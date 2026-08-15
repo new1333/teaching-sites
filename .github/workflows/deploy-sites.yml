@@ -1,0 +1,48 @@
+name: Deploy Teaching Sites
+
+# master 上任何内容变化时自动构建聚合站并发布到 gh-pages 分支；
+# 也可在 Actions 页手动触发（Run workflow）。
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: teaching-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Build aggregated site
+        # PAGES_BASE 注入子路径前缀：项目级 Pages 部署在 /<repo>/ 下，
+        # base 不含仓库名会导致 CSS/JS/字体 404。绑定自定义域名时改为 PAGES_BASE: /
+        env:
+          PAGES_BASE: /${{ github.event.repository.name }}/
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Deploy to GitHub Pages (gh-pages branch)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: courses/.vitepress/dist
+          publish_branch: gh-pages
+          force_orphan: true

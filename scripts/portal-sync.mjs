@@ -48,12 +48,16 @@ if (!courses.length) {
 }
 
 const j = JSON.stringify
+// GitHub Pages 项目级站点部署在 /<repo>/ 子路径下，资源 base 必须含该前缀。
+// 仅在显式设置 PAGES_BASE 时写入（CI 构建注入），本地 dev/build 不设则保持根路径。
+const pagesBase = process.env.PAGES_BASE?.trim()
+const baseLine = pagesBase ? `  base: '${pagesBase}',\n` : ''
 // 先在普通代码里算好，模板里只留 ${j(...)} 插值——插值内写对象字面量会触发模板插值提前闭合
 const nav = [{ text: '首页', link: '/' }, ...courses.map((c) => ({ text: c.title, link: `/${c.name}/` }))]
 const sidebarMap = Object.fromEntries(courses.map((c) => [`/${c.name}/`, c.sidebar]))
 const config = `// 由 scripts/portal-sync.mjs 生成，勿手改。改课程请改该课程自己的 config.mjs 后重跑 pnpm sync。
 export default {
-  title: '课程中心',
+${baseLine}  title: '课程中心',
   description: '全部教学课程的聚合入口',
   ignoreDeadLinks: true,
   srcExclude: ['**/README.md', '**/companion/**', '**/.course/**'],
