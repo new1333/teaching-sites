@@ -21,7 +21,7 @@ nav/sidebar 由 `.course/outline.json` **100% 渲染生成，不扫文件系统*
 
 ## docs/ 结构
 
-**`docs/index.md`**（home 布局，hero 由大纲渲染）：
+**`docs/index.md`**（home 布局，hero 由大纲渲染。**首页必须有章入口**——home 布局不显示 sidebar，hero actions 与 feature 卡片链接是首页仅有的入口，缺了读者就进不去章节）：
 
 ```md
 ---
@@ -30,13 +30,24 @@ hero:
   name: {outline.title}
   text: {outline.audience}
   tagline: 读完本课程，{outline.final_milestone.what_reader_built}
+  actions:
+    - theme: brand
+      text: 开始阅读
+      link: ./{首章 NN-slug}
+    - theme: alt
+      text: 课程介绍
+      link: ./about
 features:
   - icon: ⚡
     title: {第 1 章标题}
     details: {第 1 章 goal，截 80 字}
-  # ... 最多前 12 章
+    link: ./{本章 NN-slug}
+    linkText: 进入本章
+  # ... 最多前 12 章，每张卡都必须带 link
 ---
 ```
+
+**站内链接一律相对（`./NN-slug`）**：课程在聚合站挂载于 `/{课程名}/` 前缀下（见 `references/portal.md`），绝对路径 `/NN-slug` 会指到聚合站根部 404；相对链接在单课（首页 `/`）与聚合（首页 `/{课程名}/`）两种上下文都解析正确。首页如此，正文里链向站内页面同理。
 
 **`docs/about.md`**：一段课程由来 + 章节数（完成数）+ 输入（仓库地址或主题句）。
 
@@ -74,13 +85,15 @@ export default {
 
 ## README.md（课程根）
 
-包含：怎么跑（`pnpm install && pnpm docs:dev`；伴生实现 `cd companion && npm install && npm test`）、章节目录、终点里程碑。
+包含：怎么跑（两条路——项目根 `pnpm dev` 从聚合站进入，或本课程内 `pnpm install && pnpm docs:dev` 单独预览；伴生实验场 `cd companion && npm install && npm test`）、章节目录、终点里程碑。
 
 ## 终检清单（交付前逐条过）
 
 1. `docs/` 章文件数 = 大纲章数；文件名序号连续。
 2. 每章 frontmatter title 与大纲一致。
-3. 术语表条目全书出现过（容 3 条未出现，与 lint 同规）。
-4. `companion/` 全量门槛通过（按伴生形态执行对应命令；tests/ 应含全部 build 章的测试）。
-5. `pnpm install && pnpm docs:build` 构建成功。
-6. 向用户汇报：站点路径、预览命令、降级章清单（如有）。
+3. `docs/index.md` 有章入口：hero actions 与每张 feature 卡都带相对 `link`（`./NN-slug`），无绝对路径站内链接。
+4. 术语表条目全书出现过（容 3 条未出现，与 lint 同规）。
+5. `companion/` 全量门槛通过（按实验场形态执行对应命令；tests/ 应含全部 build 章的测试）。
+6. `pnpm install && pnpm docs:build` 构建成功。
+7. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
+8. 向用户汇报：课程路径（`courses/{course}/`）、聚合预览命令（根目录 `pnpm dev`）、单课预览命令、降级章清单（如有）。

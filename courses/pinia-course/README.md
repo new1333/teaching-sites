@@ -5,7 +5,10 @@
 ## 怎么跑
 
 ```bash
-# 站点（VitePress）
+# 方式一：项目根的聚合入口（和其他课程一起预览）
+pnpm dev             # 项目根执行，本课挂载在 /pinia-course/
+
+# 方式二：只跑本课程（站点）
 pnpm install
 pnpm docs:dev        # 开发预览
 pnpm docs:build      # 构建
@@ -42,7 +45,7 @@ npm run typecheck    # tsc --noEmit
 
 ## 终点里程碑
 
-读者课程结束拥有：一个约 400 行 src（含类型共约 680 行）、API 与真 pinia 同构的 pinia-mini——`createPinia` / `defineStore` / 选项式与组合式两种 store 语法 / `$patch` / `$reset` / `$subscribe` / `$onAction` / `storeToRefs` / 插件系统。验证方式：`cd companion && npm install && npm test`——通过改编自官方 `__tests__` 核心场景的 9 个测试文件（40 个断言组）。
+读者课程结束拥有：一个约 400 行 src（含类型共约 680 行）、API 与真 pinia 同构的 pinia-mini——`createPinia` / `defineStore` / 选项式与组合式两种 store 语法 / `$patch` / `$reset` / `$subscribe` / `$onAction` / `storeToRefs` / 插件系统。验证方式：`cd companion && npm install && npm test`——通过改编自官方 `__tests__` 核心场景的 8 个测试文件（40 个测试）。
 
 ## 目录结构
 

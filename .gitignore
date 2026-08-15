@@ -4,6 +4,10 @@ node_modules/
 # 课程管线状态与克隆的参考仓库（可再生）
 .course/
 
+# 聚合站生成文件（pnpm sync 可再生）
+/courses/index.md
+/courses/.vitepress/
+
 # VitePress 构建产物与缓存
 **/.vitepress/dist/
 **/.vitepress/cache/

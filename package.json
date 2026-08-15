@@ -1,0 +1,14 @@
+{
+  "name": "teaching-sites",
+  "private": true,
+  "scripts": {
+    "sync": "node scripts/portal-sync.mjs",
+    "dev": "node scripts/portal-sync.mjs && vitepress dev courses",
+    "build": "node scripts/portal-sync.mjs && vitepress build courses",
+    "preview": "vitepress preview courses"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.0"
+  }
+}

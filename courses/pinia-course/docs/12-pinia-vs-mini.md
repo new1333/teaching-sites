@@ -26,24 +26,24 @@ title: pinia-mini vs pinia：差异地图
 
 ### createPinia / disposePinia
 
-mini 55 行 vs 真 79 行。差异几乎只有一处：`registerPiniaDevtools(app, pinia)`——浏览器里按装 Vue Devtools 才走的注册分支（`__USE_DEVTOOLS__ && IS_CLIENT` 双守卫）。**存在理由**：devtools 的时间旅行依赖 pinia 主动上报 store 树；**为什么可以不在**：它是纯消费者，不改变任何运行时语义。你的 mini 装不上 devtools，但行为完全一致。
+mini 55 行 vs 真 79 行。差异几乎只有一处：`registerPiniaDevtools(app, pinia)`——浏览器里按装 Vue Devtools 才走的注册分支（`__USE_DEVTOOLS__ && IS_CLIENT` 双守卫）。存在理由：devtools 的时间旅行依赖 pinia 主动上报 store 树。为什么可以不在：它是纯消费者，不改变任何运行时语义。你的 mini 装不上 devtools，但行为完全一致。
 
 ### defineStore / useStore
 
 mini 的 useStore 与真 pinia 主干逐字对应（三级回退、查表、登记）。多出的三块：
 
-- **`__TEST__` 分支**：测试模式下忽略传入的 pinia 参数，强制走活动容器——让 `createTestingPinia` 能劫持一切取用。测试基建，非内核。
-- **`useStore._pinia = pinia`（DEV）**：给 devtools 从组件实例反查 pinia 用的注记。
-- **HMR 分支**：`hot._hotUpdate(newStore)`——开发时改了 store 定义文件，Vite 热更新不刷新页面、现场状态原样迁移到新定义。`_hmrPayload`（actions/getters/state 的登记册）就是为它准备的。**存在理由**：没有它，开发时每次改 store 都丢状态重走流程；**为什么可以不在**：它只影响开发时的刷新体验，生产构建里整块被 tree-shake。
+- `__TEST__` 分支：测试模式下忽略传入的 pinia 参数，强制走活动容器——让 `createTestingPinia` 能劫持一切取用。测试基建，非内核。
+- `useStore._pinia = pinia`（DEV）：给 devtools 从组件实例反查 pinia 用的注记。
+- HMR 分支：`hot._hotUpdate(newStore)`——开发时改了 store 定义文件，Vite 热更新不刷新页面、现场状态原样迁移到新定义。`_hmrPayload`（actions/getters/state 的登记册）就是为它准备的。存在理由：没有它，开发时每次改 store 都丢状态重走流程。为什么可以不在：它只影响开发时的刷新体验，生产构建里整块被 tree-shake。
 
 ### createSetupStore（分类循环）
 
 mini 404 行 store.ts 的主干与真 pinia 相同，但四个细节被 mini 刻意简化：
 
-1. **`ACTION_MARKER` / `ACTION_NAME` 两个 Symbol**——真 pinia 给 action 外壳打的胎记，`hotUpdate` 时识别「这个函数已经是包装过的」防止套两层壳。mini 没有 HMR，不需要。
-2. **`this` 重绑**：真 pinia 的外壳用 `fn.apply(this && this.$id === $id ? this : store, args)`——HMR 期间新 store 调旧 action 时绑回新 store。mini 恒绑 `store`。
-3. **两个静音标志 vs 一个**：第 8 章末尾说过——真 pinia 有 `isListening` 与 `isSyncListening` 双标志，因为它的 sync watcher 在 patch 结束瞬间就要恢复收听；mini 统一 nextTick 恢复，边角时序略钝，主行为一致。
-4. **hydration 的守卫差异**：真 pinia 用 `shouldHydrate`（配合 `skipHydrate()` 逃生舱，允许 setup 返回「响应式但不是状态」的东西跳过水合）；mini 用 `key in initialState`——语义更直白，边角少一层可配置性。
+1. `ACTION_MARKER` / `ACTION_NAME` 两个 Symbol——真 pinia 给 action 外壳打的标记，`hotUpdate` 时识别「这个函数已经是包装过的」防止套两层壳。mini 没有 HMR，不需要。
+2. `this` 重绑：真 pinia 的外壳用 `fn.apply(this && this.$id === $id ? this : store, args)`——HMR 期间新 store 调旧 action 时绑回新 store。mini 恒绑 `store`。
+3. 两个静音标志 vs 一个：第 8 章末尾说过——真 pinia 有 `isListening` 与 `isSyncListening` 双标志，因为它的 sync watcher 在 patch 结束瞬间就要恢复收听；mini 统一 nextTick 恢复，边角时序略钝，主行为一致。
+4. hydration 的守卫差异：真 pinia 用 `shouldHydrate`（配合 `skipHydrate()` 逃生舱，允许 setup 返回「响应式但不是状态」的东西跳过水合）；mini 用 `key in initialState`——语义更直白，边角少一层可配置性。
 
 ### $patch / $reset / $state
 
@@ -51,7 +51,7 @@ mini 与真 pinia 的 `mergeReactiveObjects` 逻辑一致（含 Map/Set 分支�
 
 ### $subscribe / $onAction / $dispose
 
-subscriptions.ts 两边几乎逐行相同（38 vs 33，mini 注释多）。真 pinia 多两处：`$subscribe` 对**同一回调重复订阅**返回 noop 并在 DEV 报警（mini 返回空函数但不报警）；订阅事件里的 `events` 字段（同上，devtools 数据源）。
+subscriptions.ts 两边几乎逐行相同（38 vs 33，mini 注释多）。真 pinia 多两处：`$subscribe` 对同一回调重复订阅返回 noop 并在 DEV 报警（mini 返回空函数但不报警）；订阅事件里的 `events` 字段（同上，devtools 数据源）。
 
 ### storeToRefs
 
@@ -63,15 +63,15 @@ subscriptions.ts 两边几乎逐行相同（38 vs 33，mini 注释多）。真 p
 
 ### mini 完全不做的三块
 
-- **mapHelpers.ts（554 行）**：`mapState`/`mapActions`/`mapStores`——Vue 2 选项式组件的 Vuex 风格语法。Vue 3 组合式 API 下的新代码基本不用，纯兼容层。
-- **hmr.ts（122 行）**：热更新的状态迁移（`patchObject` 按 option/setup 两种语法的差异化迁移，第 12 章开头那批 `_hotUpdate` 细节的实现所在）。
-- **devtools/（7 个文件）**：与 Vue Devtools 面板的协议对接。
+- mapHelpers.ts（554 行）：`mapState`/`mapActions`/`mapStores`——Vue 2 选项式组件的 Vuex 风格语法。Vue 3 组合式 API 下的新代码基本不用，纯兼容层。
+- hmr.ts（122 行）：热更新的状态迁移（`patchObject` 按 option/setup 两种语法的差异化迁移，本章开头那批 `_hotUpdate` 细节的实现所在）。
+- devtools/（7 个文件）：与 Vue Devtools 面板的协议对接。
 
-三块的共同点：**都挂在内核已有的钩子上，不碰内核路径**。这就是「内核与生态分层」的价值——你写的 mini 少了它们依然是一个正确的 pinia。
+三块的共同点：都挂在内核已有的钩子上，不碰内核路径。这就是「内核与生态分层」的价值——你写的 mini 少了它们依然是一个正确的 pinia。
 
 ## 类型层的差距（最大也最值得看）
 
-723 行的 types.ts 是真 pinia 最大的单文件，也是 mini 刻意绕开的山：`defineStore` 的四层泛型 `Id/S/G/A`、`Store<Id, S, G, A>` 的交叉类型、Setup Store 的 `_ExtractXxxFromSetupStore` 条件类型——全为了一个目标：**`const { count, double, increment } = store` 每个都有精确类型，`store.typo` 编译期报错**。mini 的测试里那些 `this: any` 标注，就是绕开这座山付的学费。想进阶类型体操，这个文件是比任何教程都好的教材——但建议啃完运行时再回来。
+723 行的 types.ts 是真 pinia 最大的单文件，也是 mini 刻意绕开的山：`defineStore` 的四层泛型 `Id/S/G/A`、`Store<Id, S, G, A>` 的交叉类型、Setup Store 的 `_ExtractXxxFromSetupStore` 条件类型——全为了一个目标：`const { count, double, increment } = store` 每个都有精确类型，`store.typo` 编译期报错。mini 的测试里那些 `this: any` 标注，就是绕开这座山付的学费。想进阶类型体操，这个文件是比任何教程都好的教材——但建议啃完运行时再回来。
 
 ## 啃真源码的推荐入口
 

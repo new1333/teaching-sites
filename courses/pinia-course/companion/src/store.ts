@@ -90,7 +90,7 @@ function createOptionsStore(
 ): StoreGeneric {
   const { state, actions, getters } = options
 
-  // 状态进集中营：pinia.state.value[id]
+  // 状态进容器根状态：pinia.state.value[id]
   // 已有值（hydration/测试预置）时不覆盖
   if (!(id in pinia.state.value)) {
     pinia.state.value[id] = state ? state() : {}
@@ -139,7 +139,7 @@ export function createSetupStore(
   // watcher 的静音标志：$patch 期间关掉 watcher 通道，只走手动触发——避免双份通知
   let isListening = true
 
-  // 选项式已把 state 写进集中营；组合式先占位，分类时再搬
+  // 选项式已把 state 写进容器根状态；组合式先占位，分类时再搬
   if (!isOptionsStore && !($id in pinia.state.value)) {
     pinia.state.value[$id] = {}
   }
@@ -301,9 +301,9 @@ export function createSetupStore(
     const prop = setupStore[key]
 
     if ((isRef(prop) && !isComputed(prop)) || isReactive(prop)) {
-      // 状态通道：组合式的 ref/reactive 搬进集中营
+      // 状态通道：组合式的 ref/reactive 搬进容器根状态
       if (!isOptionsStore) {
-        // hydration：集中营里已有预置值（SSR 直出 / 测试预置），
+        // hydration：容器根状态里已有预置值（SSR 直出 / 测试预置），
         // 把它写回 setup 刚创建的默认 ref——而不是让默认值覆盖它
         if (key in initialState) {
           if (isRef(prop)) {

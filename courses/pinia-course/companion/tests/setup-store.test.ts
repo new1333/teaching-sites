@@ -26,7 +26,7 @@ describe('组合式 store 与运行时分类', () => {
     expect(s.double).toBe(20)
   })
 
-  it('ref 状态搬进容器集中营（$state 与 store 是同一份数据）', () => {
+  it('ref 状态搬进容器根状态（$state 与 store 是同一份数据）', () => {
     const s = useSetupCounter()
     expect(s.$state.count).toBe(0)
     s.count = 7

@@ -1,0 +1,43 @@
+- generic [ref=e3]:
+  - link "Skip to content" [ref=e4] [cursor=pointer]:
+    - /url: "#VPContent"
+  - banner:
+    - generic:
+      - generic:
+        - generic:
+          - link "课程中心" [ref=e6] [cursor=pointer]:
+            - /url: /
+          - generic [ref=e8]:
+            - button "Search" [ref=e11] [cursor=pointer]:
+              - generic [ref=e15]:
+                - generic [ref=e16]: Ctrl
+                - generic [ref=e17]: K
+            - navigation "Main Navigation" [ref=e18]:
+              - link "首页" [ref=e20] [cursor=pointer]:
+                - /url: /
+              - link "Nginx 前端实战课" [ref=e22] [cursor=pointer]:
+                - /url: /nginx-course/
+              - link "Pinia 从零实现" [ref=e24] [cursor=pointer]:
+                - /url: /pinia-course/
+            - button "extra navigation" [ref=e27] [cursor=pointer]
+  - generic [ref=e30]:
+    - generic [ref=e33]:
+      - heading "课程中心 2 门从零实现的课程" [level=1] [ref=e34]:
+        - generic [ref=e35]: 课程中心
+        - generic [ref=e36]: 2 门从零实现的课程
+      - paragraph [ref=e37]: 根目录 pnpm dev 聚合预览；每门课程也可在 courses/ 下独立运行
+    - generic [ref=e40]:
+      - link [ref=e42] [cursor=pointer]:
+        - /url: /nginx-course/
+        - article [ref=e43]:
+          - generic [ref=e44]: 📘
+          - heading "Nginx 前端实战课" [level=2] [ref=e45]
+          - paragraph [ref=e46]: 会打包部署前端应用、但遇到 Nginx 配置只会复制粘贴的前端工程师（12 章）
+          - paragraph [ref=e48]: 进入课程
+      - link [ref=e51] [cursor=pointer]:
+        - /url: /pinia-course/
+        - article [ref=e52]:
+          - generic [ref=e53]: 📘
+          - heading "Pinia 从零实现" [level=2] [ref=e54]
+          - paragraph [ref=e55]: 会用 Vue 3 组合式 API、想真正吃透状态管理而非只会调 API 的开发者（12 章）
+          - paragraph [ref=e57]: 进入课程

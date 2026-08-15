@@ -5,7 +5,10 @@
 ## 运行
 
 ```bash
-# 教学站点
+# 方式一：项目根的聚合入口（和其他课程一起预览）
+pnpm dev             # 项目根执行，本课挂载在 /nginx-course/
+
+# 方式二：只跑本课程（教学站点）
 pnpm install
 pnpm docs:dev        # http://localhost:5173
 
