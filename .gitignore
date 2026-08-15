@@ -1,0 +1,35 @@
+# 依赖
+node_modules/
+
+# 课程管线状态与克隆的参考仓库（可再生）
+.course/
+
+# VitePress 构建产物与缓存
+**/.vitepress/dist/
+**/.vitepress/cache/
+.vite/
+
+# 构建产物
+dist/
+coverage/
+*.tsbuildinfo
+
+# 日志
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 环境变量
+.env
+.env.*
+!.env.example
+
+# 编辑器 / IDE
+.idea/
+.vscode/
+*.swp
+
+# 操作系统
+.DS_Store
+Thumbs.db
+Desktop.ini
