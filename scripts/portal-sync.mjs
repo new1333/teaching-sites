@@ -53,7 +53,11 @@ const j = JSON.stringify
 const pagesBase = process.env.PAGES_BASE?.trim()
 const baseLine = pagesBase ? `  base: '${pagesBase}',\n` : ''
 // 先在普通代码里算好，模板里只留 ${j(...)} 插值——插值内写对象字面量会触发模板插值提前闭合
-const nav = [{ text: '首页', link: '/' }, ...courses.map((c) => ({ text: c.title, link: `/${c.name}/` }))]
+// 课程标题较长且会持续增加，平铺在 nav 会溢出屏幕，故收纳进一个下拉菜单
+const nav = [
+  { text: '首页', link: '/' },
+  { text: '全部课程', items: courses.map((c) => ({ text: c.title, link: `/${c.name}/` })) },
+]
 const sidebarMap = Object.fromEntries(courses.map((c) => [`/${c.name}/`, c.sidebar]))
 const config = `// 由 scripts/portal-sync.mjs 生成，勿手改。改课程请改该课程自己的 config.mjs 后重跑 pnpm sync。
 export default {

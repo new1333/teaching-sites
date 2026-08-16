@@ -47,6 +47,8 @@ features:
 ---
 ```
 
+**hero 长度硬约束**：`text` ≤30 字、`tagline` 全长 ≤50 字（=「读完本课程，」+ `what_reader_built` ≤40 字）。超限时先回改 `outline.json` 的 `audience` / `final_milestone.what_reader_built` 再重渲染——压缩成「产物名+规模+一个验证信号」，砍掉特性枚举，是改写不是机械截断；大纲是单一事实源，不在模板里另造一版短文案。
+
 **站内链接一律相对（`./NN-slug`）**：课程在聚合站挂载于 `/{课程名}/` 前缀下（见 `references/portal.md`），绝对路径 `/NN-slug` 会指到聚合站根部 404；相对链接在单课（首页 `/`）与聚合（首页 `/{课程名}/`）两种上下文都解析正确。首页如此，正文里链向站内页面同理。
 
 **`docs/about.md`**：一段课程由来 + 章节数（完成数）+ 输入（仓库地址或主题句）。
@@ -92,8 +94,9 @@ export default {
 1. `docs/` 章文件数 = 大纲章数；文件名序号连续。
 2. 每章 frontmatter title 与大纲一致。
 3. `docs/index.md` 有章入口：hero actions 与每张 feature 卡都带相对 `link`（`./NN-slug`），无绝对路径站内链接。
-4. 术语表条目全书出现过（容 3 条未出现，与 lint 同规）。
-5. `companion/` 全量门槛通过（按实验场形态执行对应命令；tests/ 应含全部 build 章的测试）。
-6. `pnpm install && pnpm docs:build` 构建成功。
-7. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
-8. 向用户汇报：课程路径（`courses/{course}/`）、聚合预览命令（根目录 `pnpm dev`）、单课预览命令、降级章清单（如有）。
+4. hero 长度：`text` ≤30 字、`tagline` 全长 ≤50 字；超限回改 `outline.json` 对应字段后重渲染。
+5. 术语表条目全书出现过（容 3 条未出现，与 lint 同规）。
+6. `companion/` 全量门槛通过（按实验场形态执行对应命令；tests/ 应含全部 build 章的测试）。
+7. `pnpm install && pnpm docs:build` 构建成功。
+8. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
+9. 向用户汇报：课程路径（`courses/{course}/`）、聚合预览命令（根目录 `pnpm dev`）、单课预览命令、降级章清单（如有）。

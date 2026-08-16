@@ -9,7 +9,7 @@ Term = { term: string /* 中文术语 */, en?: string /* 英文原文 */, defini
 
 CourseOutline = {
   title: string                    // 课程名（中文可）
-  audience: string                 // 一句话受众画像
+  audience: string                 // 一句话受众画像，≤30 字（原样渲染为首页 hero 大字号 text）
   input: { kind: 'repo' | 'topic', ref?: string }   // repo: owner/name@branch（仅作者侧备课）；topic: 主题句
   companion: {                     // 原理实验场形态与规模，随大纲一并确认；形态菜单见 companion-and-gates.md
     form: 'library' | 'cli-golden' | 'config-validate' | 'dom-test'
@@ -17,7 +17,7 @@ CourseOutline = {
     scope: string                  // 验证核心原理的最小实验工程 + 预计规模（如「最小调度器，~300 行」）；是原理验证不是复刻
   }
   parts: Part[]                    // 2-4 个分部
-  final_milestone: { what_reader_built: string, verify: string }
+  final_milestone: { what_reader_built: string /* ≤40 字：产物名+规模+一个验证信号，不枚举特性清单——原样渲染为 hero tagline */, verify: string }
 }
 
 Part  = { title: string, chapters: Chapter[] }
@@ -45,7 +45,7 @@ Chapter = {
 5. **depends_on 只能指向更早的章**——无前向依赖，保证 Crafting Interpreters 式的干净渐进主线。
 6. **relevant_files 的路径必须原样存在**于 clone 的仓库里——它是作者侧备课索引（生成期拿不准某条原理的真实行为时去读），不是成稿引用源码的义务，正文与测试零仓库痕迹。topic 输入无 clone，relevant_files 留空。
 7. acceptance 3-5 条，可判定，至少含「实验场门槛通过」与「零外部源码引用」。
-8. **final_milestone 写清读者终态**：读完拥有什么（如「一个 ~300 行的最小 store 容器」）、怎么验证（如「通过课程自设的原理断言测试」）。
+8. **final_milestone 写清读者终态**：读完拥有什么（如「一个 ~300 行的最小 store 容器」）、怎么验证（如「通过课程自设的原理断言测试」）。**长度硬约束：`what_reader_built` ≤40 字、`audience` ≤30 字**——产物名+规模+一个验证信号就够，禁止把各章特性排比成清单塞进去（「会合点、事件系统、登记处……」）。原因：这两个字段原样渲染为首页 hero 的大字号 text/tagline，超长首页排版就垮；特性清单属于 feature 卡片和目录，不属于 hero。
 
 ## slug 与宽松校验
 
