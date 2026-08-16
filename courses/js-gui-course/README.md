@@ -20,8 +20,10 @@
 8. IPC：invoke/handle 与 send/on
 9. 反方向：native 事件进 JS
 10. 组装 mini-Electron
-11. 回望：Electron、Tauri 与原生绑定的同一原理
+11. 真机篇（上）：WebAssembly——第一次真的跨语言
+12. 真机篇（下）：跑起来——终端 App 与真窗口
+13. 回望：Electron、Tauri 与原生绑定的同一原理
 
 ## 终点里程碑
 
-一个约 500-600 行、可测试的 mini-Electron 内核：模拟原生层（事件队列、runLoop、窗口管理器）+ 嵌入运行时与 binding 桥 + 异步任务队列 + IPC 通道 + 事件分发 + createApp 组装。验证：companion 的 45 条课程自设原理断言全绿、`tsc --noEmit` 通过；你能讲清从 JS 一行调用到窗口出现、从用户点击到状态更新的完整链路，以及 Electron/Tauri/原生绑定各自的权衡。
+一个约六百行、55 条断言背书的 mini-Electron 内核：模拟原生层（事件队列、runLoop、窗口管理器）+ 嵌入运行时与 binding 桥 + 异步任务队列 + IPC 通道 + 事件分发 + createApp 组装。真机篇再给你两样：手工组装的 WebAssembly 模块（真跨语言边界实测），以及可交互运行的应用与 Bun FFI 真系统弹窗。验证：`npm test` 55 条全绿、`tsc --noEmit` 通过、`npm run demo` 可运行、`bun src/app/native-window.mjs --msgbox` 真弹窗。

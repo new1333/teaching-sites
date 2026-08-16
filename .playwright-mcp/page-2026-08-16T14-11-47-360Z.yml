@@ -1,0 +1,5 @@
+- generic [active] [ref=e1]:
+  - heading "用 TypeScript 从零写的 NES 模拟器 · NROM demo" [level=3] [ref=e2]
+  - button "Choose File" [ref=e4]
+  - generic [ref=e5]: 选择一个 .nes 文件(仅 mapper 0 / NROM)
+  - generic [ref=e6]: 键位:方向键 = 十字键 · Z = A · X = B · Enter = Start · 右 Shift = Select 先 pnpm demo:build,再经任意静态服务器打开本页(如 npx serve .)

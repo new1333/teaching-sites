@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>NES demo —— 用 TypeScript 从零写的模拟器</title>
+  <style>
+    body {
+      font-family: ui-monospace, Consolas, monospace;
+      background: #1a1a22;
+      color: #ddd;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 24px;
+    }
+    canvas {
+      width: 512px;
+      height: 480px;
+      image-rendering: pixelated;
+      background: #000;
+      border: 2px solid #444;
+    }
+    #hint { color: #888; font-size: 13px; text-align: center; line-height: 1.7 }
+  </style>
+</head>
+<body>
+  <h3>用 TypeScript 从零写的 NES 模拟器 · NROM demo</h3>
+  <canvas id="screen" width="256" height="240"></canvas>
+  <input type="file" id="rom" accept=".nes" />
+  <div id="status">选择一个 .nes 文件(仅 mapper 0 / NROM)</div>
+  <div id="hint">
+    键位:方向键 = 十字键 · Z = A · X = B · Enter = Start · 右 Shift = Select<br />
+    先 pnpm demo:build,再经任意静态服务器打开本页(如 npx serve .)
+  </div>
+  <script type="module" src="../demo-build/demo/app.js"></script>
+</body>
+</html>

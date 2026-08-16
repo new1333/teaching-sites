@@ -26,14 +26,16 @@ export default {
         ],
       },
       {
-        text: '进程与组装：mini-Electron 闭环',
+        text: '进程与组装：mini-Electron 闭环与真机',
         collapsed: false,
         items: [
           { text: '7. 为什么是两个进程', link: '/07-process-model.md' },
           { text: '8. IPC：invoke/handle 与 send/on', link: '/08-ipc-channel.md' },
           { text: '9. 反方向：native 事件进 JS', link: '/09-native-events-to-js.md' },
           { text: '10. 组装 mini-Electron', link: '/10-assemble-mini-electron.md' },
-          { text: '11. 回望：Electron、Tauri 与原生绑定的同一原理', link: '/11-ecosystem-tradeoffs.md' },
+          { text: '11. 真机篇（上）：WebAssembly——第一次真的跨语言', link: '/11-wasm-binding.md' },
+          { text: '12. 真机篇（下）：跑起来——终端 App 与真窗口', link: '/12-terminal-app.md' },
+          { text: '13. 回望：Electron、Tauri 与原生绑定的同一原理', link: '/13-ecosystem-tradeoffs.md' },
         ],
       },
     ],

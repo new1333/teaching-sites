@@ -62,9 +62,19 @@ features:
     details: 把全部零件缝成 createApp，计数器 App 全程走桥跑通
     link: ./10-assemble-mini-electron
     linkText: 进入本章
+  - icon: 🧬
+    title: 真机篇（上）：WebAssembly——第一次真的跨语言
+    details: 手工组装 41 字节 wasm 模块，在真语言边界上实测值语义
+    link: ./11-wasm-binding
+    linkText: 进入本章
+  - icon: ⌨️
+    title: 真机篇（下）：跑起来——终端 App 与真窗口
+    details: npm run demo 可交互运行；Bun FFI 直调 user32.dll 真的弹窗
+    link: ./12-terminal-app
+    linkText: 进入本章
   - icon: ⚖️
     title: 回望：Electron、Tauri 与原生绑定的同一原理
     details: 同一内核的三组参数：一致性、轻量、性能各付什么账
-    link: ./11-ecosystem-tradeoffs
+    link: ./13-ecosystem-tradeoffs
     linkText: 进入本章
 ---

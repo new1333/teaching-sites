@@ -37,3 +37,6 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# NES 课程 demo 构建产物
+/courses/nes-emulator-course/companion/demo-build/

@@ -5,8 +5,8 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "demo": "tsx src/app/demo.ts",
-    "demo:native": "bun src/app/native-window.mjs"
+    "demo:build": "tsc -p tsconfig.demo.json",
+    "demo": "tsc -p tsconfig.demo.json && npx --yes serve ."
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

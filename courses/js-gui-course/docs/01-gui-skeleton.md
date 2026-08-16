@@ -47,7 +47,8 @@ while (true) {
 6. 耗时的原生调用走异步：结果进入任务队列（task queue），回投 JS 单线程；
 7. 界面与系统权限拆进渲染进程/主进程（renderer process / main process），跨进程用进程间通信（IPC）借能力，一问一答靠请求-响应（invoke/handle），通知靠事件推送（send/on）；
 8. 反方向：用户点击经订阅（subscription）回到 JS 回调；
-9. 全部零件拼成 createApp，点按钮改状态刷新界面全程走桥。
+9. 全部零件拼成 createApp，点按钮改状态刷新界面全程走桥；
+10. 真机两章：真的跨一次语言边界（WebAssembly），再把内核跑成可交互的应用。
 
 ## 小结
 
