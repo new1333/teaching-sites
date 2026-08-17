@@ -11,8 +11,11 @@ pnpm dev
 # 单独预览本课程
 pnpm install && pnpm docs:dev
 
-# 伴生实验场（107 个断言）
+# 伴生实验场（117 个断言）
 cd companion && pnpm install && pnpm test
+
+# 浏览器试机台：canvas 上真机开机，内置试机带可用方向键推动笑脸精灵
+cd companion && pnpm dev
 ```
 
 ## 章节
@@ -36,4 +39,4 @@ cd companion && pnpm install && pnpm test
 
 ## 终点里程碑
 
-约 1400 行的 TS 版 NES 模拟器，跑通自产测试卡带：出画面、出声音。验证方式：`companion` 全量测试通过（10 个文件、107 个用例——帧缓冲逐像素断言 + 手柄回放 + 音频缓冲非静音）。访客无需自备任何 ROM：克隆实验场、跑测试，即可看到第一次开机。
+约 1400 行的 TS 版 NES 模拟器，跑通自产测试卡带：出画面、出声音。验证方式：`companion` 全量测试通过（12 个文件、117 个用例——帧缓冲逐像素断言 + 手柄回放 + 音频缓冲非静音 + 滚动相机）。访客无需自备任何 ROM：克隆实验场、跑测试，即可看到第一次开机；跑 `pnpm dev` 还能在浏览器的 canvas 上亲手玩到它。

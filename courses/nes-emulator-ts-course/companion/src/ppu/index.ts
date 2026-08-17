@@ -15,7 +15,11 @@ export class PPU {
   sprite0Hit = false // status bit6：第 9 章置位
   private statusLatch = 0 // $2002 低 5 位残影（真机行为，写入值滞留）
 
-  private v = 0 // 15 位 VRAM 指针（$2005/$2006 两步写入共用）
+  private v = 0 // 15 位 VRAM 指针：渲染与 $2007 读写共用（布局 coarseX|coarseY|nametable|fineY）
+  private t = 0 // 15 位暂存指针：$2005/$2006 写进这里，每帧预取线整体抄进 v
+  private fineX = 0 // 3 位水平微调（$2005 第一拍低 3 位）——v 里放不下，单独住
+  private renderV = 0 // 渲染起点快照：预取线抄 v 时定格，避免 vblank 里 $2007 改 v 弄脏画面
+  private renderFineX = 0
   private writeToggle = false // 两次写入节奏的第一/第二步开关
   private oamAddr = 0 // OAM 指针
 
@@ -47,6 +51,10 @@ export class PPU {
         // 预取线：收工铃的余音散去，哨兵复位
         this.vblank = false
         this.sprite0Hit = false
+        // 滚动装载：把暂存指针整体抄进 v，并定格为本帧渲染起点
+        this.v = this.t
+        this.renderV = this.v
+        this.renderFineX = this.fineX
       } else if (this.scanline === 262) {
         this.scanline = 0
         this.frameCount++
@@ -89,14 +97,23 @@ export class PPU {
         this.oamAddr = (this.oamAddr + 1) & 0xff
         break
       case 5:
-        this.writeToggle = !this.writeToggle // 滚动寄存器，第 8 章用
+        // 滚动寄存器两拍：第一拍 X（tile 粒度进 t、像素粒度进 fineX），第二拍 Y
+        if (!this.writeToggle) {
+          this.t = (this.t & ~0x001f) | (val >> 3) // coarse X 进 t
+          this.fineX = val & 7 // 像素微调单独住
+        } else {
+          this.t = (this.t & ~0x73e0) | ((val & 7) << 12) | ((val & 0xf8) << 2) // fine Y + coarse Y
+        }
+        this.writeToggle = !this.writeToggle
         break
       case 6:
+        // 地址寄存器两拍：写进 t，并立刻同步给 v（$2007 马上要按它定址）
         if (!this.writeToggle) {
-          this.v = (this.v & 0x00ff) | ((val & 0x3f) << 8)
+          this.t = (this.t & 0x00ff) | ((val & 0x3f) << 8)
         } else {
-          this.v = (this.v & 0xff00) | val
+          this.t = (this.t & 0xff00) | val
         }
+        this.v = this.t
         this.writeToggle = !this.writeToggle
         break
       case 7: {
@@ -130,35 +147,59 @@ export class PPU {
     return val
   }
 
-  // 整帧背景渲染：nametable 960 格 → 每格查 16 字节图案 → 双位平面合并出 0-3
-  // 色号 → 调色板间接 → 256×240 个 NES 色号（0-63）。滚动偏移第 10 章接入。
+  // 整帧背景渲染：从「相机位置」（预取线定格的 v 快照）起步，逐像素走过 nametable
+  // → 查图案表双位平面合并出 0-3 色号 → 调色板间接 → 256×240 个 NES 色号（0-63）。
+  // 屏幕右缘跨入相邻 nametable（方向由卡带镜像决定），垂直同理在 30 行处跨表。
   readonly frameBuffer: number[] = new Array<number>(256 * 240).fill(0)
   // 背景每像素的 0-3 色号底账：精灵合成与 sprite 0 hit 都要查「背景是否透明」
   readonly bgColorIdx = new Uint8Array(256 * 240)
 
   renderBackground(): number[] {
     const bgTable = (this.ctrl & 0x10) !== 0 ? 0x1000 : 0 // PPUCTRL bit4 选左右图案表
-    for (let row = 0; row < 30; row++) {
-      for (let col = 0; col < 32; col++) {
-        const ntBase = 0 // 滚动未接：固定 nametable 0
-        const tileIdx = this.vram[ntBase + row * 32 + col]
+    // v 的布局拆成「相机」四要素：coarseX/Y（tile 粒度）、nametable 两位、fineY（行内 0-7）
+    let coarseY = (this.renderV >> 5) & 0x1f
+    let fineY = (this.renderV >> 12) & 7
+    let ntY = (this.renderV >> 11) & 1
+    for (let sy = 0; sy < 240; sy++) {
+      // 每行的水平相机：从起点列与 fineX 像素偏移出发，走满 256 像素
+      let coarseX = this.renderV & 0x1f
+      let ntX = (this.renderV >> 10) & 1
+      let inTileX = this.renderFineX
+      for (let sx = 0; sx < 256; sx++) {
+        // 逻辑地址 = ntY×$800 + ntX×$400 + coarseY×32 + coarseX，再折进物理 2KB
+        const tileIdx = this.vram[this.ntIndex(0x2000 | (ntY << 11) | (ntX << 10) | (coarseY << 5) | coarseX)]
         // 属性表在 nametable 末尾的 64 格，每格管 32×32 像素（2×2 个 tile）
-        const attr = this.vram[ntBase + 0x3c0 + (row >> 2) * 8 + (col >> 2)]
-        const shift = ((row & 2) << 1) | (col & 2) // 象限选 2 bit
+        const attr =
+          this.vram[this.ntIndex(0x2000 | (ntY << 11) | (ntX << 10) | 0x3c0 | ((coarseY >> 2) << 3) | (coarseX >> 2))]
+        const shift = ((coarseY & 2) << 1) | (coarseX & 2) // 象限选 2 bit
         const palette = (attr >> shift) & 3
         const base = bgTable + tileIdx * 16
-        for (let y = 0; y < 8; y++) {
-          const lo = this.chrRom[base + y]
-          const hi = this.chrRom[base + 8 + y]
-          for (let x = 0; x < 8; x++) {
-            const bit = 7 - x
-            const colorIdx = (((hi >> bit) & 1) << 1) | ((lo >> bit) & 1)
-            // 色号 0 是透明：永远落通用背景色 $3F00
-            const palAddr = colorIdx === 0 ? 0x3f00 : 0x3f00 + palette * 4 + colorIdx
-            const fbIdx = (row * 8 + y) * 256 + col * 8 + x
-            this.frameBuffer[fbIdx] = this.paletteRam[palAddr & 0x1f]
-            this.bgColorIdx[fbIdx] = colorIdx
+        const bit = 7 - inTileX
+        const colorIdx = ((((this.chrRom[base + 8 + fineY] >> bit) & 1) << 1) | ((this.chrRom[base + fineY] >> bit) & 1))
+        // 色号 0 是透明：永远落通用背景色 $3F00
+        const palAddr = colorIdx === 0 ? 0x3f00 : 0x3f00 + palette * 4 + colorIdx
+        const fbIdx = sy * 256 + sx
+        this.frameBuffer[fbIdx] = this.paletteRam[palAddr & 0x1f]
+        this.bgColorIdx[fbIdx] = colorIdx
+        // 水平推进：走完一块 tile 跨一列，走完一行跨入相邻 nametable
+        inTileX++
+        if (inTileX === 8) {
+          inTileX = 0
+          coarseX++
+          if (coarseX === 32) {
+            coarseX = 0
+            ntX ^= 1
           }
+        }
+      }
+      // 垂直推进：8 行走完一块 tile，30 行走完一块 nametable（属性表 2 行跳过）
+      fineY++
+      if (fineY === 8) {
+        fineY = 0
+        coarseY++
+        if (coarseY === 30) {
+          coarseY = 0
+          ntY ^= 1
         }
       }
     }

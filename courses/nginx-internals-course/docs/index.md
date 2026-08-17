@@ -1,0 +1,70 @@
+---
+layout: home
+hero:
+  name: nginx 实现原理：亲手写一个事件驱动 HTTP 服务器
+  text: 配过 nginx、懂 HTTP 的 Web 开发者，未接触过 socket 编程
+  tagline: 读完本课程，tinysrv——约 800 行的事件驱动 HTTP 服务器，含代理、均衡与限流
+  actions:
+    - theme: brand
+      text: 开始阅读
+      link: ./01-c10k-and-event-driven
+    - theme: alt
+      text: 课程介绍
+      link: ./about
+features:
+  - icon: ⚡
+    title: C10K：一万个连接怎么把老牌服务器打爆
+    details: prefork Apache 的三笔崩账，与非阻塞 I/O + epoll 的事件驱动方案为什么赢
+    link: ./01-c10k-and-event-driven
+    linkText: 进入本章
+  - icon: 📒
+    title: 连接注册表：把连接当成一等公民管理
+    details: 注册、事件分发、空闲收割——事件驱动服务器的地基，从 socket 是什么教起
+    link: ./02-connection-registry
+    linkText: 进入本章
+  - icon: 🔬
+    title: HTTP 解析状态机：半个请求也能接
+    details: 任意切分的字节流喂入状态机，粘包半包免疫，顺手堵死慢速攻击
+    link: ./03-http-parser-state-machine
+    linkText: 进入本章
+  - icon: 🔁
+    title: keep-alive：说完别挂电话
+    details: 一条 TCP 连接顺序服务多个请求，算清 TIME_WAIT 与端口耗尽那笔账
+    link: ./04-keepalive-reuse
+    linkText: 进入本章
+  - icon: 🏭
+    title: 请求内存池：整批进货，整仓清退
+    details: malloc 的三笔开销，与「请求内存天生完美生命周期」换来的结构性防泄漏
+    link: ./05-memory-pool
+    linkText: 进入本章
+  - icon: 🧩
+    title: 配置继承：你写过的那些花括号
+    details: nginx.conf 子集解析成块树，沿路径由外向内覆盖——「挪一条指令弄坏别的路径」的真相
+    link: ./06-config-inheritance
+    linkText: 进入本章
+  - icon: 👥
+    title: master 与 worker：一个老板一队员工
+    details: reload 为什么不掐断流量、worker 崩了整站为什么还活着——信号与优雅关闭的时序
+    link: ./07-master-workers
+    linkText: 进入本章
+  - icon: 🛎️
+    title: 反向代理：前台接待员的艺术
+    details: 弱网手机拖不死反代的缓冲账、X-Forwarded-For 邮戳与 502 的语义
+    link: ./08-reverse-proxy
+    linkText: 进入本章
+  - icon: ⚖️
+    title: 负载均衡与故障转移：三台坏一台，用户看不见
+    details: 轮询、失败记账、摘除与试探回归——max_fails 与 fail_timeout 的机制真相
+    link: ./09-load-balance
+    linkText: 进入本章
+  - icon: 🕳️
+    title: 漏桶限流：你抄过的 rate 和 burst 到底是什么
+    details: 漏桶整流、burst 突发额度、nodelay 排队策略，一人一桶按人限流
+    link: ./10-rate-limit-leaky-bucket
+    linkText: 进入本章
+  - icon: 🚚
+    title: 写回路径：少搬一次是一次
+    details: 四次拷贝的过路费、writev 聚合写与 sendfile 零拷贝，全书一张请求旅程图收官
+    link: ./11-zero-copy-write-path
+    linkText: 进入本章
+---

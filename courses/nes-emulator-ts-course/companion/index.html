@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NES 试机台</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        padding: 24px 12px 40px;
+        background: #16181d;
+        color: #d7dae0;
+        font-family: system-ui, 'Microsoft YaHei', sans-serif;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+      canvas {
+        width: min(768px, 92vw);
+        aspect-ratio: 256 / 240;
+        image-rendering: pixelated; /* 256×240 放大不糊 */
+        background: #000;
+        border: 1px solid #3a3f4a;
+        border-radius: 4px;
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+      }
+      button,
+      label[for='romFile'] {
+        font: inherit;
+        color: inherit;
+        background: #242932;
+        border: 1px solid #3a3f4a;
+        border-radius: 4px;
+        padding: 5px 14px;
+        cursor: pointer;
+      }
+      button:hover,
+      label[for='romFile']:hover {
+        background: #2d3340;
+      }
+      input[type='file'] {
+        display: none;
+      }
+      .hint {
+        color: #8b93a1;
+        font-size: 13px;
+        line-height: 1.8;
+        text-align: center;
+      }
+      kbd {
+        font-family: Consolas, monospace;
+        background: #242932;
+        border: 1px solid #3a3f4a;
+        border-bottom-width: 2px;
+        border-radius: 3px;
+        padding: 0 5px;
+      }
+      #status {
+        font-size: 13px;
+        color: #9fd0a0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>NES 试机台</h1>
+    <canvas id="screen" width="256" height="240"></canvas>
+    <div class="bar">
+      <button id="reset">重置</button>
+      <button id="mute">静音</button>
+      <label for="romFile">载入 .nes 卡带</label>
+      <input id="romFile" type="file" accept=".nes" />
+      <span id="fps"></span>
+      <span id="pix" title="画面上非通用背景色的像素数——一眼看出画面是空、半空还是满屏"></span>
+    </div>
+    <div class="bar"><span id="cart"></span></div>
+    <p class="hint">
+      方向键 = 十字键，<kbd>X</kbd> = A，<kbd>Z</kbd> = B，<kbd>Enter</kbd> = Start，<kbd>Shift</kbd> = Select<br />
+      内置试机带：方向键推动笑脸精灵。也可以拖一张 mapper 0 的 .nes 文件到本页换卡带。
+    </p>
+    <div id="status"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
