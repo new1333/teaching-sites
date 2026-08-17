@@ -21,16 +21,19 @@ for (const name of courseNames) {
   }
   const cfg = (await import(pathToFileURL(cfgPath).href)).default
   let chapterCount = 0
-  const sidebar = (cfg.themeConfig?.sidebar ?? []).map((part) => ({
-    ...part,
-    items: (part.items ?? []).map((item) => {
-      if (item.link?.startsWith('/')) {
-        chapterCount++
-        return { ...item, link: `/${name}${item.link}` }
-      }
-      return item
-    }),
-  }))
+  const sidebar = (cfg.themeConfig?.sidebar ?? []).map((part) => {
+    const isAppendix = part.text === '附录' // 附录分部不计入章数
+    return {
+      ...part,
+      items: (part.items ?? []).map((item) => {
+        if (item.link?.startsWith('/')) {
+          if (!isAppendix) chapterCount++
+          return { ...item, link: `/${name}${item.link}` }
+        }
+        return item
+      }),
+    }
+  })
   if (existsSync(join(coursesDir, name, 'docs', 'about.md')))
     sidebar.push({ text: '关于本课', items: [{ text: '关于', link: `/${name}/about` }] })
   courses.push({
