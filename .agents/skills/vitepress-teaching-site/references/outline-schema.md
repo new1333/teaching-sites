@@ -17,6 +17,8 @@ CourseOutline = {
     scope: string                  // 验证核心原理的最小实验工程 + 预计规模（如「最小调度器，~300 行」）；是原理验证不是复刻
   }
   parts: Part[]                    // 2-4 个分部
+  appendices?: { slug: string, title: string, kind: 'glossary' | 'reference-table' | 'exercises' }[]
+                                   // 可选：读者要反复翻查的承重数据（指令表/寄存器表/时序表/语法表）、术语表页、练习路线——有就给它们一个家，没有就不建
   final_milestone: { what_reader_built: string /* ≤40 字：产物名+规模+一个验证信号，不枚举特性清单——原样渲染为 hero tagline */, verify: string }
 }
 
@@ -28,6 +30,7 @@ Chapter = {
   goal: string          // 一句话目标
   type: 'principle' | 'build'
   pain_point: string    // 必填：「没有 X 时」的真实 bug 场景，具体到现象
+  new_concepts?: string[]     // 本章首次教授的陌生概念（应出自 bible 读者模型的陌生清单）——写作提示，不作验收项
   milestone?: string          // build 章必填：章末实验场的可运行增量
   milestone_verify?: string   // build 章必填：怎么验证里程碑达成
   relevant_files?: { path: string, why: string }[]   // repo 输入：作者侧备课索引（生成期校验存在性）；正文与测试零仓库痕迹
@@ -35,6 +38,8 @@ Chapter = {
   acceptance: string[]  // 3-5 条可判定验收项（含「实验场门槛通过」）
 }
 ```
+
+`new_concepts` 与 `appendices` 是思考提示不是硬性规则：前者的价值在大纲期想清楚「这章第一次教什么」、随 spec 进入该章生成的上下文——不设配额、不进 acceptance；后者按需声明，课程没有查表型承重数据就不建，有就别让它在正文里流浪。
 
 ## 八条硬性规则
 

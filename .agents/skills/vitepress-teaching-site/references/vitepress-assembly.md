@@ -53,6 +53,8 @@ features:
 
 **`docs/about.md`**：一段课程由来 + 章节数（完成数）+ 输入（仓库地址或主题句）。
 
+**附录页**（大纲声明 `appendices` 时才有，文件 `docs/{slug}.md`）：`glossary` 由 bible 术语表渲染成「术语 / 英文 / 一句话定义」表格，零额外写作；`reference-table` 收读者要反复翻查的承重数据（指令表、寄存器表、时序表、语法表——别让它们散落正文）；`exercises` 是练习路线页（内容见 `references/companion-and-gates.md`）。sidebar 末尾追加「附录」分部收录。
+
 **`docs/.vitepress/config.mjs`**：
 
 ```js
@@ -63,7 +65,7 @@ export default {
   ignoreDeadLinks: true,
   themeConfig: {
     nav: [{ text: '首页', link: '/' }, { text: '关于', link: '/about' }],
-    sidebar: [ /* 每个分部一项： */
+    sidebar: [ /* 每个分部一项；大纲声明 appendices 时末尾再追加 { text: '附录', items: [...] }： */
       {
         text: '{part.title}',
         collapsed: false,
@@ -91,12 +93,14 @@ export default {
 
 ## 终检清单（交付前逐条过）
 
-1. `docs/` 章文件数 = 大纲章数；文件名序号连续。
+1. `docs/` 章文件数 = 大纲章数（附录页不计入）；文件名序号连续；附录页与大纲 `appendices` 一一对应（如有）。
 2. 每章 frontmatter title 与大纲一致。
 3. `docs/index.md` 有章入口：hero actions 与每张 feature 卡都带相对 `link`（`./NN-slug`），无绝对路径站内链接。
 4. hero 长度：`text` ≤30 字、`tagline` 全长 ≤50 字；超限回改 `outline.json` 对应字段后重渲染。
 5. 术语表条目全书出现过（容 3 条未出现，与 lint 同规）。
 6. `companion/` 全量门槛通过（按实验场形态执行对应命令；tests/ 应含全部 build 章的测试）。
-7. `pnpm install && pnpm docs:build` 构建成功。
-8. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
-9. 向用户汇报：课程路径（`courses/{course}/`）、聚合预览命令（根目录 `pnpm dev`）、单课预览命令、降级章清单（如有）。
+7. **数字事实核对**：正文中可验证的数字声明（「N 个用例」「累计 N」「~N 行」）与机械现实比对——vitest 输出、`wc -l`；不一致改文，现实是事实源。
+8. **零输入体验**（问一句，不是开关）：形态允许时，终章的可运行产物自带课程自产的内置输入（测试 fixture 导出），访客不自备文件就能看到成果；不允许（需真实密钥/数据集）时在 README 写明。
+9. `pnpm install && pnpm docs:build` 构建成功。
+10. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
+11. 向用户汇报：课程路径（`courses/{course}/`）、聚合预览命令（根目录 `pnpm dev`）、单课预览命令、降级章清单（如有）。
