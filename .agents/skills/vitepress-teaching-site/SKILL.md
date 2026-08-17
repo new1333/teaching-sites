@@ -1,6 +1,6 @@
 ---
 name: vitepress-teaching-site
-description: Turn any technical topic — optionally anchored by a GitHub repo used only as author-side study material — into a complete VitePress teaching site focused on core principles. Outline first for user review, then chapter-by-chapter content deep enough that the reader can explain the principles and build a minimal working implementation of them, with every hands-on chapter backed by a companion lab that must compile and pass self-written principle tests before prose is written. The finished site contains zero source-code references. Use whenever the user wants to turn a topic or repo into a tutorial, course, or teaching site ("把这个仓库背后的原理讲透", "帮我生成一个教学网站/课程", "用 VitePress 做一个讲 X 的课程", "generate a VitePress course/tutorial for X", "teach X from scratch"), or mentions building a teaching/course site with VitePress.
+description: Turn any technical topic — optionally anchored by a GitHub repo used only as author-side study material — into a complete VitePress teaching site focused on core principles. Outline first for user review, then chapter-by-chapter content in plain, jargon-free prose that explains every technical term at first mention, deep enough that the reader can explain the principles and build a minimal working implementation of them, with every hands-on chapter backed by a companion lab that must compile and pass self-written principle tests before prose is written. The finished site contains zero source-code references. Use whenever the user wants to turn a topic or repo into a tutorial, course, or teaching site ("把这个仓库背后的原理讲透", "帮我生成一个教学网站/课程", "用 VitePress 做一个讲 X 的课程", "generate a VitePress course/tutorial for X", "teach X from scratch"), or mentions building a teaching/course site with VitePress.
 ---
 
 # VitePress 教学站点生成
@@ -10,6 +10,8 @@ description: Turn any technical topic — optionally anchored by a GitHub repo u
 仓库输入只是**作者侧备课资料**：帮你把特性与原理拆对，产物中零仓库痕迹——不引源码、不列行数、不做「与真源码对照」、不改编官方测试。可以提真实库的公开概念与行为（「Vue 没有官方 isComputed」），但它的代码一行不进正文。
 
 默认用中文写全部内容（质量机制是中文优先的）；用户明确要求其他语言时才切换，并跳过中文特有的 lint 规则。
+
+**语言基调：说人话。** 全部正文面向「聪明、但没接触过这个领域」的读者：专业名词第一次出现，必须当场用一句大白话说清它是什么、拿来干嘛——只标英文原文不算解释；行话能不用就不用，能用日常词说清的概念不发明新词。读者读到某处停下来想「这词什么意思」却又找不到下文解释，就是写作事故——不能要求读者先查百科再回来上课。细则与机械检查见 `references/chapter-writing.md`（硬要求 5，及 lint 的 term-intro / jargon / long-sentence 检查）。
 
 ## 四条不可谈判的原则
 
@@ -94,7 +96,7 @@ audience 若只是首页文案，教学就只能靠猜。这一步把「作者�
 一次性产出，之后每章生成都常驻参考。存 `.course/bible.json`：
 
 - **读者模型**（来自阶段 0.5 校准答案；未校准按 audience 保守默认）：读者已知资产清单 + 陌生概念清单——每条含概念、为什么对这类读者陌生、锚点（挂到读者已知世界的类比）、首次教授章（大纲期落位）。它是每章生成的常驻参考，价值在「写下一章时被带进上下文」；**不是验收清单**——不设配额、不进 acceptance。
-- **术语表**（8-15 条）：中文术语 + 英文 + 一句话定义；后续 lint 会检查术语是否在正文出现（检查参数连同读者模型的陌生概念一起传）。
+- **术语表**（8-15 条）：中文术语 + 英文 + 一句话**大白话**定义——定义本身要能让外行看懂，它就是正文首现解释直接要用的那句话；后续 lint 会检查术语是否在正文出现（检查参数连同读者模型的陌生概念一起传）。
 - **代码约定**：伴生实验场的模块命名、目录结构、错误处理。命名服务于教学清晰——可以借用概念的自然名字（`storeToRefs`），但不与任何真实库的 API 面刻意对齐。
 - **API 契约**：伴生实验场的公共导出面——模块路径、签名风格、语义约定（如「log 按新→旧返回」「默认分支 main」）、错误约定。开篇只定约定与前几章的核心导出，后续章的新导出随手记回、**只增不破**——它是全书导入面的单一事实源，没有它，各章测试会各自发明不兼容的导入面。
 
@@ -112,7 +114,7 @@ audience 若只是首页文案，教学就只能靠猜。这一步把「作者�
 
 1. **写本章测试（红）**：为当前章现写 `companion/tests/{slug}.test.ts`，断言 milestone 背后的**原理行为**——测试自己设计，不从任何官方/上游测试改编；先跑一次，必须失败——这就是渐进语义的机械证明。`tests/` 是 append-only：只新增本章测试，绝不动旧章测试。
 2. **演进伴生实验场（绿）**：快照 companion（失败回滚点）→ 按章 spec + 前情滚动摘要 + 备课笔记（如有）演进实验场 → 跑双硬门槛（新测试转绿 + 旧章测试全量通过）→ 失败把报错回灌重试（最多 3 轮）→ 仍败则回滚快照、本章降级为占位章，**不中断全书**。形态菜单、脚手架与门槛细则见 `references/companion-and-gates.md`。
-3. **写正文**：≥1200 字、上限不设，骨架=痛点开章→原理（先「为什么存在」，再「怎么工作」）→渐进实验（引用伴生实验场的真实代码）→验证→小结；大纲声明的 new_concepts 按 `references/chapter-writing.md`「陌生概念怎么教」处理；**零外部源码引用**——示例代码只出自实验场或自包含用法示例，不写「与真源码对照」段落。写作纪律与笔感基准见 `references/chapter-writing.md`——**每会话首次动笔前读一次**（长时间中断或 lint 连续报警再重读，不必每章读）。
+3. **写正文**：≥1200 字、上限不设，骨架=痛点开章→原理（先「为什么存在」，再「怎么工作」）→渐进实验（引用伴生实验场的真实代码）→验证→小结；大纲声明的 new_concepts 按 `references/chapter-writing.md`「陌生概念怎么教」处理；任何专业名词首现当场说人话（硬要求 5）；**零外部源码引用**——示例代码只出自实验场或自包含用法示例，不写「与真源码对照」段落。写作纪律与笔感基准见 `references/chapter-writing.md`——**每会话首次动笔前读一次**（长时间中断或 lint 连续报警再重读，不必每章读）。
 4. **lint 自检**：按 `references/chapter-writing.md` 的全部检测规则机械执行（用脚本，别用眼睛），未过则定向修订一轮。
 5. **记录滚动摘要**到 `.course/rolling.json`，进入下一章。
 

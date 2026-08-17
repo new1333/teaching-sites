@@ -16,7 +16,7 @@
 
 ```json
 {
-  "name": "teaching-sites",
+  "name": "{项目名——取所在仓库的目录名，小写 ASCII 连字符，不写死任何具体仓库名}",
   "private": true,
   "scripts": {
     "sync": "node scripts/portal-sync.mjs",
