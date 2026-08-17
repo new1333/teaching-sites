@@ -1,7 +1,7 @@
 ---
 id: 006
 title: 正文↔伴生仓一致性闸门：根治幽灵代码
-status: open
+status: closed
 labels: [wayfinder:grilling]
 blocked-by: []
 ---
@@ -26,4 +26,8 @@ blocked-by: []
 
 ## 决议
 
-（待决议）
+采纳组合方案，已落地：
+1. companion-and-gates 门槛循环新增第 7 步「引用一致性闸门」+ 新节「重构回写义务」：正文 src 标注必须等于终态；重构波及已发布引用必须回写（串行=下一章开工前回扫，并行=并入缝合审计）；
+2. chapter-writing 硬要求 12 重写：出处必须真实（逐字一致、教学注释除外）、禁注释占位分支、历史形态只准以「拼版·教学示意」标注并注明终态去向；
+3. lint 新增 snippet-missing（出处存在性，含 companion/ 相对基准）与 placeholder（注释占位）两个机械检查——已在真实课程上验证有效；
+4. 评审轴 2 由抽查升级为全量比对；全书评审与缝合审计各加全量比对项。

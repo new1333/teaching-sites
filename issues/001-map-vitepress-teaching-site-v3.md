@@ -1,7 +1,7 @@
 ---
 id: 001
 title: 地图：vitepress-teaching-site skill v3 优化
-status: open
+status: closed
 labels: [wayfinder:map]
 ---
 
@@ -21,12 +21,21 @@ vitepress-teaching-site skill 下一版（v3）的改动方案全部定稿：202
 
 ## Decisions so far
 
-- [调研：VitePress 实时结果方案](004-vitepress-live-result-research.md) — 三层组合：内置全局演示组件为主力（markdown 即 SFC，构建期 import companion 代码，零外部依赖）+ public/ 静态产物兜底 + 外部 playground 仅作外链；iframe/手写 URL 必须 withBase；CLI/配置类课程降级为静态产物+外链。详证 `issues/assets/research-vitepress-live-result.md`。
+- [调研：VitePress 实时结果方案](004-vitepress-live-result-research.md) — 三层组合：内置演示组件为主力（markdown 即 SFC，构建期 import 伴生仓代码，零外部依赖）+ 静态产物兜底 + 外部 playground 仅作外链；iframe/手写 URL 必须 withBase；CLI/配置类课程降级。详证 `issues/assets/research-vitepress-live-result.md`。
+- [覆盖面对齐](002-coverage-vs-promise.md) — 标题不得承诺不教的面（大纲规则 1）+ 硬要求 13「承诺面=交付面」静默缩水即阻断 + 评审轴 1 覆盖核对；不设配额。
+- [自包含演示](003-self-contained-demos.md) — 硬要求 14：承重知识点至少一种不进实验仓的载体（REPL/数值演算/结构表），首章标准不得静默放弃。
+- [可感知成果](005-perceivable-milestone.md) — 验证段「亲手开机」指引 + 打包资产内嵌（相对路径图片 / script setup 导入音频；禁 public 绝对路径，聚合站不拷贝课程 public）；资产必须由实验场真实代码产出；形态不允许则降级声明。
+- [正文↔伴生仓一致性闸门](006-prose-companion-sync-gate.md) — 门槛循环第 7 步一致性闸门 + 重构回写义务 + 硬要求 12 重写（出处真实/禁占位分支/拼版·教学示意标注）+ lint snippet-missing/placeholder 机械检查 + 评审全量比对。
+- [验收双轨制](007-acceptance-two-tracks.md) — 不拆 schema：acceptance 条目自明判据类型（仓/文两轨），评审逐条回查文验收，未兑现即阻断；终检全书回查。
+- [事实核查与简化清单](008-fact-check-and-divergence.md) — 圣经「权威文档清单」（测试自洽不算事实证据，硬要求 15）+ appendices 新 kind divergence 差异清单 + 终检附录对账。
+- [验证小节与终检扩展](009-verify-section-and-final-check.md) — 验证段双门槛两侧可见；数字脚本核对禁手写；终检 11 项扩 15 项（一致性/回查/对账/资产清白/双构建资产）。
+- [lint 反噬修正](010-lint-backfire-fixes.md) — pain-point 改 --pain 传大纲现象词；term-intro 放宽到段落内；判词/闪前不动；新 lint 已在真实课程回归验证。
+
+**执行注记（超出原「仅定稿」目的地）**：全部决议已直接落地到 skill 文件（SKILL.md + 6 份 references），并以 nes-emulator-ts-course 的全量修复作为回归验证（12 章事实错误/幽灵代码/覆盖缺口/零交互全部修复，双门槛 117/117 绿，单课与聚合双构建通过，版权 ROM 清除）。目的地已达成并执行完毕。
 
 ## Not yet specified
 
-- v3 改动落定后，是否需要一门小规模试跑课程做回归验证——改动面大则必要、小则可免；等各工单决议后才知道改动面多大。
-- 评审智能体的三轴清单为何在实跑中漏掉幽灵代码与覆盖缺口——是 spawn 纪律执行走样还是清单本身缺项；006/007 的决议会间接回答一部分，剩余的待那些决议落地后再看是否仍需单独工单。
+（已清空：两项迷雾均随决议落地而消解——①是否需要试跑课程回归：nes-emulator-ts-course 的修复本身就是一次全流程回归验证；②评审智能体漏检根因：三轴清单已补覆盖/一致性/事实三块判定项，机械闸门补上 lint 盲区。）
 
 ## Out of scope
 

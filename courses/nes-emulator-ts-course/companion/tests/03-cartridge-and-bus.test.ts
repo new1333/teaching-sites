@@ -47,7 +47,7 @@ describe('Bus：64KB 门牌街', () => {
     expect(bus.read(0x0000)).toBe(0xab)
   })
 
-  it('RAM 三段镜像：$0800/$1000/$1800 与 $0000 是同一间房', () => {
+  it('RAM 四段镜像：$0000/$0800/$1000/$1800 是同一间房', () => {
     const bus = new Bus()
     bus.write(0x0005, 0x11)
     expect(bus.read(0x0805)).toBe(0x11)

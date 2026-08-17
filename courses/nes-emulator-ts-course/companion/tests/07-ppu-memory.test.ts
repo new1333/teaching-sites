@@ -60,14 +60,17 @@ describe('寄存器窗口：$2000-$2007', () => {
     expect(ppu.ctrl).toBe(0x89)
   })
 
-  it('OAM：$2003 设指针，$2004 读写并自增', () => {
-    const { bus } = makeMachine()
+  it('OAM：$2003 设指针，$2004 写推进、读不推进（真机行为）', () => {
+    const { bus, ppu } = makeMachine()
     bus.write(0x2003, 0x10)
-    bus.write(0x2004, 0xab)
-    bus.write(0x2004, 0xcd) // 第二个写进 oam[0x11]
-    bus.write(0x2003, 0x10)
+    bus.write(0x2004, 0xab) // 写进 oam[0x10]，指针推进到 0x11
+    bus.write(0x2004, 0xcd) // 写进 oam[0x11]，指针推进到 0x12
+    bus.write(0x2003, 0x10) // 指针拨回 0x10
     expect(bus.read(0x2004)).toBe(0xab)
-    expect(bus.read(0x2004)).toBe(0xcd)
+    expect(bus.read(0x2004)).toBe(0xab) // 读不推进：第二次读还是同一格
+    bus.write(0x2004, 0xee) // 写才推进：覆盖 oam[0x10]，指针到 0x11
+    expect(ppu.oam[0x10]).toBe(0xee)
+    expect(bus.read(0x2004)).toBe(0xcd) // 指针在 0x11
   })
 })
 

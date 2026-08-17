@@ -31,7 +31,7 @@ export class Bus {
   read(addr: number): number {
     addr &= 0xffff
     if (addr < 0x2000) {
-      // $0000-$1FFF：2KB RAM，高 3 位地址线没接，三段镜像到同一间房
+      // $0000-$1FFF：2KB RAM，高 5 位地址线没接，四段镜像（$0000/$0800/$1000/$1800）到同一间房
       return this.ram[addr & 0x7ff]
     }
     if (addr < 0x4000) {

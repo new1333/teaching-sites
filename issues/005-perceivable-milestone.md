@@ -1,7 +1,7 @@
 ---
 id: 005
 title: 可感知成果：里程碑要能被读者看见/听见/玩到
-status: open
+status: closed
 labels: [wayfinder:grilling]
 blocked-by: [004]
 ---
@@ -27,4 +27,8 @@ blocked-by: [004]
 
 ## 决议
 
-（待 004 输入）
+采纳「底线 + 打包资产」组合（基于 004 调研），已落地：
+1. chapter-writing 骨架「验证」段扩展：双门槛两侧可见 + 里程碑可感知的章给「亲手开机」指引；
+2. vitepress-assembly 新增「正文内嵌资产」节：图片用 markdown 相对路径（docs/assets/，vite 打包自动 base 前缀），音频用 script setup 导入绑定——**禁止 public/ + 绝对路径**（聚合站构建不拷贝课程 public/，必坏）；资产必须由实验场真实代码现场产出（可重跑脚本 + README 记录）；形态不允许的课程降级为指引并声明；
+3. outline-schema：milestone_verify 优先写成可感知验证；终检加「可感知成果落点」项。
+课程侧已按此落地（试机台指引进正文、帧截图/tile 图/两段音频内嵌并双构建验证）。

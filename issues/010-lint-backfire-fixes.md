@@ -1,7 +1,7 @@
 ---
 id: 010
 title: lint 反噬修正：检测意图，别催生模板
-status: open
+status: closed
 labels: [wayfinder:grilling]
 blocked-by: []
 ---
@@ -24,4 +24,8 @@ blocked-by: []
 
 ## 决议
 
-（待决议）
+采纳方案 1+2，已落地并实跑验证：
+1. pain-point 检查改为 `--pain` 参数：开篇 1500 字内须出现大纲 pain_point 的现象关键词——检测与 spec 对齐，不再奖励硬造踩坑故事；无参数时回退旧信号词并提示建议改用 --pain；
+2. term-intro 句式判定放宽：解释信号从「同句」放宽到「首现段落内」（同段前后 120-400 字窗口），消除「中文（english——解释）」模板化压力，保留存在性与解释性要求；
+3. 其余规则排查结论：判词密度/闪前配额副作用可控，不动；顺带新增 snippet-missing/placeholder 检查（006）。
+新 lint 已在真实课程 12 章上全量回归通过。

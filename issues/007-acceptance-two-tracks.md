@@ -1,7 +1,7 @@
 ---
 id: 007
 title: 验收双轨制：仓验收与文验收分开签收
-status: open
+status: closed
 labels: [wayfinder:grilling]
 blocked-by: []
 ---
@@ -28,4 +28,8 @@ outline 的 acceptance 要不要拆「仓验收（机械可判：门槛/测试/�
 
 ## 决议
 
-（待决议）
+采纳方案 2（不改 schema 字段，靠书写约定 + 回查机制），已落地：
+1. outline-schema：acceptance 注释明确「每条自明判据类型：仓验收（机械命令可判）/ 文验收（正文教学兑现）」；大纲规则 7 要求两轨都有人签字；
+2. 评审智能体职责：文验收条目逐条回查、回报兑现/部分/未兑现，未兑现即阻断；
+3. 全书评审与终检各加「acceptance 全书回查」项。
+不拆字段的原因：保持 schema 简单、避免旧 outline 不兼容；约定 + 评审回查已足以闭合回路。

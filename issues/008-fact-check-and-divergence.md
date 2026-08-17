@@ -1,7 +1,7 @@
 ---
 id: 008
 title: 领域事实核查 + 统一的「简化与真机差异」清单
-status: open
+status: closed
 labels: [wayfinder:grilling]
 blocked-by: []
 ---
@@ -30,4 +30,8 @@ blocked-by: []
 
 ## 决议
 
-（待决议）
+三件全采纳，已落地：
+1. SKILL.md 阶段 1 圣经新增「权威文档清单」（备课期定，写作期断言「真机/规范如此」的唯一依据；明确测试自洽不构成事实证据）；chapter-writing 硬要求 15 固化同义规则；
+2. outline-schema appendices 新增 kind 'divergence'（差异清单：正文每处「本课程简化为…」集中登记）；vitepress-assembly 规定差异清单由管线汇总并与速查表互相对账；
+3. 终检加附录对账项（速查表 vs 实现、差异清单齐全性）。
+课程侧已实践：NES 课新增差异清单附录，7 处事实错误全部修正（$2004、VBlank 241、镜像位算术、sprite0 边界、SP=$FD、开放总线、bit5 对齐）。

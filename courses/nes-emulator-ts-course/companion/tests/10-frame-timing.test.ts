@@ -15,10 +15,10 @@ describe('PPU 时序状态机', () => {
     expect(ppu.cycle).toBe(0)
   })
 
-  it('VBlank 标志：扫描线 240 置位、261 清零', () => {
+  it('VBlank 标志：扫描线 241 置位、261 清零（240 是收尾空行）', () => {
     const ppu = new PPU('horizontal')
     while (!ppu.vblank) ppu.tick()
-    expect(ppu.scanline).toBe(240)
+    expect(ppu.scanline).toBe(241)
     while (ppu.vblank) ppu.tick()
     expect(ppu.scanline).toBe(261)
   })

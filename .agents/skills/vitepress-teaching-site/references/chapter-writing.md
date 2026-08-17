@@ -4,22 +4,25 @@
 
 ## 骨架（五段，圣经章节模板的展开）
 
-痛点开章 → 原理（先「为什么存在」，再「怎么工作」）→ 渐进实验（引用伴生实验场的真实代码，讲演进思路）→ 验证（跑什么、看到什么）→ 小结（末尾可加几问「读完本章你该能回答」让读者自查，问几条看本章概念多少——不进 lint，不设配额）
+痛点开章 → 原理（先「为什么存在」，再「怎么工作」）→ 渐进实验（引用伴生实验场的真实代码，讲演进思路）→ 验证（跑什么、看到什么——双门槛两侧都要可见；里程碑可被读者感知时，给「亲手开机」指引：入口命令与能看到/听到什么）→ 小结（末尾可加几问「读完本章你该能回答」让读者自查，问几条看本章概念多少——不进 lint，不设配额）
 
-## 十二条硬要求
+## 十五条硬要求
 
 1. **开章 = 痛点场景**：把本章 spec 的 pain_point 写成具体到现象的真实 bug 故事，不要概念式描述。
 2. **≥1200 字**（中文字符，不含代码块），上限不设——写满凑字反而降质，讲透即收。
 3. 教**核心原理**：读者读完能讲清原理、写出原理级最小实现。**零外部源码引用**——示例代码只出自伴生实验场或自包含用法示例；不写「与真源码对照」段落。可以提真实库的公开概念与行为（「Vue 没有官方 isComputed」），但它的代码一行不进正文。
 4. 中文与英文/数字之间加空格；短句；禁翻译腔。
 5. **说人话，术语首现必解释**：专业名词第一次出现时，当场用一句大白话说清「它是什么、拿来干嘛」——只标英文原文不算解释，默认读者已经认识更不行。行话只在「它是业界通用叫法、读者以后躲不开」时才用，且首现必须翻译成人话；能用日常词说清的概念，不发明新词。自查标准：把这句解释念给一个没接触过这行的人听，他能复述个大概才算过。黑话（赋能、抓手、底层逻辑这类词）零容忍。
-6. 代码块标注语言；不用 HTML 标签；不写「本章小结」式重复标题。
+6. 代码块标注语言；不用 HTML 标签（嵌资产的技术标签除外，见 vitepress-assembly.md）；不写「本章小结」式重复标题。
 7. frontmatter 写 `title:`（中文标题）。
 8. 章末产出 **rolling_summary**（≤200 字：已建立的 API/概念、本章代码变更点、读者已能做什么）——写入 `.course/rolling.json`，下一章必带。
 9. **判词句密度**：每章加粗判断 ≤8 处（含列表标签）。平实句是主体——重点句靠平实背景衬托，句句加粗等于没有加粗。箴言体是复盘文体，不是教学文体。
 10. **闪前配额**：正文中「第 N 章（N＞本章）会……」预告每章 ≤3 处，只留「当下不讲清楚就无法理解」的；概念去向统一收在章末地图或小结，不在正文里逐个指路。回看（引用已写过的章）不受限。
 11. **比喻登记**：每章常驻比喻 ≤2 个（贯穿全书的核心比喻记入 bible）；装饰性比喻一律改回技术名。禁用词默认含「集中营」——比喻要承重，不要猎奇，更不能失当。
-12. **代码片段标注出处**：伴生实验场的代码片段首行注释写明文件与函数（`// src/store.ts · createSetupStore`），用法示例标 `// 用法示例`；拼合视图标「拼版」。全书核心函数首次登场时给一次全貌（含生长点注释），后续章节只贴增量——读者不该在从未见过全貌的文件里跟跳切镜头。承重逻辑（milestone 依赖的路径）禁用 `...`/「同上」开天窗——省略只允许出现在标注「拼版」的视图，且该函数的完整形态全书至少出现过一次（首次登场或附录）。
+12. **代码片段标注出处，且出处必须真实**：伴生实验场的代码片段首行注释写明文件与函数（`// src/store.ts · createSetupStore`），用法示例标 `// 用法示例`；拼合视图标「拼版」。标注 `src/…` 的代码必须与伴生实验场**当前形态**逐字一致——允许追加教学注释，不允许标识符或结构差异；标注了出处却对不上，比不标注更伤信任。全书核心函数首次登场时给一次全貌（含生长点注释），后续章节只贴增量——读者不该在从未见过全貌的文件里跟跳切镜头。承重逻辑（milestone 依赖的路径）禁用 `...`/「同上」开天窗，**也禁用注释占位分支**（`/* 高序号先画 */` 这类「此处省略实现」的空壳）——省略只允许出现在标注「拼版」的视图，且该函数的完整形态全书至少出现过一次（首次登场或附录）。某章的历史形态只允许以「拼版·教学示意」标注出现，并注明仓库终态在哪章交代。
+13. **承诺面 = 交付面**：本章以标题、总表、「一次讲清」式开篇承诺列出的每一项，正文必须有着落——按概念教学的四步教透，或当场声明去向（「X 留到第 N 章」「本课程不实现，差异清单见附录」）。静默缩水（表格里列了、正文再不提）是阻断项：标题不承诺本章不教的东西，承诺面超载时拆章或降标题。
+14. **承重知识给「不进实验仓也能验证」的载体**：引用伴生仓代码之外，每个承重知识点至少配一种读者独立可验证的载体——REPL 可跑的自包含片段，或纸笔可复算的数值演算；结构类概念可用位图/结构表。选哪种由知识点性质决定，不设数量配额；首章立下的自包含标准（如 REPL 示例）不得在后续章静默放弃。
+15. **「真机/规范如此」类断言，依据只能是权威文档**：对客观领域事实（硬件行为、协议、算法标准）的断言，写作时对照圣经的权威文档清单核实；**测试通过与实现一致不构成事实正确的证据**——测试与实现同错时会互相背书。课程对真实行为的每处简化必须在正文声明，并集中登记在差异清单附录（大纲声明了该附录时）；未声明的差异是事故。
 
 ## 笔感基准（两段范文）
 
@@ -59,7 +62,7 @@
 
 讲透即收：有的概念一句成因就够，硬配图和例题是凑数，与凑字同罪。配多少由「读者能否自己推出这个结论」决定，不由配额决定。
 
-四步是大纲声明的陌生概念的完整教法；没被声明的其余专业名词按硬要求 5 兜底——首现给一句人话，一个都不能漏。
+四步是大纲声明的陌生概念的完整教法；没被声明的其余专业名词按硬要求 5 兜底——首现给一句人话，一个都不能漏。被本章标题、总表或开篇承诺覆盖但未声明过的知识点，同样按「成因 + 载体」的标准对齐（硬要求 13/14）：讲不透就别承诺，承诺了就必须有着落。
 
 **范文**（四步各就各位，约 300 字）：
 
@@ -81,14 +84,17 @@
 
 ## lint 自检（写完一章后，机械执行）
 
-别用眼睛扫——把下面的脚本存为 `.course/lint.mjs`，对每章跑 `node .course/lint.mjs docs/NN-slug.md <术语1> <术语2> ... --new <本章新教术语...>`（`--new` 后传本章 new_concepts，首现解释检查只看它们；本章没有新术语就省略这一段）：
+别用眼睛扫——把下面的脚本存为 `.course/lint.mjs`，对每章跑 `node .course/lint.mjs docs/NN-slug.md <术语1> <术语2> ... --new <本章新教术语...> --pain <大纲 pain_point 的现象词...>`（`--new` 后传本章 new_concepts，首现解释检查只看它们，本章没有新术语就省略；`--pain` 后传该章 pain_point 里具体到现象的关键词，开篇检查以它们为准——检测与 spec 对齐，而不是任意「坑/报错」信号词都算数，免得为过检硬造踩坑故事）：
 
 ```js
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 const md = readFileSync(process.argv[2], 'utf8')
 const dashIdx = process.argv.indexOf('--new')
-const terms = process.argv.slice(3, dashIdx === -1 ? undefined : dashIdx)
-const newTerms = dashIdx >= 0 ? process.argv.slice(dashIdx + 1) : []
+const painIdx = process.argv.indexOf('--pain')
+const end1 = dashIdx === -1 ? (painIdx === -1 ? undefined : painIdx) : dashIdx
+const terms = process.argv.slice(3, end1)
+const newTerms = dashIdx >= 0 ? process.argv.slice(dashIdx + 1, painIdx === -1 ? undefined : painIdx) : []
+const painWords = painIdx >= 0 ? process.argv.slice(painIdx + 1) : []
 const text = md.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '')  // 剥代码
 const issues = []
 const spacing = (text.match(/[\u4e00-\u9fff](?=[A-Za-z0-9])|[A-Za-z0-9](?=[\u4e00-\u9fff])/g) ?? []).length
@@ -119,10 +125,18 @@ for (const b of md.match(/```\w*\n[\s\S]*?```/g) ?? []) {
   const elided = b.split('\n').filter((l) => /^\s*(\.\.\.|…|\/\/\s*(…|\.\.\.|其余|省略|同上))/.test(l)).length
   if (elided && /\/\/\s*(src|tests)\//.test(b.slice(0, 200)) && !b.includes('拼版'))
     issues.push(`elision: 实验场代码块有 ${elided} 行省略——承重逻辑禁用 … 开天窗，拼版视图须标注「拼版」`)
+  const placeholder = b.split('\n').filter((l) => /^\s*(\/\*|\{\/\*).*(占位|省略|此处|骨架|展开|实现略|\.\.\.)/.test(l)).length
+  if (placeholder) issues.push(`placeholder: 实验场代码块内有 ${placeholder} 行注释占位——承重分支禁空壳（硬要求 12）`)
+  const m = /\/\/\s*((?:src|tests)\/[\w./-]+)/.exec(b.slice(0, 300))
+  if (m && !existsSync(m[1]) && !existsSync('companion/' + m[1])) issues.push(`snippet-missing: 出处 ${m[1]} 在伴生仓中不存在——标注必须真实`)
 }
 const head = text.slice(0, 1500)
-if (!['没有', '踩', '坑', 'bug', '报错', '崩溃', '泄漏', '失败', '丢失', '出错'].some((m) => head.toLowerCase().includes(m)))
-  issues.push('pain-point: 开篇 1500 字内无痛点信号词')
+if (painWords.length) {
+  if (!painWords.some((w) => head.includes(w)))
+    issues.push(`pain-point: 开篇 1500 字内未出现大纲 pain_point 的现象词（应含：${painWords.join('、')}）`)
+} else if (!['没有', '踩', '坑', 'bug', '报错', '崩溃', '泄漏', '失败', '丢失', '出错'].some((m) => head.toLowerCase().includes(m))) {
+  issues.push('pain-point: 开篇 1500 字内无痛点信号词（建议改用 --pain 传大纲现象词）')
+}
 const prose = text.replace(/^---[\s\S]*?---/, '').replace(/^#{1,6}[^\n]*$/gm, '').replace(/^\|.*$/gm, '')
 const long = prose.split(/[。！？；]/).filter((s) => s.replace(/[^\u4e00-\u9fffA-Za-z0-9]/g, '').length > 80)
 if (long.length > 1) issues.push(`long-sentence: 超 80 字长句 ${long.length} 处——拆短，一句只装一件事`)
@@ -131,12 +145,9 @@ for (const w of ['赋能', '抓手', '组合拳', '打法', '底层逻辑', '心
 for (const t of newTerms) {
   const i = text.indexOf(t)
   if (i < 0) continue  // 存在性由 terminology 检查负责
-  const before = text.slice(Math.max(0, i - 8), i)
-  const sentence = text.slice(i, i + 200).split(/[。！？；\n]/)[0]
-  const introBefore = /称为|所谓/.test(before)  // 「把 X 称为 Y」「所谓 Y」的引导词紧贴术语
-  const introInSentence = /(（|\()[^）)]{3,}(）|\))|——|也就(?:是|说)|指的是|意思是|是一种|是一个|：[^。：]{8,}/.test(sentence)
-  if (!introBefore && !introInSentence)
-    issues.push(`term-intro: 「${t}」首现句内无解释信号（紧前的「称为/所谓」，或同句的括号注释 / 破折号 /「也就是」「指的是」…）`)
+  const para = text.slice(Math.max(0, i - 120), i + 400)
+  if (!/(（|\()[^）)]{3,}(）|\))|——|也就(?:是|说)|指的是|意思是|是一种|是一个|：[^。：]{8,}/.test(para))
+    issues.push(`term-intro: 「${t}」首现段落内无解释信号（括号注释 / 破折号 /「也就是」「指的是」…）`)
 }
 console.log(issues.length ? issues.join('\n') : 'OK')
 ```

@@ -28,8 +28,8 @@ features:
     link: ./03-cartridge-and-bus
     linkText: 进入本章
   - icon: 💓
-    title: CPU 心跳：寄存器（register）与取指（fetch）执行循环
-    details: 实现 6502 的七个寄存器与 fetch-decode-execute 心跳，让 CPU 跑起第一段程序
+    title: CPU 心跳：寄存器与取指执行循环
+    details: 实现 6502 的六个寄存器与取指-译码-执行心跳，让 CPU 跑起第一段程序
     link: ./04-cpu-heartbeat
     linkText: 进入本章
   - icon: 🧭
@@ -59,7 +59,7 @@ features:
     linkText: 进入本章
   - icon: 🥁
     title: 帧时序与中断：CPU 与 PPU 的双人舞
-    details: 用一个主时钟按 1:3 驱动两颗芯片，实现扫描线状态机与 NMI，点亮第一幅静态画面
+    details: 用一个主时钟按 1:3 驱动两颗芯片，实现扫描线状态机与 NMI，跑通「等窗口→接电话」的整机闭环
     link: ./10-frame-timing
     linkText: 进入本章
   - icon: 🎵
@@ -73,3 +73,11 @@ features:
     link: ./12-apu-triangle-noise-and-boot
     linkText: 进入本章
 ---
+
+## 开机画面长这样
+
+终点里程碑「跑通自产测试卡带：出画面、出声音」的实际样子——满屏棋盘背景上一枚笑脸精灵，方向键可以推动它，四通道 APU 同时在响：
+
+![试机台实拍：棋盘背景与笑脸精灵](assets/ch12-first-frame.png)
+
+亲手跑起来只需两条命令，第 12 章末「亲手开机」一节有完整说明。

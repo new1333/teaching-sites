@@ -24,7 +24,7 @@ export class PPU {
   private oamAddr = 0 // OAM 指针
 
   // 扫描线状态机：一帧 262 线 × 341 拍 = 89342 个 PPU 周期
-  scanline = 0 // 0-239 可见区，240 进 VBlank，241-260 歇息窗，261 预取
+  scanline = 0 // 0-239 可见区，240 收尾空行，241 进 VBlank，261 预取
   cycle = 0 // 当前扫描线内的拍子（0-340）
   totalCycles = 0
   frameCount = 0
@@ -41,8 +41,8 @@ export class PPU {
     if (this.cycle === 341) {
       this.cycle = 0
       this.scanline++
-      if (this.scanline === 240) {
-        // 一帧画完，进 VBlank 窗口：帧缓冲此刻定格有效
+      if (this.scanline === 241) {
+        // 第 241 线起进 VBlank 窗口（真机时序：240 是收尾空行）：帧缓冲此刻定格有效
         this.renderBackground()
         this.renderSprites()
         this.vblank = true
@@ -67,11 +67,9 @@ export class PPU {
     switch (addr & 7) {
       case 2:
         return this.readStatus()
-      case 4: {
-        const v = this.oam[this.oamAddr]
-        this.oamAddr = (this.oamAddr + 1) & 0xff // 读 $2004 同样推进指针
-        return v
-      }
+      case 4:
+        // 读 $2004：只读当前格，不推进指针（真机如此：写推进、读不推进）
+        return this.oam[this.oamAddr]
       case 7:
         return this.readVramData()
       default:
