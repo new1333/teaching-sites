@@ -64,7 +64,7 @@ title: 组装你的交易系统：清单、纪律与防骗
 
 ### 入场：条件全勾才买
 
-- [ ] 趋势方向可数：波峰波谷成链（[第 10 章](./10-trend-anatomy)）。均线信号不逆势：日线金叉只在更大周期趋势同向时才当有效信号（[第 11 章](./11-moving-averages)）。。
+- [ ] 趋势方向可数：波峰波谷成链（[第 10 章](./10-trend-anatomy)）。均线信号不逆势：日线金叉只在更大周期趋势同向时才当有效信号（[第 11 章](./11-moving-averages)）。
 - [ ] 基本面资格闸：三条雷全过、非 ST（[第 19 章](./19-fundamentals-peek)）。
 - [ ] 信号成立：单根形态（[第 5 章](./05-single-patterns-wicks)、[第 6 章](./06-single-patterns-doji)）。双根形态（[第 7 章](./07-multi-patterns-two)）或多根形态（[第 8 章](./08-multi-patterns-three)）。与背景相符。
 - [ ] 量能与筹码确认：放量而非缩量（[第 12 章](./12-volume-analysis)），上方无密集套牢峰（[第 14 章](./14-chip-distribution)）。
