@@ -1,0 +1,85 @@
+---
+layout: home
+hero:
+  name: SQL 与 ORM：给前端的数据库课
+  text: 会写 Node 脚本的前端：SQL 与 ORM 从零开始
+  tagline: 读完本课程，一个约 550 行、6 文件的 mini-ORM，105 项原理测试全绿
+  actions:
+    - theme: brand
+      text: 开始阅读
+      link: ./01-tables-and-rows
+    - theme: alt
+      text: 课程介绍
+      link: ./about
+features:
+  - icon: 🏠
+    title: 把数据放进有形状的家：表、行与类型
+    details: 关系模型四步入门，建表、插入、查询最小闭环，实验场地基 src/db.ts 落成
+    link: ./01-tables-and-rows
+    linkText: 进入本章
+  - icon: 🔍
+    title: 查询的艺术：WHERE、排序与分页
+    details: 过滤、排序、分页三大件搬回数据库，声明式思维与 NULL 三值逻辑拆解
+    link: ./02-where-order-limit
+    linkText: 进入本章
+  - icon: 🛡️
+    title: 改数据不翻车：UPDATE、DELETE 与约束
+    details: 忘写 WHERE 的事故现场、changes 回执、主键外键 UNIQUE 守门、自动发号机制
+    link: ./03-update-delete-constraints
+    linkText: 进入本章
+  - icon: 📊
+    title: 让数据库替你算报表：聚合与分组
+    details: 聚合五件套、GROUP BY 分桶、HAVING 与 WHERE 的分工、NULL 的记账规则
+    link: ./04-aggregate-group-by
+    linkText: 进入本章
+  - icon: 🔗
+    title: 两张表缝成一张：JOIN
+    details: INNER 与 LEFT 的行集演算、三表链式、ON 与 WHERE 在 LEFT 下的分工
+    link: ./05-join-tables
+    linkText: 进入本章
+  - icon: 🗂️
+    title: 越用越慢的查询：索引与查询计划
+    details: 全表扫描为什么线性变慢、B-tree 对数定位、EXPLAIN QUERY PLAN 读法与索引账单
+    link: ./06-index-query-plan
+    linkText: 进入本章
+  - icon: 🗺️
+    title: ORM 是什么：分层地图与两大门派
+    details: 对象与 SQL 之间的翻译器、三层地图、Active Record vs Data Mapper、五个主流库对照
+    link: ./07-what-is-orm
+    linkText: 进入本章
+  - icon: 💉
+    title: 一个引号引发的越权：SQL 注入与参数化
+    details: 亲手复现攻击、占位符与预编译语句为什么在机制上防住注入
+    link: ./08-sql-injection
+    linkText: 进入本章
+  - icon: 🧱
+    title: 用对象描述表：schema 与 CREATE TABLE 生成
+    details: 一份定义两边生效，defineTable 把 TS 对象翻译成 DDL——mini-ORM 动工
+    link: ./09-schema-to-ddl
+    linkText: 进入本章
+  - icon: ⛓️
+    title: 链式调用变 SQL：查询构建器
+    details: 两阶段模式：链式只记账、toSQL 才编译；白名单守住标识符，全参数化
+    link: ./10-query-builder
+    linkText: 进入本章
+  - icon: 🔄
+    title: 行变对象，对象写回行：水合与脏跟踪
+    details: 裸行装上方法、快照 diff 只写脏列，丢更新从必然事故降为同列冲突
+    link: ./11-hydration-dirty-tracking
+    linkText: 进入本章
+  - icon: 🚀
+    title: 关联加载与 N+1：101 条 SQL
+    details: 一次循环引发的 101 条查询，两跳 IN 批量加载药到病除，SQL 数恒为 2
+    link: ./12-relations-n-plus-1
+    linkText: 进入本章
+  - icon: ⚖️
+    title: 要么全成，要么全不算：事务
+    details: BEGIN/COMMIT/ROLLBACK 三件套，回调式 tx() 抛错自动回滚，性能是副产品
+    link: ./13-transactions
+    linkText: 进入本章
+  - icon: 🧾
+    title: 收工对账：我们的 mini-ORM 与真实 ORM 差在哪
+    details: 迁移、连接池、类型推导、多对多、方言——差距地图逐项四问，面试不再哑火
+    link: ./14-finale-gaps
+    linkText: 进入本章
+---

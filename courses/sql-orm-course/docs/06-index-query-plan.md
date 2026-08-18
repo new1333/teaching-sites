@@ -1,0 +1,356 @@
+---
+title: 越用越慢的查询：索引与查询计划
+---
+
+# 越用越慢的查询：索引与查询计划
+
+## 从 2ms 到 800ms，代码一行没改
+
+登录接口按 email 查用户，SQL 是第 2 章的老朋友：`SELECT * FROM users WHERE email = ?`。上线那天它 2ms 出结果。三个月后，users 表涨到 50 万行，同一条 SQL 要 800ms——用户输完密码，页面转圈将近一秒。你怀疑内存泄漏，重启服务，没用；申请换更强的机器，还是没用。因为慢的从来不是 Node 这边的代码：是那条 SELECT 在数据库里做全表扫描（full table scan）。也就是从表的第一行翻到最后一行，一行一行地问「你的 email 是这个吗」——50 万行，一次不落。
+
+代码没变，什么变了？行数。这条查询上线时快，不是因为它写得好，是因为当时行少。筛选、排序、分页（第 2 章），聚合函数与分组（第 4 章），连接（第 5 章）——你攒下的全套 SQL 手艺，没有一样保证「数据变多时速度不变」。
+
+还有一笔旧账。第 2 章讲 WHERE 时留过一句：数据库比你更了解这份数据怎么存放，比如哪一列建了目录、能抄近路；第 5 章讲 JOIN 时也提过，「主键背后有现成的目录」。这一章就来拆目录。主角是索引（index）——为某一列额外维护的、按这列的值排好序的一份查询目录。三件事讲透：全表扫描为什么随行数线性变慢；索引凭什么把几十万行的翻找压到二十步以内；以及怎么让数据库亲口交代它走没走目录。本章是原理章——不写新测试、不动实验场，三个自包含脚本存成文件就能跑，每条结论都有终端输出作证。
+
+## 全表扫描：行数涨多少，它就慢多少
+
+### 成因：表只承诺形状，不承诺顺序
+
+先把「慢」的机制拆开。第 1 章建表时你声明的是列名和类型——关系模型的表承诺每行的形状，从不承诺行的物理顺序。行按插入的先后躺在文件里，先来的在前。可查询按值找：「email 等于这个的行在哪？」在一堆没按 email 排序的行里，这个问题没有捷径。找到了也不能停——数据库不知道后面还有没有第二个；不看到最后一行，也不敢说「没有」。
+
+于是 `WHERE email = ?` 的执行方式只剩一种：逐行取 email，逐行比较。表无序不是 bug，是无序数据上找值的唯一通用解——你在 JS 里对一个未排序数组做 find，也是这个命。这样的执行方式，数据库在查询计划（它自述的执行方案）里标成 SCAN，读法下一节拆。
+
+### 载体：一张按插入序躺着的表
+
+```text
+表 users（行按插入先后躺着；email 一列没人保证有序）
+┌────┬──────────────────────┬────────┐
+│ id │ email                │ name   │
+├────┼──────────────────────┼────────┤
+│ 1  │ user7@example.com    │ 用户7  │
+│ 2  │ user2@example.com    │ 用户2  │
+│ 3  │ user99@example.com   │ 用户99 │
+│ 4  │ user0@example.com    │ 用户0  │
+│ …  │ …                    │ …      │
+└────┴──────────────────────┴────────┘
+```
+
+按 email 找 user42@example.com：第 1 行不是，第 2 行也不是——每一行都得看，看完最后一行才有结论。这就是全表扫描的全部：**行数就是工作量**。
+
+### 演算：不是查询变慢，是输入变多
+
+给每行的比较记一个固定成本 c（取一行、比一次字符串，都按常数算）。扫描 50 万行的总成本是 500000 × c——成本与行数成正比，这种关系叫线性。含义很直白：行数翻十倍，同一查询的时间就翻十倍。
+
+回看开章的账：若上线时 1 万行、2ms，三个月后 50 万行，行数是五十倍——光线性增长就该慢五十倍，2ms 的五十倍是 100ms。剩下的差距来自别处：生产库在磁盘上、行更宽、还有并发，每行的成本本来就比内存里高。**同一算法，输入变大**——800ms 不是「查询写坏了」，是那条查询从第一天起就在全表扫描，只是行数还没涨到让它现形。
+
+### 锚点
+
+对未排序的数组 filter——你从没觉得它慢，只因数组里只有几百条。数组换到几十万条还 filter，就是开章那条 800ms 的查询。
+
+## 索引：为查询多维护一份目录
+
+### 成因：查询按值找，表按插入躺
+
+病根是「存放顺序」与「查找顺序」对不上。修法不是把表整个重排——插入会再次打乱它，何况下一张报表按 city 查，再下一张按注册时间查，一张表满足不了所有姿势。修法是承认现实：表保持原样，为高频的查询条件另外维护一份有序的目录。目录就是索引——为某一列额外维护、按这一列的值排好序的查询清单，每项背后挂着「这一行在哪」。
+
+代价当场立下：目录是第二份要维护的数据。INSERT 新行、UPDATE 改到 email，目录都得跟着改。查得快，是用写得慢换来的——这张账单本章后面实付实测。
+
+### 载体：有序清单挂行号
+
+SQLite 里每一行都有个行号 rowid（第 3 章讲过，INTEGER PRIMARY KEY 就是它的别名）。索引这份目录，每项存「列的值 + 所指行的 rowid」，按值升序排好：
+
+```text
+表 users（按插入序，原样）    索引 idx_users_email（按 email 升序，挂 rowid）
+ rowid  email                  email          rowid
+   1    user7@…                user0@…          4
+   2    user2@…                user1@…          5
+   3    user99@…               user2@…          2
+   4    user0@…                user3@…          6
+   5    user1@…                …（50 万项升序）  …
+   6    user3@…
+```
+
+表还是那张乱序的表，右边多出的清单才是索引。查询 `WHERE email = ?` 改走清单：有序，就能跳着找（二分——每比一次砍掉一半，下一节纸笔走一遍）；找到的那项挂着 rowid，拿它回原表取整行——这个动作叫回表。SQLite 官方文档描述典型的索引查找就是两次二分：先在目录里定位，再拿 rowid 定位到行。
+
+### 演算：8 项排好序，3 次比较就够
+
+拿 8 项升序的清单在纸上走一遍二分，找 user6：第 1 步看正中的 user3，user6 排在它后面，砍掉左半，剩 user4 到 user7；第 2 步看正中的 user5，再砍左半，剩 user6、user7；第 3 步看 user6——中了。三次比较落在第 6 项。规律：每比较一次，剩余范围至少砍一半，8 项最多 3 次砍到 1 项，因为 2^3 = 8（若目标可能不在清单里，最坏再多花一次确认「砍剩的这项不是它」）。再加上回表那一次定位，总共常数几步，与清单有几十万项无关。规模放大到 50 万的账，下一节一起算。
+
+### 锚点
+
+字典的部首目录：先在目录里查到页码，再翻到正文那一页。索引之于表，就是部首目录之于字典——目录有序，正文不必有序。
+
+## B-tree：目录自己也要经得起插入
+
+把目录拍平成一个排好序的大数组行不行？查找照样二分，但一插入就露馅：新 email 排在中间，它后面的几十万项全部后移。目录要跟着每次写入变动，就得换成「插在哪里都只动一小块」的形状。SQLite 文档写明：库文件里每张表、每个索引各存成一棵 B-tree（balanced tree，平衡树）——有序、分层的树。
+
+### 成因：插入只许动一小块
+
+数组插中间挪半张表；树把有序清单切成一小段一小段，段与段之间用「路标」索引。插入先顺着路标找到该进的段，段内有序、就地插入；段满了就从中点分裂成两段，路标添一笔。改动始终锁在局部——「平衡」保证任何叶子离根一样远，任何一次查找走的层数一样多。
+
+### 载体：层层路标
+
+```text
+              根节点 [ m ]            ← 路标：比 m 小往左，否则往右
+            ┌─────┴─────┐
+   叶子段 [a..l]      叶子段 [n..z]    ← 真正存「值 + rowid」的层
+   （段内升序）       （段内升序）
+```
+
+每个节点占存储的一页（SQLite 默认页 4096 字节，我跑 `PRAGMA page_size` 验过）。一页塞得下上百个路标，所以一步砍掉的远不止一半——不过演算按最保守的口径走，只多不少。
+
+### 演算：50 万项，19 步封顶
+
+纸笔接着上一节：每比一次至少砍一半。2^10 = 1024，十步之后 50 万只剩约 488 项；2^18 = 262144，2^19 = 524288——刚好盖过 500000。结论：**50 万行的线性翻找，最坏 50 万步；走有序目录，19 步封顶**——差四个数量级。真实 B-tree 一页上百键、一步砍九成多，几百万行的索引也就三四层深；19 步是保守上界——按每步只砍一半的最保守口径推出，实际只会更少。
+
+这也补全了开章的账：行数再涨，扫描时间按比例跟涨；索引定位只是偶尔多走一层。行数翻十倍，一个翻十倍，一个多一步。
+
+### 锚点
+
+按拼音排好的通讯录：从中间翻开，看一眼头一个字，决定往左还是往右——几步定位。B-tree 是把这套「翻中间、砍一半」固化成层层路标。
+
+## EXPLAIN QUERY PLAN：让数据库自己交代
+
+### 成因：声明式的另一面
+
+第 2 章立过规矩：SQL 是声明式——你只说要什么，怎么找由数据库定。同一条查询，它可能扫表、可能走索引，定夺权在它。猜是猜不中的，好在它肯交代：EXPLAIN QUERY PLAN 这条命令，让数据库把「打算怎么执行」写成几行清单。清单叫查询计划（EXPLAIN）——数据库自述的执行方案。
+
+### 载体：SCAN 与 SEARCH
+
+真实输出长这样（本章亲手跑出来的，复现脚本在「亲手做实验」一节）：
+
+```text
+建索引前： [ 'SCAN users' ]
+建索引后： [ 'SEARCH users USING INDEX idx_users_email (email=?)' ]
+```
+
+读法拆三段。动词：SCAN 还是 SEARCH——SQLite 文档写明，SCAN 用于整表逐行，SEARCH 表示只碰表中的一部分行。用了哪本目录：USING INDEX 后面是索引名；主键查找显示 INTEGER PRIMARY KEY，UNIQUE 约束的自动目录显示 sqlite_autoindex_ 开头的名字，下一节细说。定位条件：末尾括号里的 (email=?)——哪个 WHERE 条件当上了「在目录里定位」的条件。没进括号的条件不是不生效，它们退回逐行核对，只是没帮上定位的忙。
+
+### 演算：空表也照样出计划
+
+EXPLAIN QUERY PLAN 只交代打算，不执行查询——「亲手做实验」里的 try-prefix.mjs 一行数据都不插，照样打印出六行完整计划。这有个实用推论：新功能上线前，把带条件的 SELECT 前面加上 EXPLAIN QUERY PLAN 跑一遍，SCAN 还是 SEARCH 当场现形，不用等 50 万行攒出来再吃 800ms。
+
+### 锚点
+
+DevTools 的 Performance 面板：不猜慢在哪，让执行者自己交代。EXPLAIN QUERY PLAN 是数据库世界的同款工具。
+
+方言一段：让数据库交代执行方案的能力家家都有，拼法不同。SQLite 用 EXPLAIN QUERY PLAN；MySQL 与 PostgreSQL 用 EXPLAIN，PG 还有个 EXPLAIN ANALYZE，会把查询真跑一遍附上真实耗时，SQLite 这条只说不跑。输出形状也各不相同：MySQL 的 EXPLAIN 是一张表格，type 列的 ALL 就是全表扫描；PG 的计划里叫 Seq Scan。SCAN 与 SEARCH 这对概念是跨库通用的阅读能力。SQLite 文档另有提醒：这套输出仅供交互式调试，格式在版本之间可能变——读语义，别把字面格式写进工具链。
+
+## CREATE INDEX：一行 SQL 和它的账单
+
+语法一行：
+
+```sql
+CREATE INDEX idx_users_email ON users(email);
+```
+
+名字习惯 idx_表_列，不要了就 `DROP INDEX idx_users_email`。就这么多。跑「亲手做实验」里的 try-own.mjs，头两行输出先给你个惊喜。
+
+```text
+主键查找  ： SEARCH users USING INTEGER PRIMARY KEY (rowid=?)
+UNIQUE 列 ： SEARCH users USING COVERING INDEX sqlite_autoindex_users_1 (email=?)
+```
+
+第一行：按主键查走的是 INTEGER PRIMARY KEY——每张表本身就是一棵按 rowid 排的 B-tree，主键查找天生有目录。第 5 章那句「主键背后有现成的目录」，账在这儿结清。第二行：email 上有第 3 章的 UNIQUE 约束，SQLite 文档写明这类约束的实现就包括一本自动目录——名字 sqlite_autoindex_ 开头。你建 UNIQUE 那天，这本目录已经悄悄建好了。这行还多了个 COVERING：目录里已经带齐这条查询要的列，连回表都省了。这张两列小表的目录存着 email 和行号，而行号就是 id；文档说这种「包办」的目录能省掉两次二分里的一次。
+
+然后是账单。两个实测（复现方法在实验一节）：往 users 插 50 万行，无索引 288ms，带着一本 email 目录插是 529ms——慢了八成多；空间上，24.3MB 的表，加一本目录变 39.0MB——多占六成。每多建一本索引，INSERT 就多一份有序结构要维护，UPDATE 改到被索引的列同理。好在查询侧吃红利的也不止 WHERE：JOIN 的连接条件（通常是外键那一列）、ORDER BY 的排序、分组查询里的分组列，都可能走目录。
+
+原则一句话：**查询频繁、写入少的表，放心建；写入频繁的表（日志、埋点），先跑 EXPLAIN QUERY PLAN 看清再决定**。也别给每种查询组合各配一本——每本都是真金白银的写入税。
+
+## 联合索引与最左前缀：一本按两列排序的目录
+
+高频查询常常一次带两个条件：某用户的已支付订单，`WHERE user_id = ? AND status = 'paid'`。为它建一本两列的目录：
+
+```sql
+CREATE INDEX idx_orders_user_status ON orders(user_id, status);
+```
+
+### 载体：先按 user_id 排，user_id 相同才比 status
+
+联合索引（multi-column index）就是按多列排序的目录：整本按 user_id 升序，user_id 相同的项之间再按 status 排。跟 JS 的多键排序一个道理：`.sort((a, b) => a.user_id - b.user_id || a.status.localeCompare(b.status))`。
+
+```text
+idx_orders_user_status（示意）
+ (user_id=1, status='paid')     → rowid 3
+ (user_id=1, status='pending')  → rowid 1
+ (user_id=2, status='paid')     → rowid 7
+ (user_id=2, status='refunded') → rowid 2
+ (user_id=3, status='paid')     → rowid 5
+ …
+```
+
+盯着这张图记一件事：全局看 user_id 有序；只看 status 一列——乱序。
+
+### 演算：换条件，看计划变色
+
+try-prefix.mjs 的六行真实输出，逐行对账：
+
+```text
+只有第一列等值： SEARCH orders USING INDEX idx_orders_user_status (user_id=?)
+只有第二列等值： SCAN orders
+两列都是等值  ： SEARCH orders USING INDEX idx_orders_user_status (user_id=? AND status=?)
+第一列是范围  ： SEARCH orders USING INDEX idx_orders_user_status (user_id>?)
+按未建列排序  ： SCAN orders | USE TEMP B-TREE FOR ORDER BY
+按第一列排序  ： SCAN orders USING INDEX idx_orders_user_status
+```
+
+- 只给 user_id：目录按 user_id 排，直接定位，SEARCH。
+- 只给 status：全局不按 status 有序，目录翻遍也白翻，退回扫整表，SCAN。跳过最左列单独用后面的列，这本目录帮不上忙。
+- 两列都给：括号里 (user_id=? AND status=?)——两级定位，先落进 user_id 的段，再在段内按 status 缩。
+- user_id 给范围：括号里只剩 (user_id>?)。user_id > 42 划出的是一大段，这段里 status 是乱的，status 进不了括号，退回逐行核对。SQLite 文档写得更死：范围列右边的列，通常不能再用来定位。
+- 排序两行：按没建目录的 amount 排，数据库只能自建一棵临时排序树（USE TEMP B-TREE FOR ORDER BY）；按 user_id 排，顺着目录走就行——目录天然有序，省掉了那棵临时树。注意第六行仍是 SCAN：排序没有少看任何一行，省的是排序那一步，不是翻找。第 2 章把 sort 搬进了数据库，排序这步的活谁干、有没有省法的账，到这里才结清。
+
+规矩收拢成一句，叫**联合索引最左前缀**：能用上目录的条件，必须从索引最左一列开始、连续成段；这一段里，最后一列才允许用范围（>、BETWEEN 这些）。
+
+列序怎么选，从规矩直接推：最常单独出现的列放最左；等值条件在前，范围条件在后。连接场景里，外键那一列通常就是最左列。
+
+### LIKE：给得出区间，才走得了目录
+
+搜索框是 LIKE 的主场，也是索引的高发事故区。try-own.mjs 的后三行：
+
+```text
+LIKE 前缀 ： SCAN users
+NOCASE 目录: SEARCH users USING COVERING INDEX idx_email_nocase (email>? AND email<?)
+前导通配  ： SCAN users
+```
+
+前导通配 `LIKE '%99'`：「以 99 结尾」的行在有序清单上不构成连续区间，目录无从下手，永远 SCAN。前缀 `LIKE 'user4%'` 呢？直觉上「user4 开头」明明是连续一段，默认却还是 SCAN。SQLite 文档写明了原因和条件：默认的 LIKE 对 ASCII 字母不分大小写，而普通目录严格按字节序排，'User4' 落不进 'user4' 起头的那段。所以 LIKE 想吃目录只有两种组合：列按 NOCASE 排序建目录（默认设置），或列按大小写敏感排、再打开 case_sensitive_like。第三行输出就是按 `COLLATE NOCASE` 建目录后的样子：SEARCH，括号里是 (email>? AND email<?)——顺带看清 LIKE 优化的本质，是把前缀折算成一个区间。区间给得出才走得了目录；包含匹配（'%xx%'）给不出，认 SCAN。
+
+## 亲手做实验
+
+原理章不写新测试、不动实验场。本章的实验场是三个自包含脚本：Node 24 自带 node:sqlite，存成同名文件，node 一跑，本章所有输出都从它们来。
+
+脚本一，造 50 万行、掐表对比建索引前后：
+
+```js
+// 用法示例：50 万行的全表扫描与索引定位，存成 try-scan.mjs，node try-scan.mjs 就能跑
+import { DatabaseSync } from 'node:sqlite'
+
+const db = new DatabaseSync(':memory:')
+db.exec(`
+  CREATE TABLE users (
+    id INTEGER PRIMARY KEY,
+    email TEXT NOT NULL,
+    name TEXT NOT NULL,
+    city TEXT NOT NULL
+  )
+`)
+const insert = db.prepare('INSERT INTO users (email, name, city) VALUES (?, ?, ?)')
+db.exec('BEGIN')
+for (let i = 0; i < 500000; i++) {
+  insert.run(`user${i}@example.com`, `用户${i}`, '杭州')
+}
+db.exec('COMMIT')
+
+const target = 'user499999@example.com'
+const byEmail = db.prepare('SELECT * FROM users WHERE email = ?')
+const plan = (sql) => db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all(target).map((r) => r.detail)
+
+console.log('建索引前：', plan('SELECT * FROM users WHERE email = ?'))
+let t = performance.now()
+byEmail.all(target)
+const scanMs = performance.now() - t
+
+db.exec('CREATE INDEX idx_users_email ON users(email)')
+console.log('建索引后：', plan('SELECT * FROM users WHERE email = ?'))
+
+t = performance.now()
+byEmail.all(target)
+const seekMs = performance.now() - t
+console.log(`50 万行无索引（SCAN）：${scanMs.toFixed(1)}ms`)
+console.log(`50 万行有索引（SEARCH）：${seekMs.toFixed(3)}ms`)
+```
+
+两处细节。`BEGIN` 到 `COMMIT` 把 50 万次插入包成一个事务——不这么包，每行单独提交一次，光插入就要等很久，为什么第 13 章的事务章拆。掐表用的是 `performance.now()`，Node 全局自带。
+
+跑出来的真实输出（毫秒数因机器而异，两行计划的形状不变）：
+
+```text
+建索引前： [ 'SCAN users' ]
+建索引后： [ 'SEARCH users USING INDEX idx_users_email (email=?)' ]
+50 万行无索引（SCAN）：10.8ms
+50 万行有索引（SEARCH）：0.027ms
+```
+
+内存库的绝对数当然比生产小，要看的是形状。把脚本里的 500000 改小再跑（测法与脚本完全一致：单次执行、不预热），我跑的三档：
+
+| 行数 | SCAN | SEARCH |
+| --- | --- | --- |
+| 5 万 | 1.1ms | 0.039ms |
+| 20 万 | 4.2ms | 0.034ms |
+| 50 万 | 10.6ms | 0.032ms |
+
+行数 ×10，扫描时间跟着 ×10——线性就是这么直白；右边一列纹丝不动——对数增长的形状就是一条平线（这列的绝对值微小，反复预热后单次能低到几微秒，看形状别看尾数）。这就是 2ms 到 800ms 的全部机制。
+
+账单两个数的复现法：把脚本里 `CREATE INDEX` 那行挪到插入之前，插入段立刻变慢（我这里 288ms 变 529ms）；在 `CREATE INDEX` 前后各取一次 `PRAGMA page_count`，页数乘 4096 换算成 MB——建索引前 6214 页即 24.3MB，建索引后 9992 页即 39.0MB。空间是确定性量：数据一样，谁跑都是这两个数。
+
+脚本二与脚本三，全文如下；它们的输出就是前文「联合索引与最左前缀」那六行和 CREATE INDEX、LIKE 两节那五行：
+
+```js
+// 用法示例：联合索引的最左前缀——换条件看查询计划变色，存成 try-prefix.mjs，node try-prefix.mjs 就能跑
+import { DatabaseSync } from 'node:sqlite'
+
+const db = new DatabaseSync(':memory:')
+db.exec(`
+  CREATE TABLE orders (
+    id INTEGER PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    amount INTEGER NOT NULL
+  )
+`)
+db.exec('CREATE INDEX idx_orders_user_status ON orders(user_id, status)')
+
+const plan = (sql) =>
+  db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all().map((r) => r.detail).join(' | ')
+
+console.log('只有第一列等值：', plan('SELECT * FROM orders WHERE user_id = 42'))
+console.log('只有第二列等值：', plan("SELECT * FROM orders WHERE status = 'paid'"))
+console.log('两列都是等值  ：', plan("SELECT * FROM orders WHERE user_id = 42 AND status = 'paid'"))
+console.log('第一列是范围  ：', plan("SELECT * FROM orders WHERE user_id > 42 AND status = 'paid'"))
+console.log('按未建列排序  ：', plan('SELECT * FROM orders ORDER BY amount'))
+console.log('按第一列排序  ：', plan('SELECT * FROM orders ORDER BY user_id'))
+```
+
+```js
+// 用法示例：主键、UNIQUE 自动目录与 LIKE 的查询计划，存成 try-own.mjs，node try-own.mjs 就能跑
+import { DatabaseSync } from 'node:sqlite'
+
+const db = new DatabaseSync(':memory:')
+db.exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT NOT NULL UNIQUE)')
+const plan = (sql) =>
+  db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all().map((r) => r.detail).join(' | ')
+
+console.log('主键查找  ：', plan('SELECT * FROM users WHERE id = 42'))
+console.log('UNIQUE 列 ：', plan('SELECT * FROM users WHERE email = ?'))
+console.log("LIKE 前缀 ：", plan("SELECT * FROM users WHERE email LIKE 'user4%'"))
+db.exec("CREATE INDEX idx_email_nocase ON users(email COLLATE NOCASE)")
+console.log('NOCASE 目录:', plan("SELECT * FROM users WHERE email LIKE 'user4%'"))
+console.log('前导通配  ：', plan("SELECT * FROM users WHERE email LIKE '%99'"))
+```
+
+## 见证它变快
+
+终端里跑第一个脚本：
+
+```bash
+node try-scan.mjs
+```
+
+四行输出依次是：SCAN 的自白、SEARCH 的自白、两条耗时。眼见为实三件事：动词从 SCAN 换成 SEARCH；毫秒从 10.8 掉到 0.027，约四百倍；代码与机器都没换，变的只是数据库多了一本目录。再补一步纸笔：拿 2 的幂往上垒，2^10、2^18、2^19——亲手推出「19 步封顶」，对照表里那条平线的 SEARCH 耗时。
+
+日常用法就此定型：往后遇到慢查询，第一反应不是重启，是把 SQL 前面加上 EXPLAIN QUERY PLAN 跑一遍。动词是 SCAN，就看条件列、考虑建目录；动词已是 SEARCH 还慢，再查行宽、返回行数、连接姿势这些别处。
+
+## 小结
+
+全表扫描是表无序时的唯一通用找法：逐行比较，行数就是工作量，行数翻十倍时间翻十倍。索引是为一列额外维护的有序目录，B-tree 让它的查找和插入都是对数步：50 万行线性最坏 50 万步，目录定位 19 步封顶；代价是写入变慢加占空间——一本目录让 50 万次插入慢八成、多占六成上下的空间。EXPLAIN QUERY PLAN 让数据库自述方案：SCAN 整表逐行，SEARCH 只碰一部分，括号里是当上定位条件的列。主键与 UNIQUE 天生带目录。联合索引按最左前缀服务查询：条件从最左列连续成段，段内最后一列才许范围；前导通配永远走不了目录，默认大小写规则下的 LIKE 前缀也走不了，按 COLLATE NOCASE 建目录才吃得着。你现在能做到：对任何一条慢 SELECT，跑一遍查询计划，读出动词、目录与定位条件，判断该建索引还是该改写条件。
+
+读完本章你该能回答：
+
+- 2ms 涨到 800ms，代码没变，变的是什么？为什么重启服务没用？
+- 为什么 50 万项的目录定位不超过 19 步？这笔账怎么在纸上推？
+- SCAN 与 SEARCH 差在哪？末尾括号里的 (email=?) 在告诉你什么？
+- 只按 status 查，为什么用不上 (user_id, status) 这本目录？user_id 给范围时，status 进得了括号吗？
+- LIKE 'user4%' 默认为什么走不了目录？怎么建目录才走得了？
+
+去向：ORM 怎么把这层包起来、它生成的 SQL 怎么对照查询计划检查——第 7 章给地图；关联加载的批量 IN，正是吃 user_id 目录的那一招——第 12 章拆 N+1。
