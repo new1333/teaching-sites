@@ -42,3 +42,6 @@ Desktop.ini
 /courses/nes-emulator-course/companion/demo-build/
 
 
+
+# 浏览器自动化工具的会话快照（playwright MCP 产物，可再生）
+.playwright-mcp/
