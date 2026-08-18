@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createRng, generateCandles, generateTicks } from '../src/data/generate'
-import { aggregateTicks, resample } from '../src/candles/aggregate'
+import { aggregateTicks, resample, tickDirections } from '../src/candles/aggregate'
 import { candleAnatomy } from '../src/candles/anatomy'
 import type { Candle, Session, Tick } from '../src/types'
 
@@ -147,6 +147,41 @@ describe('aggregateTicks：逐笔聚成日K', () => {
     const dates = candles.map((c) => c.date)
     expect([...dates].sort()).toEqual(dates)
     expect(new Set(dates).size).toBe(5)
+  })
+})
+
+describe('tickDirections：tick 规则给每笔成交贴方向（第 3 章蜡烛诞生图）', () => {
+  it('上行记主动买、下行记主动卖、首笔约定买——第 3 章五笔成交的方向序列', () => {
+    const ticks = [
+      tick('2026-03-02', '09:30', 10.0, 200),
+      tick('2026-03-02', '10:15', 10.4, 100),
+      tick('2026-03-02', '11:05', 9.8, 300),
+      tick('2026-03-02', '14:00', 10.1, 100),
+      tick('2026-03-02', '14:57', 10.25, 400),
+    ]
+    expect(tickDirections(ticks)).toEqual(['buy', 'buy', 'sell', 'buy', 'buy'])
+    // 聚合不变量同源再钉一遍：这五笔聚出的蜡烛逐字段等于正文手算
+    expect(aggregateTicks(ticks, SESSION)).toEqual([
+      { date: '2026-03-02', open: 10.0, high: 10.4, low: 9.8, close: 10.25, volume: 1100 },
+    ])
+  })
+
+  it('同价成交沿用它前一笔的方向', () => {
+    const ticks = [
+      tick('2026-03-02', '09:30', 10.0, 100),
+      tick('2026-03-02', '10:00', 10.4, 100),
+      tick('2026-03-02', '10:30', 10.4, 100),
+      tick('2026-03-02', '11:00', 10.4, 100),
+    ]
+    expect(tickDirections(ticks)).toEqual(['buy', 'buy', 'buy', 'buy'])
+  })
+
+  it.each([
+    ['空数组', () => tickDirections([])],
+    ['价格为零', () => tickDirections([tick('2026-03-02', '09:30', 0, 100)])],
+    ['价格非有限数', () => tickDirections([tick('2026-03-02', '09:30', Number.NaN, 100)])],
+  ])('%s', (_name, fn) => {
+    expect(fn).toThrow()
   })
 })
 

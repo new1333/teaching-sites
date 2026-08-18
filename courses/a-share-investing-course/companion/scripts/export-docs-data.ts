@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { createRng, generateCandles, tradingDates } from '../src/data/generate'
 import { candleAnatomy } from '../src/candles/anatomy'
+import { aggregateTicks, tickDirections } from '../src/candles/aggregate'
+import { callAuction, type AuctionOrder } from '../src/matching/auction'
 import { classifyWicks, type WickPatternId } from '../src/patterns/wicks'
 import { classifyDoji, dojiContext, type DojiKind } from '../src/patterns/doji'
 import { detectTwoCandle, type TwoCandlePatternId } from '../src/patterns/two'
@@ -21,11 +23,11 @@ import { levels } from '../src/levels/levels'
 import { fibLevels } from '../src/levels/fib'
 import { detectStructures } from '../src/levels/structures'
 import { chipDistribution } from '../src/chips/distribution'
-import { expectancy, type EdgeStats } from '../src/risk/expectancy'
+import { compoundCurve, expectancy, type EdgeStats } from '../src/risk/expectancy'
 import { kellyFraction } from '../src/risk/kelly'
 import { equityPaths, monteCarloRuin } from '../src/risk/ruin'
 import { backtest, type Strategy } from '../src/backtest/engine'
-import { maxDrawdown } from '../src/backtest/metrics'
+import { drawdownSeries, maxDrawdown } from '../src/backtest/metrics'
 import type { Candle } from '../src/types'
 
 /**
@@ -59,7 +61,40 @@ const HAMMER_AT = 30 // 植入位置：两段行情里同一个相对下标
 const spanOf = (cs: readonly Candle[]): number =>
   Math.max(...cs.map((c) => c.high)) - Math.min(...cs.map((c) => c.low))
 
-function writeJson(name: string, data: ChartJson | LineJson): void {
+/** 配套可视化数据集的形态：与 ChartJson/LineJson 并列——正文交互图表的专用形状 */
+type AuctionCurveJson = { labels: string[]; volumes: number[] }
+type AnatomyDayJson = {
+  candle: Candle
+  trades: { time: string; price: number; size: number; direction: 'buy' | 'sell' }[]
+}
+type MatrixScenesJson = {
+  scenes: { key: 'up-price-up-vol' | 'down-price-up-vol' | 'up-price-down-vol' | 'down-price-down-vol'; label: string; candles: Candle[] }[]
+}
+type ChipBinsJson = { bins: { price: number; volume: number; profitable: boolean }[]; currentPrice: number; avgCost: number }
+type MarkersOnlyJson = { candles: Candle[]; markers: Marker[] }
+type MacdIndJson = { candles: Candle[]; dif: (number | null)[]; dea: (number | null)[]; hist: (number | null)[]; markers: Marker[] }
+type IndicatorsIndJson = {
+  candles: Candle[]
+  rsi: (number | null)[]
+  k: (number | null)[]
+  d: (number | null)[]
+  j: (number | null)[]
+  thresholds: { rsiOverbought: number; rsiOversold: number; rsiStrong: number; kdjOverbought: number; kdjOversold: number }
+  markers: Marker[]
+}
+type BacktestDetailJson = {
+  dates: string[]
+  equity: number[]
+  benchmark: number[]
+  drawdown: number[]
+  trades: { index: number; kind: 'buy' | 'sell'; note: string }[]
+}
+type DisposalCurvesJson = { labels: string[]; curves: { name: string; values: number[] }[] }
+
+function writeJson(
+  name: string,
+  data: ChartJson | LineJson | AuctionCurveJson | AnatomyDayJson | MatrixScenesJson | ChipBinsJson | MarkersOnlyJson | MacdIndJson | IndicatorsIndJson | BacktestDetailJson | DisposalCurvesJson,
+): void {
   mkdirSync(DATA_DIR, { recursive: true })
   writeFileSync(path.join(DATA_DIR, name), JSON.stringify(data, null, 2) + '\n', 'utf8')
 }
@@ -2435,5 +2470,316 @@ console.log(
   [
     `21-equity.json：${market21.length} 根合成行情（种子 2102）——守规的 MA5/20 交叉策略 ${honest21.trades.length} 笔、总收益 ${(honest21.totalReturn * 100).toFixed(1)}%、最大回撤 ${(honest21.maxDrawdown * 100).toFixed(1)}%、胜率 ${(honest21.winRate * 100).toFixed(0)}%、盈亏比 ${honest21.payoffRatio?.toFixed(2)}；买入持有基准 ${(honest21.buyHoldReturn * 100).toFixed(1)}%、回撤 ${(maxDrawdown(honest21.buyHoldEquity) * 100).toFixed(1)}%`,
     `21-lookahead.json：偷看写法整段一笔（${cheater21.trades[0]!.entryDate} 开盘买 → ${cheater21.trades[0]!.exitDate} 开盘卖）——总收益 ${(cheater21.totalReturn * 100).toFixed(1)}%、最大回撤 ${(cheater21.maxDrawdown * 100).toFixed(1)}%，对守规写法 ${(honest21.totalReturn * 100).toFixed(1)}%/${(honest21.maxDrawdown * 100).toFixed(1)}%：同一引擎、同一行情，只差「信号有没有偷看」`,
+  ].join('\n'),
+)
+
+// —— 配套可视化数据集（第 2/3/12/14/15/21/22 章 + 16/17 指标交互派生件）——
+// 为正文的交互图表补数据。凡正文表格已给出数字的（02 申报表、03 五笔成交、21 回测参数、
+// 22 处置效应两组参数），数据必须由这些数字算出，不另编；合成场景（12 量价矩阵、15 双底）
+// 沿用本文件既有的固定种子合成器与守门惯例。以下各段变量如无声明，均只在本段使用。
+
+// —— 02-auction-curve.json：集合竞价撮合曲线 ——
+// 申报表是第 2 章正文原文；五个候选价的可成交量由 src/matching/auction.ts 的 callAuction
+// 按撮合规则算出（两侧取小），峰值价位即正文结论的开盘价 10.65 元
+const AUCTION_BUYS_02: AuctionOrder[] = [
+  { price: 10.7, shares: 3000 },
+  { price: 10.65, shares: 4000 },
+  { price: 10.6, shares: 2000 },
+  { price: 10.58, shares: 1000 },
+  { price: 10.5, shares: 2000 },
+]
+const AUCTION_SELLS_02: AuctionOrder[] = [
+  { price: 10.5, shares: 1500 },
+  { price: 10.6, shares: 2500 },
+  { price: 10.65, shares: 4500 },
+  { price: 10.7, shares: 4000 },
+]
+const auction02 = callAuction(AUCTION_BUYS_02, AUCTION_SELLS_02)
+// [候选价, 愿买, 愿卖, 可成交量]——第 2 章正文表格逐行，错一处整段导出失败
+const AUCTION_TABLE_02: readonly (readonly [number, number, number, number])[] = [
+  [10.7, 3000, 12500, 3000],
+  [10.65, 7000, 8500, 7000],
+  [10.6, 9000, 4000, 4000],
+  [10.58, 10000, 1500, 1500],
+  [10.5, 12000, 1500, 1500],
+]
+for (const [p, b, s, v] of AUCTION_TABLE_02) {
+  const row = auction02.levels.find((l) => l.price === p)
+  if (!row || row.buyShares !== b || row.sellShares !== s || row.volume !== v) {
+    throw new Error(`第 2 章候选价 ${p} 的撮合读数 ${JSON.stringify(row)} 与正文表格（愿买 ${b}/愿卖 ${s}/可成交 ${v}）不一致——算式与正文口径分叉`)
+  }
+}
+if (auction02.openingPrice !== 10.65 || auction02.openingVolume !== 7000) {
+  throw new Error(`第 2 章开盘价投出 ${auction02.openingPrice}×${auction02.openingVolume}，与正文结论 10.65×7000 不一致`)
+}
+writeJson('02-auction-curve.json', {
+  labels: auction02.levels.map((l) => l.price.toFixed(2)),
+  volumes: auction02.levels.map((l) => l.volume),
+})
+
+// —— 03-anatomy-candle.json：一根蜡烛的诞生 ——
+// 五笔成交是第 3 章正文表格原文；蜡烛由 aggregateTicks 聚出
+// （开=第一笔、收=最后一笔、高=最大那笔、低=最小那笔、量=求和）；
+// 每笔的方向箭头由 tick 规则标注（tickDirections：较前笔上行记主动买、下行记主动卖、首笔约定买）
+const TRADES_03 = [
+  { time: '09:30', price: 10.0, size: 200 },
+  { time: '10:15', price: 10.4, size: 100 },
+  { time: '11:05', price: 9.8, size: 300 },
+  { time: '14:00', price: 10.1, size: 100 },
+  { time: '14:57', price: 10.25, size: 400 },
+] as const
+const at03 = (hhmm: string): number => Date.UTC(2026, 2, 2, Number(hhmm.slice(0, 2)), Number(hhmm.slice(3, 5)))
+const ticks03 = TRADES_03.map((t) => ({ time: at03(t.time), price: t.price, size: t.size }))
+const candle03 = aggregateTicks(ticks03, { open: '09:30', close: '15:00' })[0]!
+if (
+  candle03.date !== '2026-03-02' ||
+  candle03.open !== 10.0 ||
+  candle03.high !== 10.4 ||
+  candle03.low !== 9.8 ||
+  candle03.close !== 10.25 ||
+  candle03.volume !== 1100
+) {
+  throw new Error(`第 3 章五笔成交聚出的蜡烛 ${JSON.stringify(candle03)} 与正文手算（开10.00 高10.40 低9.80 收10.25 量1100）不一致`)
+}
+const dirs03 = tickDirections(ticks03)
+writeJson('03-anatomy-candle.json', {
+  candle: candle03,
+  trades: TRADES_03.map((t, i) => ({ time: t.time, price: t.price, size: t.size, direction: dirs03[i] })),
+})
+
+// —— 12-matrix-candles.json：量价关系矩阵四格 ——
+// 每格 8 根合成 K 线：价格出自本文件既有的 driftSeries（固定种子），量能是手工设计的
+// 单调阶梯（放量格逐根抬高、缩量格逐根回落，首尾差 3.5 倍）——趋势与量能形态一眼可辨；
+// 量纲沿用第 12 章数据集（百万股级成交量、10 元档价格）
+type MatrixScene = {
+  key: 'up-price-up-vol' | 'down-price-up-vol' | 'up-price-down-vol' | 'down-price-down-vol'
+  label: string
+  candles: Candle[]
+}
+const MATRIX_VOL_UP = [2_000_000, 2_600_000, 3_200_000, 3_800_000, 4_500_000, 5_200_000, 6_000_000, 7_000_000]
+const matrixScene = (key: MatrixScene['key'], label: string, seed: number, drift: number, vols: readonly number[]): MatrixScene => ({
+  key,
+  label,
+  candles: withVolumes(driftSeries(createRng(seed), { days: 8, startPrice: 10, drift, vol: 0.008 }), [...vols]),
+})
+const scenes12: MatrixScene[] = [
+  matrixScene('up-price-up-vol', '价涨量增：推进有燃料', 1261, 0.012, MATRIX_VOL_UP),
+  matrixScene('down-price-up-vol', '价跌量增：恐慌或派发', 1262, -0.012, MATRIX_VOL_UP),
+  matrixScene('up-price-down-vol', '价涨量缩：无人反对的推进', 1263, 0.012, [...MATRIX_VOL_UP].reverse()),
+  matrixScene('down-price-down-vol', '价跌量缩：卖压枯竭', 1264, -0.012, [...MATRIX_VOL_UP].reverse()),
+]
+for (const s of scenes12) {
+  const cs = s.candles
+  const disp = cs[cs.length - 1]!.close / cs[0]!.open - 1
+  const priceUp = s.key.startsWith('up-')
+  const volUp = s.key.endsWith('up-vol')
+  if (priceUp ? disp < 0.05 : disp > -0.05) {
+    throw new Error(`第 12 章矩阵 ${s.key} 的价格位移只有 ${(disp * 100).toFixed(1)}%——趋势方向不够醒目，换一颗种子再试`)
+  }
+  const mono = volUp
+    ? cs.every((c, i) => i === 0 || c.volume >= cs[i - 1]!.volume)
+    : cs.every((c, i) => i === 0 || c.volume <= cs[i - 1]!.volume)
+  const span3x = volUp ? cs[cs.length - 1]!.volume >= 3 * cs[0]!.volume : cs[0]!.volume >= 3 * cs[cs.length - 1]!.volume
+  if (!mono || !span3x) {
+    throw new Error(`第 12 章矩阵 ${s.key} 的量能阶梯不单调或首尾差距不足 3 倍——量能形态不够醒目`)
+  }
+}
+writeJson('12-matrix-candles.json', { scenes: scenes12 })
+
+// —— 14-chip-bins.json：筹码分布的价位直方图 ——
+// 与 14-rebound.json 同一段行情（种子 1401）、同一台 chipDistribution——桶宽放宽到 0.2 元，
+// 反弹末日的分布摊成约 17 档（规格 15–25 档）：套牢峰（全图最大桶）仍在现价上方，
+// 获利/套牢的分界就是现价——与本章「峰压在头顶」的叙事同源
+const chipsBins14 = chipDistribution(rebound14, { floatShares: FLOAT14, binWidth: 0.2 })
+const finalBins14 = chipsBins14[chipsBins14.length - 1]!
+const bins14 = finalBins14.buckets.map((b) => ({
+  price: round2(b.price),
+  volume: Math.round(b.quantity),
+  profitable: round2(b.price) <= finalBins14.close,
+}))
+if (bins14.length < 15 || bins14.length > 25) {
+  throw new Error(`第 14 章直方图摊成 ${bins14.length} 档（规格 15–25）——桶宽 0.2 元的选段不对`)
+}
+if (Math.abs(bins14.reduce((s, b) => s + b.volume, 0) - FLOAT14) > bins14.length) {
+  throw new Error(`第 14 章直方图持仓合计偏离流通股本 ${FLOAT14} 超过逐桶取整误差——守恒被破坏`)
+}
+const peakBin14 = bins14.reduce((a, b) => (b.volume > a.volume ? b : a))
+if (peakBin14.profitable || bins14.every((b) => b.profitable === bins14[0]!.profitable)) {
+  throw new Error(`第 14 章直方图最大桶 ${peakBin14.price} 元（${peakBin14.volume} 股）不在现价上方——「套牢峰压顶」的叙事不成立`)
+}
+writeJson('14-chip-bins.json', {
+  bins: bins14,
+  currentPrice: finalBins14.close,
+  avgCost: round2(finalBins14.averageCost),
+})
+
+// —— 15-double-bottom.json：双底与颈线突破 ——
+// 双顶图（15-double-top.json）的镜像剧本：跌到第一底、反弹出中间峰（未来的颈线）、
+// 二次探底同一价位、收盘突破颈线上行到量度目标附近。结构、颈线、破位日、量度目标
+// 全部出自 src/levels/structures.ts 的 detectStructures 真实计算，标记不手标；
+// kinds 只用 bull/info——底部结构与突破都在看涨侧
+const dbWalk = pathSeries(createRng(1503), 10.4, [
+  { target: 9.4, bars: 8 }, // 第一底
+  { target: 10.7, bars: 7 }, // 中间峰：未来的颈线
+  { target: 9.4, bars: 8 }, // 第二底：同一价位第二次证明有人守
+  { target: 12.0, bars: 9 }, // 突破颈线上行，收在量度目标附近
+])
+const dbFound = detectStructures(dbWalk, { tol: TOL15 })
+const db15 = dbFound.find((s) => s.id === 'double-bottom')
+if (dbFound.length !== 1 || !db15) {
+  throw new Error(`第 15 章双底段检出 ${JSON.stringify(dbFound)}——期望恰好一个双底，换一颗种子再试`)
+}
+const [b115, midDb15, b215] = db15.indices
+if (Math.abs(dbWalk[b115].low - dbWalk[b215].low) > TOL15) {
+  throw new Error(`两底低点 ${dbWalk[b115].low}/${dbWalk[b215].low} 差超过容差 ${TOL15}——「同水平」前提被破坏`)
+}
+if (dbWalk[db15.breakIndex].close <= db15.neckline) {
+  throw new Error('双底破位根收盘没有越过颈线——破位读数自相矛盾')
+}
+const dbHeight = db15.neckline - Math.min(dbWalk[b115].low, dbWalk[b215].low)
+if (dbHeight < 1.2) {
+  throw new Error(`双底结构高度只有 ${round2(dbHeight)} 元（需 ≥1.2）——底不够深，换一颗种子再试`)
+}
+if (Math.abs(dbWalk[dbWalk.length - 1].close - db15.target) > 0.5) {
+  throw new Error(`末根收盘 ${dbWalk[dbWalk.length - 1].close} 离量度目标 ${round2(db15.target)} 超过 0.5 元——行程设计不对`)
+}
+writeJson('15-double-bottom.json', {
+  candles: dbWalk,
+  markers: [
+    { index: b115, label: '谷1', kind: 'info' },
+    { index: midDb15, label: '颈线峰', kind: 'info' },
+    { index: b215, label: '谷2', kind: 'info' },
+    { index: db15.breakIndex, label: '收盘突破颈线', kind: 'bull' },
+  ],
+})
+
+// —— 16-macd-ind.json：MACD 指标交互派生件 ——
+// 16-macd-round.json（主图 K 线）与 16-macd-panel.json（DIF/DEA/柱）是同一段行情拆成的
+// 两张静态图；交互版主副图联动需要一份合并文件——candles 与 dif/dea/hist 逐格对齐
+// （指标未成形的暖机段记 null，与副图同款），标记沿用主图的四处计算读数
+if (!(round16.length === macd16.dif.length && round16.length === macd16.dea.length && round16.length === macd16.hist.length)) {
+  throw new Error('第 16 章交互件的对齐前提被破坏：candles 与 dif/dea/hist 不等长')
+}
+writeJson('16-macd-ind.json', {
+  candles: round16,
+  dif: macd16.dif.map(r4n),
+  dea: macd16.dea.map(r4n),
+  hist: macd16.hist.map(r4n),
+  markers: [golden16, { index: histPeak16, label: '柱峰', kind: 'info' }, { index: top16, label: '山顶', kind: 'info' }, dead16],
+})
+
+// —— 17-indicators-ind.json：RSI+KDJ 指标交互派生件 ——
+// 17-strong-rally.json（主图）、17-rsi-panel.json、17-kdj-panel.json 三张静态图同一段行情；
+// 交互版把主图 K 线与 RSI/K/D/J 序列合并成一份逐格对齐的文件，阈值依据随文件走——
+// RSI 的 70/30 超买超卖与 80 强势线来自 src/indicators/rsi.ts 的 RSI_LEVELS，
+// KDJ 的 80/20 与副图刻度同款；标记沿用 17-strong-rally 的四处计算读数
+if (![rsi17, kdj17.k, kdj17.d, kdj17.j].every((s) => s.length === rally17.length)) {
+  throw new Error('第 17 章交互件的对齐前提被破坏：candles 与 rsi/k/d/j 不等长')
+}
+writeJson('17-indicators-ind.json', {
+  candles: rally17,
+  rsi: rsi17.map(r2n),
+  k: kdj17.k.map(r2n),
+  d: kdj17.d.map(r2n),
+  j: kdj17.j.map(r2n),
+  thresholds: {
+    rsiOverbought: RSI_LEVELS.overbought,
+    rsiOversold: RSI_LEVELS.oversold,
+    rsiStrong: RSI_LEVELS.strong,
+    kdjOverbought: 80,
+    kdjOversold: 20,
+  },
+  markers: [
+    { index: firstOb17, label: 'RSI 首上 80·清仓点', kind: 'bear' },
+    { index: obDead17[0]!.index, label: '超买区死叉', kind: 'bear' },
+    { index: top17, label: `山顶 ${round2(rally17[top17].high)}`, kind: 'info' },
+    { index: below50_17, label: 'RSI 跌破 50', kind: 'info' },
+  ],
+})
+
+// —— 21-backtest-detail.json：回测明细（资金曲线 + 逐格回撤 + 交易点位） ——
+// 与 21-equity.json 同一行情（种子 2102）、同一引擎、同一 MA5/20 均线交叉策略与默认
+// 费用档——honest21 一个字没重算，只是在资金曲线之外补齐交互图要的三样：买入持有基准、
+// 相对历史峰值的逐格回撤（drawdown[0] 恒为 0、最深一格 = −最大回撤，drawdownSeries）、
+// 逐笔交易的下标与成交价（含滑点的成交价，与交易列表同源）。
+// equity/benchmark 沿用 21-equity.json 的百分轴（初始资金 = 100），drawdown 记负百分数
+const dd21raw = drawdownSeries(honest21.equity)
+if (dd21raw[0] !== 0) {
+  throw new Error('第 21 章明细图的 drawdown[0] 不是 0——回撤序列口径被破坏')
+}
+if (Math.abs(Math.min(...dd21raw) + honest21.maxDrawdown) > 1e-12) {
+  throw new Error('第 21 章明细图的最深回撤与 maxDrawdown 不一致——两条算路必须同源')
+}
+const tradesDetail21: { index: number; kind: 'buy' | 'sell'; note: string }[] = []
+for (const t of honest21.trades) {
+  tradesDetail21.push({ index: t.entryIndex, kind: 'buy', note: `买入 @${round2(t.entryPrice)}` })
+  tradesDetail21.push({ index: t.exitIndex, kind: 'sell', note: `卖出 @${round2(t.exitPrice)}` })
+}
+if (honest21.openPosition) {
+  tradesDetail21.push({
+    index: honest21.openPosition.entryIndex,
+    kind: 'buy',
+    note: `买入 @${round2(honest21.openPosition.entryPrice)}（期末仍持有）`,
+  })
+}
+if (tradesDetail21.length !== honest21.trades.length * 2 + (honest21.openPosition ? 1 : 0)) {
+  throw new Error('第 21 章明细图的交易点位数与回测交易列表对不上——记账分叉')
+}
+writeJson('21-backtest-detail.json', {
+  dates: market21.map((c) => c.date),
+  equity: honest21.equity.map(pctRound21),
+  benchmark: honest21.buyHoldEquity.map(pctRound21),
+  drawdown: dd21raw.map((v) => Math.round(v * 100 * 1000) / 1000),
+  trades: tradesDetail21,
+})
+
+// —— 22-disposal-curves.json：处置效应的两组复利资金曲线 ——
+// 参数是第 22 章正文演算的两组构造参数（同一套胜率 60%）：处置画像 赢 2% 亏 20%
+// （期望值每笔 −6.8%）、修正版 赢 12% 亏 8%（每笔 +4.0%）；曲线由 src/risk/expectancy.ts
+// 的 compoundCurve 按期望值逐笔复利——初始 1.0，十笔后 0.932 的 10 次方 ≈ 0.495
+// 对 1.04 的 10 次方 ≈ 1.480，方向与正文结论一致
+const DISPOSAL_22: EdgeStats = { winRate: 0.6, avgWin: 0.02, avgLoss: 0.2 }
+const REVISED_22: EdgeStats = { winRate: 0.6, avgWin: 0.12, avgLoss: 0.08 }
+if (Math.abs(expectancy(DISPOSAL_22) - -0.068) > 1e-9) {
+  throw new Error(`第 22 章处置画像期望值不是 −6.8%（实测 ${expectancy(DISPOSAL_22)}）——正文演算的锚丢了`)
+}
+if (Math.abs(expectancy(REVISED_22) - 0.04) > 1e-9) {
+  throw new Error(`第 22 章修正版期望值不是 +4.0%（实测 ${expectancy(REVISED_22)}）——正文演算的锚丢了`)
+}
+const curveDisposal22 = compoundCurve(DISPOSAL_22, 10)
+const curveRevised22 = compoundCurve(REVISED_22, 10)
+if (curveDisposal22[9]! >= 1 || Math.abs(curveDisposal22[9]! - 0.494492) > 5e-4) {
+  throw new Error(`处置画像十笔后剩 ${curveDisposal22[9]!.toFixed(6)}——与正文 0.932 的 10 次方 ≈ 0.495 不一致`)
+}
+if (curveRevised22[9]! <= 1 || Math.abs(curveRevised22[9]! - 1.480244) > 5e-4) {
+  throw new Error(`修正版十笔后到 ${curveRevised22[9]!.toFixed(6)}——与正文 1.04 的 10 次方 ≈ +48% 不一致`)
+}
+writeJson('22-disposal-curves.json', {
+  labels: Array.from({ length: 10 }, (_, k) => `第${k + 1}笔`),
+  curves: [
+    {
+      name: '处置效应画像（赢2% 亏20%·每笔 −6.8%）',
+      values: curveDisposal22.map((v) => Math.round(v * 1e4) / 1e4),
+    },
+    {
+      name: '修正版（赢12% 亏8%·每笔 +4.0%）',
+      values: curveRevised22.map((v) => Math.round(v * 1e4) / 1e4),
+    },
+  ],
+})
+
+const dispOf12 = (s: MatrixScene): string =>
+  `${(((s.candles[s.candles.length - 1]!.close / s.candles[0]!.open) - 1) * 100).toFixed(1)}%`
+
+console.log(
+  [
+    `02-auction-curve.json：五个候选价可成交量 ${auction02.levels.map((l) => l.volume.toLocaleString('en-US')).join('/')} 股——峰值 ${auction02.openingPrice.toFixed(2)} 元（${auction02.openingVolume.toLocaleString('en-US')} 股）即开盘价，逐行对上正文申报表`,
+    `03-anatomy-candle.json：五笔成交聚成一根蜡烛（开 ${candle03.open} 高 ${candle03.high} 低 ${candle03.low} 收 ${candle03.close} 量 ${candle03.volume}），tick 方向标注 ${dirs03.join('/')}`,
+    `12-matrix-candles.json：量价矩阵四格各 8 根——${scenes12.map((s) => `${s.label}（位移 ${dispOf12(s)}）`).join('；')}`,
+    `14-chip-bins.json：反弹末日筹码直方图 ${bins14.length} 档（桶宽 0.2 元）——最大桶 ${peakBin14.price} 元（${peakBin14.volume.toLocaleString('en-US')} 股）压在现价 ${finalBins14.close} 上方，平均成本 ${round2(finalBins14.averageCost)}`,
+    `15-double-bottom.json：${dbWalk.length} 根双底段——谷1 第 ${b115 + 1} 根（低 ${dbWalk[b115].low}）、颈线峰第 ${midDb15 + 1} 根（高 ${dbWalk[midDb15].high}）、谷2 第 ${b215 + 1} 根（低 ${dbWalk[b215].low}），颈线 ${round2(db15.neckline)}，第 ${db15.breakIndex + 1} 根收盘 ${dbWalk[db15.breakIndex].close} 突破，末根收 ${dbWalk[dbWalk.length - 1].close}（量度目标 ${round2(db15.target)}）`,
+    `16-macd-ind.json / 17-indicators-ind.json：主图与指标序列逐格对齐的交互派生件（各 ${round16.length} / ${rally17.length} 根，含阈值与标记）`,
+    `21-backtest-detail.json：守规策略 ${honest21.trades.length} 笔交易摊成 ${tradesDetail21.length} 个点位，逐格回撤最深 ${(Math.min(...dd21raw) * 100).toFixed(1)}%（drawdown[0]=0）`,
+    `22-disposal-curves.json：两条十笔复利曲线——处置画像终值 ${curveDisposal22[9]!.toFixed(4)}（跌破本金一半附近）、修正版终值 ${curveRevised22[9]!.toFixed(4)}`,
   ].join('\n'),
 )

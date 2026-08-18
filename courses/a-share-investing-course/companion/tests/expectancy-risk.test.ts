@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { expectancy, type EdgeStats } from '../src/risk/expectancy'
+import { compoundCurve, expectancy, type EdgeStats } from '../src/risk/expectancy'
 import { kellyFraction } from '../src/risk/kelly'
 import { equityPaths, monteCarloRuin } from '../src/risk/ruin'
 
@@ -190,6 +190,49 @@ describe('结构性非法输入：抛中文错误', () => {
     ['非法 stats 传入模拟器', () => monteCarloRuin({ winRate: 2, avgWin: 0.1, avgLoss: 0.05 }, 100, 100, 0.5)],
     ['路径条数为 0', () => equityPaths(ok, 100, 0, 0.5)],
     ['路径种子非整数', () => equityPaths(ok, 100, 5, 0.5, { seed: 2.5 })],
+  ])('%s', (_name, fn) => {
+    expect(fn).toThrow()
+  })
+})
+
+describe('compoundCurve：期望值复利曲线（第 22 章处置效应演算）', () => {
+  /** 处置画像：胜率 60%、赢 2% 亏 20%——期望值每笔 −6.8%（正文示意参数） */
+  const DISPOSAL: EdgeStats = { winRate: 0.6, avgWin: 0.02, avgLoss: 0.2 }
+  /** 修正版：止损压亏到 8%、离场放盈到 12%，胜率不动——期望值每笔 +4.0% */
+  const REVISED: EdgeStats = { winRate: 0.6, avgWin: 0.12, avgLoss: 0.08 }
+
+  it('处置画像每笔 −6.8%：十笔 0.932 的 10 次方 ≈ 0.495，跌破本金', () => {
+    expect(expectancy(DISPOSAL)).toBeCloseTo(-0.068, 10)
+    const curve = compoundCurve(DISPOSAL, 10)
+    expect(curve).toHaveLength(10)
+    expect(curve[0]).toBeCloseTo(0.932, 10)
+    expect(curve[9]).toBeCloseTo(0.494492, 5)
+    expect(curve[9]).toBeLessThan(1)
+  })
+
+  it('修正版每笔 +4.0%：十笔 1.04 的 10 次方 ≈ 1.480，终值向上', () => {
+    expect(expectancy(REVISED)).toBeCloseTo(0.04, 10)
+    const curve = compoundCurve(REVISED, 10)
+    expect(curve[0]).toBeCloseTo(1.04, 10)
+    expect(curve[9]).toBeCloseTo(1.480244, 5)
+    expect(curve[9]).toBeGreaterThan(1)
+  })
+
+  it('两条曲线同一套胜率，方向在第一笔就分岔', () => {
+    const a = compoundCurve(DISPOSAL, 10)
+    const b = compoundCurve(REVISED, 10)
+    expect(a[0]).toBeLessThan(1)
+    expect(b[0]).toBeGreaterThan(1)
+    for (let k = 1; k < 10; k++) {
+      expect(a[k]).toBeLessThan(a[k - 1]!)
+      expect(b[k]).toBeGreaterThan(b[k - 1]!)
+    }
+  })
+
+  it.each([
+    ['步数为 0', () => compoundCurve(ok, 0)],
+    ['步数非整数', () => compoundCurve(ok, 3.5)],
+    ['非法 stats', () => compoundCurve({ winRate: 1.5, avgWin: 0.1, avgLoss: 0.05 }, 10)],
   ])('%s', (_name, fn) => {
     expect(fn).toThrow()
   })

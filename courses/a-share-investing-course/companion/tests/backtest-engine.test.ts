@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { backtest, type Strategy } from '../src/backtest/engine'
-import { maxDrawdown, totalReturn, tradeStats } from '../src/backtest/metrics'
+import { drawdownSeries, maxDrawdown, totalReturn, tradeStats } from '../src/backtest/metrics'
 import { createRng, generateCandles } from '../src/data/generate'
 import { crossovers } from '../src/indicators/ma'
 import type { Candle } from '../src/types'
@@ -355,6 +355,42 @@ describe('结构性非法输入：抛中文错误', () => {
     ['资金曲线含 NaN', () => maxDrawdown([1, NaN, 2])],
     ['期初为 0 求总收益', () => totalReturn([0, 1])],
     ['盈亏列表含非数值', () => tradeStats([100, NaN])],
+  ])('%s', (_name, fn) => {
+    expect(fn).toThrow()
+  })
+})
+
+describe('drawdownSeries：逐格回撤序列（第 21 章回测明细图）', () => {
+  it('相对历史峰值：[100,120,60,90] → [0,0,−0.5,−0.25]，首格恒为 0', () => {
+    expect(drawdownSeries([100, 120, 60, 90])).toEqual([0, 0, -0.5, -0.25])
+  })
+
+  it('最深一格与 maxDrawdown 同源（差一个符号），创新高时回撤归零', () => {
+    const curve = [100, 80, 130, 117, 140]
+    const dd = drawdownSeries(curve)
+    expect(dd[1]).toBeCloseTo(-0.2, 12)
+    expect(dd[3]).toBeCloseTo(-0.1, 12)
+    expect(dd[4]).toBe(0)
+    expect(Math.min(...dd)).toBeCloseTo(-maxDrawdown(curve), 12)
+  })
+
+  it('守规回测的资金曲线（种子 2102·MA5/20 交叉）：drawdown[0] === 0，最深一格 = −最大回撤', () => {
+    const market = generateCandles(createRng(2102), { days: 300, startPrice: 10, volatility: 0.03 })
+    const strategy: Strategy = (candles, i) => {
+      const kind = crossovers(candles, 5, 20).find((c) => c.index === i)
+      return kind?.kind === 'golden' ? 'buy' : kind?.kind === 'dead' ? 'sell' : 'hold'
+    }
+    const r = backtest(market, strategy)
+    const dd = drawdownSeries(r.equity)
+    expect(dd).toHaveLength(market.length)
+    expect(dd[0]).toBe(0)
+    expect(Math.min(...dd)).toBeCloseTo(-r.maxDrawdown, 12)
+    expect(r.maxDrawdown).toBeCloseTo(0.412, 2) // 正文读数：最大回撤 41.2%
+  })
+
+  it.each([
+    ['空资金曲线求逐格回撤', () => drawdownSeries([])],
+    ['资金曲线含 NaN', () => drawdownSeries([1, NaN, 2])],
   ])('%s', (_name, fn) => {
     expect(fn).toThrow()
   })

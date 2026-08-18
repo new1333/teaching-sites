@@ -47,6 +47,27 @@ export function aggregateTicks(ticks: readonly Tick[], session: Session): Candle
   return candles
 }
 
+/** 逐笔方向标注（tick 规则）：较前一笔价上行记主动买 'buy'、下行记主动卖 'sell'，同价沿用前一笔；
+ *  首笔没有前价可依，约定记 'buy'（开盘第一笔来自集合竞价的双方撮合，可视化取约定方向）。
+ *  返回与 ticks 等长的方向序列——第 3 章「一根蜡烛的诞生」图给每笔成交贴的箭头 */
+export function tickDirections(ticks: readonly Tick[]): ('buy' | 'sell')[] {
+  if (ticks.length === 0) throw new Error('tickDirections：ticks 不能为空')
+  const out: ('buy' | 'sell')[] = []
+  for (let i = 0; i < ticks.length; i++) {
+    const t = ticks[i]
+    if (!Number.isFinite(t.price) || t.price <= 0) {
+      throw new Error(`tickDirections：第 ${i + 1} 笔的价格必须是正数，收到的是 ${t.price}`)
+    }
+    if (i === 0) {
+      out.push('buy')
+      continue
+    }
+    const prev = ticks[i - 1]!.price
+    out.push(t.price > prev ? 'buy' : t.price < prev ? 'sell' : out[i - 1]!)
+  }
+  return out
+}
+
 /** n 根日K并成 1 根大周期K线（n=5 即周K）：开=首根开、收=末根收、高=最高、低=最低、量=求和；不足 n 根的尾组照样并成一根 */
 export function resample(daily: readonly Candle[], n: number): Candle[] {
   if (daily.length === 0) throw new Error('resample：daily 不能为空')

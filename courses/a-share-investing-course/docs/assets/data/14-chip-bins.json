@@ -1,0 +1,96 @@
+{
+  "bins": [
+    {
+      "price": 9,
+      "volume": 69022,
+      "profitable": true
+    },
+    {
+      "price": 9.2,
+      "volume": 193738,
+      "profitable": true
+    },
+    {
+      "price": 9.4,
+      "volume": 73755,
+      "profitable": true
+    },
+    {
+      "price": 9.6,
+      "volume": 143395,
+      "profitable": true
+    },
+    {
+      "price": 9.8,
+      "volume": 69022,
+      "profitable": true
+    },
+    {
+      "price": 10,
+      "volume": 103306,
+      "profitable": true
+    },
+    {
+      "price": 10.2,
+      "volume": 87523,
+      "profitable": true
+    },
+    {
+      "price": 10.4,
+      "volume": 120470,
+      "profitable": true
+    },
+    {
+      "price": 10.6,
+      "volume": 88569,
+      "profitable": true
+    },
+    {
+      "price": 10.8,
+      "volume": 55749,
+      "profitable": false
+    },
+    {
+      "price": 11,
+      "volume": 36976,
+      "profitable": false
+    },
+    {
+      "price": 11.2,
+      "volume": 13616,
+      "profitable": false
+    },
+    {
+      "price": 11.4,
+      "volume": 26248,
+      "profitable": false
+    },
+    {
+      "price": 11.6,
+      "volume": 15566,
+      "profitable": false
+    },
+    {
+      "price": 11.8,
+      "volume": 12771,
+      "profitable": false
+    },
+    {
+      "price": 12,
+      "volume": 19979,
+      "profitable": false
+    },
+    {
+      "price": 12.2,
+      "volume": 866574,
+      "profitable": false
+    },
+    {
+      "price": 12.4,
+      "volume": 3721,
+      "profitable": false
+    }
+  ],
+  "currentPrice": 10.79,
+  "avgCost": 10.96
+}

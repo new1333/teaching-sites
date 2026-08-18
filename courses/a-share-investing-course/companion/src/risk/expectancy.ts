@@ -38,3 +38,22 @@ export function expectancy(stats: EdgeStats): number {
   const q = 1 - stats.winRate
   return stats.winRate * stats.avgWin - q * stats.avgLoss
 }
+
+/** 期望值复利曲线：每一笔按期望值复利——第 k 格 = (1 + 期望值)^(k+1)，从初始 1 起步。
+ *  第 22 章处置效应演算的同一条算式：期望值 −6.8% 的画像十笔剩 0.932 的 10 次方 ≈ 0.495，
+ *  修正版 +4.0% 十笔 ≈ 1.48——同一套胜率，命运分岔只在每笔的平均盈亏。
+ *  「每笔平均」直接当每笔复利是示意口径（正文与差异清单已声明）。 */
+export function compoundCurve(stats: EdgeStats, steps: number): number[] {
+  assertEdgeStats(stats, 'compoundCurve')
+  if (!Number.isInteger(steps) || steps < 1) {
+    throw new Error(`compoundCurve：steps 必须是正整数，收到的是 ${steps}`)
+  }
+  const factor = 1 + expectancy(stats)
+  const out: number[] = []
+  let v = 1
+  for (let k = 0; k < steps; k++) {
+    v *= factor
+    out.push(v)
+  }
+  return out
+}

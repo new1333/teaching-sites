@@ -98,7 +98,36 @@ ${courses
 ---
 `
 
+// 聚合站默认回退 DefaultTheme，课程在自身 theme/index.ts 注册的全局组件（如 KLineChart）
+// 会全部静默失效（标签原样输出、浏览器丢弃）。这里把各课程 theme 的 enhanceApp 串起来统一注册。
+const themed = courses.filter((c) =>
+  existsSync(join(coursesDir, c.name, 'docs', '.vitepress', 'theme', 'index.ts')),
+)
+const camel = (name) => name.replace(/-([a-z0-9])/g, (_, ch) => ch.toUpperCase())
+let themeLog = ''
+if (themed.length) {
+  const themeTs = `// 由 scripts/portal-sync.mjs 生成，勿手改。改课程组件请改该课程自己的 theme/index.ts 后重跑 pnpm sync。
+import type { Theme } from 'vitepress'
+import DefaultTheme from 'vitepress/theme'
+${themed.map((c) => `import ${camel(c.name)} from '../../${c.name}/docs/.vitepress/theme/index'`).join('\n')}
+
+const courseThemes: Theme[] = [${themed.map((c) => camel(c.name)).join(', ')}]
+
+export default {
+  extends: DefaultTheme,
+  enhanceApp(ctx) {
+    for (const theme of courseThemes) theme.enhanceApp?.(ctx)
+  },
+} satisfies Theme
+`
+  mkdirSync(join(coursesDir, '.vitepress', 'theme'), { recursive: true })
+  writeFileSync(join(coursesDir, '.vitepress', 'theme', 'index.ts'), themeTs)
+  themeLog = `；已聚合 ${themed.length} 个课程组件包（${themed.map((c) => c.name).join('、')}）`
+}
+
 mkdirSync(join(coursesDir, '.vitepress'), { recursive: true })
 writeFileSync(join(coursesDir, '.vitepress', 'config.mjs'), config)
 writeFileSync(join(coursesDir, 'index.md'), index)
-console.log(`[portal] 已生成聚合站：${courses.map((c) => `${c.title}(${c.chapterCount} 章)`).join('、')}`)
+console.log(
+  `[portal] 已生成聚合站：${courses.map((c) => `${c.title}(${c.chapterCount} 章)`).join('、')}${themeLog}`,
+)

@@ -32,6 +32,20 @@ export function maxDrawdown(equity: readonly number[]): number {
   return worst
 }
 
+/** 逐格回撤序列：第 i 格 = equity[i] 相对「到此为止最高点」的下坡幅度（记负数比例，峰上为 0）。
+ *  首格没有前史，drawdown[0] 恒为 0。maxDrawdown 只报最深的一次下坡，
+ *  这条曲线把整段路程逐格铺开——回撤面积图的原料 */
+export function drawdownSeries(equity: readonly number[]): number[] {
+  assertCurve(equity, 'drawdownSeries')
+  const out: number[] = []
+  let peak = equity[0]
+  for (const v of equity) {
+    if (v > peak) peak = v
+    out.push(peak > 0 ? v / peak - 1 : 0)
+  }
+  return out
+}
+
 /** 总收益 = 期末资金 ÷ 期初资金 − 1：整场彩排赚了或亏了几成。
  *  期初必须大于 0——资金不是从零起步的。 */
 export function totalReturn(equity: readonly number[]): number {

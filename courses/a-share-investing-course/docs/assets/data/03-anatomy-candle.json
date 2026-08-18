@@ -1,0 +1,42 @@
+{
+  "candle": {
+    "date": "2026-03-02",
+    "open": 10,
+    "high": 10.4,
+    "low": 9.8,
+    "close": 10.25,
+    "volume": 1100
+  },
+  "trades": [
+    {
+      "time": "09:30",
+      "price": 10,
+      "size": 200,
+      "direction": "buy"
+    },
+    {
+      "time": "10:15",
+      "price": 10.4,
+      "size": 100,
+      "direction": "buy"
+    },
+    {
+      "time": "11:05",
+      "price": 9.8,
+      "size": 300,
+      "direction": "sell"
+    },
+    {
+      "time": "14:00",
+      "price": 10.1,
+      "size": 100,
+      "direction": "buy"
+    },
+    {
+      "time": "14:57",
+      "price": 10.25,
+      "size": 400,
+      "direction": "buy"
+    }
+  ]
+}
