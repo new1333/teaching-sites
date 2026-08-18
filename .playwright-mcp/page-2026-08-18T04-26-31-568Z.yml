@@ -1,0 +1,398 @@
+- generic [ref=f2e3]:
+  - link "Skip to content" [ref=f2e4] [cursor=pointer]:
+    - /url: "#VPContent"
+  - banner:
+    - generic:
+      - generic:
+        - generic:
+          - link "WebGL 图形学入门：从第一个三角形到 3D 世界" [ref=f2e6] [cursor=pointer]:
+            - /url: /
+          - generic [ref=f2e8]:
+            - button "Search" [ref=f2e11] [cursor=pointer]:
+              - generic [ref=f2e15]:
+                - generic [ref=f2e16]: Ctrl
+                - generic [ref=f2e17]: K
+            - navigation "Main Navigation" [ref=f2e18]:
+              - link "首页" [ref=f2e20] [cursor=pointer]:
+                - /url: /
+              - link "关于" [ref=f2e22] [cursor=pointer]:
+                - /url: /about.html
+            - button "extra navigation" [ref=f2e25] [cursor=pointer]
+  - button "On this page" [ref=f2e30] [cursor=pointer]
+  - complementary [ref=f2e32]:
+    - navigation "Sidebar Navigation" [ref=f2e34]:
+      - generic [ref=f2e37]:
+        - button [ref=f2e38] [cursor=pointer]:
+          - heading "第一部 · 点亮像素" [level=2] [ref=f2e40]
+          - button "toggle section" [ref=f2e41]
+        - generic [ref=f2e43]:
+          - link [ref=f2e47] [cursor=pointer]:
+            - /url: /01-gpu-pipeline.html
+            - paragraph [ref=f2e48]: 1. 为什么你的画布卡成幻灯片：GPU 与渲染管线
+          - link [ref=f2e52] [cursor=pointer]:
+            - /url: /02-first-triangle.html
+            - paragraph [ref=f2e53]: 2. 第一个三角形：着色器、缓冲区与顶点属性
+          - link [ref=f2e57] [cursor=pointer]:
+            - /url: /03-uniforms-and-animation.html
+            - paragraph [ref=f2e58]: 3. 动起来：uniform 与渲染循环
+      - generic [ref=f2e60]:
+        - button [ref=f2e61] [cursor=pointer]:
+          - heading "第二部 · 三维的数学" [level=2] [ref=f2e63]
+          - button "toggle section" [ref=f2e64]
+        - generic [ref=f2e66]:
+          - link [ref=f2e70] [cursor=pointer]:
+            - /url: /04-vectors.html
+            - paragraph [ref=f2e71]: 4. 向量：图形世界的语言
+          - link [ref=f2e75] [cursor=pointer]:
+            - /url: /05-transform-matrices.html
+            - paragraph [ref=f2e76]: 5. 矩阵变换：平移、旋转、缩放与顺序陷阱
+          - link [ref=f2e80] [cursor=pointer]:
+            - /url: /06-projection.html
+            - paragraph [ref=f2e81]: 6. 投影：把三维压进屏幕
+          - link [ref=f2e85] [cursor=pointer]:
+            - /url: /07-camera-lookat.html
+            - paragraph [ref=f2e86]: 7. 相机：lookAt 与搬世界
+          - link [ref=f2e90] [cursor=pointer]:
+            - /url: /08-depth-and-cube.html
+            - paragraph [ref=f2e91]: 8. 深度缓冲与第一个 3D 物体
+      - generic [ref=f2e93]:
+        - button [ref=f2e94] [cursor=pointer]:
+          - heading "第三部 · 光与表面" [level=2] [ref=f2e96]
+          - button "toggle section" [ref=f2e97]
+        - generic [ref=f2e99]:
+          - link [ref=f2e103] [cursor=pointer]:
+            - /url: /09-textures.html
+            - paragraph [ref=f2e104]: 9. 纹理：给世界穿上皮肤
+          - link [ref=f2e108] [cursor=pointer]:
+            - /url: /10-lighting.html
+            - paragraph [ref=f2e109]: 10. 光照：法线与 Phong 三件套
+      - generic [ref=f2e111]:
+        - button [ref=f2e112] [cursor=pointer]:
+          - heading "第四部 · 组装 3D 世界" [level=2] [ref=f2e114]
+          - button "toggle section" [ref=f2e115]
+        - generic [ref=f2e117]:
+          - link [ref=f2e121] [cursor=pointer]:
+            - /url: /11-scene-graph.html
+            - paragraph [ref=f2e122]: 11. 场景树：坐标跟着上级走
+          - link [ref=f2e126] [cursor=pointer]:
+            - /url: /12-camera-controls.html
+            - paragraph [ref=f2e127]: 12. 可操控的相机：轨道与漫游
+          - link [ref=f2e131] [cursor=pointer]:
+            - /url: /13-build-3d-world.html
+            - paragraph [ref=f2e132]: 13. 组装：一个可漫游的 3D 小世界
+          - link [ref=f2e136] [cursor=pointer]:
+            - /url: /14-beyond-webgl.html
+            - paragraph [ref=f2e137]: 14. 写完了 WebGL：Three.js、WebGL2 与 WebGPU
+      - generic [ref=f2e139]:
+        - button [ref=f2e140] [cursor=pointer]:
+          - heading "附录" [level=2] [ref=f2e142]
+          - button "toggle section" [ref=f2e143]
+        - generic [ref=f2e145]:
+          - link [ref=f2e149] [cursor=pointer]:
+            - /url: /glossary.html
+            - paragraph [ref=f2e150]: 术语表
+          - link [ref=f2e154] [cursor=pointer]:
+            - /url: /cheatsheet.html
+            - paragraph [ref=f2e155]: 速查表：GLSL 与 WebGL 调用
+          - link [ref=f2e159] [cursor=pointer]:
+            - /url: /divergences.html
+            - paragraph [ref=f2e160]: 简化清单：本课程与真实引擎的差距
+          - link [ref=f2e164] [cursor=pointer]:
+            - /url: /exercises.html
+            - paragraph [ref=f2e165]: 练习路线：把 minigl 再写一遍
+  - generic [ref=f2e170]:
+    - main [ref=f2e171]:
+      - generic [ref=f2e173]:
+        - heading [level=1] [ref=f2e174]:
+          - text: 纹理：给世界穿上皮肤
+          - link "Permalink to \"纹理：给世界穿上皮肤\"" [ref=f2e175] [cursor=pointer]:
+            - /url: "#纹理-给世界穿上皮肤"
+            - text: "#"
+        - paragraph [ref=f2e176]: 第 8 章埋的三处伏笔，今天全部到期。顶点表里每份顶点末尾那对 0 和 1（uv 字段）、取数口令里占着 24 字节偏移却没人取用的第三个顶点属性、小结里那句「下一章给立方体贴皮肤」——现在轮到它们开工。
+        - paragraph [ref=f2e177]: 你找了张现成的 8×8 格子图片，写好接线上传，跑起来第一眼就愣住：图案整个上下颠倒，底边的格子跑到顶上去了。翻资料加了一行 pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)，方向正了。凑近再看，新的毛病：格子的边缘糊成一片彩色锯齿，斜边犬牙交错；把相机拉近放大特写，格子干脆散成一块块马赛克，边缘全是台阶。你把模型矩阵、视图矩阵、投影矩阵挨个对账，全对——矩阵没病，MVP 从来没碰过贴图。病根在两个你从没设置过的参数上：取色怎么取、行序怎么对。这两个参数背后是一整套贴图词汇——纹理、UV 坐标、纹素、采样、过滤、包裹方式——本章一次讲清，再送你一个不依赖图片文件的贴图方案：程序化纹理。
+        - heading [level=2] [ref=f2e178]:
+          - text: 出发前清点：这一章动用哪些家当
+          - link "Permalink to \"出发前清点：这一章动用哪些家当\"" [ref=f2e179] [cursor=pointer]:
+            - /url: "#出发前清点-这一章动用哪些家当"
+            - text: "#"
+        - paragraph [ref=f2e180]: 管线侧照旧三段：顶点着色器管「东西在哪」，光栅化把三角形圈成格子，片元着色器管「格子涂什么色」。顶点属性从缓冲区逐顶点进料；随时间变的量走统一变量；可变变量把逐顶点的值运进片元、沿线做线性插值；渲染循环每帧清屏重画、动画量用增量时间缩放；片元着色器开头的 precision mediump float 还是第 3 章立的精度限定符规矩。裁剪坐标系、透视除法那套账不用重算——本章顶点坐标一个字不改。
+        - paragraph [ref=f2e181]: 数学侧也清闲：齐次坐标、列主序、矩阵乘法从右往左作用，MVP 三台机器（模型矩阵、视图矩阵、投影）原样值班；透视投影与正交投影、视锥体、宽高比、「相机是矩阵不是岗位」都照旧。深度测试与深度缓冲开着，索引绘制一次 drawElements 画完 36 个索引，缠绕方向与背面剔除照常判正反。向量、点积、叉积、归一化、单位向量、向量投影、缓动，这一章全部歇班——第 10 章讲光照时它们才全员复工。
+        - paragraph [ref=f2e182]:
+          - text: 只有一笔账要新算：帧率。给立方体换成砖墙细节，最笨的写法是往顶点表里塞几万个小方块，顶点着色器逐顶点跑一遍，16.7 毫秒的预算当场穿仓、帧率跳水掉帧。纹理的思路相反：细节写进一张图，一次上传显存，逐帧只查表——查表发生在片元着色器里，那是 GPU 的主场。
+          - strong [ref=f2e183]: 细节住在纹理里而不是顶点里，省的正是每帧的算力和带宽
+          - text: 。
+        - heading [level=2] [ref=f2e184]:
+          - text: 纹理：把细节从顶点搬到图片里
+          - link "Permalink to \"纹理：把细节从顶点搬到图片里\"" [ref=f2e185] [cursor=pointer]:
+            - /url: "#纹理-把细节从顶点搬到图片里"
+            - text: "#"
+        - paragraph [ref=f2e186]: 先回答「为什么存在」。想画一面砖墙：一块砖约 0.2 米见方，一面 3 米 × 3 米的墙要两百多块砖，每块砖四个顶点就是上千个顶点——还只是一面墙；顶点着色器每帧都要逐顶点跑，第 1 章算过的帧率预算撑不住这种花法。换个组织法：墙面只用 4 个顶点圈出矩形，砖缝、色差、污渍这些「颜色层面的细节」写进一张图，渲染时按位置查图取色。这张图就是纹理（texture）——贴在物体表面的图片数据，由 GPU 按坐标取样。屏幕像素还是那么多，贵的是逐顶点的变换，不是逐片元的查表。
+        - paragraph [ref=f2e187]: 纹理在显存里的形态，是逐像素排队的字节表：每个像素 4 个字节（R、G、B、A 各占一个），逐行连续。一张 128×128 的 RGBA 纹理就是 128×128×4 = 65536 个字节——本章实验场生成的正是这样一块 Uint8Array。纹理里的一个像素有自己的名字：纹素（texel）——起个专名单独叫，是因为它和屏幕像素不是一回事。
+        - heading [level=2] [ref=f2e188]:
+          - text: UV 坐标：贴纸上的地址
+          - link "Permalink to \"UV 坐标：贴纸上的地址\"" [ref=f2e189] [cursor=pointer]:
+            - /url: "#uv-坐标-贴纸上的地址"
+            - text: "#"
+        - paragraph [ref=f2e190]:
+          - text: 贴纸要贴上墙，得先约定「贴纸上的哪个点对齐墙上的哪个点」。这个约定就是 UV 坐标（texture coordinates）：纹理平面上的归一化地址，左下角 (0,0)、右上角 (1,1)，u 沿纹理的底边向右、v 沿左边向上。归一化，就是只记「百分之几」、不记第几个像素。为什么归一化：分辨率无关。顶点表里写死「第 37 个像素」，换一张 2048 的图就得改顶点表；写 (0.25, 0.5)，64×64 和 2048×2048 的纹理都读得懂，
+          - strong [ref=f2e191]: 同一份顶点数据配任意分辨率的贴图
+          - text: 。这个设计你在第 8 章已经用过：立方体每面的四个角点各拿 (0,0)(1,0)(1,1)(0,1)，一张贴图铺满一整面，六面共用同一个 [0,1] 的地址空间。
+        - generic [ref=f2e192]:
+          - button "Copy Code" [ref=f2e193] [cursor=pointer]
+          - generic [ref=f2e194]: text
+          - code [ref=f2e196]:
+            - generic [ref=f2e197]: 立方体 +Z 面（从外面看）的 UV 分配——每面铺满 [0,1]²：
+            - generic [ref=f2e198]: (0,1)--------------------(1,1)
+            - generic [ref=f2e199]: "| |"
+            - generic [ref=f2e200]: "| 一整张贴图 |"
+            - generic [ref=f2e201]: "| （棋盘格、砖墙都行） |"
+            - generic [ref=f2e202]: "| |"
+            - generic [ref=f2e203]: (0,0)--------------------(1,0)
+            - generic [ref=f2e204]: 左下角是原点，v 向上——注意，是向上
+        - paragraph [ref=f2e205]: 纸上算一笔承重的账。纹理 8×8 纹素、格子数 cells = 4（格边 = 8/4 = 2 个纹素），约定格 (0,0)（左下角）为黑、相邻格黑白互反：
+        - generic [ref=f2e206]:
+          - button "Copy Code" [ref=f2e207] [cursor=pointer]
+          - generic [ref=f2e208]: text
+          - code [ref=f2e210]:
+            - generic [ref=f2e211]: UV (0.25, 0.5) 落在哪格、取什么色？
+            - generic [ref=f2e212]: 纹素刻度：x = floor(0.25 × 8) = 2，y = floor(0.5 × 8) = 4
+            - generic [ref=f2e213]: 格号：cx = floor(2 / 2) = 1，cy = floor(4 / 2) = 2
+            - generic [ref=f2e214]: 颜色：cx + cy = 3，奇数 → 白
+            - generic [ref=f2e215]: 越界再算一笔（包裹方式 REPEAT 时）：
+            - generic [ref=f2e216]: UV (1.25, 0.5)：u 取小数部分 0.25
+            - generic [ref=f2e217]: → 落点与 (0.25, 0.5) 同纹素、同格 → 同样取白
+        - paragraph [ref=f2e218]: 不必背结论：任给你一个 UV，你都能在纸上推出它落在哪格、取什么色——UV 对你就不该是黑话。贴纸就是那个老比方：纹理是贴纸，UV 是贴纸上的网格地址，贴的时候报地址不报像素。
+        - paragraph [ref=f2e219]: 还有半笔账先记着：UV 的 v 轴向上，而图片文件的行序自上而下——两套 y 轴方向相反，这正是开章「上下颠倒」的病根，下文单独算它。
+        - heading [level=2] [ref=f2e220]:
+          - text: 纹素与屏幕像素：两套户口
+          - link "Permalink to \"纹素与屏幕像素：两套户口\"" [ref=f2e221] [cursor=pointer]:
+            - /url: "#纹素与屏幕像素-两套户口"
+            - text: "#"
+        - paragraph [ref=f2e222]:
+          - text: 纹素是纹理的像素，屏幕像素是屏幕的像素，
+          - strong [ref=f2e223]: 两套户口各记各的账
+          - text: 。一张 64×64 的纹理贴满屏幕上 320×320 像素的一张面：一个纹素要盖 5×5 个屏幕像素——放大。反过来，2048×2048 的纹理缩到屏幕上 300×300 像素：四十几个纹素挤一个屏幕像素——缩小。放大缩小每帧都在发生：立方体一转，同一张面离相机忽近忽远，纹素和屏幕像素的配比就跟着变。配比一旦不是一比一，「UV 落在纹素之间」就躲不开——这就要引出采样和过滤。
+        - heading [level=2] [ref=f2e224]:
+          - text: 采样：片元着色器里的查表
+          - link "Permalink to \"采样：片元着色器里的查表\"" [ref=f2e225] [cursor=pointer]:
+            - /url: "#采样-片元着色器里的查表"
+            - text: "#"
+        - paragraph [ref=f2e226]: 采样（sampling）就是按 UV 坐标从纹理里取出一个颜色的动作——GLSL 里一个函数调用的事。链路把前八章的零件串起来：UV 是顶点属性，在顶点表里每顶点一份；顶点着色器把它交给可变变量；光栅化按片元位置沿线插值——第 2 章那条「传送带」运的值从颜色换成了坐标；片元着色器拿到属于自己这个片元的 UV，查表取色。
+        - generic [ref=f2e227]:
+          - button "Copy Code" [ref=f2e228] [cursor=pointer]
+          - generic [ref=f2e229]: glsl
+          - code [ref=f2e231]:
+            - generic [ref=f2e232]: // 用法示例：采样链路的两端——UV 沿可变变量插值进片元，texture2D 查表
+            - generic [ref=f2e233]: // 顶点着色器
+            - generic [ref=f2e234]: attribute vec3 a_position;
+            - generic [ref=f2e235]: attribute vec2 a_uv; // 第 8 章 24 字节偏移的字段，今天开工
+            - generic [ref=f2e236]: uniform mat4 u_mvp;
+            - generic [ref=f2e237]: varying vec2 v_uv;
+            - generic [ref=f2e238]: "void main() {"
+            - generic [ref=f2e239]: v_uv = a_uv; // 坐标当值传，沿线自动插值
+            - generic [ref=f2e240]: gl_Position = u_mvp * vec4(a_position, 1.0);
+            - generic [ref=f2e241]: "}"
+            - generic [ref=f2e242]: // 片元着色器
+            - generic [ref=f2e243]: precision mediump float; // 精度限定符的规矩照旧
+            - generic [ref=f2e244]: varying vec2 v_uv;
+            - generic [ref=f2e245]: uniform sampler2D u_sampler; // 采样器：指名道姓的纹理入口
+            - generic [ref=f2e246]: "void main() {"
+            - generic [ref=f2e247]: gl_FragColor = texture2D(u_sampler, v_uv); // 采样：按 UV 查表取色
+            - generic [ref=f2e248]: "}"
+        - paragraph [ref=f2e249]: 注意查表的密度：不是每顶点一次，是每片元一次。一张面在屏幕上占几万个片元，就查几万次表——这就是为什么细节要住进纹理：查表便宜，逐顶点变换贵。
+        - heading [level=2] [ref=f2e250]:
+          - text: 过滤：UV 落在纹素之间怎么办
+          - link "Permalink to \"过滤：UV 落在纹素之间怎么办\"" [ref=f2e251] [cursor=pointer]:
+            - /url: "#过滤-uv-落在纹素之间怎么办"
+            - text: "#"
+        - paragraph [ref=f2e252]: 片元拿到的 UV 是插值出来的浮点数，几乎从不会恰好落在纹素中心。比如 u = 0.4375，它落在两个纹素之间——取谁的颜色？这就是过滤（filtering）要定的策略：UV 落在纹素之间时的取色规则。放大照片时怎么调色，就这两种思路：
+        - list [ref=f2e253]:
+          - listitem [ref=f2e254]: NEAREST：谁近听谁的。整块取中心最近的那个纹素——省事，但放大后每个屏幕像素一块颜色，马赛克块就是这么来的；斜边上的纹素锯齿分明。
+          - listitem [ref=f2e255]: LINEAR：按距离调匀。相邻纹素按远近加权混合，格边出现过渡色——放大看着柔和，代价是细节被抹成一片灰。
+        - generic [ref=f2e256]:
+          - button "Copy Code" [ref=f2e257] [cursor=pointer]
+          - generic [ref=f2e258]: text
+          - code [ref=f2e260]:
+            - generic [ref=f2e261]: 4×4 纹素的纹理，采样点 u = 0.4375（纹素刻度：0.4375 × 4 = 1.75）
+            - generic [ref=f2e262]: NEAREST：找中心最近的纹素——纹素 1 中心 1.5（差 0.25）
+            - generic [ref=f2e263]: 胜过纹素 2 中心 2.5（差 0.75）→ 整块取纹素 1 的颜色
+            - generic [ref=f2e264]: LINEAR： 站在两中心之间 0.25 处 → 纹素 1 占七成五、纹素 2 占两成五
+            - generic [ref=f2e265]: → 颜色 = 0.75 × c1 + 0.25 × c2，格边出现过渡色
+        - paragraph [ref=f2e266]: 接线是两个参数，缩小与放大各管一档：TEXTURE_MIN_FILTER（纹理比屏幕小时，即缩小）与 TEXTURE_MAG_FILTER（放大）。有一处默认值的坑必须记账：MIN_FILTER 的默认值是 NEAREST_MIPMAP_LINEAR，它要求一套逐级减半的多级渐远纹理；只上传第 0 级又不改参数，纹理不完整，采样出来一片黑。多级渐远纹理是缩小时的抗噪方案，本课程不展开——做法是把 MIN 与 MAG 设成同一档，把这笔债绕开。
+        - heading [level=2] [ref=f2e267]:
+          - text: 上下颠倒的账：UNPACK_FLIP_Y_WEBGL
+          - link "Permalink to \"上下颠倒的账：UNPACK_FLIP_Y_WEBGL\"" [ref=f2e268] [cursor=pointer]:
+            - /url: "#上下颠倒的账-unpack-flip-y-webgl"
+            - text: "#"
+        - paragraph [ref=f2e269]: 现在算开章第一笔病。两套坐标的方向相反：UV 的 v 轴向上，(0,0) 在左下角；图片文件与浏览器里的图片，行序从顶行往下。而 WebGL 上传纹理时，数据的第一行落在 v=0 那一侧——底边。两条规矩一叠加：图片的顶行（第一行）直传后落进底边，整张图在 v 方向镜像，贴上去就是上下颠倒。
+        - generic [ref=f2e270]:
+          - button "Copy Code" [ref=f2e271] [cursor=pointer]
+          - generic [ref=f2e272]: text
+          - code [ref=f2e274]:
+            - generic [ref=f2e275]: 图片文件的行序（顶行在前） 纹理的 v 轴（向上）
+            - generic [ref=f2e276]: 第 0 行 = 顶行 v=1 顶边
+            - generic [ref=f2e277]: 第 1 行 v=0.5
+            - generic [ref=f2e278]: 第 2 行 v=0.25
+            - generic [ref=f2e279]: 第 7 行 = 底行 v=0 底边 ← 上传的数据第一行落这里
+            - generic [ref=f2e280]: 直传：顶行落 v=0 —— 图案倒立
+            - generic [ref=f2e281]: 开 UNPACK_FLIP_Y_WEBGL：上传时把源数据行序倒转一次 —— 顶行回顶边
+        - paragraph [ref=f2e282]:
+          - text: UNPACK_FLIP_Y_WEBGL 是 pixelStorei 的一个开关，默认关。按 MDN 的口径：置为 true 时上传（texImage2D / texSubImage2D）会把源数据沿垂直方向翻转——也就是把行序倒一次再入库。图片行序的数据要正立，就开它；反过来，如果你像本章实验场那样按 UV 约定自己生成数据（第 0 行生来就是底边），直传即正立、开它反而倒立。开关没有对错，对的是账：
+          - strong [ref=f2e283]: 数据第 0 行是谁，和 v=0 要对上
+          - text: 。
+        - heading [level=2] [ref=f2e284]:
+          - text: 包裹方式：UV 越界怎么办
+          - link "Permalink to \"包裹方式：UV 越界怎么办\"" [ref=f2e285] [cursor=pointer]:
+            - /url: "#包裹方式-uv-越界怎么办"
+            - text: "#"
+        - paragraph [ref=f2e286]: 顶点表的 UV 老老实实在 [0,1] 里，但没人拦着你在着色器里把 UV 乘个 3——贴一面墙想平铺多张贴图时，这是常规操作。UV 出了 [0,1]，听谁的？这就是包裹方式（texture wrapping）：UV 越出 [0,1] 时的处理规则，S、T（即 u、v 方向）各设一个。两种常用：
+        - list [ref=f2e287]:
+          - listitem [ref=f2e288]: REPEAT：取小数部分回来。u=1.25 当 0.25 用，贴图平铺拼接，一块贴纸无限复印。
+          - listitem [ref=f2e289]: CLAMP_TO_EDGE：摁在边缘。越界坐标被压回最边上一排纹素的中心，边缘纹素被拉成宽条纹——不复印，改成拉伸。
+        - paragraph [ref=f2e290]: 上面 UV (0.25, 0.5) 的演算里那笔越界账就是 REPEAT 的账：(1.25, 0.5) 取小数部分后与 (0.25, 0.5) 落进同一格、取同一个白。还有一条 WebGL 1 的硬限制要记账：纹理尺寸不是 2 的幂时，包裹只许 CLAMP_TO_EDGE、过滤只许 NEAREST 或 LINEAR，否则采样返回黑色。本课程的纹理一律用 2 的幂尺寸，REPEAT 随便用。
+        - heading [level=2] [ref=f2e291]:
+          - text: 接线：纹理对象与采样器 uniform
+          - link "Permalink to \"接线：纹理对象与采样器 uniform\"" [ref=f2e292] [cursor=pointer]:
+            - /url: "#接线-纹理对象与采样器-uniform"
+            - text: "#"
+        - paragraph [ref=f2e293]: 纹理在 GL 侧是一件独立对象，与顶点缓冲区平起平坐——它的数据不走 ARRAY_BUFFER，走自己的 texImage2D。全部接线五步：
+        - generic [ref=f2e294]:
+          - button "Copy Code" [ref=f2e295] [cursor=pointer]
+          - generic [ref=f2e296]: ts
+          - code [ref=f2e298]:
+            - generic [ref=f2e299]: // 用法示例：纹理对象与采样器的全部接线（着色器里的 u_sampler 见上文）
+            - generic [ref=f2e300]: const tex = gl.createTexture() // 1. 造纹理对象
+            - generic [ref=f2e301]: gl.activeTexture(gl.TEXTURE0) // 2. 选 0 号纹理单元——给同时挂着的纹理编的号
+            - generic [ref=f2e302]: gl.bindTexture(gl.TEXTURE_2D, tex) // 3. 绑定到当前单元
+            - generic [ref=f2e303]: gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1) // 图片行序的数据才要开；UV 序数据设 0
+            - generic [ref=f2e304]: gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, data) // 4. 入库
+            - generic [ref=f2e305]: gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR) // 5. 过滤
+            - generic [ref=f2e306]: gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+            - generic [ref=f2e307]: gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT) // 包裹
+            - generic [ref=f2e308]: gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+            - generic [ref=f2e309]: gl.uniform1i(uSampler, 0) // 采样器 uniform 里填的是单元号，不是纹理对象
+        - paragraph [ref=f2e310]: 最后一行最容易接错：sampler2D 是统一变量，但它存的不是纹理、是纹理单元的编号。GL 里有若干个纹理单元（规范保底 8 个），activeTexture 选台、bindTexture 挂货、uniform1i 报台号——三方对上同一个号，采样器才知道去哪查表。
+        - heading [level=2] [ref=f2e311]:
+          - text: 渐进实验：代码即图案
+          - link "Permalink to \"渐进实验：代码即图案\"" [ref=f2e312] [cursor=pointer]:
+            - /url: "#渐进实验-代码即图案"
+            - text: "#"
+        - paragraph [ref=f2e313]: 老规矩测试先行。tests/textures.test.ts 写好 8 条断言，此刻 src/texture/procedural.ts 还不存在，跑 pnpm test 整个新套件直接红。import 一个不存在的模块，连断言都没轮到执行。里程碑先钉在测试上，再动笔实现。
+        - paragraph [ref=f2e314]: 这一章的实验场增量是一个纹理数据生成器。所谓程序化纹理（procedural texture），就是用代码算出纹素数据的纹理——不读图片文件，图案即函数。它有三个好处：零外部资源，课程的演示与你的实验离线都能跑；同参数必得同图案，测试可以像对账数字一样对账图案；想要什么图案，规则就写在你眼前。棋盘格的规则一句话：格边 = size / cells 个纹素，格 (cx, cy) 的黑白由 (cx + cy) 的奇偶定。
+        - generic [ref=f2e315]:
+          - button "Copy Code" [ref=f2e316] [cursor=pointer]
+          - generic [ref=f2e317]: ts
+          - code [ref=f2e319]:
+            - generic [ref=f2e320]: // src/texture/procedural.ts · checkerboard（首次登场，全文）
+            - generic [ref=f2e321]: "export function checkerboard(size: number, cells: number): Uint8Array {"
+            - generic [ref=f2e322]: const data = new Uint8Array(size * size * 4)
+            - generic [ref=f2e323]: const edge = size / cells // 格边（像素）：一格里挤着 edge×edge 个像素
+            - generic [ref=f2e324]: "for (let y = 0; y < size; y++) {"
+            - generic [ref=f2e325]: "for (let x = 0; x < size; x++) {"
+            - generic [ref=f2e326]: const dark = (Math.floor(x / edge) + Math.floor(y / edge)) % 2 === 0
+            - generic [ref=f2e327]: "const level = dark ? 0 : 255 // 黑白两档，写满 RGBA 四个字节"
+            - generic [ref=f2e328]: const o = (y * size + x) * 4
+            - generic [ref=f2e329]: data[o] = level
+            - generic [ref=f2e330]: data[o + 1] = level
+            - generic [ref=f2e331]: data[o + 2] = level
+            - generic [ref=f2e332]: data[o + 3] = 255
+            - generic [ref=f2e333]: "}"
+            - generic [ref=f2e334]: "}"
+            - generic [ref=f2e335]: return data
+            - generic [ref=f2e336]: "}"
+        - paragraph [ref=f2e337]: 对着 UV 演算读它：y 是从底边数起的行号（UV 同向），数组第 0 行生来就是 v=0 的底边——这就是 JSDoc 里写死的原点约定，也是它直接上传即正立的原因。floor(x / edge) 就是「落在第几格」：8×8 纹素配 cells=4 时 edge=2，x=3 落第 1 格，正是上文手算的那笔。黑白只写 0/255 两档，为的是测试能在纸上逐像素对账。index.ts 照例 re-export：checkerboard。
+        - paragraph [ref=f2e338]: 另一半早就在了：createCube() 的顶点表里，每面四个角点的 uv 依次 (0,0)(1,0)(1,1)(0,1)，六面每面铺满 [0,1]——第 8 章写下的地址，今天终于有货可查。演示组件里那条 24 字节偏移的 vertexAttribPointer 也从占位转正为取用。
+        - generic [ref=f2e339]:
+          - generic [ref=f2e340]:
+            - generic [ref=f2e341]:
+              - text: 格子密度 8×8
+              - slider "格子密度 8×8" [ref=f2e342]: "3"
+            - generic [ref=f2e343]:
+              - checkbox "LINEAR 过滤" [ref=f2e344]
+              - text: LINEAR 过滤
+            - generic [ref=f2e345]:
+              - checkbox "REPEAT 包裹" [checked] [ref=f2e346]
+              - text: REPEAT 包裹
+            - generic [ref=f2e347]:
+              - checkbox "UV 放大到 [0,3]" [ref=f2e348]
+              - text: UV 放大到 [0,3]
+            - generic [ref=f2e349]:
+              - checkbox "特写" [ref=f2e350]
+              - text: 特写
+            - generic [ref=f2e351]:
+              - checkbox "行序翻转 UNPACK_FLIP_Y" [checked] [ref=f2e352]
+              - text: 行序翻转 UNPACK_FLIP_Y
+            - generic [ref=f2e353]:
+              - checkbox "自转" [active] [ref=f2e354]
+              - text: 自转
+          - list [ref=f2e356]:
+            - listitem [ref=f2e357]: 纹理 128×128、RGBA 逐像素 4 字节，共 65536 字节——代码生成（Uint8Array），零图片文件；左下角格染红是方向标记。
+            - listitem [ref=f2e358]: 接线五步：createTexture → bindTexture → pixelStorei + texImage2D → texParameteri（过滤/包裹）→ activeTexture(TEXTURE0) + uniform1i 把采样器指到 0 号单元。
+            - listitem [ref=f2e359]: MIN_FILTER 与 MAG_FILTER 设成同一档：默认的 NEAREST_MIPMAP_LINEAR 要多级渐远纹理才完整，本章不做 mipmap，把它绕开。
+          - paragraph [ref=f2e360]: 立方体每面铺满一张 [0,1] 的程序化棋盘格：UV 在顶点表里写好，varying 插值到片元，texture2D 采样上色
+        - paragraph [ref=f2e361]: 演示是一颗贴棋盘格的旋转立方体，开关与滑杆排在画布上方，账目与判词在画布下方。纹理 128×128 全程序化生成，零图片文件；左下角格染红，是给你看方向用的标记（实验场的 checkerboard 约定该格为黑，纯黑白）。按这几步玩：
+        - list [ref=f2e362]:
+          - listitem [ref=f2e363]: 格子密度滑杆从 2×2 拉到 32×32：每次都是重新生成纹理数据再上传——顶点表一个字节没动，这就是「细节住在纹理里」。
+          - listitem [ref=f2e364]: 勾上特写再切 NEAREST/LINEAR：贴近看格边——NEAREST 是马赛克块加锯齿，LINEAR 把边缘调出过渡灰。开章那笔糊成彩色锯齿的账，就是这个开关。
+          - listitem [ref=f2e365]: 勾上「UV 放大到 [0,3]」再切 REPEAT/CLAMP：REPEAT 把一张贴图平铺成 3×3；CLAMP_TO_EDGE 把边缘纹素拉成条纹。UV 不越界时这两个参数看不出差别——包裹方式只管出界之后。
+          - listitem [ref=f2e366]: 关掉「行序翻转 UNPACK_FLIP_Y」：红色标记格跳到右上角，整张贴图上下颠倒——开章第一个痛点当场复刻。
+        - heading [level=2] [ref=f2e367]:
+          - text: 验证：手算对账，门槛背书
+          - link "Permalink to \"验证：手算对账，门槛背书\"" [ref=f2e368] [cursor=pointer]:
+            - /url: "#验证-手算对账-门槛背书"
+            - text: "#"
+        - paragraph [ref=f2e369]: 两道门槛在 companion/ 下跑：pnpm run typecheck 加 pnpm test——85 条断言全绿，其中旧 77 条一字未动，新 8 条是本章里程碑。手算对账挑几笔：checkerboard(8, 4) 总字节数 = 8²×4 = 256；像素 (0,0)（数组前 4 个字节）是 (0,0,0,255)——左下角原点约定；沿底边一行数颜色段、沿左边一列数颜色段，段数都恰是 cells；任取相邻两格的中心像素，必是一黑一白。立方体那边：24 个顶点的 UV 全在 [0,1]，六面每面 min=0、max=1，且四个角点严格按左下→右下→右上→左上依次 (0,0)(1,0)(1,1)(0,1)——贴图不需要旋转就铺满每面。
+        - paragraph [ref=f2e370]: 颜色段的断言值得单独看——它把「黑白格数与 cells 一致」翻译成了机器可查的数法：
+        - generic [ref=f2e371]:
+          - button "Copy Code" [ref=f2e372] [cursor=pointer]
+          - generic [ref=f2e373]: ts
+          - code [ref=f2e375]:
+            - generic [ref=f2e376]: // tests/textures.test.ts · 黑白格数与 cells 一致（一维重复次数 = cells）
+            - generic [ref=f2e377]: "it('黑白格数与 cells 一致：沿底边一行数颜色段、沿左边一列数颜色段，段数都是 cells', () => {"
+            - generic [ref=f2e378]: for (const [size, cells] of [
+            - generic [ref=f2e379]: "[8, 4],"
+            - generic [ref=f2e380]: "[4, 2],"
+            - generic [ref=f2e381]: "[12, 3],"
+            - generic [ref=f2e382]: "] as const) {"
+            - generic [ref=f2e383]: const data = checkerboard(size, cells)
+            - generic [ref=f2e384]: // 底行（y=0）从左到右数颜色段：相邻像素颜色变了就开一段
+            - generic [ref=f2e385]: let runsRow = 1
+            - generic [ref=f2e386]: "for (let x = 1; x < size; x++) {"
+            - generic [ref=f2e387]: if (px(data, size, x, 0)[0] !== px(data, size, x - 1, 0)[0]) runsRow++
+            - generic [ref=f2e388]: "}"
+            - generic [ref=f2e389]: // 左列（x=0）从下到上数颜色段
+            - generic [ref=f2e390]: let runsCol = 1
+            - generic [ref=f2e391]: "for (let y = 1; y < size; y++) {"
+            - generic [ref=f2e392]: if (px(data, size, 0, y)[0] !== px(data, size, 0, y - 1)[0]) runsCol++
+            - generic [ref=f2e393]: "}"
+            - generic [ref=f2e394]: expect(runsRow).toBe(cells)
+            - generic [ref=f2e395]: expect(runsCol).toBe(cells)
+            - generic [ref=f2e396]: "}"
+            - generic [ref=f2e397]: "})"
+        - paragraph [ref=f2e398]:
+          - text: 先红复刻一把：把 checkerboard 里奇偶判断反写成
+          - code [ref=f2e399]: "% 2 === 1"
+          - text: ，格 (0,0) 变白。跑 pnpm test，「像素 (0,0) 为黑」那条红——原点约定是公开承诺，黑就是黑。改回来，绿。再配合演示做感知验证：四组开关的每一种组合，画布上都有肉眼可辨的差别，判词行实时对账。
+        - heading [level=2] [ref=f2e400]:
+          - text: 小结
+          - link "Permalink to \"小结\"" [ref=f2e401] [cursor=pointer]:
+            - /url: "#小结"
+            - text: "#"
+        - paragraph [ref=f2e402]: 本章给世界穿上皮肤。纹理是贴在表面的图片数据，细节住在它那里而不是顶点表里——查表便宜、逐顶点变换贵。UV 坐标是贴纸上的归一化地址，(0,0) 在左下角、v 向上；归一化换来分辨率无关，立方体六面各铺满 [0,1]。纹素是纹理的像素，与屏幕像素两套户口；采样是片元着色器里按 UV 查表，每片元一次。UV 落在纹素之间由过滤裁决：NEAREST 谁近听谁的、放大即马赛克，LINEAR 按距离调匀、格边出过渡色。UV 出界由包裹方式裁决：REPEAT 取小数部分平铺，CLAMP_TO_EDGE 摁在边缘拉丝；WebGL 1 里非 2 的幂尺寸只有后者的份。上下颠倒是数据行序与 v 轴没对账：图片顶行直传落底边，UNPACK_FLIP_Y_WEBGL 在上传时倒一次行序；程序化数据按 UV 约定生成则免翻转。接线五步：createTexture、activeTexture + bindTexture、texImage2D、texParameteri、uniform1i 报单元号。实验场新增 texture/procedural 的 checkerboard——代码即图案，第 12 章组装世界时，地板与柱廊的纹样还从这领。下一章讲光照：顶点表里歇了一章的法线复工，颜色从「查表查来」变成「算出来」。
+        - paragraph [ref=f2e403]: 读完本章，下面几问应该能脱口而出：
+        - list [ref=f2e404]:
+          - listitem [ref=f2e405]: 纹理 8×8 纹素、cells=4，UV (0.75, 0.25) 落在哪一格、取什么颜色？在 REPEAT 下 UV (1.75, 0.25) 呢？
+          - listitem [ref=f2e406]: 同一张纹理，TEXTURE_MAG_FILTER 设 NEAREST 与 LINEAR，特写下各看到什么？哪个对应「马赛克块」？
+          - listitem [ref=f2e407]: 图片上传后贴图上下颠倒，账出在哪一行数据？UNPACK_FLIP_Y_WEBGL 改变的是纹理坐标约定还是数据行序？
+          - listitem [ref=f2e408]: 采样器 uniform1i 里填的 0 是什么编号？它和 createTexture 返回的对象是什么关系？
+          - listitem [ref=f2e409]: 顶点表里的 UV 每面都是 (0,0) 到 (1,1)，为什么不用改顶点就能换 64×64 或 2048×2048 的贴图？
+    - contentinfo [ref=f2e410]:
+      - navigation "Pager" [ref=f2e411]:
+        - link "上一章 8. 深度缓冲与第一个 3D 物体" [ref=f2e414] [cursor=pointer]:
+          - /url: /08-depth-and-cube.html
+          - generic [ref=f2e415]: 上一章
+          - generic [ref=f2e416]: 8. 深度缓冲与第一个 3D 物体
+        - link "下一章 10. 光照：法线与 Phong 三件套" [ref=f2e418] [cursor=pointer]:
+          - /url: /10-lighting.html
+          - generic [ref=f2e419]: 下一章
+          - generic [ref=f2e420]: 10. 光照：法线与 Phong 三件套
