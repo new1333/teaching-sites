@@ -30,14 +30,27 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Install dependencies
+        # 根只装聚合站自身的依赖（vitepress/vue）；各课程依赖由各自的 lock 决定——
+        # 聚合构建是单个 vite 进程编译全部课程源码，import 解析先走各课程自己的 node_modules。
+        # 根 package.json 不声明课程依赖，保证每门课程可脱离仓库独立 install 与 build。
+        run: |
+          pnpm install --frozen-lockfile
+          for pkg in courses/*/package.json; do
+            dir=$(dirname "$pkg")
+            if [ -f "$dir/pnpm-lock.yaml" ]; then
+              pnpm --dir "$dir" install --frozen-lockfile
+            elif [ -f "$dir/package-lock.json" ]; then
+              npm --prefix "$dir" ci
+            fi
+          done
+
       - name: Build aggregated site
         # PAGES_BASE 注入子路径前缀：项目级 Pages 部署在 /<repo>/ 下，
         # base 不含仓库名会导致 CSS/JS/字体 404。绑定自定义域名时改为 PAGES_BASE: /
         env:
           PAGES_BASE: /${{ github.event.repository.name }}/
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm build
+        run: pnpm build
 
       - name: Deploy to GitHub Pages (gh-pages branch)
         uses: peaceiris/actions-gh-pages@v4
