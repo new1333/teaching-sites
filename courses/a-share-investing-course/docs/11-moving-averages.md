@@ -105,6 +105,9 @@ MA5：                     (10+10+10+10+13) ÷ 5 = 10.60
 
 老规矩，先写测试看红。本章测试审五件事：sma 滑窗与手算逐格一致；ema 递推与手算一致；头部不足窗口返回 null 且数组与 K 线等长；金叉死叉位置与手算一致；新价格跳变后 ema 响应快于 sma、且窗口越长追得越慢。挑核心的三条贴出来。第一条，交叉位置：
 
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
+
 ```ts
 // tests/moving-averages.test.ts · 金叉死叉位置与手算一致
   it('平走→抬升→回落：金叉@8、死叉@11，与逐格手算一致', () => {
@@ -117,7 +120,12 @@ MA5：                     (10+10+10+10+13) ÷ 5 = 10.60
   })
 ```
 
+</details>
+
 这段序列逐格手算：前八根平走，MA2 与 MA3 都贴在 10；第 9 根（下标 8）收盘跳 12，MA2 = 11 越过 MA3 = 10.67，金叉；随后三个 12 让 MA3 追平；第 12 根（下标 11）收盘跌回 8，MA2 = 10 跌破 MA3 = 10.67，且前一根 12 恰好贴着 12——按「前一根不低于」的口径，死叉成立。第二条，响应速度：
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/moving-averages.test.ts · ema 对新价格响应更快
@@ -131,7 +139,12 @@ MA5：                     (10+10+10+10+13) ÷ 5 = 10.60
   })
 ```
 
+</details>
+
 jump 序列是 29 根收盘 10 元、最后一根跳 20 元：n = 5 时 SMA 末格 = (4×10 + 20) ÷ 5 = 12，EMA 末格 = 10 + (2/6) × 10 ≈ 13.33。都还远着——慢半拍的量化像。第三条，窗口越长越慢：
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/moving-averages.test.ts · 窗口越长慢得越重
@@ -144,7 +157,12 @@ jump 序列是 29 根收盘 10 元、最后一根跳 20 元：n = 5 时 SMA 末�
   })
 ```
 
+</details>
+
 见红后实现。新模块 `src/indicators/ma.ts`，先立字据：均线序列与 K 线逐根对齐，头部不足窗口的格子是 null。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/indicators/ma.ts · 均线序列与交叉信号的类型
@@ -160,7 +178,12 @@ export type MaCross = {
 }
 ```
 
+</details>
+
 三个公共入口共用一段入参体检，与第 9 章 evaluate 的体检同款。体检名单：空序列、非正整数窗口、非有限收盘价，当场抛中文错误。sma 全貌如下，滑窗只做一加一减。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/indicators/ma.ts · sma 全貌
@@ -179,7 +202,12 @@ export function sma(candles: readonly Candle[], n: number): MaSeries {
 }
 ```
 
+</details>
+
 ema 全貌如下。首窗 SMA 作种子，此后每根只按 α 挪一步。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/indicators/ma.ts · ema 全貌
@@ -203,7 +231,12 @@ export function ema(candles: readonly Candle[], n: number): MaSeries {
 }
 ```
 
+</details>
+
 crossovers 全貌如下。快慢两条 SMA 逐格比较，严格穿越才记账。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/indicators/ma.ts · crossovers 全貌
@@ -242,7 +275,12 @@ export function crossovers(candles: readonly Candle[], fast: number, slow: numbe
 }
 ```
 
+</details>
+
 循环里那些叹号是 TypeScript 的非空断言：循环从 slow 起步，数学上保证取到的格子必然已成形，注释里写清了依据。图表数据照旧出自 export-docs 脚本，图二的标记是真实扫描：
+
+<details>
+<summary>🔧 导出脚本 · 点击展开</summary>
 
 ```ts
 // companion/scripts/export-docs-data.ts · 图二标记：交叉由 crossovers 扫出，山顶取全程最高点
@@ -251,6 +289,16 @@ export function crossovers(candles: readonly Candle[], fast: number, slow: numbe
     { index: top11, label: '山顶', kind: 'info' },
   ],
 ```
+
+</details>
+
+## 插曲：除权除息——均线上的一道假信号
+
+有一个高频问题必须在这里拆掉：分红送股。假设你持有的股票现价 20 元，公司分红方案是「10 送 10」——每持有 10 股送 10 股。分红到账那天（除权日），你的股数翻倍、股价直接标成 10 元：这不是暴跌，你的总资产一分没少（20 元 × 100 股 = 10 元 × 200 股）。交易所主动调低价格是为了公平——不调的话，白送的一半股票就成了凭空多出来的市值。现金分红同理：每股分 1 元，除息日股价就减 1 元，钱进了你的账户。这套机制合称除权除息。
+
+问题出在图上。不复权的 K 线图里，除权日会留下一道「股价腰斩」的巨大假跳空：均线被旧价格拖住，可能凭空砸出一个假死叉；第 10 章要数的波峰波谷、第 13 章要画的支撑位，也会被这道裂缝伪造。解法是复权——行情软件里的一个一键开关：**前复权**把除权日之前的历史价格按比例缩回去，整条曲线恢复连续，均线才量得准。所以打开任何行情图的第一件事：确认前复权已开。本课程所有图与判据，一律假定你开的是前复权。
+
+顺带拆一条常见误读：分红当天「股价跌了」不是亏钱——账户里现金多了或股数多了，总账不变。真正决定你赚不赚的，始终是买入价与卖出价之间的那条路，外加第 2 章算过的费用。
 
 简化之处照实声明：交叉口径取「相等后穿越算、两根相等不算」；EMA 以首窗 SMA 作种子，行情软件另有以首个收盘价起步的版本，前段读数会有差异；三张图都是固定种子合成行情，「追到跳幅一半」是量响应速度的教学刻度；「山顶」标记取全程最高点，不是识别器。全部登记在附录差异清单。
 

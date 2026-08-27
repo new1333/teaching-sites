@@ -21,7 +21,7 @@ import ft from './assets/data/18-fat-tails.json'
 
 带子全程在动。
 
-先对表。收口点在第 41 根，带宽 0.55%——上下轨离中轨各只有约 1 分 4 厘。第 51 根收盘 9.92 元首次跌破下轨 9.98 元，横盘期那根 约 0.9% 的阴线就把它踩破了。此后连续 16 根收盘压在下轨之下，价格最低第 68 根（7.29 元），带宽却在第 71 根才冲到开口极值 41.98%——是收口水位的 76 倍。结尾第 81 根收盘反抽回中轨。数字先摆在这，原理后面逐个拆。
+先对表。收口点在第 41 根，带宽 0.55%——此时 σ 约 1 分 4 厘，上下轨离中轨各约 2 分 8 厘（半宽是 2σ，别把 σ 当成半宽）。第 51 根收盘 9.92 元首次跌破下轨 9.98 元，横盘期那根约 0.9% 的阴线就把它踩破了。此后连续 16 根收盘压在下轨之下，价格最低第 68 根（7.29 元），带宽却在第 71 根才冲到开口极值 41.98%——是收口水位的 76 倍。结尾第 81 根收盘反抽回中轨。数字先摆在这，原理后面逐个拆。
 
 三件事：把标准差手算到能复现；讲清「±2σ 大约覆盖 95%」这句口诀的来历与适用边界；用带宽的收口与开口读行情——顺便还上第 11 章欠的账（乖离怎么量）。
 
@@ -84,12 +84,20 @@ import ft from './assets/data/18-fat-tails.json'
 
 老规矩，先写测试看红。本章测试审五件事：标准差小样本手算四步一致；布林带小样本逐格与手算一致、中轨与第 11 章 `sma` 逐格相等、k 是带宽的放大器；带宽序列与收口检测（振幅收窄段逐格创新低、风暴段无新低）；带外占比（正态约 5%、肥尾显著更高、两列总 σ 相同）；非法输入。挑三段贴出来。
 
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
+
 ```ts
 // tests/bollinger.test.ts · 标准差手算四步
   it('小样本 [9,11,10,12,8]：平均 10 → 离差 −1/+1/0/+2/−2 → 平方和 10 → 方差 2 → σ=√2', () => {
     expect(stdev([9, 11, 10, 12, 8])).toBeCloseTo(Math.sqrt(2), 10)
   })
 ```
+
+</details>
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/bollinger.test.ts · 收口检测落在收口段，最深一处紧贴风暴起点
@@ -101,6 +109,11 @@ import ft from './assets/data/18-fat-tails.json'
   })
 ```
 
+</details>
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
+
 ```ts
 // tests/bollinger.test.ts · 同 σ 的肥尾列显著更高
   it('同 σ 的尖峰肥尾序列显著更高：至少多 2 个百分点、1.6 倍以上', () => {
@@ -109,9 +122,14 @@ import ft from './assets/data/18-fat-tails.json'
   })
 ```
 
+</details>
+
 还有一段值得单说：窗口含当根的枷锁。`bollinger` 算第 i 根的带子用的是「最近 n 根含第 i 根自己」的窗口——离群的那根自己也进了 σ 的分母。数学后果：n=5 时，一根离群收盘最多把自己的偏离顶到 √(n−1) = 2 个 σ，恰好压在 k=2 的轨上，永远越不出去。测试里窗口 [10,10,10,10,100] 的上轨恰为 100，收盘 100 压线，带外为零——这不是巧合，是算式的硬约束。
 
 见红后实现。两个新模块 `src/stats/stdev.ts` 与 `src/indicators/bollinger.ts`，只增不改。先是标准差全貌：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/stats/stdev.ts · stdev 全貌
@@ -135,7 +153,12 @@ export function stdev(values: readonly number[]): number {
 }
 ```
 
+</details>
+
 肥尾实验的样本生产线（`normalDraws` 是 Box–Muller 变换的直白包装，把均匀随机源折成钟形；两列读数共用同一个正态源）：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/stats/stdev.ts · leptokurticDraws 全貌
@@ -168,7 +191,12 @@ export function leptokurticDraws(
 }
 ```
 
+</details>
+
 再是布林带主体。中轨直接复用第 11 章的 `sma`——同一条线换了个名字：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/indicators/bollinger.ts · bollinger 全貌
@@ -193,7 +221,12 @@ export function bollinger(candles: readonly Candle[], n: number = DEFAULT_BB_N, 
 }
 ```
 
+</details>
+
 收口检测与带外占比，两个纯读数的伴生入口：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/indicators/bollinger.ts · squeezes 全貌
@@ -226,6 +259,11 @@ export function squeezes(
 }
 ```
 
+</details>
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
+
 ```ts
 // src/indicators/bollinger.ts · outsideStats 全貌
 export function outsideStats(
@@ -250,6 +288,8 @@ export function outsideStats(
   return { formed, outside, above, below, ratio: outside / formed }
 }
 ```
+
+</details>
 
 读两个承重点。其一，`squeezes` 的判据是「带宽创最近 lookback 根（默认 20）的严格新低」，连续下行的带宽会连出多个收口点——「收口进行中」本来就是一段日子，不是一根 K 线；回看窗默认 20 根是课程操作化选择，可传参改。其二，`outsideStats` 只记严格越出（恰好压在轨上算带内），测试里那根恰好压线的一百元收盘就是这条口径的活样本。
 

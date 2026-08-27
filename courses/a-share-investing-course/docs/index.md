@@ -2,7 +2,7 @@
 layout: home
 hero:
   name: 从零基础小白到A股投资入门
-  text: 零基础开户新手，看懂K线、算清概率、装上风控
+  text: 零基础新手，看懂K线、算清概率、装上风控
   tagline: 读完本课程，一个两千余行的技术分析引擎：识别近三十种K线形态、算指标、跑回测
   actions:
     - theme: brand
@@ -42,7 +42,11 @@ features:
     linkText: 进入本部分
   - icon: 🧪
     title: 原理实验场
-    details: TypeScript + vitest，404 项原理断言测试；图表数据全部由引擎现场算出
+    details: TypeScript + vitest，430 项原理断言测试；图表数据全部由引擎现场算出
     link: ./exercises
     linkText: 练习路线
 ---
+
+::: warning 开始之前
+**投资有风险，入市需谨慎。** 本课程全部内容为教学示意，不构成任何投资建议；历史规律不保证未来。只用闲钱投资，不要借贷、不要动用生活必需资金。本课程教的是技术分析的原理与纪律，不是赚钱方法。
+:::

@@ -1,8 +1,7 @@
 export default {
   title: "从零基础小白到A股投资入门",
-  description: "零基础开户新手，看懂K线、算清概率、装上风控",
+  description: "零基础新手，看懂K线、算清概率、装上风控",
   base: '/',
-  ignoreDeadLinks: true,
   themeConfig: {
     nav: [{ text: '首页', link: '/' }, { text: '关于', link: '/about' }],
     sidebar: [
@@ -49,7 +48,7 @@ export default {
                         "link": "/08-multi-patterns-three.md"
                   },
                   {
-                        "text": "9. 形态到底灵不灵：用统计给三十种形态验货",
+                        "text": "9. 形态到底灵不灵：用统计给近三十种形态验货",
                         "link": "/09-pattern-stats.md"
                   }
             ]
@@ -79,7 +78,7 @@ export default {
                         "link": "/14-chip-distribution.md"
                   },
                   {
-                        "text": "15. 头肩顶与双顶：一眼看穿大型反转结构",
+                        "text": "15. 头肩顶与双顶：看懂大型反转结构",
                         "link": "/15-reversal-structures.md"
                   }
             ]
@@ -133,7 +132,7 @@ export default {
                         "link": "/glossary.md"
                   },
                   {
-                        "text": "K线形态速查表（30余种）",
+                        "text": "K线形态速查表（近三十种）",
                         "link": "/kline-patterns-cheatsheet.md"
                   },
                   {

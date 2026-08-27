@@ -36,7 +36,7 @@ import inverted from './assets/data/05-inverted.json'
 
 位置条件：大阳线长在哪都叫大阳线，形状判定不依赖位置；变的是解读。横盘区下沿出现的第一根大阳线，常是多方宣布接管的开幕；连续上涨后的加速大阳线，则可能是最后的燃料——同样的形状，前者常开始一段行情，后者常结束一段行情。
 
-应对与失效：出现大阳线，且它收在你事先画好的压力区之上、成交量同步放大时，常见的应对是把「多方当日控盘」记为一条事实，再等回踩考虑介入。不要追在实体的顶端——追高的亏损，多发生在把「当天控盘」当成「明天继续涨」的那一秒。失效条件：次日收盘跌回这根大阳线实体的一半以下，控盘判断作废。大阴线镜像同理：它宣告当日空头控盘，跌破大阴线最低价的后续走弱才算确认。
+应对与失效：出现大阳线，且它收在你事先画好的压力区（上方卖压反复出现的价格区，第 13 章专讲怎么画）之上、成交量同步放大时，常见的应对是把「多方当日控盘」记为一条事实，再等回踩（涨上去之后短暂回落「踩」一脚、确认下方有人接）考虑介入。不要追在实体的顶端——追高的亏损，多发生在把「当天控盘」当成「明天继续涨」的那一秒。失效条件：次日收盘跌回这根大阳线实体的一半以下，控盘判断作废。大阴线镜像同理：它宣告当日空头控盘，跌破大阴线最低价的后续走弱才算确认。
 
 ## 光头光脚：连反扑的痕迹都没有
 
@@ -96,6 +96,9 @@ import inverted from './assets/data/05-inverted.json'
 
 老规矩，先写测试看它红。本章测试的核心断言就是全章的核心命题——同一组数字，背景换，名字换：
 
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
+
 ```ts
 // tests/single-patterns-wicks.test.ts · 同一形状，名字随背景反转
   it('同一根长下影小实体：下跌背景判锤子，上涨背景判上吊，横盘不命名', () => {
@@ -105,7 +108,12 @@ import inverted from './assets/data/05-inverted.json'
   })
 ```
 
+</details>
+
 端到端再压一遍：样本接在两段手搓背景（等差下跌与等差上涨）后面，背景经 `trendContext` 算出，再喂给识别器。
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/single-patterns-wicks.test.ts · 端到端：同一组数字，背景换名字
@@ -118,7 +126,12 @@ import inverted from './assets/data/05-inverted.json'
   })
 ```
 
+</details>
+
 实现分两个文件。`src/patterns/context.ts` 管位置：回看形态之前的五根，取窗口两端收盘价算涨跌幅，超过 5% 才算有方向。只用形态当天以前的数据——「末端」要等未来走出来才知道，事中能判的只有「出现在一段上涨或下跌之后」，这也是拒绝未来函数的立场。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/patterns/context.ts · 窗口与判向
@@ -134,7 +147,12 @@ import inverted from './assets/data/05-inverted.json'
   return { position, change, bars: lookback }
 ```
 
+</details>
+
 `src/patterns/wicks.ts` 管形状。四条数值判据写成常量，判据与叙述一一对应。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/patterns/wicks.ts · 四条数值判据
@@ -148,7 +166,12 @@ const WICK_VS_BODY = 2
 const BODY_FLOOR_RATIO = 0.05
 ```
 
+</details>
+
 判据先喂给三根与位置无关的形状：大阳、大阴、光头光脚——不看背景，只看比分。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/patterns/wicks.ts · 与位置无关的三个形状
@@ -164,7 +187,12 @@ const BODY_FLOOR_RATIO = 0.05
   }
 ```
 
+</details>
+
 位置换算的出口只有六行——两个形状对，各自由背景挑名字。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/patterns/wicks.ts · 位置换算的两个形状对
@@ -181,7 +209,12 @@ const BODY_FLOOR_RATIO = 0.05
   }
 ```
 
+</details>
+
 本章图表的数据由 `export-docs` 脚本追加导出：合成带漂移的趋势行情（每天平均涨或跌 2%），在第 31 根植入构造样本，再用识别器扫全序列产生标记。锤子对的守门条件直接写在脚本里。
+
+<details>
+<summary>🔧 导出脚本 · 点击展开</summary>
 
 ```ts
 // companion/scripts/export-docs-data.ts · 同一组数字，两种背景（位置换算的教学不变量）
@@ -194,7 +227,9 @@ if (!sameNumbers(fallHammer[AT], riseHang[AT])) throw new Error('锤子对两图
 if (!sameNumbers(fallInvert[AT], riseStar[AT])) throw new Error('长上影对两图不是同一组数字：位置换算的前提被破坏')
 ```
 
-样本数字本身也守第 2 章的规矩：影线深度全部控制在相对前收盘 ±10% 的涨跌停边界之内——构造样本不能带头违反交易所规则。简化之处照实声明：判据阈值（七成、5%、两倍、回看五根、涨跌 5%）是本课程的操作化选择；不检查教科书常提的「跳空」条件；上吊线与射击之星不限定阴阳颜色。全部差异登记在附录差异清单。
+</details>
+
+样本数字本身也守第 2 章的规矩：影线深度全部控制在相对前收盘 ±10% 的涨跌停边界之内——构造样本不能带头违反交易所规则。简化之处照实声明：判据阈值（七成、5%、两倍、回看五根、涨跌 5%）是本课程的操作化选择；不检查教科书常提的「跳空」前提（跳空——开盘直接越过昨天的价格区间、中间留下一段没成交过的真空，第 1 章验证一节见过定义）；上吊线与射击之星不限定阴阳颜色。全部差异登记在附录差异清单。
 
 ## 验证：两道门槛与亲手开机
 

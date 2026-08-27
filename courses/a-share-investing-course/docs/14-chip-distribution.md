@@ -62,6 +62,9 @@ import chipBins from './assets/data/14-chip-bins.json'
 
 上面这段四天行情直接做成测试夹具（fixture——测试里预置的固定输入数据），手算与代码从此对同一组数字负责：
 
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
+
 ```ts
 // tests/chip-distribution.test.ts · 一字平盘工厂与先跌后涨四连（拼版：两段相邻定义，中间略去本章未引用的 rangeBar 区间工厂）
 /** 一字平盘 K 线：开=高=低=收，全部成交量落进同一个价位桶，便于手工排布 */
@@ -84,7 +87,12 @@ const FALL_AND_REBOUND: Candle[] = [
 ]
 ```
 
+</details>
+
 本章测试审四件事：任何一天的持仓量总和等于流通股本；四天序列逐日与手算一致；反弹日头顶的套牢峰仍是最大桶；固定种子的合成行情算两遍输出全等。挑三条贴出来。第一条，守恒——换手只能搬椅子，不能造椅子：
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/chip-distribution.test.ts · 总筹码守恒
@@ -98,7 +106,12 @@ const FALL_AND_REBOUND: Candle[] = [
   })
 ```
 
+</details>
+
 第二条，反弹日的手算核对，高位套牢峰在快照里等着验收：
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/chip-distribution.test.ts · 反弹日的套牢峰
@@ -114,7 +127,12 @@ const FALL_AND_REBOUND: Candle[] = [
   })
 ```
 
+</details>
+
 第三条，峰的去处——它不会自己消失，只能让低位换手一点点吃掉：
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/chip-distribution.test.ts · 高换手消化套牢峰
@@ -130,7 +148,12 @@ const FALL_AND_REBOUND: Candle[] = [
   })
 ```
 
+</details>
+
 见红后实现。新模块 `src/chips/distribution.ts`，先是类型——一天的快照把全部读数装在一起：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/chips/distribution.ts · 分布快照与参数的类型
@@ -166,7 +189,12 @@ export type ChipDistributionOpts = {
 }
 ```
 
+</details>
+
 分摊是模型的一条腿，先看它——一字价整桶落入，区间价按重叠长度均匀切：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/chips/distribution.ts · spreadInto 全貌
@@ -190,7 +218,12 @@ function spreadInto(chips: Map<number, number>, low: number, high: number, amoun
 }
 ```
 
+</details>
+
 主函数的全貌，衰减那条腿也在这里：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/chips/distribution.ts · chipDistribution 全貌
@@ -251,6 +284,8 @@ export function chipDistribution(candles: readonly Candle[], opts: ChipDistribut
 }
 ```
 
+</details>
+
 两处诚实条款单独念一遍。其一，首日初始化假设：更早的持仓成本无从得知，只能从序列第一天开始记账，第一天全部流通盘落位首日区间。这决定了筹码图对起始日期敏感——看真实软件的筹码图，先看它算了多久。其二，换手率封顶 100%：第 2 章的 T+1 规定当天买入的次日才能卖，同一股筹码一天最多换一次手，所以封顶在真实行情里几乎不会触发，它只是给合成数据的防御。
 
 ## 四张图：把墙画出来
@@ -279,6 +314,9 @@ export function chipDistribution(candles: readonly Candle[], opts: ChipDistribut
 
 导出段内置守门，故事线不成立就整段失败：
 
+<details>
+<summary>🔧 导出脚本 · 点击展开</summary>
+
 ```ts
 // companion/scripts/export-docs-data.ts · 第 14 章守门：套牢峰的故事线必须成立
 if (final14.peak.price <= final14.close) {
@@ -288,6 +326,8 @@ if (rebound14[stall14].high >= final14.peak.price - 0.5) {
   throw new Error(`反弹段最高 ${rebound14[stall14].high} 离峰 ${round2(final14.peak.price)} 不足 0.5 元——「滞涨在峰下」不成立，换一颗种子再试`)
 }
 ```
+
+</details>
 
 守门之外还有两条：底部日获利盘必须不高于 30%，反弹必须把获利盘至少抬升 20 个百分点。五条全过（还有一条：底部要跌得够深，低点须在 9.5 元以下），这套图才配发正文。
 

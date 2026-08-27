@@ -129,6 +129,9 @@ import fall3 from './assets/data/08-falling-three.json'
 
 老规矩，先写测试看红。本章测试审四件事：七种形态各归各位；晨星第三根收复幅度与量能的数值标准；干扰序列不误报；背景门两档。最要紧的两条都是边界。收复幅度那条：第一根大阴实体 [16.0, 17.0]，中点 16.5，星线与第三根照剧本摆好，只动第三根的收盘价——
 
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
+
 ```ts
 // tests/multi-patterns-three.test.ts · 第三根收复幅度的硬边界
   it('第三根收复幅度的硬边界：收 16.51 判、收 16.50（恰好压在中点上）与 16.49 都不判', () => {
@@ -139,7 +142,12 @@ import fall3 from './assets/data/08-falling-three.json'
   })
 ```
 
+</details>
+
 样本取半元，中点 16.5 在浮点数里精确，压线测试不怕电子误差。量能线那条用同一组价格只改成交量：
+
+<details>
+<summary>🔧 测试代码 · 点击展开</summary>
 
 ```ts
 // tests/multi-patterns-three.test.ts · 晨星的确认降级
@@ -151,7 +159,12 @@ import fall3 from './assets/data/08-falling-three.json'
   })
 ```
 
+</details>
+
 见红后实现。新文件 `src/patterns/three.ts`，复用第 3 章解剖器读实体、第 5 章窗口判背景，只增不改旧。判据常量七条，与正文一一对应：
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/patterns/three.ts · 判据常量
@@ -171,7 +184,12 @@ const METHODS_SHRINK = 1 / 3
 const CONFIRM_VOL_MULT = 1.2
 ```
 
+</details>
+
 主函数 `detectThreeCandle` 全貌。四组判据按三幕反转、三连推进、受阻、五幕中继展开。推进形态共用骨架函数 `isMarch`，它判三根同向、饱满、开盘嵌套、收盘递进。受阻在它的完成日前一天复用同一骨架——受阻的前三根就是三兵。
+
+<details>
+<summary>🔧 实现代码 · 点击展开</summary>
 
 ```ts
 // src/patterns/three.ts · detectThreeCandle 全貌
@@ -284,9 +302,14 @@ export function detectThreeCandle(candles: readonly Candle[], opts: ThreeCandleO
 }
 ```
 
+</details>
+
 受阻分支里那行「背景窗口得再往前挪一天」不是注释装饰。测试先抓住了这个 bug：四根一组若沿用三根的背景窗，三兵的第一根会混进背景里，把横盘背景顶成「上涨」。写「红」测试的价值就在这——它替你看着你没想到的地方。
 
 图表数据照旧出自 `export-docs` 脚本。多根样本整段植入：第一根定锚（形态前一晚收盘）与尺（形态之前五根的平均振幅），后续每根按剧本推进。样本工厂 `morningShapes(b, r)` 按锚与尺量产三根——大阴 13 万量、星线 9 万、收复阳线 20 万，判据余量全部相对 r 留足。晨星对照样本刻意让两张图共用同一组价格，只差第三根的量：
+
+<details>
+<summary>🔧 导出脚本 · 点击展开</summary>
 
 ```ts
 // companion/scripts/export-docs-data.ts · 晨星对照的两张图
@@ -295,6 +318,8 @@ const morningBase = plantShape(ch8(801, -0.02), AT8 - 2, morningShapes)
 const morningSeries = morningBase
 const morningWeakSeries = morningBase.map((c, i) => (i === AT8 ? { ...c, volume: 100000 } : c))
 ```
+
+</details>
 
 简化之处照实声明。反转剧的阈值——首根大实体 0.7、星线收缩三分之一、收复过中点、量能 1.2 倍——是本课程的操作化选择。推进与中继的阈值——三兵实体 0.5、受阻小实体 0.3 或上影两倍、三法中间三分之一、回看五根、背景 5%——同样。晨星与暮星不要求真正的向下跳空缺口，用「星线实体脱离第一根实体」的实体版代替，因为 A 股日内缺口少。三兵与三鸦不设背景门，教科书多强调出现在底部或顶部。受阻只认「高开于第三根收盘之上」一种姿态。三法的中间三根只框高低不框实体，方向不限阴阳。量能只进晨星与暮星的确认层，其余形态不查量。全部差异登记在附录差异清单。
 
@@ -328,4 +353,4 @@ npm run export-docs
 3. 红三兵的第二根开盘跳到第一根实体之下，为什么不算？这条判据挡的是什么走法？
 4. 上升三法中间的三根小阴线，形状像一小队乌鸦——识别器为什么不报黑三鸦？差在哪个数上？
 
-去向一句话：第 9 章停下扩张形态字典，用胜率、样本量与随机对照，给前四章攒下的三十种形态逐一验货。
+去向一句话：第 9 章停下扩张形态字典，用胜率、样本量与随机对照，给前四章攒下的近三十种形态逐一验货。
