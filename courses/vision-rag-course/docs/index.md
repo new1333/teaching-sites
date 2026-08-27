@@ -1,0 +1,85 @@
+---
+layout: home
+hero:
+  name: 视觉 RAG 原理课：让 AI 真正看懂 PDF 与视频
+  text: 会写基础 Python、想弄懂视觉 RAG 原理的入门者
+  tagline: 读完本课程，一套千行级、假模型驱动的最小视觉 RAG 管线，PDF 与视频问答全流程可跑通
+  actions:
+    - theme: brand
+      text: 开始阅读
+      link: ./01-two-phase-funnel
+    - theme: alt
+      text: 课程介绍
+      link: ./about
+features:
+  - icon: 🗺️
+    title: "先通读做笔记，再按笔记翻书：两阶段架构与成本漏斗"
+    details: "建立全书地图：为什么「每次提问都把整份资料塞给模型」走不通，以及「先索引后漏斗」两阶段架构如何同时解决贵、慢、编页码三个问题"
+    link: ./01-two-phase-funnel
+    linkText: 进入本章
+  - icon: 🔌
+    title: "一个靠得住的视觉模型客户端：重试、宽容解析与密钥纪律"
+    details: "实现可插拔传输层的 Client：图片内联、密钥从环境变量读、指数退避重试、容忍围栏的 JSON 解析、按任务选推理档位"
+    link: ./02-vision-client
+    linkText: 进入本章
+  - icon: 🖨️
+    title: "把页面变成图：渲染分辨率与文字层"
+    details: "理解「页码与图像物理绑定」这一引用精确性的来源；实现合成文档渲染（DPI 旋钮）、零成本文字层抽取与简化计费估算"
+    link: ./03-page-rendering
+    linkText: 进入本章
+  - icon: 🗂️
+    title: "每页一张读书卡：批量打标与拆批重试"
+    details: "实现批量视觉索引：带页码标签成批送模型出结构化卡片，截断对半拆批递归，顽固失败页落到文字层兜底卡，标题派生大纲"
+    link: ./04-batch-page-cards
+    linkText: 进入本章
+  - icon: 🧮
+    title: "免费的第一道筛：中文 TF-IDF 粗筛"
+    details: "实现零成本本地检索：二字滑窗分词、停用词、字段加权文档、idf×封顶词频打分——毫秒级圈出候选页"
+    link: ./05-local-tfidf
+    linkText: 进入本章
+  - icon: 👁️
+    title: "让模型看图把关：视觉精排"
+    details: "实现第二层漏斗：候选页图+摘要交模型做内容级 top-k 精选，输出校验（只认候选、去重、≤k），失败回退本地排序"
+    link: ./06-vision-rerank
+    linkText: 进入本章
+  - icon: 📖
+    title: "只在刀刃上花力气：深读与引用诚实"
+    details: "实现第三层漏斗：命中页±邻页展开、页图与文字层同给、高档推理产出带 [第N页] 引用的回答；截断注记与证据不足时的拒答行为"
+    link: ./07-deep-read
+    linkText: 进入本章
+  - icon: 📦
+    title: "把证据递到手上：引用回收与自包含预览"
+    details: "贯通全漏斗 ask：从答案正文正则回收页码、导出引用页图、生成图片全内嵌的单文件 HTML——回答必须可核对"
+    link: ./08-verifiable-delivery
+    linkText: 进入本章
+  - icon: 🎬
+    title: "按时长定密度：视频宏观抽帧"
+    details: "把「视频」翻译成「带时间标签的帧序列」：合成帧源、按时长分档的采样密度、本地场景切换检测"
+    link: ./09-adaptive-sampling
+    linkText: 进入本章
+  - icon: 🗄️
+    title: "帧卡片与段聚合：把几百帧收进抽屉"
+    details: "帧级结构化卡片（含运动强度）+ 30 秒段聚合段卡，把检索粒度从帧升到段，并为微观层供数"
+    link: ./10-frame-segments
+    linkText: 进入本章
+  - icon: ⏱️
+    title: "漏斗迁移：带时间戳的视频问答"
+    details: "把三层漏斗迁移到时间段：段粗筛→段代表帧精排→选中段全帧深读，回答带 [MM:SS]；解析时刻导出关键帧与切片范围"
+    link: ./11-video-qa
+    linkText: 进入本章
+  - icon: 🔬
+    title: "再拉近一点：微观放大层"
+    details: "两级采样设计：动作类问题或运动峰值自动触发（或手动指定）时间窗，12fps 高密度重抽 + 中心裁切放大 + 首帧全图锚点，追加一次模型分析"
+    link: ./12-micro-zoom
+    linkText: 进入本章
+  - icon: 🛠️
+    title: "换一台引擎：移植差异与双引擎互验"
+    details: "理解同一套流水线移植到不同视觉引擎的三个改动点（思考控制→推理档位、文件上传→内联传图、计费模型→DPI 取舍），以及双引擎互验的用法"
+    link: ./13-engine-porting
+    linkText: 进入本章
+  - icon: 📘
+    title: "从脚本到 skill：让 AI 知道何时调用你"
+    details: "理解 agent skill 的交付形态：触发条件写在描述里、工作流给步骤、密钥不内置、细节文档按需读（渐进披露）——把脚本集变成 AI 助手能自动调用的技能"
+    link: ./14-package-as-skill
+    linkText: 进入本章
+---
