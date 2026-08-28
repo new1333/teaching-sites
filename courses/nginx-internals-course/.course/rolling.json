@@ -1,0 +1,81 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "c10k-and-event-driven",
+      "file": "01-c10k-and-event-driven.md",
+      "degraded": false,
+      "summary": "已建立：事件驱动世界观底座——并发连接数与每秒请求之别、prefork 三笔账（内存/切换/文件描述符 1024 墙）、非阻塞 I/O 与 epoll「登记一次、增量回报」、事件循环与回调、reactor 模式命名、单线程怕慢活的命门。无代码变更（principle 章）。读者已能讲清 nginx 为何单线程扛万级连接、事件循环软肋在哪。下一章开建 tinysrv 连接注册表。"
+    },
+    {
+      "n": 2,
+      "slug": "connection-registry",
+      "file": "02-connection-registry.md",
+      "degraded": false,
+      "summary": "代码：新增 src/conn.ts——createConnRegistry({maxConns?,idleTimeoutMs?,now?})，add 返回 {ok:true,conn}|{ok:false,reason:'max-conns'}，ManagedConn={id,remote,lastActiveAt,destroy}，onData/onIdle/onClose 订阅，sweepIdle(now) 收割；data 到达自动续命。概念：socket=程序里的电话机、TCP 连接=拨通的线路、判别联合错误约定、时钟注入。测试 7 个（含 127.0.0.1 真连接集成）。读者已能：给上万连接记账、空闲收割、满员拒绝。"
+    },
+    {
+      "n": 3,
+      "slug": "http-parser-state-machine",
+      "file": "03-http-parser-state-machine.md",
+      "degraded": false,
+      "summary": "代码：新增 src/http-parser.ts——createHttpParser({maxLineBytes?}).feed(bytes) 返回 ParseEvent[]（request{head{method,path,version,headers小写键}} | error{reason: bad-request-line|bad-header|line-too-long}）；pending 跨 feed 存活、状态 line→headers→空行 emit→回 line（keep-alive 地基）、broken 闭嘴、行长上限防 Slowloris。概念：字节流/半包/粘包（水管不分杯）、状态机（读到哪儿了的地图）。测试 +10（四种切法一致性/粘包按序/畸形不崩）。读者已能：把任意切分字节流解析成请求头事件。"
+    },
+    {
+      "n": 4,
+      "slug": "keepalive-reuse",
+      "file": "04-keepalive-reuse.md",
+      "degraded": false,
+      "summary": "代码：新增组装层 src/server.ts——createServer({handler,keepAliveTimeoutMs?,maxConns?,now?,sweepIntervalMs?})→TinyServer{start(port?)→port,tick()→收割数,connections/acceptedCount/requestCount/close}；conn.ts 的 ManagedConn 增 write（只增不破）；每连接一个 parser（Map<connId,HttpParser>，onClose 清尸体）；HTTP/1.1 默认 keep-alive、Connection: close 即回写并挂断；空闲超时=账本 sweepIdle 复用。概念：三次握手账、TIME_WAIT 端口耗尽演算（6.4万÷60s≈1066/s 上限）、keep-alive。测试 +4（3 请求 1 拨号/空闲收割/配合挂断）。读者已能：跑起一个真端口监听的 keep-alive HTTP 服务器。"
+    },
+    {
+      "n": 5,
+      "slug": "memory-pool",
+      "file": "05-memory-pool.md",
+      "degraded": false,
+      "summary": "代码：新增 src/pool.ts——createPool({blockSize?=8192}).alloc(size)→Uint8Array（公共块指针后移、块满自动批发、size>blockSize 超大块直通单列 bigs）、reset() 整池清退（blocks.length=0）、systemBlockCount()、stats(){allocated,blocks,systemBytes}。概念：malloc 三笔开销（记账/碎片/锁）、「请求内存天生完美生命周期→无需逐个释放→防泄漏结构化」、JS 语境诚实说明（new ArrayBuffer=向系统要）。测试 +7（1000 次零售≤16 块批发/互不重叠/超大块直通/reset 归零重分配/stats 记账）。读者已能：用池把系统级申请压到常数次。"
+    },
+    {
+      "n": 6,
+      "slug": "config-inheritance",
+      "file": "06-config-inheritance.md",
+      "degraded": false,
+      "summary": "代码：新增 src/config.ts——parseConfig(text)→{ok:true,root:ConfigNode{name,args,directives,children}}|{ok:false,reason:'unclosed-block'|'stray-close'|'empty-directive'}（剥注释+结构符补空格切词+栈式入树，键小写）；resolveConfig(root,path)沿路径逐层对象展开合并（内层覆盖外层，路径元素支持 'location /static' 名字+参数匹配，走不通 null）。概念：上下文=花括号房间、继承两条规则（写了算自己的/没写沿外找第一站）、「挪指令事故」成因。测试 +9。读者已能：解析 nginx.conf 子集并合成任意块的有效配置。"
+    },
+    {
+      "n": 7,
+      "slug": "master-workers",
+      "file": "07-master-workers.md",
+      "degraded": false,
+      "summary": "无代码变更（principle 章）。概念落地：master=只管不接待的老板（读配置/建监听 socket/fork worker/收信号/CHLD 收尸补员）、worker=事件循环员工（数量跟 CPU 核数走不跟连接数）、多进程 vs 多线程账（隔离无锁/崩了整站活）、惊群与「内核恰好交给一个」、信号表（TERM/QUIT/HUP/USR2/WINCH/CHLD）、reload 六步时序（QUIT=优雅关闭→存量连接送完再退→两代 worker 并存是账单）、热升级=换发动机不熄火、Node cluster 是现成翻版。读者已能：讲清 reload 不断流与 worker 崩溃自愈的机制。"
+    },
+    {
+      "n": 8,
+      "slug": "reverse-proxy",
+      "file": "08-reverse-proxy.md",
+      "degraded": false,
+      "summary": "代码：新增 src/proxy.ts——proxyRequest(client,head,{host,port})→Promise<ProxyOutcome{ok,status}>：net.connect 上游、转发请求行+头部（盖 x-forwarded-for 邮戳、connection 由代理自定）、响应按 Content-Length 收齐缓冲后整体回写、完即挂断、上游失联回 502；server.ts 集成：ServerOptions 增可选 proxy 目标，respond 里配了就走代理不走 handler。概念：反向代理=前台、缓冲=速度差吸收账（慢客户端拖死直连拖不死反代）、X-Forwarded-For、502 语义、三处简化 vs 真实 nginx（连接池/流式/复用）。测试 +3（双跳全链路/每请求一上游连接/失联 502）。读者已能：把 tinysrv 变成真 upstream 前面的反代。"
+    },
+    {
+      "n": 9,
+      "slug": "load-balance",
+      "file": "09-load-balance.md",
+      "degraded": false,
+      "summary": "代码：新增 src/upstream.ts——createUpstreamPool({peers,maxFails?=1,failTimeoutMs?=10000,now?})→{pick()→{ok:true,peer}|{ok:false,reason:'all-down'}（cursor 轮询跳过摘除中）、report(peer,ok)（成功清零/连续失败达 maxFails 置 downUntil=now+failTimeoutMs）、isDown、size}；proxy.ts 重构：拆 proxyOnce（成败上报、不动 client）+write502，proxyRequest 保持第 8 章行为，新增 proxyRequestPooled（pick→试→report→败换下一台，一整圈为界，全败才 502）；server.ts 增 upstreamPool 选项。概念：轮询、失败账三规则（记账/摘除=停职/试探回归=时间流逝本身）、重试与摘除两层缺一不可、回归不需清理代码（downUntil<=now）。测试 +6（含三台坏一台集成：a,c,a,c,a,c 序列+幽灵摘除）。读者已能：给 tinysrv 配后端池并故障转移。"
+    },
+    {
+      "n": 10,
+      "slug": "rate-limit-leaky-bucket",
+      "file": "10-rate-limit-leaky-bucket.md",
+      "degraded": false,
+      "summary": "代码：新增 src/ratelimit.ts——createLeakyBucket({ratePerSec,burst,now?})→{allow(key)→{ok,queue}（懒结算：allow 时按 elapsed×rate 折算水位；溢出拒）、level(key)}；server.ts 增 rateLimit 选项：数据入口、handler 之前按 IP 段（remote.split(':')[0]，一人一桶）allow，溢出回 503。踩坑存档：key 用 conn.remote（含端口）→按连接限流形同虚设，集成测试钉死。概念：慢慢失败比立刻失败贵、rate=漏速/burst=桶容量/nodelay=排队策略、漏桶整流 vs 令牌桶限平均、懒结算=时间流逝本身（与第 9 章回归同品味）。测试 +6。读者已能：给 tinysrv 挂按人限流。"
+    },
+    {
+      "n": 11,
+      "slug": "zero-copy-write-path",
+      "file": "11-zero-copy-write-path.md",
+      "degraded": false,
+      "summary": "无代码变更（principle 收官章）。概念落地：传统路径四次拷贝+四次切换的过路费账（10GB 文件=CPU 亲手搬 20GB）、writev 聚合写（系统调用次数取决于趟数不取决于数据量）、sendfile 零拷贝（货不进家门、描述符交给网卡、拷贝 2→0/切换 4→2、sendfile on 开关）、零拷贝与内存池同哲学（能不动就不动）、诚实边界（要改数据链条即断）、全书一张请求旅程图（accept→账本→状态机→keep-alive→漏桶→配置→代理/均衡→写回→清池）收官。读者已能：不看图复述一个请求经过的每一站与每笔账。全书 52 测试全绿。"
+    }
+  ]
+}

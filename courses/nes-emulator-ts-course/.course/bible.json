@@ -1,0 +1,67 @@
+{
+  "reader": {
+    "known_assets": [
+      "能日常读写 TypeScript（模块、类、接口、联合类型、泛型基础）",
+      "会跑 pnpm/npm 命令、用编辑器与终端",
+      "有前端开发经验，知道浏览器页面是什么",
+      "会用 Vitest 或至少理解「跑测试看红绿」的工作方式（课程会再教一遍用法）"
+    ],
+    "unfamiliar": [
+      { "concept": "二进制/十六进制", "why": "前端开发生涯几乎不直接读写二进制；NES 每份文档、每个寄存器值都是十六进制", "anchor": "一排只能拨 0/1 的开关；十六进制是二进制的速记笔法，0xFF=11111111=255", "chapter": "01-binary-foundations" },
+      { "concept": "位运算（与/或/异或/移位）", "why": "JS 里几乎无人日常使用；NES 硬件靠它打包标志、拆分地址", "anchor": "开关的串并联：与=两个都按才亮、或=任一按就亮、异或=两开关状态不同才亮；移位=整排开关左移一格", "chapter": "01-binary-foundations" },
+      { "concept": "字节与字长", "why": "「8 位机」的 8 指什么，没接触过计算机组成就无从回答", "anchor": "每格只能数到 255 的计数器；NES 的 CPU 一口一集装箱（字节），地址门牌是两格拼成", "chapter": "01-binary-foundations" },
+      { "concept": "补码（负数怎么存）", "why": "前端不需要关心 -1 在内存里长什么样；ADC/SBC/分支全靠它", "anchor": "汽车里程表倒着转：255 倒退一格就是 -1；-128~127 首尾相接成环", "chapter": "01-binary-foundations" },
+      { "concept": "模拟器/整机架构", "why": "不知道一台计算机由哪些部件按什么节拍协作", "anchor": "用软件扮演一台机器的三个演员（CPU/PPU/APU），按同一节拍器轮流登台", "chapter": "02-emulator-big-picture" },
+      { "concept": "主时钟与 1:3 分频", "why": "「频率/周期」对纯应用层开发者是陌生词", "anchor": "节拍器：每拍 CPU 动一下、PPU 动三下——快屏幕慢大脑", "chapter": "02-emulator-big-picture" },
+      { "concept": "内存映射/镜像", "why": "前端眼里变量是名字；硬件世界里一切是门牌号，且门牌可以分租、可以一房多名", "anchor": "64KB 一条街分租给不同租户；镜像=同一间房挂了三个门牌", "chapter": "03-cartridge-and-bus" },
+      { "concept": "iNES / PRG / CHR / mapper", "why": "卡带文件格式是冷门领域知识", "anchor": "NES 卡带=U 盘+显卡显存的合体：PRG 装程序、CHR 装图案；mapper=卡带上的换页电路", "chapter": "03-cartridge-and-bus" },
+      { "concept": "寄存器/标志位", "why": "没见过汇编，不知道 CPU 内部结构", "anchor": "CPU 手边屈指可数的几个小抽屉；标志位=每次运算顺手留的便签（是零吗？是负吗？进位了吗？）", "chapter": "04-cpu-heartbeat" },
+      { "concept": "opcode / 取指-译码-执行", "why": "不知道「程序被一条条执行」在机器层怎么发生", "anchor": "照菜谱做饭：看一行（取指）→弄懂这行说什么（译码）→照做（执行）→看下一行", "chapter": "04-cpu-heartbeat" },
+      { "concept": "寻址模式/零页/回绕", "why": "「操作数从哪来」有 13 种约定是汇编特有现象", "anchor": "取快递的 13 种说法：快递就在手上/在小区 1 号柜/在隔壁小区……零页=CPU 家门口那 256 格最顺手的柜子；回绕=柜号数过头从 0 重新数", "chapter": "05-addressing-modes" },
+      { "concept": "进位/溢出", "why": "JS 的 number 不会溢出，没有进位概念", "anchor": "加法算盘打满 255 再进一格，进的那一格叫进位；溢出=带符号数加出了正负边界", "chapter": "06-instruction-set" },
+      { "concept": "中断/NMI", "why": "应用层开发者没接触过硬件中断", "anchor": "电话铃：干活时被叫走、记住做到哪了、按门牌号去处理、办完回来继续", "chapter": "10-frame-timing" },
+      { "concept": "扫描线/VBlank", "why": "不知道 CRT 电视怎么成像", "anchor": "电子枪像扫地一样一行行扫出画面，扫完一帧回到左上角前有个歇息空档（VBlank），此时改画面才不会撕", "chapter": "02-emulator-big-picture 图景 + 10-frame-timing 实现" },
+      { "concept": "nametable/pattern table/调色板/位平面", "why": "NES 图形是冷门硬件知识，且有两层间接", "anchor": "马赛克拼贴画：pattern=图案册（每页 8×8 格、黑白两页叠出 4 色）、nametable=拼贴布局图、属性表=每 16×16 区域用哪盒 4 色颜料", "chapter": "07-ppu-memory + 08-background-rendering" },
+      { "concept": "OAM/精灵/优先级/sprite 0 hit", "why": "NES 精灵机制是特有硬件行为", "anchor": "活动贴纸登记表：64 张贴纸各记位置/图案/翻面/压在画前还是画后；0 号贴纸是游戏的哨兵，它碰到背景时游戏就知道「这帧画到这里了」", "chapter": "09-sprites" },
+      { "concept": "采样率/波形/占空比/包络", "why": "数字音频是独立领域", "anchor": "声音=空气振动；每秒量 N 次振幅记成数字=采样；方波=只有最高最低两档的电压跳变；占空比=高电平占一圈的比例（音色）；包络=音量从响到轻的衰减曲线", "chapter": "11-apu-pulse" },
+      { "concept": "LFSR/线性计数器/混音", "why": "伪随机硬件与多通道合成是冷门知识", "anchor": "LFSR=带齿轮咬合的转盘，转出「看起来随机、实则确定」的 0/1 序列（8 位机噪声的灵魂）；混音=四个声道各出多少音量加在一起", "chapter": "12-apu-triangle-noise-and-boot" }
+    ]
+  },
+  "glossary": [
+    { "term": "模拟器", "en": "emulator", "definition": "用软件扮演一整台机器，让为那台机器写的程序以为自己在真机上运行。" },
+    { "term": "字节", "en": "byte", "definition": "8 个二进制位打包成的一格数据，能表示 0~255，是 8 位机世界的基本集装箱。" },
+    { "term": "十六进制", "en": "hexadecimal", "definition": "把每 4 个二进制位缩写成 1 个字符（0-9、A-F）的速记法，0xFF 就是二进制 11111111。" },
+    { "term": "位运算", "en": "bitwise operation", "definition": "直接对二进制每一位做的运算：与、或、异或、左移、右移，硬件上比加减法还便宜。" },
+    { "term": "补码", "en": "two's complement", "definition": "8 位世界里表示负数的约定：255 代表 -1，-128~127 首尾相接成一个环。" },
+    { "term": "寄存器", "en": "register", "definition": "CPU 内部屈指可数的几个超高速小格子，数据必须先搬进来才能参与运算。" },
+    { "term": "标志位", "en": "flag", "definition": "CPU 做完一次运算顺手留下的便签：结果是零吗？是负吗？进位了吗？供下一条指令查阅。" },
+    { "term": "寻址模式", "en": "addressing mode", "definition": "「操作数从哪来」的 13 种约定：数据在指令里、在内存某格、在某格附近……同一个动作的不同说法。" },
+    { "term": "总线", "en": "bus", "definition": "全机共享的地址加数据干道：CPU 报门牌号，对应地址上的设备负责应答。" },
+    { "term": "内存映射", "en": "memory map", "definition": "把 64KB 门牌号分段出租：$0000 段是 RAM、$2000 段通向 PPU——访问地址就等于访问设备。" },
+    { "term": "中断", "en": "interrupt", "definition": "硬件的电话铃：CPU 暂停手头工作、按向量表门牌号找到处理程序、办完回来原地继续。" },
+    { "term": "垂直消隐", "en": "VBlank", "definition": "一帧画面扫完后电子束回到左上角前的歇息窗口，是修改画面数据的唯一安全期。" },
+    { "term": "图块", "en": "tile", "definition": "8×8 像素的小方格图案，NES 整个画面由几百块图块像马赛克拼贴一样拼成。" },
+    { "term": "精灵", "en": "sprite", "definition": "不受背景网格约束、可逐帧自由摆位的活动图层（角色、子弹），登记在 OAM 表里。" },
+    { "term": "采样", "en": "sampling", "definition": "把连续声波每秒量很多次、把每次振幅记成一个数字；每秒量的次数就是采样率。" }
+  ],
+  "code_conventions": {
+    "layout": "companion/src/ 下按部件分文件：bits.ts / cartridge.ts / bus.ts / cpu/（registers+addressing+instructions）/ ppu/（memory+background+sprites+timing）/ apu/（pulse+triangle+noise+frameCounter+mixer）/ controller.ts / nes.ts；fixtures/ 存课程自产测试卡带构造器。随章节逐个建立，不提前建空文件。",
+    "naming": "领域自然名：Bus.read/write、CPU.step、PPU.tick、APU.tick、NES.frame；字节值一律 number(0-255)，地址 number(0-65535)；位运算结果立即 & 0xFF / & 0xFFFF 收边；布尔开关用 isXxx/enableXxx。",
+    "errors": "非法 opcode、越界索引等直接 throw Error 并带上地址上下文（如 `unknown opcode $02 at $8003`），不做静默兜底；开放总线（未映射地址）读返回 0、写丢弃——这是真机行为。",
+    "fixtures": "所有测试卡带由 fixtures/ 里 TS 代码现场生成（拼 iNES 头 + PRG 字节序列 + CHR 图案），零版权 ROM、零外部下载；「亲手造卡带验证自己的模拟器」本身是教学设计。",
+    "tests": "companion/tests/{NN}-{slug}.test.ts，append-only；断言公共 API 行为，不断言内部存储；不依赖网络与真实时间。"
+  },
+  "api_contract": {
+    "note": "全书导入面的单一事实源；后续章新导出随手记回本文件，只增不破。",
+    "bits": "src/bits.ts: toHex(n) 两位大写、toHex16(n) 四位、lo(n)/hi(n) 取低/高字节、word(lo,hi) 拼双字节、toSigned(n) 补码转 -128~127、readBit(n,bit)/writeBit(n,bit,v)",
+    "cartridge": "src/cartridge.ts: parseINES(bytes: Uint8Array): Cartridge；Cartridge = { prgRom, chrRom, mapper: number, mirroring: 'horizontal'|'vertical' }；非法头部 throw",
+    "bus": "src/bus.ts: class Bus { constructor(ramSize?); attachCartridge(cart); read(addr: number): number; write(addr: number, val: number): void }；内部 2KB RAM，三段镜像；$2000-$3FFF 与 $4000-$401F 段后续章接入 PPU/APU/手柄前暂按开放总线处理",
+    "cpu": "src/cpu/index.ts: class CPU { constructor(bus); reset(): void; step(): number /*消耗的 CPU 周期*/; a/x/y/pc/sp 及 P 标志可读 }；src/cpu/addressing.ts: 每模式导出地址解析函数；src/cpu/instructions.ts: OPCODES 表",
+    "ppu": "src/ppu/index.ts: class PPU { constructor(vramMirroring); tick(): void /*推进 1 个 PPU 周期*/; readReg(addr)/writeReg(addr,val)（$2000-$2007 经总线转发到此）; frameBuffer: number[] /*256*240 个 NES 调色板索引*/; drawBackground()/drawSprites() 由渲染章渐进补入 }",
+    "apu": "src/apu/index.ts: class APU { tick(cpuCycles): void; readReg/writeReg（$4000-$4017）; sampleBuffer: number[] /*float -1..1*/ }；通道类 pulse/triangle/noise 各自成文件",
+    "controller": "src/controller.ts: class Controller { setButton(button, pressed); read(): number /*$4016 读：strobe+移位协议*/ }",
+    "nes": "src/nes.ts: class NES { constructor(cartBytes: Uint8Array); frame(buttons?: Record<string,boolean>): { frameBuffer: number[]; samples: number[] } /*跑完一整帧*/ }",
+    "fixtures": "src/fixtures/index.ts: makeNromCartridge({ prg: number[], chr?: number[], mirroring? }): Uint8Array；prgWithReset(code: number[]): number[]（自动补复位向量）；后续各章按需新增图案/调色板/OAM 构造器"
+  },
+  "style": "全部中文、说人话：专业名词第一次出现当场用一句大白话说清；正文示例代码只出自 companion 或自包含片段；零外部源码引用、零「与真源码对照」。"
+}

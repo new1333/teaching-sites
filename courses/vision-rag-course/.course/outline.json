@@ -1,0 +1,490 @@
+{
+ "title": "视觉 RAG 原理课：让 AI 真正看懂 PDF 与视频",
+ "audience": "会写基础 Python、想弄懂视觉 RAG 原理的入门者",
+ "input": {
+  "kind": "repo",
+  "ref": "liangdabiao/glm-5.3-flash-vision-rag@HEAD"
+ },
+ "companion": {
+  "form": "library",
+  "language": "Python 3.10+（src 仅标准库）+ pytest + ruff",
+  "scope": "假模型驱动的最小视觉 RAG 管线：渲染→索引→粗筛→精排→深读→可核对交付，再加视频抽帧/段聚合/时间戳问答/微观放大，纯代码约 1100 行（连注释与文档串约 1900 行）；测试随 11 个动手章 11 组渐进解锁"
+ },
+ "parts": [
+  {
+   "title": "第一部 · 全景与地基",
+   "chapters": [
+    {
+     "slug": "two-phase-funnel",
+     "title": "先通读做笔记，再按笔记翻书：两阶段架构与成本漏斗",
+     "goal": "建立全书地图：为什么「每次提问都把整份资料塞给模型」走不通，以及「先索引后漏斗」两阶段架构如何同时解决贵、慢、编页码三个问题",
+     "type": "principle",
+     "pain_point": "把 300 页 PDF 每次提问都整本塞给视觉模型：等两分钟、烧几十块，答完再追问一句又是两分钟几十块；更糟的是它说答案在第 187 页，你翻过去发现那一页讲的完全是另一件事——页码是编的，每次都这样",
+     "new_concepts": [
+      "视觉大模型",
+      "多模态",
+      "上下文窗口",
+      "检索增强生成",
+      "成本漏斗",
+      "幻觉"
+     ],
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/README.md",
+       "why": "备课：两阶段架构与三层漏斗的原始表述"
+      },
+      {
+       "path": "readme.md",
+       "why": "备课：三个工具的总览口径"
+      }
+     ],
+     "depends_on": [],
+     "acceptance": [
+      "正文含「整本塞给模型」的具体痛点段落，现象写到页码是编的（文验收）",
+      "成本漏斗三段（粗筛/精排/深读）各用一句人话讲清分工与代价差异（文验收）",
+      "给出全书地图：后续各章在漏斗中的位置一次交代（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "vision-client",
+     "title": "一个靠得住的视觉模型客户端：重试、宽容解析与密钥纪律",
+     "goal": "实现可插拔传输层的 Client：图片内联、密钥从环境变量读、指数退避重试、容忍围栏的 JSON 解析、按任务选推理档位",
+     "type": "build",
+     "pain_point": "脚本第一次跑就退出：密钥写死在代码里被同事推上了 GitHub，只好紧急换钥；改成环境变量后，模型返回的 JSON 外面裹了一层```围栏，json.loads 直接抛异常；网络偶发超时，脚本崩在半路，每次都要从头跑",
+     "new_concepts": [
+      "API 密钥",
+      "环境变量",
+      "base64",
+      "系统提示词",
+      "推理强度",
+      "指数退避",
+      "JSON 围栏"
+     ],
+     "milestone": "Client 落地：ScriptedTransport 剧本回放下，围栏 JSON 能救回、连续失败按退避节奏重试后成功、密钥从环境变量读取；img_block 产出带标签的图片内容块",
+     "milestone_verify": "章末测试全绿：三条断言分别验证「围栏解析成功」「第 3 次调用才成功时拿到结果且前两次留有记录」「无密钥环境抛出明确错误」",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/glm_client.py",
+       "why": "备课：客户端基座的真实行为（重试节奏、宽容解析、密钥加载）"
+      },
+      {
+       "path": "glm-5.3-flash-vision-rag/references/api-notes.md",
+       "why": "备课：推理档位与思考行为的实测记录"
+      }
+     ],
+     "depends_on": [
+      "two-phase-funnel"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "正文含「密钥写死被推上 GitHub」「围栏 JSON 崩溃」的痛点展开（文验收）",
+      "指数退避按「成因→演算」教：读者能徒手算出第 4 次重试前累计等待秒数（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "第二部 · PDF 问答主线",
+   "chapters": [
+    {
+     "slug": "page-rendering",
+     "title": "把页面变成图：渲染分辨率与文字层",
+     "goal": "理解「页码与图像物理绑定」这一引用精确性的来源；实现合成文档渲染（DPI 旋钮）、零成本文字层抽取与简化计费估算",
+     "type": "build",
+     "pain_point": "扫描版合同用文本抽取工具跑出来全是空字符串——那一页根本没有文字层，字是印在图片上的；改用 300 DPI 渲染整本，月底账单上图片费用比预想高了十倍，而肉眼分辨率只好了那么一点",
+     "new_concepts": [
+      "DPI",
+      "文字层",
+      "按分辨率计费",
+      "扫描版"
+     ],
+     "milestone": "make_handbook 合成手册 + render_pages 产出带 [第N页] 标签的页图；扫描页文字层为空可程序检出；approx_tokens 按「声明的简化模型」估算页图成本",
+     "milestone_verify": "章末测试：扫描页的 text 为空字符串且 is_scanned 判定为真；dpi=110 与 dpi=220 的 approx_tokens 恰好差约 4 倍——读者亲手改一个数字看到成本翻 4 倍",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/ingest.py",
+       "why": "备课：渲染 DPI 与长边约束的真实取舍"
+      },
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/show.py",
+       "why": "备课：按页出图的接口形态"
+      }
+     ],
+     "depends_on": [
+      "two-phase-funnel"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "「为什么页码引用天然精确」讲透：标签与图像一次绑定、照抄不走样（文验收）",
+      "DPI-成本关系给一段读者可纸笔复算的数值演算（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "batch-page-cards",
+     "title": "每页一张读书卡：批量打标与拆批重试",
+     "goal": "实现批量视觉索引：带页码标签成批送模型出结构化卡片，截断对半拆批递归，顽固失败页落到文字层兜底卡，标题派生大纲",
+     "type": "build",
+     "pain_point": "20 页一批让模型做卡片，返回到第 14 页突然截断，后半本的书目是空的；单独重试某一页又永远失败，整本书的索引就报错退出——一夜之间没有任何一页是可用的",
+     "new_concepts": [
+      "截断",
+      "对半拆批",
+      "文字层兜底"
+     ],
+     "milestone": "build_page_cards 落地：正常批一次成卡；截断剧本自动对半拆到拆得动为止；失败页产出文字层兜底卡而非中断；derive_outline 跨页标题去重",
+     "milestone_verify": "章末测试：截断剧本下 20 页全部拿到卡片且子批大小逐轮减半；永久失败页拿到 type='其他' 的兜底卡；同一标题在相邻两页出现时大纲只留一条",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/ingest.py",
+       "why": "备课：批量打标、拆批递归与兜底的真实结构"
+      }
+     ],
+     "depends_on": [
+      "vision-client",
+      "page-rendering"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "对半拆批按「成因→载体→演算」教：附截断时刻的拆批树示意与页数演算（文验收）",
+      "「兜底不是失败」的工程判断讲透：宁可全书带一张弱卡，不中断整本（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "local-tfidf",
+     "title": "免费的第一道筛：中文 TF-IDF 粗筛",
+     "goal": "实现零成本本地检索：二字滑窗分词、停用词、字段加权文档、idf×封顶词频打分——毫秒级圈出候选页",
+     "type": "build",
+     "pain_point": "问「预算表在哪一页」，用「关键词在不在页面文本里」做检索：审批、预算这类词在 96 页里 74 页都有，排序全靠出现次数，排第一的是全文最长的那页而不是最相关的那页；而不做本地筛选、直接把全部页卡逐页问模型，光筛选就烧掉十几次调用",
+     "new_concepts": [
+      "分词",
+      "停用词",
+      "TF-IDF"
+     ],
+     "milestone": "tokenize + page_document + score_pages 落地：加权字段生效、稀有词压倒高频词、词频封顶防「长页霸榜」、无词命中回退全部页",
+     "milestone_verify": "章末测试：构造「74 页都含『审批』、只有 1 页含『预算表』」的语料，score_pages 第一名恰是那 1 页；把某页关键词重复 100 次，其得分不再随次数线性上涨",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/ask.py",
+       "why": "备课：粗筛打分公式与字段加权的真实权重"
+      }
+     ],
+     "depends_on": [
+      "batch-page-cards"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "TF-IDF 按「成因→演算→锚点」教：读者能对 3 页小语料徒手算出某词的 idf 与页面得分（文验收）",
+      "「为什么词频要封顶」给出读者可复算的反例演算（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "vision-rerank",
+     "title": "让模型看图把关：视觉精排",
+     "goal": "实现第二层漏斗：候选页图+摘要交模型做内容级 top-k 精选，输出校验（只认候选、去重、≤k），失败回退本地排序",
+     "type": "build",
+     "pain_point": "问「退货政策怎么规定的」，本地粗筛 top4 全是『退货』字样出现最多的页——而真正的答案在一页只写着「售后与退换」的页上。词面对不上（退货≠退换），纯字面检索永远把它排不进来；每页单独问一次模型倒是可以，一次提问又要烧 96 次调用",
+     "new_concepts": [
+      "词面匹配",
+      "top-k",
+      "回退"
+     ],
+     "milestone": "rerank_pages 落地：剧本下模型从 8 个候选挑出 2 个含语义相关但词面不同的页；返回编造页码/重复页码被校验丢弃；transport 罢工时静默回退 candidates[:k]",
+     "milestone_verify": "章末测试：三段剧本各验一事——语义命中、非法页码被滤、ChatError 回退后返回值恰为本地前 k",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/ask.py",
+       "why": "备课：精排调用形态与回退逻辑"
+      }
+     ],
+     "depends_on": [
+      "local-tfidf",
+      "vision-client"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "「词面匹配的盲区」用退货/退换实例讲透，并说明为什么看图能补这个盲区（文验收）",
+      "「模型输出不可信、要校验」的原则在正文明确成立且测试可见（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "deep-read",
+     "title": "只在刀刃上花力气：深读与引用诚实",
+     "goal": "实现第三层漏斗：命中页±邻页展开、页图与文字层同给、高档推理产出带 [第N页] 引用的回答；截断注记与证据不足时的拒答行为",
+     "type": "build",
+     "pain_point": "精排选中的第 40 页只有表格的上半段，趋势结论在 41 页——只给模型一页图，它把全年趋势猜反了，你照着回答去汇报，被当场指出数据对不上；再问一个书里根本没有的问题，它一本正经编了个第 53 页的引用，翻过去是空白页",
+     "new_concepts": [
+      "邻页",
+      "拒答"
+     ],
+     "milestone": "deep_read 落地：{40} 自动展开为 {39,40,41} 且页序稳定；请求里同时含页图块与文字层文本块；effort 记录为 high；剧本返回「资料中未见相关内容」时该文本原样透传为答案",
+     "milestone_verify": "章末测试：断言扩展后的页集合、请求中标签与文字层齐备、剧本的拒答文本出现在返回值里",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/ask.py",
+       "why": "备课：邻页展开与深读请求结构"
+      }
+     ],
+     "depends_on": [
+      "vision-rerank"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "「表格跨页」与「编造引用」两个痛点场景都在正文展开且各有实验场剧本对应（文验收）",
+      "「为什么深读要同时给图和文字层」讲出分工（图管版式图表、文字层管精确措辞）（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "verifiable-delivery",
+     "title": "把证据递到手上：引用回收与自包含预览",
+     "goal": "贯通全漏斗 ask：从答案正文正则回收页码、导出引用页图、生成图片全内嵌的单文件 HTML——回答必须可核对",
+     "type": "build",
+     "pain_point": "回答里写着 [第 12 页]，用户翻到 PDF 第 12 页发现内容对不上（索引只建了前一半、模型却装作读过全书）；同事要证据截图，你只能口头说「模型是这么说的」——没有图、没有页、没有可转发的东西",
+     "new_concepts": [
+      "正则表达式",
+      "自包含 HTML"
+     ],
+     "milestone": "ask + cited_pages + export_pages + html_preview 贯通：一次调用跑完粗筛→精排→深读→引用回收，输出答案、页图文件与自包含 HTML；HTML 内无任何外部资源引用",
+     "milestone_verify": "亲手开机：python -c 一行跑通 ask 并生成 HTML，双击打开看到答案+引用页图同屏；测试断言 HTML 里 0 个外部引用、页图标签与答案页码一致",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/scripts/ask.py",
+       "why": "备课：引用回收与预览产物的真实形态"
+      }
+     ],
+     "depends_on": [
+      "deep-read",
+      "page-rendering"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "正文给出「亲手开机」指引：一行命令+双击 HTML 看到什么（文验收）",
+      "「索引只覆盖部分页时要如实声明」体现在 ask 的输出或调用约定里（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "第三部 · 视频问答",
+   "chapters": [
+    {
+     "slug": "adaptive-sampling",
+     "title": "按时长定密度：视频宏观抽帧",
+     "goal": "把「视频」翻译成「带时间标签的帧序列」：合成帧源、按时长分档的采样密度、本地场景切换检测",
+     "type": "build",
+     "pain_point": "10 分钟监控按 1fps 抽了 600 帧，每帧都送模型，账单当场爆炸；改成 30 分钟抽 1 帧的稀疏采样，回看时「进门前那 3 秒的推搡」整个落在两帧之间——抽过的帧里一张都没有它",
+     "new_concepts": [
+      "抽帧",
+      "采样密度",
+      "场景切换"
+     ],
+     "milestone": "FrameSource + make_clip + auto_fps + extract_frames + detect_scene_cuts 落地：四档密度自动选择、采样帧标签取最近真帧、场景切换在合成素材的两个切点处被检出",
+     "milestone_verify": "章末测试：61 秒素材 auto_fps 返回 0.5 而非 1.0；3 秒事件以 1fps 必被抽到、以 0.1fps 必被漏掉——同一素材两个密度一对比，遗漏是可复现的事实",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-video-rag/scripts/ingest.py",
+       "why": "备课：自适应密度分档与场景检测参数"
+      }
+     ],
+     "depends_on": [
+      "two-phase-funnel",
+      "page-rendering"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "采样密度按「成因→演算」教：给定时长与 fps 读者能算出帧数与漏检窗口（文验收）",
+      "「视觉模型没有耳朵」的诚实边界在正文声明：一切理解基于画面（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "frame-segments",
+     "title": "帧卡片与段聚合：把几百帧收进抽屉",
+     "goal": "帧级结构化卡片（含运动强度）+ 30 秒段聚合段卡，把检索粒度从帧升到段，并为微观层供数",
+     "type": "build",
+     "pain_point": "600 张帧卡片摊平在索引里，检索粒度是「帧」：问「推搡是什么时候开始的」，命中的第 233 帧 [03:53] 和第 234 帧 [03:55] 是两张几乎一样的卡片，模型读到的也是两段重复描述——页码式的精确在视频里变成了重复与噪音",
+     "new_concepts": [
+      "段聚合",
+      "运动强度"
+     ],
+     "milestone": "build_frame_cards + aggregate_segments 落地：六字段帧卡（scene/summary/keywords/ocr/event/motion）、段卡携带帧时刻清单与 peak_motion；复用对半拆批纪律",
+     "milestone_verify": "章末测试：75 秒素材按 30 秒聚合恰为 3 段且边界正确；段内含一张 motion='高' 的帧时该段 peak_motion=='高'——微观层要的钩子就绪",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-video-rag/scripts/ingest.py",
+       "why": "备课：帧卡片字段与段聚合的真实形态"
+      }
+     ],
+     "depends_on": [
+      "adaptive-sampling",
+      "batch-page-cards"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "「为什么粒度要从帧升到段」用重复命中痛点讲透（文验收）",
+      "运动强度字段的存在理由（为微观层供数）在正文交代去向（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "video-qa",
+     "title": "漏斗迁移：带时间戳的视频问答",
+     "goal": "把三层漏斗迁移到时间段：段粗筛→段代表帧精排→选中段全帧深读，回答带 [MM:SS]；解析时刻导出关键帧与切片范围",
+     "type": "build",
+     "pain_point": "把 PDF 漏斗照搬到视频后，回答却说「冲突大约发生在视频的中段」——没有时间戳，用户只能拖着进度条来回找；找到了也没法转发给同事：说不出是第几秒，切不出那一段",
+     "new_concepts": [
+      "时间戳",
+      "关键帧"
+     ],
+     "milestone": "ask_video + fmt_ts/parse_ts/clip_ranges/score_segments/rerank_segments 落地：VideoAnswer 携带答案、时刻清单与切片范围（前后补 5 秒、最多 3 段、合并重叠）",
+     "milestone_verify": "亲手开机：一行命令对合成片段问「推搡发生在什么时候」，终端打出带 [MM:SS] 的答案、时刻与切片范围；测试断言 pad 与 max_clips 语义",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-video-rag/scripts/ask.py",
+       "why": "备课：段漏斗结构与时间戳回收"
+      },
+      {
+       "path": "glm-5.3-flash-vision-video-rag/scripts/show.py",
+       "why": "备课：片段切分的接口形态"
+      }
+     ],
+     "depends_on": [
+      "frame-segments",
+      "local-tfidf",
+      "vision-rerank",
+      "deep-read"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "「时间戳是采样估计（有 ±误差）」的诚实声明在正文与输出约定里都有（文验收）",
+      "clip_ranges 的补边/合并/上限语义各配一段读者可复算的例子（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    },
+    {
+     "slug": "micro-zoom",
+     "title": "再拉近一点：微观放大层",
+     "goal": "两级采样设计：动作类问题或运动峰值自动触发（或手动指定）时间窗，12fps 高密度重抽 + 中心裁切放大 + 首帧全图锚点，追加一次模型分析",
+     "type": "build",
+     "pain_point": "问「他第几秒按下了按钮」——宏观 0.5fps 的帧间隔 2 秒，按下动作只持续 300 毫秒，正好落在两帧之间，深读回答「画面中没有看到按键动作」；把全片提高到 12fps 重抽，帧数与账单同时涨 24 倍",
+     "new_concepts": [
+      "微观层",
+      "中心裁切",
+      "锚点帧"
+     ],
+     "milestone": "is_action_question + motion_peak_window + extract_micro + run_micro 落地：动作问题自动定位运动峰值窗口；微观序列首帧全图、其余中心裁切且尺寸可证；Bitmap.center_crop 可用",
+     "milestone_verify": "章末测试：非动作问题不触发微观调用；「按下按钮」问题触发且窗口覆盖运动峰值帧；微观序列 cropped 标记恰为首帧 False 其余 True",
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-video-rag/scripts/ask.py",
+       "why": "备课：微观层的触发词表与帧序列结构"
+      }
+     ],
+     "depends_on": [
+      "video-qa",
+      "adaptive-sampling"
+     ],
+     "acceptance": [
+      "实验场双硬门槛通过：ruff + pytest 全量（仓验收）",
+      "两级采样按「成因→演算」教：读者能算出「全程 12fps vs 峰值窗口 12fps」的帧数差（文验收）",
+      "锚点帧的存在理由（防丢上下文）与中心裁切的「放大」原理都讲透（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "第四部 · 走向工程",
+   "chapters": [
+    {
+     "slug": "engine-porting",
+     "title": "换一台引擎：移植差异与双引擎互验",
+     "goal": "理解同一套流水线移植到不同视觉引擎的三个改动点（思考控制→推理档位、文件上传→内联传图、计费模型→DPI 取舍），以及双引擎互验的用法",
+     "type": "principle",
+     "pain_point": "从 DeepSeek 换到 GLM：「关思考」参数直接返回 400（该模型始终思考、不支持关闭）、文件上传接口根本不存在、图片计费从单图封顶变成按分辨率——一夜之间三处全挂，而流水线的其余部分一行没改",
+     "new_concepts": [
+      "双引擎互验"
+     ],
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/references/api-notes.md",
+       "why": "备课：三处差异的实测记录"
+      },
+      {
+       "path": "glm-5.3-flash-vision-video-rag/README.md",
+       "why": "备课：同构移植的表述"
+      }
+     ],
+     "depends_on": [
+      "vision-client",
+      "video-qa"
+     ],
+     "acceptance": [
+      "正文含「400/接口不存在/计费全变」的三点痛点展开（文验收）",
+      "transport 抽象如何把引擎差异压到一层：用第 2 章已建的结构对照讲解，零新代码（文验收）",
+      "双引擎互验按「成因→做法→何时用」讲清（文验收）",
+      "零外部源码引用；真实平台行为只做方向性断言，具体数值不写死（文验收）"
+     ]
+    },
+    {
+     "slug": "package-as-skill",
+     "title": "从脚本到 skill：让 AI 知道何时调用你",
+     "goal": "理解 agent skill 的交付形态：触发条件写在描述里、工作流给步骤、密钥不内置、细节文档按需读（渐进披露）——把脚本集变成 AI 助手能自动调用的技能",
+     "type": "principle",
+     "pain_point": "你把脚本打包发给同事，他手头明明有 PDF 要查，却跑来问「这个怎么用」；装进 AI 助手后更糟——助手也不知道什么时候该掏出这个工具，脚本躺在文件夹里吃灰，没人知道它的存在条件",
+     "new_concepts": [
+      "agent skill",
+      "触发描述",
+      "渐进披露"
+     ],
+     "relevant_files": [
+      {
+       "path": "glm-5.3-flash-vision-rag/SKILL.md",
+       "why": "备课：触发条件与工作流的写法"
+      },
+      {
+       "path": "glm-5.3-flash-vision-video-rag/SKILL.md",
+       "why": "备课：第二个 skill 的触发差异化"
+      }
+     ],
+     "depends_on": [
+      "engine-porting"
+     ],
+     "acceptance": [
+      "正文含「脚本没有说明书」的痛点展开，写到没人知道何时调用（文验收）",
+      "触发描述「用户提到 X 且想做 Y 时用本 skill」的写法拆解，配一段读者可自查的示范（文验收）",
+      "渐进披露按「成因（上下文预算）→做法（精要+references）」教，并与全书结构呼应收束（文验收）",
+      "零外部源码引用（文验收）"
+     ]
+    }
+   ]
+  }
+ ],
+ "appendices": [
+  {
+   "slug": "glossary",
+   "title": "术语表",
+   "kind": "glossary"
+  },
+  {
+   "slug": "divergence",
+   "title": "差异清单：本课程的简化与真实世界",
+   "kind": "divergence"
+  },
+  {
+   "slug": "exercises",
+   "title": "练习路线：清空 src，从红到绿",
+   "kind": "exercises"
+  }
+ ],
+ "final_milestone": {
+  "what_reader_built": "一套千行级、假模型驱动的最小视觉 RAG 管线，PDF 与视频问答全流程可跑通",
+  "verify": "companion 下 python -m pytest -q：141 个测试全部转绿；一行命令跑通 ask 并产出可双击核对的自包含 HTML"
+ }
+}

@@ -1,0 +1,89 @@
+{
+ "current": 14,
+ "chapters": {
+  "1": {
+   "slug": "two-phase-funnel",
+   "file": "docs/01-two-phase-funnel.md",
+   "degraded": false,
+   "summary": "第 1 章（principle）建立全书地图：视觉大模型＝看得见照片的远程助手（多模态）；调用无状态、按量计费、上下文窗口有限——整本塞＝贵/慢/编页码，幻觉源于「生成不是查询」。解法＝两阶段（先通读建卡片索引，再按 RAG 开卷翻书）＋三层成本漏斗（粗筛免费→精排便宜→深读昂贵，深读带邻页）。成本演算用声明口径一页≈1500 token。companion 未动、无新 API。读者能讲清为何不能整本塞、漏斗如何把每问代价压到约 1/8，并持有全书章节地图。"
+  },
+  "2": {
+   "slug": "vision-client",
+   "file": "docs/02-vision-client.md",
+   "degraded": false,
+   "summary": "第 2 章（build）落地 client.py 与 fake.py：ChatError、Transport 协议、load_api_key（GLM_API_KEY 环境变量，缺钥明确报错）、img_block（data URL 内联、标签在前）、parse_json_lenient 四步宽容解析、Client.chat 指数退避重试（sleep 可注入、.waited 可观察、耗尽抛 ChatError）、chat_json；ScriptedTransport 剧本回放并记 .requests，配 fenced_json/failing。测试 test_vision_client.py 13 个全绿。读者已能搭可插拔传输的可靠客户端并零网络验证。"
+  },
+  "3": {
+   "slug": "page-rendering",
+   "file": "docs/03-page-rendering.md",
+   "degraded": false,
+   "summary": "第 3 章（build）落地 bitmap.py 与 document.py：Bitmap 等宽字符网格（width/height/render，crop 留微观章）；Page(text, bitmap).is_scanned＝文字层剥空白为空；PageImage.label＝'[第N页]'；make_handbook 六页合成手册（第 5 页扫描件）；render_pages(dpi=110) 最近邻缩放；approx_tokens 按 750 像素/token 声明模型估成本（dpi 110→220 每页 2→8 token，平方律）。新增测试 12 个、累计 25 全绿。读者已能把文档变成带页码标签的页图、检出扫描页、按声明口径估算渲染成本。"
+  },
+  "4": {
+   "slug": "batch-page-cards",
+   "file": "docs/04-batch-page-cards.md",
+   "degraded": false,
+   "summary": "第 4 章（build）落地 index.py：PageCard 六字段读书卡；normalize_card 白名单/钳制/页码以送审标签为准；build_page_cards(client, page_images, texts, batch=20) 成批打标（标签先行、effort=low、json_mode），截断（finish='length'）/解析失败/重试耗尽对半拆批递归（最坏 2n-1 次），漏页只补漏，残页文字层兜底卡 type='其他'（摘要取前 150 字）；derive_outline 跨页同标题去重。新增测试 13 个、累计 38 全绿。读者已能把整本手册变成一摞卡片索引，一页不缺。"
+  },
+  "5": {
+   "slug": "local-tfidf",
+   "file": "docs/05-local-tfidf.md",
+   "degraded": false,
+   "summary": "第 5 章（build）落地 scoring.py：tokenize（中文相邻二字滑窗、英文数字整段小写、去停用词 STOP_TERMS）、page_document（标题/摘要/关键词 ×3 FIELD_WEIGHT＋文字层 ×1）、score_pages（idf=log(1+n/df) × min(tf,8) TF_CAP，总分降序、同分按页序；无词命中回退全部页序；texts 短于页数抛 ValueError）。新增测试 13 个、累计 51 全绿。读者已能零成本圈候选页：稀有词压倒高频词、封顶防长页霸榜、扫描页靠卡片字段检回。空白页过滤留给精排层。"
+  },
+  "6": {
+   "slug": "vision-rerank",
+   "file": "docs/06-vision-rerank.md",
+   "degraded": false,
+   "summary": "第 6 章（build）落地 pipeline.py：rerank_pages(client, cards, page_images, candidates, k, question)——候选页图＋摘要标签一次调用交模型挑 top-k（effort=low、json_mode）；回执三闸校验（只认候选、去重、≤k）；ChatError/空选/校验全灭静默回退【过滤后】候选前 k；空白页与无卡/无图候选入口即拦（兑现第 5 章「空白页由精排把关」）。新增测试 11 个、累计 62 全绿。读者已能补词面盲区：语义相关而字面不同的页被挑回，精排失败退回粗筛排序不断线。deep_read/ask 留待第 7/8 章续写本文件。"
+  },
+  "7": {
+   "slug": "deep-read",
+   "file": "docs/07-deep-read.md",
+   "degraded": false,
+   "summary": "第 7 章（build）在 pipeline.py 续写 deep_read：命中页 ±1 邻页展开（去重、升序、首尾收拢；空白/无卡无图邻页不进场，cards 参数用于把关）；请求页图（[第N页] 标签在前）+ 末块文字层同给，扫描页如实标「（无文字层）」；effort=high、max_tokens=24576（教学数值）、非 JSON；拒答原样透传，finish='length' 追加截断注记；空命中页/语料外页码/长度不齐抛 ValueError。新增测试 12 个、累计 74 全绿。读者已能深读选中页、拿到带页码引用的诚实回答；ask 贯通与引用回收对账留待第 8 章。"
+  },
+  "8": {
+   "slug": "verifiable-delivery",
+   "file": "docs/08-verifiable-delivery.md",
+   "degraded": false,
+   "summary": "第 8 章（build）贯通 PDF 主线：pipeline.py 增 Answer(answer, cited)、cited_pages（正则 第(\\d+)页 回收，升序去重）、ask(client, doc, question, top=4, cands=12, index=None)——粗筛→精排→深读→引用回收一趟跑完，index 注入可跳过建卡；索引覆盖不全时答案末尾追加 INDEX_NOTE 如实声明。新落 report.py：export_pages 落盘带标签页图（.txt）、html_preview 产自包含单文件 HTML（<pre> 内嵌、零外部引用、html.escape 转义）；语料外页码抛 ValueError。新增测试 13 个、累计 87 全绿。读者已能一行命令跑通 ask 并双击核对答案与引用页。"
+  },
+  "9": {
+   "slug": "adaptive-sampling",
+   "file": "docs/09-adaptive-sampling.md",
+   "degraded": false,
+   "summary": "第 9 章（build）落地 video.py：Frame(t, bitmap, scene, motion) 与 FrameSource(duration, frames)；make_clip＝61 秒合成片（三场面两次切换＋(31,34) 3 秒事件）；auto_fps 四档（≤60→1.0/≤600→0.5/≤1800→0.25/更长 0.1）；extract_frames 按 fps 采样、标签取最近真帧（平手取前、不重复）；detect_scene_cuts 以格点突变分 ≥0.3 报切点（不读标签）。新增测试 12 个、累计 99 全绿。读者已能把视频翻译成带时间标签的帧序列并本地检出场景切换；帧卡片与段聚合留待第 10 章。"
+  },
+  "10": {
+   "slug": "frame-segments",
+   "file": "docs/10-frame-segments.md",
+   "degraded": false,
+   "summary": "第 10 章（build）落地 video_index.py：FrameCard 七格（t＋scene/summary/keywords/ocr/event/motion，MOTIONS 白名单低/中/高）；build_frame_cards(client, frames, batch=20) 平移第 4 章对半拆批纪律（[t=Xs] 标签、effort=low、json_mode；回执时刻贴最近送审帧、多帧批容差半个批内最大间隔，编造远时刻整条扔；顽固帧空兜底卡）；SegmentCard(start, end, frame_ts, summary, keywords, peak_motion)＋aggregate_segments(seg=30)：归属键 int(t//seg) 整点归下段、摘要串联去重、关键词按频次、peak=段内最高运动。新增测试 15 个、累计 114 全绿。读者已能把帧序列变成可检索的段卡索引，微观层钩子（peak_motion）就绪。"
+  },
+  "11": {
+   "slug": "video-qa",
+   "file": "docs/11-video-qa.md",
+   "degraded": false,
+   "summary": "第 11 章（build）落地 video_pipeline.py：fmt_ts/parse_ts 秒数与 [MM:SS] 互译（回收只认方括号单时刻）；clip_ranges 补边 5 秒、clamp、重叠合并、上限 3 段；score_segments 把 TF-IDF 平移到段文档；rerank_segments 代表帧＝段中时刻最近帧，三闸校验与回退照旧；深读选中段全帧＋OCR，视频侧第一处 effort=high；ask_video 四跳贯通出 VideoAnswer（答案/时刻/切片），末尾印 ± 误差注记（TS_NOTE，半个真相帧间隔口径）。新增测试 14 个、累计 128 全绿；微观层留待第 12 章。"
+  },
+  "12": {
+   "slug": "micro-zoom",
+   "file": "docs/12-micro-zoom.md",
+   "degraded": false,
+   "summary": "第 12 章（build）落地 micro.py 与 Bitmap.crop/center_crop：is_action_question 词面闸门触发动作问题（刻意不含「推搡」）；motion_peak_window 取运动最高帧 ±1.5 秒定窗（平手取最早，clamp 两处分工：起点收 0、终点 extract_micro 收 duration）；extract_micro 12fps 窗口重抽——首帧全图锚点、其余 28×8 中心裁切（真相帧 0.5 秒一张为密度上限）；run_micro 锚点＋放大帧交模型 high 档追加分析，截断注记照旧、ChatError 如实抛。新增测试 13 个、累计 141 全绿；第 3 章 Bitmap 引言一行已回写终态。读者已能两级采样：宏观答案之上对亚秒动作自动拉近重看。"
+  },
+  "13": {
+   "slug": "engine-porting",
+   "file": "docs/13-engine-porting.md",
+   "degraded": false,
+   "summary": "第 13 章（principle）零代码讲移植：三处差异＝思考控制（开关→三档旋钮）、传图（上传换编号→base64 内联）、计费（单图封顶→按分辨率）；前两处机械差异由 Transport 翻译层吸收，计费是经济差异、回头重调 DPI——漏斗结构免疫。双引擎互验：终答双跑、比要点与出处不比字面、分歧回物理证据、只用于深读终答。实验场未动、141 测试全绿、无新 API；读者能用 REPL 翻译适配器验证「换引擎只换一层」。ThinkingDialect 为用法示例不进实验场。"
+  },
+  "14": {
+   "slug": "package-as-skill",
+   "file": "docs/14-package-as-skill.md",
+   "degraded": false,
+   "summary": "第 14 章（principle，收官）零代码讲交付形态：脚本变技能＝补一页机器可读说明书——agent skill；触发描述按「用户提到 X 且想做 Y」写（素材词×意图词×引用形态，禁实现词），工作流给编号步骤，回答规范重抄全书诚实纪律，密钥只从环境变量读、永不进文件；渐进披露＝一页精要常驻、references 按需再读，是成本漏斗在文档世界的镜像。结尾回扣第 1 章地图与收官里程碑：千行级假模型管线全流程可跑、141 测试全绿。实验场未动、无新 API、无降级。"
+  }
+ }
+}

@@ -1,0 +1,246 @@
+{
+  "title": "用 TypeScript 造一台 NES：从比特到第一声开机音",
+  "audience": "会 TS 的前端工程师，二进制与汇编零基础",
+  "input": { "kind": "topic", "ref": "使用 TypeScript 实现 NES 模拟器" },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript + vitest（Node 环境，无 DOM；帧/音频缓冲为数组，终章附零依赖上屏小页）",
+    "scope": "最小 NES 模拟器：6502 CPU + 总线与卡带 + PPU 渲染与时序 + 四通道 APU + 手柄 + 整机，约 1400 行（不含测试）；全部测试卡带由课程自产 fixture 生成，零外部 ROM"
+  },
+  "parts": [
+    {
+      "title": "地基：机器的语言",
+      "chapters": [
+        {
+          "slug": "01-binary-foundations",
+          "title": "从 0 和 1 说起：8 位机的世界观",
+          "goal": "建立二进制/十六进制/位运算/补码的读写能力，从此看懂 NES 文档里的每一个数字",
+          "type": "principle",
+          "pain_point": "用文本编辑器打开 ROM 文件满屏乱码，切到十六进制视图是整齐的两两一组数字，却一个都读不懂——0xFF 是多少？为什么这台机器处处是 255？",
+          "new_concepts": ["二进制与十六进制", "位运算", "字节与字长", "补码"],
+          "depends_on": [],
+          "acceptance": [
+            "正文每个进制/位运算概念都有可亲手验证的自包含示例（node REPL 可跑）",
+            "所有术语首现即用大白话解释",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "02-emulator-big-picture",
+          "title": "模拟器是一台「假机器」：整机地图与施工路线",
+          "goal": "看清 NES 五大部件、它们靠什么节拍协作，以及这门课每一步在盖哪块砖",
+          "type": "principle",
+          "pain_point": "照着 6502 手册抄了三天 opcode 表，还是不知道模拟器第一行代码该写什么——没有地图就上路，是模拟器项目弃坑率第一名的原因",
+          "new_concepts": ["模拟器", "CPU/PPU/APU 分工", "主时钟与 1:3 分频", "帧与扫描线（图景级）"],
+          "depends_on": ["01-binary-foundations"],
+          "acceptance": [
+            "产出整机结构 ASCII 示意图与「章节↔部件」施工对照表",
+            "一帧的诞生过程有逐步图景描述",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "让 CPU 活起来",
+      "chapters": [
+        {
+          "slug": "03-cartridge-and-bus",
+          "title": "卡带与总线：内存是一排门牌号",
+          "goal": "解析 iNES 卡带文件，实现 64KB 总线，让 CPU 的每个地址都找得到对应设备",
+          "type": "build",
+          "pain_point": "PRG 明明解析出 16KB，CPU 读 $8000 却拿到 RAM 脏数据——卡带还没接进门牌段；更诡异的是写 $0800 竟改了 $0000 的值（镜像），不知情的程序数据莫名被覆盖",
+          "new_concepts": ["iNES 文件头", "PRG/CHR ROM", "mapper", "内存映射", "镜像"],
+          "milestone": "parseINES() 解析自产迷你卡带（PRG/CHR 尺寸、mapper、镜像方向全对）；Bus 按 NES 分区分发读写并复现 RAM 三段镜像",
+          "milestone_verify": "新增 tests/03-cartridge-and-bus.test.ts：头部字段断言 + 镜像断言 + $8000 读到 PRG 首字节，全绿",
+          "depends_on": ["01-binary-foundations", "02-emulator-big-picture"],
+          "acceptance": [
+            "实验场双门槛通过：tsc --noEmit + vitest run（新测试转绿且旧测试全绿）",
+            "iNES 头部解析对非法文件头 throw",
+            "正文含「读 $8000 读到脏数据」痛点段落",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "04-cpu-heartbeat",
+          "title": "CPU 心跳：寄存器与取指执行循环",
+          "goal": "实现 6502 的七个寄存器与 fetch-decode-execute 心跳，让 CPU 跑起第一段程序",
+          "type": "build",
+          "pain_point": "复位后 PC 从 $FFFC 复位向量起飞，没有取指循环的 CPU 把指令字节当数据、把数据当指令，三条就跑飞到未知地址——模拟器第一次运行几乎必然翻车在这里",
+          "new_concepts": ["寄存器", "程序计数器与栈指针", "标志位", "opcode", "取指-译码-执行", "复位向量"],
+          "milestone": "CPU.reset() 从 $FFFC/$FFFD 取复位入口；step() 完整取指译码执行；自产程序 LDA #$05 / STA $0200 / NOP 跑通，A 寄存器与内存可断言",
+          "milestone_verify": "新增 tests/04-cpu-heartbeat.test.ts：复位向量语义、三条指令行为、未知 opcode 抛错，全绿",
+          "depends_on": ["03-cartridge-and-bus"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "LDA 立即数正确置 Z/N 标志",
+            "未知 opcode 抛错而非静默跳过",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "05-addressing-modes",
+          "title": "寻址模式：同一个动作的十三种说法",
+          "goal": "实现全部 13 种寻址模式的地址计算，含零页回绕与页边界陷阱",
+          "type": "build",
+          "pain_point": "LDA $40 和 LDA $0400 一字之差，一个读零页一个读绝对地址，opcode 写错游戏瞬间写飞内存；而 (指针),Y 在 $00FF 页边界居然回绕不进位——真机的硬件 bug 也得复刻，否则依赖它的游戏直接崩给你看",
+          "new_concepts": ["零页", "间接寻址", "页", "回绕"],
+          "milestone": "13 种寻址模式全部实现并接入指令表骨架；零页回绕与 (ind),Y 陷阱语义与真机一致",
+          "milestone_verify": "新增 tests/05-addressing-modes.test.ts：每种模式一条行为断言 + 零页,X 回绕 + (ind),Y 页边界陷阱，全绿",
+          "depends_on": ["04-cpu-heartbeat"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "零页 $FF+X 回绕到 $00xx 而非 $01xx",
+            "(ind),Y 在 $00FF 复刻真机页回绕行为",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "06-instruction-set",
+          "title": "指令集全家福：五十六条官方指令",
+          "goal": "实现全部官方指令——算术、逻辑、移位、比较分支、跳转与栈",
+          "type": "build",
+          "pain_point": "JSR 跳进子程序就再也回不来——RTS 弹栈的地址差了一个字节；ADC 忘接进位，血量显示直接 -1；分支看错标志，菜单按一下下标直接穿到底",
+          "new_concepts": ["进位与溢出", "子程序与栈", "比较与分支"],
+          "milestone": "56 条官方指令全部实现；一段含「循环计数 + 子程序调用 + 条件分支」的自产程序跑出正确结果",
+          "milestone_verify": "新增 tests/06-instruction-set.test.ts：算术/逻辑/移位的标志位、JSR/RTS 配对、BNE 循环退出、PHA/PLA，全绿",
+          "depends_on": ["05-addressing-modes"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "ADC/SBC 的进位与溢出标志语义正确",
+            "JSR/RTS 经栈正确配对",
+            "非法 opcode 抛错（不实现未公开指令）",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "画面：一帧的诞生",
+      "chapters": [
+        {
+          "slug": "07-ppu-memory",
+          "title": "PPU 的记忆：图块、拼贴与颜料盒",
+          "goal": "搭起 PPU 的三块记忆（nametable/调色板/OAM）与 $2000-$2007 八个寄存器的读写语义",
+          "type": "build",
+          "pain_point": "往 $2007 连写三个调色板字节，画面纹丝不动——PPU 地址要先用 $2006 两次写入拼装、读写还会自增，不懂这套节奏，写再多也是写去了别处",
+          "new_concepts": ["VRAM", "nametable", "pattern table", "调色板 RAM", "OAM", "DMA"],
+          "milestone": "PPU 内存体系 + 八寄存器语义 + OAM DMA 一次搬 256 字节；总线 $2000-$3FFF 段接通",
+          "milestone_verify": "新增 tests/07-ppu-memory.test.ts：$2006/$2007 拼地址与自增、读 PPUSTATUS 清 VBlank、调色板镜像、OAM DMA 搬运，全绿",
+          "depends_on": ["06-instruction-set"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "$2006 两次写入正确拼出 16 位地址",
+            "读 PPUSTATUS 一次即清 VBlank 标志",
+            "OAM DMA 从 CPU 页搬到 OAM 共 256 字节",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "08-background-rendering",
+          "title": "背景渲染：从图块编号到一整屏像素",
+          "goal": "走通 tile→pattern 双位平面→调色板间接→帧缓冲的整条渲染管线",
+          "type": "build",
+          "pain_point": "把 nametable 里的 tile 编号直接当颜色填画面，满屏马赛克；补上 pattern 查询后又忘了「调色板选的是 4 色组里第几号」这层间接——图形对了颜色全错，这种对了一半的 bug 最折磨人",
+          "new_concepts": ["pattern 位平面", "属性表", "帧缓冲", "调色板索引"],
+          "milestone": "renderBackground() 把一整屏背景画进 256×240 帧缓冲（存 NES 调色板索引）",
+          "milestone_verify": "新增 tests/08-background-rendering.test.ts：自产 fixture（已知图案/布局/调色板）渲染结果与手算期望逐像素相等，全绿",
+          "depends_on": ["07-ppu-memory"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "pattern 低/高两个位平面正确合并出 0-3 像素值",
+            "属性表按 16×16 区域正确选调色板",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "09-sprites",
+          "title": "精灵：会动的一切",
+          "goal": "把 OAM 的 64 个精灵按扫描线合成到背景上，并实现 sprite 0 hit",
+          "type": "build",
+          "pain_point": "精灵写了坐标却看不见——它被排在背景后面；另一颗该在前的漂在最上面——优先级位与翻转位没实现；sprite 0 hit 永不置位，游戏「画完这帧再动」的等待逻辑直接卡死",
+          "new_concepts": ["精灵优先级", "水平垂直翻转", "sprite 0 hit", "每扫描线 8 个上限"],
+          "milestone": "renderSprites() 完成合成（8×8/8×16、H/V 翻转、前景/背景、每线 8 个上限）+ sprite 0 hit 标志置位",
+          "milestone_verify": "新增 tests/09-sprites.test.ts：优先级覆盖、翻转、第 9 个精灵裁剪、sprite 0 置位条件，全绿",
+          "depends_on": ["08-background-rendering"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "优先级位为 1 时精灵被背景非透明像素盖住",
+            "同一扫描线只画优先级最高的 8 个精灵",
+            "sprite 0 与背景非透明像素重叠时 PPUSTATUS 置位",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "10-frame-timing",
+          "title": "帧时序与中断：CPU 与 PPU 的双人舞",
+          "goal": "用一个主时钟按 1:3 驱动两颗芯片，实现扫描线状态机与 NMI，点亮第一幅静态画面",
+          "type": "build",
+          "pain_point": "只跑 CPU 不跑 PPU，游戏在「等 NMI」的循环里假死黑屏；反过来不等 VBlank 窗口就改画面，撕裂花屏——两颗芯片不按 1:3 共享节拍，谁也活不成",
+          "new_concepts": ["主时钟", "扫描线状态机", "VBlank 窗口", "NMI", "中断序列"],
+          "milestone": "tickTock() 主循环按 CPU:PPU=1:3 推进；扫描线状态机走完一帧 89341.5 PPU 周期、第 241 线触发 NMI；mini 程序完成「等 NMI→VBlank 改 nametable」闭环，静态画面点亮",
+          "milestone_verify": "新增 tests/10-frame-timing.test.ts：一帧周期数、NMI 进 $FFFA 向量与现场保存/恢复、VBlank 标志窗口、闭环出帧，全绿",
+          "depends_on": ["08-background-rendering"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "一帧共 89341.5 PPU 周期（NTSC）、VBlank 在 241-260 线",
+            "NMI 触发时 PC 入栈、跳 $FFFA/$FFFB 向量、RTI 恢复",
+            "「等 NMI→改画面→出帧」集成闭环成功",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "声音与合体：第一次开机",
+      "chapters": [
+        {
+          "slug": "11-apu-pulse",
+          "title": "方波、包络与节拍器：APU 的旋律声部",
+          "goal": "实现两条方波通道（定时器/占空比/包络/sweep/长度）与统一节拍的帧序列器，输出采样流",
+          "type": "build",
+          "pain_point": "把方波想当然当正弦波，声音发闷毫无 8 位味；不做包络，每个音像蜂鸣器直进直出；帧序列器不统一节拍，长度计数器永不归零，一个音从头响到尾",
+          "new_concepts": ["波形与音高", "占空比", "包络", "帧序列器", "采样率"],
+          "milestone": "pulse×2 完整实现 + 帧序列器 quarter/half 步进 + 四通道混音骨架输出 float 采样流",
+          "milestone_verify": "新增 tests/11-apu-pulse.test.ts：四种占空比序列、包络衰减曲线、sweep 变频、长度归零静音、帧序列器节拍，全绿",
+          "depends_on": ["10-frame-timing"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "定时器周期到音高换算正确",
+            "包络按帧序列器 quarter 节拍衰减",
+            "sweep 能把音高按周期推弯",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "12-apu-triangle-noise-and-boot",
+          "title": "APU 下与整机合体：三角波、噪声与第一次开机",
+          "goal": "补齐三角波与噪声通道、接上手柄，组装 NES 整机，用自产测试卡带完成第一次开机",
+          "type": "build",
+          "pain_point": "噪声用 Math.random()，听着是白噪音却没有 8 位机沙沙的齿轮感——LFSR 伪随机才是那个味；三角波忘了 linear counter 的解锁条件，低音声部整段静音；整机合体时部件单测全绿、合起来却黑屏——时钟配比与初始化顺序是集成期头号杀手",
+          "new_concepts": ["LFSR", "线性计数器", "混音", "手柄移位寄存器协议"],
+          "milestone": "triangle（32 步序列+线性计数器）与 noise（LFSR+周期表）入混音；$4016 手柄移位协议；NES.frame(buttons) 一帧整机接口——课程自产测试卡带跑出「画面正确 + 声音非静音」的第一帧",
+          "milestone_verify": "新增 tests/12-apu-triangle-noise-and-boot.test.ts：三角波门控、LFSR 模式序列、手柄 8 键移位读取、frame() 集成（帧缓冲含预期 tile 与精灵、音频缓冲 RMS>0），全绿",
+          "depends_on": ["11-apu-pulse", "09-sprites", "10-frame-timing"],
+          "acceptance": [
+            "实验场双门槛通过",
+            "LFSR 模式 1 输出确定序列而非随机数",
+            "手柄 strobe 后连读 8 次得 8 个键态、之后恒为 1",
+            "frame() 跑自产卡带：帧缓冲逐点含预期图案、音频缓冲非静音",
+            "零外部输入：卡带为课程自产 fixture，访客无需自备任何 ROM",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "6502-opcodes", "title": "6502 指令与寻址速查表", "kind": "reference-table" },
+    { "slug": "ppu-apu-registers", "title": "PPU / APU 寄存器速查表", "kind": "reference-table" },
+    { "slug": "exercises", "title": "练习路线：把实验场亲手再写一遍", "kind": "exercises" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "约 1400 行的 TS 版 NES 模拟器，跑通自产测试卡带：出画面、出声音",
+    "verify": "companion 全量测试通过：帧缓冲逐像素断言 + 手柄回放 + 音频缓冲非静音（约 60 个用例）"
+  }
+}

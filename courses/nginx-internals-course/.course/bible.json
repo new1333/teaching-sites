@@ -1,0 +1,80 @@
+{
+  "reader_model": {
+    "known_assets": [
+      "nginx 配置实操：自己写/改过 server/location 块、用过 proxy_pass，理解每块大概干什么——全书可反复挂「你见过的 nginx.conf」锚点",
+      "HTTP 概念层：知道 Method/URL/Header/Body 与常见状态码，但没见过裸报文字节流",
+      "业务级 TypeScript/JavaScript（前端或全栈业务代码）",
+      "「进程 vs 线程」大概知道有区别，说不出机制"
+    ],
+    "unknown_concepts": [
+      { "concept": "TCP 连接与 socket", "why": "业务代码只调 fetch，从没摸过连接本身", "anchor": "两部电话之间拨通的线路；socket 是程序手里的电话机", "first_chapter": "connection-registry" },
+      { "concept": "文件描述符", "why": "没接触过系统编程", "anchor": "操作系统发给每台「电话机」的编号凭条", "first_chapter": "c10k-and-event-driven" },
+      { "concept": "阻塞与非阻塞 I/O", "why": "没写过系统级代码，不知道 I/O 还有两种等法", "anchor": "占着工位死等快递 vs 快递到了门铃响", "first_chapter": "c10k-and-event-driven" },
+      { "concept": "事件多路复用 / epoll", "why": "内核名词，业务层完全屏蔽", "anchor": "传达室大爷同时盯一万个门铃，谁响叫谁", "first_chapter": "c10k-and-event-driven" },
+      { "concept": "字节流与粘包/半包", "why": "fetch 拿到的永远是完整对象，没见过数据切开到货", "anchor": "水管里的水没有「一杯一杯」，一股股涌出来", "first_chapter": "http-parser-state-machine" },
+      { "concept": "状态机", "why": "算法课名词，没在真实场景用过", "anchor": "逐字读句子，随时知道「读到哪了、下一个该看什么」", "first_chapter": "http-parser-state-machine" },
+      { "concept": "keep-alive 机制", "why": "指令（keepalive_timeout）抄过，机制黑箱", "anchor": "说完一件事不挂电话，接着说下一件", "first_chapter": "keepalive-reuse" },
+      { "concept": "TIME_WAIT 与端口耗尽", "why": "网络内核名词", "anchor": "挂电话后一方要原地等一会儿才能走，防止最后一句没送到；走的人太多把大门口的门牌号占光了", "first_chapter": "keepalive-reuse" },
+      { "concept": "内存分配器（malloc）与碎片", "why": "没写过 C，不知道分配也有成本", "anchor": "仓库进货出货，反复进出后到处是塞不进大件的小空格", "first_chapter": "memory-pool" },
+      { "concept": "内存池", "why": "同上", "anchor": "整批进货再零售；退仓时整仓清空，不用一件件对账", "first_chapter": "memory-pool" },
+      { "concept": "配置 context 继承规则", "why": "块结构天天见，覆盖/继承规则没系统化", "anchor": "大房子定了规矩，小房间没写就沿用；写了就是自己说了算", "first_chapter": "config-inheritance" },
+      { "concept": "信号（signal）", "why": "没碰过进程控制", "anchor": "操作系统给进程发的对讲机暗号", "first_chapter": "master-workers" },
+      { "concept": "反向代理的转发机制", "why": "proxy_pass 用过，背后发生什么是黑箱", "anchor": "站在真实服务器前面的前台接待员", "first_chapter": "reverse-proxy" },
+      { "concept": "漏桶算法", "why": "算法名词", "anchor": "水先倒进固定漏斗，按固定速率漏出去，倒太猛就溢出拒绝", "first_chapter": "rate-limit-leaky-bucket" },
+      { "concept": "零拷贝 / sendfile", "why": "系统调用名词", "anchor": "货不进你家门，从库房直接装车发走", "first_chapter": "zero-copy-write-path" }
+    ]
+  },
+  "glossary": [
+    { "term": "并发连接数", "en": "concurrent connections", "definition": "同一时刻挂在服务器上的「通话中」数量，不是每秒新来电数" },
+    { "term": "C10K 问题", "en": "C10K problem", "definition": "一台服务器同时伺候一万个连接这道经典难题" },
+    { "term": "套接字", "en": "socket", "definition": "程序世界里的一部电话机——应用程序通过它接进网络打电话" },
+    { "term": "文件描述符", "en": "file descriptor", "definition": "操作系统发给每个「电话机」的编号凭条" },
+    { "term": "阻塞 I/O", "en": "blocking I/O", "definition": "打电话时占着人死等对方开口，别的什么都干不了" },
+    { "term": "非阻塞 I/O", "en": "non-blocking I/O", "definition": "不占人死等——留一句「有消息叫我」，自己继续干别的" },
+    { "term": "事件多路复用", "en": "I/O multiplexing", "definition": "雇一位传达室大爷同时盯一万个门铃，谁响了叫谁来取" },
+    { "term": "epoll", "definition": "Linux 提供的那位「传达室大爷」的官方名字" },
+    { "term": "事件循环", "en": "event loop", "definition": "不断重复「等事件→处理事件」的循环，服务器的心跳" },
+    { "term": "回调", "en": "callback", "definition": "留给系统的一句留言：「事来了打这个电话」" },
+    { "term": "字节流", "en": "byte stream", "definition": "数据在网络里像水管的水，一股股涌出来，天生不分「一封一封」" },
+    { "term": "粘包与半包", "definition": "一次到货粘了两条消息 / 一条消息只到一半——水管流水的常态" },
+    { "term": "状态机", "en": "state machine", "definition": "给解析器画的一张「读到哪了」地图，每读一段就知道下一步去哪" },
+    { "term": "keep-alive", "definition": "说完一件事不挂电话，接着说下一件" },
+    { "term": "TIME_WAIT", "definition": "主动挂电话的一方要原地多等一会儿才能走，防止最后的告别没送到" },
+    { "term": "内存池", "en": "memory pool", "definition": "整批进货再零售的仓库；清仓时整仓清空，不用一件件对账" },
+    { "term": "内存碎片", "en": "fragmentation", "definition": "反复进货退货后，仓库里到处是塞不进大件的小空格" },
+    { "term": "配置上下文", "en": "context", "definition": "nginx.conf 里一层层的花括号房间，指令写在哪个房间就算哪个房间的" },
+    { "term": "配置继承", "definition": "房间没写的规矩，沿用外面大房间的；写了就自己说了算" },
+    { "term": "master 进程", "definition": "只管不接待的老板：读配置、盯员工、收指令，不亲自伺候连接" },
+    { "term": "worker 进程", "definition": "真正伺候客人的员工，一人一摊互不打扰，倒了一个老板再招一个" },
+    { "term": "信号", "en": "signal", "definition": "操作系统层面发给进程的对讲机暗号" },
+    { "term": "优雅关闭", "en": "graceful shutdown", "definition": "「不再接新客，把手头客人送完再下班」" },
+    { "term": "热升级", "definition": "换发动机不熄火——新二进制顶上，旧进程送完旧客才退" },
+    { "term": "反向代理", "en": "reverse proxy", "definition": "站在真实服务器前面的前台接待员，客人只见前台" },
+    { "term": "upstream", "definition": "后台真正干活的服务器名单" },
+    { "term": "负载均衡", "en": "load balancing", "definition": "把活分给名单上几台服务器的分配规则" },
+    { "term": "轮询", "en": "round robin", "definition": "按名单顺序一家一个轮着来" },
+    { "term": "最少连接", "en": "least_conn", "definition": "谁手头活少就把新活给谁" },
+    { "term": "故障转移", "en": "failover", "definition": "一台坏了自动记下来、换下一台重试，别让客人看见失败" },
+    { "term": "漏桶算法", "en": "leaky bucket", "definition": "水先倒进固定漏斗、按固定速率漏出去；倒太猛直接溢出拒绝" },
+    { "term": "突发余额", "en": "burst", "definition": "漏斗上方临时加高的一段缓冲空间，偶尔倒猛点也不至于马上溢" },
+    { "term": "缓冲", "en": "buffer", "definition": "两个速度不一致的人之间摆的一张桌子，快的那方先把东西堆桌上" },
+    { "term": "聚合写", "en": "writev", "definition": "把几堆东西抱一次送出去，省得跑三趟" },
+    { "term": "零拷贝", "en": "zero copy", "definition": "货不进你家门：数据不搬到应用手里，从库房直接装车发走" },
+    { "term": "sendfile", "definition": "零拷贝在 Linux 上的官方通道——文件直接从磁盘送进网卡" }
+  ],
+  "code_conventions": {
+    "project": "tinysrv：读者课程结束拥有的最小事件驱动 HTTP 服务器，验证 nginx 核心原理，不复刻任何真实服务器",
+    "structure": "src/ 按层分文件：conn.ts（连接注册表）、http-parser.ts（状态机）、pool.ts（内存池）、config.ts（配置解析与继承）、proxy.ts（反向代理）、upstream.ts（负载均衡）、ratelimit.ts（漏桶）、server.ts（组装层，后期出现）",
+    "errors": "可预期失败（解析错、配置错、超限）返回判别联合 { ok: false, reason, ... }，不用异常做控制流；编程错误才 throw",
+    "naming": "工厂函数 createXxx；事件回调 onXxx；类型/接口 PascalCase；测试文件与章 slug 同名",
+    "tests": "纯逻辑（解析器/池/桶/配置）直接喂数据断言；连接与代理层允许 127.0.0.1 真实 socket 集成测试（不依赖外网）；时间相关逻辑一律注入假时钟"
+  },
+  "api_contract": {
+    "src/conn.ts": "createConnRegistry(opts?: { idleTimeoutMs?, maxConns?, now? }) → ConnRegistry：add(socket) 返回 {ok:true,conn}|{ok:false,reason:'max-conns'}、onData(cb)、onIdle(cb)、onClose(cb)、sweepIdle(now) 返回收割名单、size()；ManagedConn={id,remote,lastActiveAt,destroy()}",
+    "src/http-parser.ts": "createHttpParser(opts?: { maxLineBytes? }) → { feed(bytes: Uint8Array): ParseEvent[] }，ParseEvent = { type: 'request', head: { method, path, version, headers（键小写） } } | { type: 'error', reason: 'bad-request-line'|'bad-header'|'line-too-long' }；解析完回起点等下一个请求（keep-alive 地基），出错后 broken 闭嘴",
+    "src/server.ts": "createServer({ handler(head)→{status,body}, keepAliveTimeoutMs?, maxConns?, now?, sweepIntervalMs? }) → TinyServer { start(port?=0)→Promise<port>, tick()→收割数, connections(), acceptedCount(), requestCount(), close() }；HTTP/1.1 默认 keep-alive，请求头 Connection: close 则响应后挂断；每连接一个 parser",
+    "src/pool.ts": "createPool({ blockSize?=8192 }) → Pool { alloc(size)→Uint8Array（超大块直通）、reset() 整池清退、systemBlockCount()、 stats()→{allocated,blocks,systemBytes} }",
+    "src/config.ts": "parseConfig(text) → { ok:true, root: ConfigNode{name,args,directives,children} } | { ok:false, reason:'unclosed-block'|'stray-close'|'empty-directive' }；resolveConfig(root, path) → Record|null（沿路径逐层合并，内层覆盖外层；路径元素 'name' 或 'name arg'）",
+    "_rule": "后续各章新导出随手记回本契约，只增不破；它是全书导入面的单一事实源"
+  }
+}

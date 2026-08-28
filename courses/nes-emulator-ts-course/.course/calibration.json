@@ -1,0 +1,11 @@
+{
+  "asked": true,
+  "answers": {
+    "oldCourseHandling": "新目录并存（旧 nes-emulator-course 保留，新版位于 courses/nes-emulator-ts-course）",
+    "readerBinary": "没接触过 —— 二进制/十六进制/位运算从零教起",
+    "readerAssembly": "没接触过 —— 从「CPU 一次做什么」讲起，指令逐条细讲",
+    "apuScope": "完整 APU —— pulse×2 + triangle + noise 全实现（DMC 采样通道不做，附录提及）"
+  },
+  "audienceGuess": "会写 TypeScript 的前端开发者（课程主题即『用 TS 实现』，默认读者能读懂日常 TS）；对二进制、汇编、计算机组成、数字音频全部零基础",
+  "readerProfileOneLiner": "会 TS 的前端开发者，二进制与汇编双零基础：位运算、补码、寄存器、标志位、中断、内存映射、扫描线、采样率全部按陌生概念从零教"
+}

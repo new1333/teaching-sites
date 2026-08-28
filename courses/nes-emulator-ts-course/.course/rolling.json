@@ -1,0 +1,14 @@
+{
+  "chapters": {
+    "01-binary-foundations": {
+      "file": "01-binary-foundations.md",
+      "degraded": false,
+      "summary": "全书数字语言已建立：二进制/十六进制（$ 与 0x 同义）、字节=8 bit（0-255、装满即 255）、位运算（& 取、| 拼、^ 翻、移位挪；拆拼双字节地址三套路）、补码（-1=255，-128~127 环）。无代码变更（principle 章）。读者已能读懂 NES 文档里的每个数字、在 REPL 验证进制与位运算。"
+    },
+    "02-emulator-big-picture": {
+      "file": "02-emulator-big-picture.md",
+      "degraded": false,
+      "summary": "整机图景已立：模拟器=软件扮演整机，程序是唯一考官；三演员 CPU 6502（64KB 门牌视野）/PPU（记忆分家，仅 $2000-$2007 八寄存器窗口）/APU（四声道），外加卡带（PRG 程序+CHR 图案）与手柄（$4016）；主时钟 1:3（CPU 一步 PPU 三步）；一帧 262 扫描线×341 周期，240 线进 VBlank 窗口改数据，中断=收工铃（第 10 章实现）。无代码变更。读者持有整机结构总平面图与 12 步施工表。下一章从卡带解析+64KB 总线开工。"
+    }
+  }
+}

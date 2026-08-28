@@ -1,0 +1,526 @@
+{
+ "reader": {
+  "profile": "会写基础 Python 脚本（变量/函数/字典/列表/文件读写/装包）的聪明入门者；没调过大模型 API、没做过 RAG、没用过 ffmpeg、不知道 TF-IDF。宁可多解释，不赌读者已知。",
+  "known_assets": [
+   "Python 基础：函数、字典/列表、字符串方法、文件读写、pip 装包、命令行运行脚本",
+   "见过 JSON：知道它是「花括号套键值」的文本格式，能读懂简单结构",
+   "知道图片由像素组成、知道 PDF 和 mp4 是常见文件格式（仅此而已）",
+   "会一点 HTML 名词（标签、双击打开网页文件），不需要会写网页"
+  ],
+  "stranger_concepts": [
+   {
+    "concept": "视觉大模型",
+    "why": "读者没调过大模型 API，更没接触能读图的模型",
+    "anchor": "一位看得见照片的远程助手：你把图片和问题一起发过去，它回文字",
+    "first_chapter": "two-phase-funnel"
+   },
+   {
+    "concept": "上下文窗口",
+    "why": "不知道模型单次能读多少东西，容易以为可以无限塞",
+    "anchor": "助手桌上一次只能摊开的资料总量——桌子就这么大",
+    "first_chapter": "two-phase-funnel"
+   },
+   {
+    "concept": "检索增强生成",
+    "why": "没做过 RAG，容易把它想成「模型自己记得一切」",
+    "anchor": "开卷考试：先翻书找到那段，再照着答——不是闭卷背诵",
+    "first_chapter": "two-phase-funnel"
+   },
+   {
+    "concept": "成本漏斗",
+    "why": "「为什么不全丢给模型」的直觉需要被结构化纠正",
+    "anchor": "招聘漏斗：简历机筛（免费）→ 面试精选（便宜）→ 终面细聊（昂贵）",
+    "first_chapter": "two-phase-funnel"
+   },
+   {
+    "concept": "幻觉",
+    "why": "初学者容易把模型输出当事实，尤其编造的页码/出处",
+    "anchor": "考试不会答还硬编一个页号，语气还特别自信",
+    "first_chapter": "two-phase-funnel"
+   },
+   {
+    "concept": "API 密钥",
+    "why": "没调过云端 API，不知道鉴权这回事",
+    "anchor": "门禁卡：证明调用者是你、平台好计费——随身带，但别印在名片上",
+    "first_chapter": "vision-client"
+   },
+   {
+    "concept": "base64 与 data URL",
+    "why": "图片怎么进到一次文本请求里，读者没概念",
+    "anchor": "把照片折成一条长纸条塞进信封，收信人照折痕能原样折回照片",
+    "first_chapter": "vision-client"
+   },
+   {
+    "concept": "系统提示词",
+    "why": "不知道调用里还能预设角色与输出格式",
+    "anchor": "开工前递给助手的一页岗位说明书：你是谁、只输出什么格式",
+    "first_chapter": "vision-client"
+   },
+   {
+    "concept": "推理强度",
+    "why": "不知道模型有「想多深再下笔」的档位概念",
+    "anchor": "答题前的思考时长旋钮：批量登记拧到最省，深度分析拧到最足",
+    "first_chapter": "vision-client"
+   },
+   {
+    "concept": "指数退避",
+    "why": "没写过网络重试逻辑",
+    "anchor": "电话占线：等 2 秒再打、还占线等 4 秒、再等 8 秒——越来越客气",
+    "first_chapter": "vision-client"
+   },
+   {
+    "concept": "JSON 围栏",
+    "why": "模型常把 JSON 包进 Markdown 代码块，直接解析会崩",
+    "anchor": "模型把 JSON 当礼物装进了包装盒（```），拆盒再取",
+    "first_chapter": "vision-client"
+   },
+   {
+    "concept": "文字层",
+    "why": "不知道 PDF 里「看得见的字」与「机器能抽出的字」是两回事",
+    "anchor": "书页上的一层隐形文字：真排版的 PDF 有；拍照扫描的只有照片没有这层",
+    "first_chapter": "page-rendering"
+   },
+   {
+    "concept": "按分辨率计费",
+    "why": "以为图片进模型是免费的或按张计费",
+    "anchor": "洗照片：像素越高越清楚，也越贵——清晰度是个旋钮",
+    "first_chapter": "page-rendering"
+   },
+   {
+    "concept": "对半拆批",
+    "why": "没处理过「输出超长被截断」的工程问题",
+    "anchor": "一车货装不下就分两车、再不行分四车——总能装下",
+    "first_chapter": "batch-page-cards"
+   },
+   {
+    "concept": "分词",
+    "why": "中文没有空格，读者没想过检索前要先切词",
+    "anchor": "中文句子是一整串，得先切成两字一小块的碎片才好对暗号",
+    "first_chapter": "local-tfidf"
+   },
+   {
+    "concept": "停用词",
+    "why": "不知道检索前要扔掉无信息量的高频词",
+    "anchor": "「什么」「怎么」这类词像空气——到处都有，指认不了任何人",
+    "first_chapter": "local-tfidf"
+   },
+   {
+    "concept": "TF-IDF",
+    "why": "没接触过信息检索打分",
+    "anchor": "评线索的规矩：这页出现得越多、全书出现得越少的词越值钱",
+    "first_chapter": "local-tfidf"
+   },
+   {
+    "concept": "词面匹配",
+    "why": "初学者以为检索就是「字对上」",
+    "anchor": "对暗号只对字面：问「退货」就找不到只写「退换」的那页",
+    "first_chapter": "vision-rerank"
+   },
+   {
+    "concept": "邻页",
+    "why": "没想到表格和论证会跨页断开",
+    "anchor": "表格上半段在这页、结论在下一页——只看一半必猜错",
+    "first_chapter": "deep-read"
+   },
+   {
+    "concept": "拒答",
+    "why": "初学者不知道「明说证据不足」是设计出来的行为而不是失败",
+    "anchor": "诚实的助手：资料里没有就说没有，而不是现编一段",
+    "first_chapter": "deep-read"
+   },
+   {
+    "concept": "正则表达式",
+    "why": "读者没写过正则",
+    "anchor": "按格式捞文本的渔网：网眼写成「第+数字+页」就能捞出所有页码",
+    "first_chapter": "verifiable-delivery"
+   },
+   {
+    "concept": "自包含 HTML",
+    "why": "不知道「单文件双击可开」为什么要特意设计",
+    "anchor": "一封把所有照片都洗好贴进去的信——收信人不用再找附件",
+    "first_chapter": "verifiable-delivery"
+   },
+   {
+    "concept": "抽帧",
+    "why": "不知道视频对模型来说是一叠图",
+    "anchor": "把视频按固定间隔拍成连环画，每张标上时刻",
+    "first_chapter": "adaptive-sampling"
+   },
+   {
+    "concept": "采样密度",
+    "why": "不知道抽多密是个成本-遗漏权衡",
+    "anchor": "巡逻频率：每秒一趟看得清但太贵，半小时一趟省钱但漏事",
+    "first_chapter": "adaptive-sampling"
+   },
+   {
+    "concept": "场景切换",
+    "why": "没接触镜头切分概念",
+    "anchor": "画面内容突变的那一格——换镜头了，正好当切分线",
+    "first_chapter": "adaptive-sampling"
+   },
+   {
+    "concept": "段聚合",
+    "why": "没想过几百张卡片要归堆才能检索",
+    "anchor": "散落一桌的卡片按抽屉归档：一个抽屉 30 秒",
+    "first_chapter": "frame-segments"
+   },
+   {
+    "concept": "运动强度",
+    "why": "没想过「画面动得猛不猛」可以成为数据",
+    "anchor": "每张卡片顺手记一笔：这格画面是静坐还是打架",
+    "first_chapter": "frame-segments"
+   },
+   {
+    "concept": "时间戳",
+    "why": "视频没有页码，读者没想过用什么当出处",
+    "anchor": "视频版的页码：第 1 分 23 秒，写作 [01:23]",
+    "first_chapter": "video-qa"
+   },
+   {
+    "concept": "关键帧",
+    "why": "不知道代表帧的概念",
+    "anchor": "一段戏的剧照：一张图代表整段",
+    "first_chapter": "video-qa"
+   },
+   {
+    "concept": "微观层",
+    "why": "没见过两级采样设计",
+    "anchor": "先望远镜扫全景，可疑处再换显微镜——而不是全程用显微镜",
+    "first_chapter": "micro-zoom"
+   },
+   {
+    "concept": "中心裁切",
+    "why": "没想过裁剪是给模型「放大看」的手段",
+    "anchor": "把画面中间挖一块放大——同样的分辨率，细节翻倍",
+    "first_chapter": "micro-zoom"
+   },
+   {
+    "concept": "锚点帧",
+    "why": "不知道纯放大画面会丢失位置感",
+    "anchor": "放大镜旁边钉一张全景小地图：先看自己在哪，再看细节",
+    "first_chapter": "micro-zoom"
+   },
+   {
+    "concept": "双引擎互验",
+    "why": "没想过用两个模型互相核对答案",
+    "anchor": "重要结论问两位专家：说法一致才采信",
+    "first_chapter": "engine-porting"
+   },
+   {
+    "concept": "agent skill",
+    "why": "不知道 AI 助手可以按说明书自动调用工具",
+    "anchor": "给 AI 助手的工具说明书：遇到什么活、按什么步骤、用哪个脚本",
+    "first_chapter": "package-as-skill"
+   },
+   {
+    "concept": "渐进披露",
+    "why": "不知道上下文预算约束下的文档组织法",
+    "anchor": "工具箱只贴一张封面卡，详细说明书放抽屉——用到再抽",
+    "first_chapter": "package-as-skill"
+   }
+  ]
+ },
+ "glossary": [
+  {
+   "term": "视觉大模型",
+   "en": "Vision Language Model / VLM",
+   "definition": "能同时读文字和图片、就内容对话的大模型——一位看得见照片的远程助手。"
+  },
+  {
+   "term": "多模态",
+   "en": "multimodal",
+   "definition": "一个模型同时处理多种信息类型（文字加图片），而不是只会读纯文本。"
+  },
+  {
+   "term": "上下文窗口",
+   "en": "context window",
+   "definition": "模型一次调用里能摊开读的全部内容上限——助手桌面就这么大，塞满就放不下。"
+  },
+  {
+   "term": "检索增强生成",
+   "en": "RAG",
+   "definition": "先从资料里找出相关内容、再让模型照着找到的部分回答——开卷考试，不是闭卷背诵。"
+  },
+  {
+   "term": "成本漏斗",
+   "definition": "三层筛选结构：免费的本地粗筛先圈候选，便宜的模型调用再精选，昂贵的深读只留给最后几页。"
+  },
+  {
+   "term": "幻觉",
+   "en": "hallucination",
+   "definition": "模型一本正经编造不存在的内容或出处——考试不会答还硬编页码。"
+  },
+  {
+   "term": "API 密钥",
+   "en": "API key",
+   "definition": "调云端服务时的身份凭证，像门禁卡——随身带，但绝不能写死在要公开的代码里。"
+  },
+  {
+   "term": "base64",
+   "definition": "把图片的字节编码成纯文本的办法，让一次请求里能「随身带图」；拼上 data: 前缀就成了内联的数据地址。"
+  },
+  {
+   "term": "系统提示词",
+   "en": "system prompt",
+   "definition": "调用模型时预先给它的岗位说明书，规定角色、任务与输出格式。"
+  },
+  {
+   "term": "推理强度",
+   "en": "reasoning effort",
+   "definition": "模型下笔前「想多深」的档位——批量打标用低档省时省钱，深读分析用高档。"
+  },
+  {
+   "term": "指数退避",
+   "en": "exponential backoff",
+   "definition": "失败重试的节奏：等 2 秒、再败等 4 秒、再败等 8 秒——越挫越客气，不把对方打挂。"
+  },
+  {
+   "term": "JSON 围栏",
+   "definition": "模型爱把 JSON 包进三个反引号的代码块再输出，像礼物装了包装盒——解析前要先拆盒。"
+  },
+  {
+   "term": "DPI",
+   "en": "dots per inch",
+   "definition": "每英寸多少个点，渲染清晰度的旋钮——数字越大图越清楚，进模型的账单也越贵。"
+  },
+  {
+   "term": "文字层",
+   "definition": "PDF 里机器可直接抽出的那层文字。真排版的 PDF 有；扫描件只有照片、这层是空的。"
+  },
+  {
+   "term": "按分辨率计费",
+   "definition": "图片进视觉模型按像素量收费的计费方式——图越清晰越贵，清晰度是成本旋钮。"
+  },
+  {
+   "term": "对半拆批",
+   "definition": "一批任务输出超长被截断时，把批对半分成两批递归重试——总能装得下。"
+  },
+  {
+   "term": "分词",
+   "en": "tokenization",
+   "definition": "把连成一串的中文切成可检索的小块——中文没有空格，得自己切（本课程用相邻两字滑窗）。"
+  },
+  {
+   "term": "停用词",
+   "en": "stop words",
+   "definition": "「什么」「怎么」这类到处都有、不携带线索的词，检索前先扔掉。"
+  },
+  {
+   "term": "TF-IDF",
+   "en": "term frequency–inverse document frequency",
+   "definition": "给词打分的检索方法：在这页出现越多、在全书出现越少的词越值钱。"
+  },
+  {
+   "term": "词面匹配",
+   "definition": "只对字面的检索方式：问「退货」就匹配不到只写「退换」的页——它的盲区正是要加视觉精排的原因。"
+  },
+  {
+   "term": "top-k",
+   "definition": "只取排分最高的前 k 名——筛候选人筛页面都用它。"
+  },
+  {
+   "term": "回退",
+   "en": "fallback",
+   "definition": "高档手段失败时退回低档手段保命的策略：模型精排失败就退回本地排序，功能不断。"
+  },
+  {
+   "term": "邻页",
+   "definition": "命中页的前后一页。表格和论证常跨页断开，深读要带上邻页才不被半截信息带偏。"
+  },
+  {
+   "term": "拒答",
+   "definition": "证据不足时明确说「资料里没有、缺什么」，而不是编一段——被设计出来的诚实行为。"
+  },
+  {
+   "term": "正则表达式",
+   "en": "regular expression",
+   "definition": "按格式捞文本的渔网：网眼写成「第＋数字＋页」就能从一段话里捞出所有页码引用。"
+  },
+  {
+   "term": "自包含 HTML",
+   "definition": "把答案、引用、证据图全部内嵌进单个 HTML 文件——双击即开，不依赖任何外部文件。"
+  },
+  {
+   "term": "抽帧",
+   "en": "frame extraction",
+   "definition": "按固定间隔把视频抽成一张张带时刻标签的图片——视觉模型看视频就是看这叠连环画。"
+  },
+  {
+   "term": "采样密度",
+   "en": "sampling fps",
+   "definition": "每秒抽几帧。抽得密看得清但贵，抽得疏省钱但可能漏掉瞬间——按时长分档权衡。"
+  },
+  {
+   "term": "场景切换",
+   "en": "scene cut",
+   "definition": "画面内容明显突变的时刻（换镜头），可用程序在本地检测出来当切分线。"
+  },
+  {
+   "term": "段聚合",
+   "definition": "把零散的帧卡片按时长归堆成段卡片（如每 30 秒一段），检索粒度从帧升到段。"
+  },
+  {
+   "term": "运动强度",
+   "definition": "帧卡片上顺手记录的「画面动得猛不猛」等级——微观放大层靠它找最值得拉近看的时刻。"
+  },
+  {
+   "term": "时间戳",
+   "en": "timestamp",
+   "definition": "某画面在视频里的时刻，分:秒写作 [01:23]——视频回答里的「页码」。"
+  },
+  {
+   "term": "关键帧",
+   "en": "keyframe",
+   "definition": "能代表一段内容的画面，比如段中间时刻那一帧——一段戏的剧照。"
+  },
+  {
+   "term": "微观层",
+   "definition": "对可疑时间窗用高得多的采样密度（如 12fps）重新看一遍的两级设计——望远镜扫全景、显微镜看疑点。"
+  },
+  {
+   "term": "中心裁切",
+   "en": "center crop",
+   "definition": "把画面中间一块挖出来单独送模型——同样的分辨率下细节翻倍，是「放大看」的实现手段。"
+  },
+  {
+   "term": "锚点帧",
+   "definition": "微观帧序列开头放的一张全图，防止只看放大画面丢失位置感——放大镜旁钉的全景小地图。"
+  },
+  {
+   "term": "双引擎互验",
+   "definition": "同一素材让两个不同厂商的模型各答一遍、对照答案——重要结论问两位专家。"
+  },
+  {
+   "term": "agent skill",
+   "definition": "写给 AI 助手的工具说明书文件（含触发条件与工作流），让助手在合适的时机自动调用你的脚本。"
+  },
+  {
+   "term": "渐进披露",
+   "en": "progressive disclosure",
+   "definition": "说明书只放一页精要、细节文档按需再读的文档组织法——省上下文预算，像分层抽屉。"
+  },
+  {
+   "term": "环境变量",
+   "definition": "操作系统给每个进程看的随身配置表——密钥这类敏感值放这里，代码里只写名字不写值。"
+  },
+  {
+   "term": "扫描版",
+   "definition": "纸质文档拍照或扫描成的 PDF 页——只有图像没有文字层，机器抽不出字，只能靠看图。"
+  },
+  {
+   "term": "截断",
+   "en": "finish reason: length",
+   "definition": "输出长度超出预算被拦腰砍断——批的答案装不下时的结构性故障，重试救不了，只能拆批。"
+  },
+  {
+   "term": "文字层兜底",
+   "definition": "模型反复读不出的页退而用文字层开头凑一张弱卡占位——整本不中断，弱页事后定向补。"
+  },
+  {
+   "term": "触发描述",
+   "definition": "技能说明头部那段「用户提到 X 且想做 Y 时用本工具」的自然话说明——AI 助手靠它判断何时掏出这个工具。"
+  }
+ ],
+ "code_conventions": [
+  "Python ≥ 3.10；companion/src 仅用标准库（pytest 与 ruff 只是开发依赖）；包名 vision_rag，位于 companion/src/vision_rag/",
+  "companion/conftest.py 把 src 加入 sys.path：读者在 companion/ 下 `python -m pytest -q` 即可跑全部测试",
+  "双硬门槛（cwd = companion/）：`python -m ruff check src tests conftest.py` + `python -m pytest -q`，全量通过才算绿",
+  "模块与函数 snake_case，命名直白优先教学（build_page_cards / score_pages / rerank_pages / deep_read / auto_fps / extract_micro）；类用 PascalCase；常量 UPPER_SNAKE",
+  "结构化卡片一律 @dataclass（PageCard / FrameCard / SegmentCard / Answer / VideoAnswer / MicroFrame）；错误统一 ValueError（参数错）或 ChatError（调用层），不裸抛字符串",
+  "docstring 与注释用中文，公开函数带类型注解；测试不碰网络、不 sleep、全确定性",
+  "假模型：ScriptedTransport 按剧本回放响应（可抛错/可截断/可围栏 JSON）并记录每次请求供断言——真实引擎差异被压到 transport 一层，正文讲解时随时可以指着它说「真实现里这里换成 HTTP」"
+ ],
+ "api_contract": {
+  "principle": "全书导入面的单一事实源，只增不破；各章测试只能从这里列出的模块与签名导入。落地章标注在每条后（先在这里登记、当章实现）。",
+  "modules": [
+   {
+    "path": "src/vision_rag/bitmap.py",
+    "land": "page-rendering（crop/center_crop 由 micro-zoom 追加）",
+    "exports": "class Bitmap(rows: list[str])；.width / .height；.crop(x, y, w, h) -> Bitmap；.center_crop(w, h) -> Bitmap；.render() -> str"
+   },
+   {
+    "path": "src/vision_rag/client.py",
+    "land": "vision-client",
+    "exports": "class ChatError(RuntimeError)；parse_json_lenient(text) -> dict（容忍围栏/尾逗号/None）；img_block(bitmap, label=None) -> list[dict]（text/image_url 内容块，data URL 内联）；Transport 协议：call(request: dict) -> (text, finish)；class Client(transport, retries=4, base_delay=2.0, sleep=time.sleep)：chat(blocks, system=None, effort='low', json_mode=False, max_tokens=16384, temperature=1.0) -> (text, finish)、chat_json(blocks, **kw) -> dict——空回复/异常按指数退避重试（sleep 可注入等待函数使测试零等待），重试耗尽抛 ChatError；.waited 属性=每次重试前等待秒数列表；load_api_key(environ=None) -> str（读 GLM_API_KEY，缺失时明确报错退出；实现只支持这一个键名）【ch2 落地增补】"
+   },
+   {
+    "path": "src/vision_rag/document.py",
+    "land": "page-rendering",
+    "exports": "class Page(text: str, bitmap: Bitmap)；class PageImage(page_no: int, bitmap: Bitmap)，label 属性为 '[第N页]'；class SynthDoc(pages: list[Page])；make_handbook() -> SynthDoc（课程自产示例手册：封面/目录/正文/表格/扫描页/空白页）；render_pages(doc, dpi=110) -> list[PageImage]；approx_tokens(bitmap, pixels_per_token=750) -> int（声明过的简化计费模型，非任何平台真实价格）；Page.is_scanned 属性（text 剥空白为空即 True）【ch3 落地增补】"
+   },
+   {
+    "path": "src/vision_rag/fake.py",
+    "land": "vision-client 起逐章扩剧本",
+    "exports": "class ScriptedTransport(script: list)：call(request) 依次弹出剧本项（dict 或 (text, finish) 或 Exception），并把 request 记入 .requests；.calls 属性=已发生调用次数；helper：fenced_json(payload) -> str（带```围栏的 JSON 文本）、failing(exc=ChatError('boom'))"
+   },
+   {
+    "path": "src/vision_rag/index.py",
+    "land": "batch-page-cards",
+    "exports": "@dataclass PageCard(page: int, type: str, headings: list, summary: str, keywords: list, has: dict)；normalize_card(rec, page) -> PageCard（字段规整与类型白名单）；build_page_cards(client, page_images, texts, batch=20) -> dict[int, PageCard]（截断/解析失败对半拆批递归；残页文字层兜底卡，type='其他'）；derive_outline(cards) -> list[dict]（level/text/page，标题文本跨页去重）；PAGE_TYPES 页型白名单常量（封面/版权/目录/序言/正文/附录/参考文献/索引/空白/其他）【ch4 落地增补】"
+   },
+   {
+    "path": "src/vision_rag/scoring.py",
+    "land": "local-tfidf",
+    "exports": "tokenize(text) -> set[str]（英文/数字整段、中文相邻二字滑窗、去停用词）；page_document(card, page_text) -> str（标题/摘要/关键词各重复 3 次 + 页文本）；score_pages(cards, texts, question) -> list[int]（idf × min(tf, 8) 总分降序；无词命中回退全部页序）；常量 STOP_TERMS（停用词表）/ TF_CAP=8 / FIELD_WEIGHT=3【ch5 落地增补】；语义：score_pages 不过滤「空白」页——空白页过滤由精排层把关【ch5 增补】"
+   },
+   {
+    "path": "src/vision_rag/pipeline.py",
+    "land": "vision-rerank / deep-read / verifiable-delivery 分章落",
+    "exports": "rerank_pages(client, cards, page_images, candidates, k, question) -> list[int]（只接受候选内的页码、去重、≤k；空白页与无卡/无图候选入口先拦；ChatError/空选/校验全灭时回退【过滤后】候选的前 k）【ch6 落地增补语义】【vision-rerank】；deep_read(client, cards, texts, page_images, pages, question) -> str（±1 邻页展开、effort='high'、页图+文字层同给；finish=='length' 时文末追加截断注记）【deep-read】；@dataclass Answer(answer: str, cited: list[int])；cited_pages(answer) -> list[int]（正则回收页码升序去重）【verifiable-delivery】；ask(client, doc, question, top=4, cands=12, index=None) -> Answer（粗筛→精排→深读→引用回收贯通）【verifiable-delivery】"
+   },
+   {
+    "path": "src/vision_rag/report.py",
+    "land": "verifiable-delivery",
+    "exports": "export_pages(page_images, pages, out_dir) -> list[Path]；html_preview(doc_name, question, answer, page_images, pages, out_dir) -> Path（自包含单文件：Bitmap 以 <pre> 网格内嵌，文件内无任何外部资源引用）"
+   },
+   {
+    "path": "src/vision_rag/video.py",
+    "land": "adaptive-sampling",
+    "exports": "@dataclass Frame(t: float, bitmap: Bitmap, scene: str, motion: str)；class FrameSource(duration: float, frames: list[Frame])（frames 为全部真相帧，按 t 升序）；make_clip() -> FrameSource（课程自产示例视频：含一次 3 秒快速动作事件与两次场景切换）；auto_fps(duration) -> float（≤60→1.0；≤600→0.5；≤1800→0.25；更长→0.1）；extract_frames(source, fps) -> list[Frame]（按 fps 采样，帧标签 t 取实帧最近时刻）；detect_scene_cuts(frames, threshold=0.3) -> list[float]（相邻帧 scene 变化即切点）"
+   },
+   {
+    "path": "src/vision_rag/video_index.py",
+    "land": "frame-segments",
+    "exports": "@dataclass FrameCard(t: float, scene: str, summary: str, keywords: list, ocr: str, event: str, motion: str)；build_frame_cards(client, frames, batch=20) -> dict[float, FrameCard]（复用对半拆批纪律）；@dataclass SegmentCard(start: float, end: float, frame_ts: list, summary: str, keywords: list, peak_motion: str)；aggregate_segments(frame_cards, seg=30.0) -> list[SegmentCard]（段卡摘要=帧卡摘要串联、peak_motion=段内最高运动等级）"
+   },
+   {
+    "path": "src/vision_rag/video_pipeline.py",
+    "land": "video-qa",
+    "exports": "fmt_ts(sec) -> str（[MM:SS]，超一小时 H:MM:SS）；parse_ts(text) -> list[float]（回收 [MM:SS]/[M:SS] 时刻，升序去重）；clip_ranges(timestamps, duration, pad=5.0, max_clips=3) -> list[tuple[float, float]]（前后各补 pad 秒、clamp 到 [0, duration]、合并重叠、最多 max_clips 段）；segment_document(seg_card, frame_cards) -> str（段检索文档）；score_segments(seg_cards, frame_cards, question) -> list[int]（复用 scoring 打分思路，无命中回退全部段）；rerank_segments(client, seg_cards, frames, candidates, k, question) -> list[int]（段代表帧=段中间时刻最近帧）；@dataclass VideoAnswer(answer: str, timestamps: list[float], clips: list)；ask_video(client, source, question, top=3, cands=10, index=None) -> VideoAnswer（段粗筛→代表帧精排→选中段全帧深读→时刻回收→切片范围）"
+   },
+   {
+    "path": "src/vision_rag/micro.py",
+    "land": "micro-zoom",
+    "exports": "ACTION_WORDS（动作类问题词表常量）；is_action_question(question) -> bool；motion_peak_window(frame_cards, half=1.5) -> tuple[float, float]（运动最高帧时刻±half，clamp 到 [0, duration]）；@dataclass MicroFrame(t: float, bitmap: Bitmap, cropped: bool)；extract_micro(source, center, fps=12.0, half=1.5) -> list[MicroFrame]（首帧全图锚点 cropped=False，其余中心裁切 cropped=True）；run_micro(client, source, window, question) -> str（锚点+放大帧序列交给模型出要点分析）"
+   }
+  ]
+ },
+ "authority_docs": [
+  {
+   "name": "智谱 AI 开放平台文档",
+   "url": "https://open.bigmodel.cn/dev/api",
+   "scope": "凡正文断言「平台/接口如此」（模型行为、计费规则、参数语义），以此为准"
+  },
+  {
+   "name": "OpenAI Chat Completions API 参考",
+   "url": "https://platform.openai.com/docs/api-reference/chat",
+   "scope": "messages 结构、多模态 image_url 内容块等业界公开通用事实"
+  },
+  {
+   "name": "FFmpeg 官方文档",
+   "url": "https://ffmpeg.org/documentation.html",
+   "scope": "正文提及生产工具映射（真实抽帧/场景检测/切片）时的参数事实"
+  }
+ ],
+ "fact_discipline": "真实平台的具体数值（思考行为、按分辨率计费的比例、单请求图片上限）随版本变化且属厂商实测细节：正文只讲方向性事实（例如「按分辨率计费，所以 DPI 是成本旋钮」），不写死具体数值；companion 中的计费与接口行为一律标注为「声明的简化模型」。凡是简化，登记差异清单附录。",
+ "core_metaphors": [
+  {
+   "metaphor": "开卷考试：先翻书（检索）再照着答（生成），不背不编",
+   "used_for": "RAG 全书主线"
+  },
+  {
+   "metaphor": "三层漏斗：简历机筛→面试精选→终面细聊，越往后越贵、人数越少",
+   "used_for": "粗筛/精排/深读结构"
+  }
+ ]
+}
