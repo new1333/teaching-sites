@@ -10,6 +10,8 @@ Term = { term: string /* 中文术语 */, en?: string /* 英文原文 */, defini
 CourseOutline = {
   title: string                    // 课程名（中文可）
   audience: string                 // 一句话受众画像，≤30 字（原样渲染为首页 hero 大字号 text）
+  driving_question?: string        // 读者视角的一句主线大问题，全书回答它（渲染进 about.md 开头；
+                                   //   各章收束可自然回指，终章必须收口）。收敛不出就省略，不硬造
   input: { kind: 'repo' | 'topic', ref?: string }   // repo: owner/name@ref（zero-trace 档仅作者侧备课；
                                    // guided-walkthrough 档 ref 必须锁定到 commit SHA，全书引用的唯一事实源）
   profile: CourseProfile           // 课程形态层，schema 见 references/course-profiles.md——阶段 2 随大纲一并确认
@@ -34,25 +36,30 @@ Chapter = {
   title: string         // 中文标题
   goal: string          // 一句话目标
   type: 'principle' | 'build' | 'review' | 'walkthrough'
-                        // principle 纯理解；build 动手验证；review = part 末概念对账章（合法章型，011 P2-7：
-                        //   前情回顾 + 概念对账 + 自查，可声明 length_exempt）；walkthrough = 走读章（guided-walkthrough 档，
-                        //   走读顺序即学习路径）。profile 决定可用集，比例不设规定
-  hook: {               // 开章钩子（v3 的 pain_point 是它的 bug-story 特例，仍兼容读取）
-    kind: 'bug-story' | 'real-incident' | 'observation' | 'ability-gap'
+                        // principle 纯理解；build 动手验证；review = part 末概念对账章（前情回顾 + 概念对账 + 自查，
+                        //   可声明 length_exempt）；walkthrough = 走读章（guided-walkthrough 档，走读顺序即学习路径）。
+                        //   profile 决定可用集，比例不设规定
+  hook: {               // 开章钩子（pain_point 是它的 bug-story 特例，仍兼容读取）
+    kind: string        // 常见：'bug-story' | 'real-incident' | 'observation' | 'ability-gap'，可自定义——
+                        //   验收从不看 kind，只看 point 具体到现象
     point: string       // 具体到现象的开章场景
-    phenomena: string[] // 现象关键词（写作期自动传给 lint --pain——检测与 spec 对齐，issues/010）
+    phenomena: string[] // 现象关键词（写作期自动传给 lint --pain——检测与 spec 对齐）
   }
   pain_point?: string   // 兼容字段：等价于 hook { kind: 'bug-story', point: pain_point }
   new_concepts?: string[]     // 本章首次教授的陌生概念（应出自 bible 读者模型的陌生清单）——写作提示，不作验收项
+  misconceptions?: string[]   // 本章要证伪的读者既有误解（「你可能以为 X」句式，读者视角）——最强深度装置之一，
+                              //   写法见 chapter-writing.md「误区证伪」；没有天然误区就省略，不硬造
+  structure?: string          // 五槽位不合身时声明替代结构（一句话，如「两种方案对比 → 取舍推演 → 自查」），
+                              //   评审按声明验收；缺省即默认五槽位骨架
   milestone?: string          // 动手章必填：章末验证物的可运行增量。语义随 profile：code-lab=实验场增量；
                               // worksheet=一组可核对答案的题目；observation=一项完成的实操任务；repo-probe=一组全绿探针
   milestone_verify?: string   // 怎么验证里程碑达成——能写成读者可感知的验证（看到画面/听到声音/看到输出）
-                              // 就不要只写机械验证；**测试输出不算可感知面**（011 P1-5）；读者感知不到时（纯内部机制）
+                              // 就不要只写机械验证；**测试输出不算可感知面**；读者感知不到时（纯内部机制）
                               // 才写测试级验证
   relevant_files?: { path: string, why: string }[]
                               // zero-trace 档：作者侧备课索引（生成期校验存在性），正文与测试零仓库痕迹；
                               // guided-walkthrough 档：正文逐字引用对象（标注 owner/repo@sha:path 与其对应）
-  length_exempt?: boolean     // review/总览章可声明：豁免 ≥1200 字下限（lint 按此检查；字数是防御下限不是目标值）
+  length_exempt?: boolean     // review/总览章可声明：免除字数参考线提示（1200 字只是参考线，lint 全局只提示不阻断）
   promises_out?: { target: string /* 章 slug */, what: string }[]
                               // 本章向后续章开出的承诺（并入 .course/promises.json，目标章生成时注入清账项）
   depends_on: string[]  // 前置章 slug，只允许指向更早的章（无前向依赖）
@@ -69,7 +76,7 @@ Chapter = {
 
 1. **一章一特性，章数由特性数决定**：备课拆出几个值得单独成章的核心特性就几章——不设上下限，不为凑数拆章，也不为省事并章；分部按学习的自然阶段划分，几个由内容决定。内容多就多几章，这是特性，不是问题。**标题不得承诺本章不教的面**：标题、开篇总表、「一次讲清」式承诺列出的每一项都必须有正文着落——知识点超载时拆章或降标题承诺。
 2. **章型按特性性质选，可用集由 profile 决定**：需要动手验证的用 build，纯理解的用 principle，part 末的概念对账用 review（不硬塞——没有对账价值的 part 末不设），走读课的机制章用 walkthrough。比例不设规定（原理密集的主题 principle 多些是常态）。没有 source-mapping 章型——zero-trace 档不做源码对照。
-3. 每章必填 **hook**（`kind + point + phenomena`）——具体到现象（「周五上线的组件销毁后，定时器还在每秒拉一次数据」「某年某月某交易所熔断那几分钟」），不是概念式描述。四种 kind 任选，验收只看「具体到现象」。
+3. 每章必填 **hook**（`kind + point + phenomena`）——具体到现象（「周五上线的组件销毁后，定时器还在每秒拉一次数据」「某年某月某交易所熔断那几分钟」），不是概念式描述。kind 开放（四种常见形态之外可自定义），验收只看「具体到现象」。
 4. 动手章必填 **milestone + milestone_verify**：章末验证物多出什么可运行的东西、怎么验证（可感知优先；测试输出不算可感知面）。
 5. **depends_on 只能指向更早的章**——无前向依赖，保证干净渐进主线。走读课的走读顺序就是学习路径（备课源码地图直接变成章节依赖图）。
 6. **relevant_files 的路径必须原样存在**于 clone 的仓库里——zero-trace 档它是作者侧备课索引；guided-walkthrough 档它是正文引用对象（引用须逐字一致）。topic 输入无 clone，relevant_files 留空。
@@ -83,7 +90,7 @@ Chapter = {
 
 ## 金样例（以状态管理原理课为校准用例；校准集含非 coding 映射，见 course-profiles.md 样例映射表）
 
-课程结构：3 原理 + 8 实验 = 11 章、3 分部；依赖链严格线性；profile：`principle-reimpl / code-lab:library / zero-trace / full`；实验场 = 最小 store 容器 ≈300 行；最终里程碑「通过课程自设的原理断言测试（约 35-40 个）」。（这些数字只是本例课程从它的特性清单自然得出的结果，不是任何课程的目标值——别的主题该几章就几章。）
+课程结构：3 原理 + 8 实验 = 11 章、3 分部；依赖链严格线性；profile：`principle-reimpl / code-lab:library / zero-trace / full`；主线问题「一份组件外的状态，怎么一步步长成完整的状态管理库？」；实验场 = 最小 store 容器 ≈300 行；最终里程碑「通过课程自设的原理断言测试（约 35-40 个）」。（这些数字只是本例课程从它的特性清单自然得出的结果，不是任何课程的目标值——别的主题该几章就几章。）
 
 章节表节选（呈现给用户用这种格式，profile 一句话画像一并带出）：
 

@@ -51,7 +51,7 @@ features:
 
 **站内链接一律相对（`./NN-slug`）**：课程在聚合站挂载于 `/{课程名}/` 前缀下（见 `references/portal.md`），绝对路径 `/NN-slug` 会指到聚合站根部 404；相对链接在单课（首页 `/`）与聚合（首页 `/{课程名}/`）两种上下文都解析正确。首页如此，正文里链向站内页面同理。
 
-**`docs/about.md`**：一段课程由来 + 章节数（完成数）+ 输入（仓库地址或主题句）。
+**`docs/about.md`**：一段课程由来 + 章节数（完成数）+ 输入（仓库地址或主题句）。大纲声明 `driving_question` 时，开头先亮主线问题（全书就是它的答案）。随后放一份**能力阶梯**——由大纲各章 goal/milestone 渲染的「学完第 N 章，你能…」清单——读者随时知道自己走到地图哪里；数据全部来自 outline.json，零额外写作。
 
 ### obligations 呈现槽（profile.obligations 声明时渲染）
 
@@ -65,7 +65,7 @@ features:
 
 ## 附录页（大纲声明 `appendices` 时才有，文件 `docs/{slug}.md`）
 
-- `glossary` 由 bible 术语表渲染成「术语 / 英文 / 一句话定义」表格，零额外写作；**条目集必须 ⊇ 全书全部 new_concepts**（final-check 机械对账，011 P2-7——首教过的概念在术语页找不到，是读者的死链）。
+- `glossary` 由 bible 术语表渲染成「术语 / 英文 / 一句话定义」表格，零额外写作；**条目集必须 ⊇ 全书全部 new_concepts**（final-check 机械对账——首教过的概念在术语页找不到，是读者的死链）。
 - `reference-table` 收读者要反复翻查的承重数据（指令表、寄存器表、费率表、参数表——别让它们散落正文），表内条目必须与实现一致（未实现的位/项要么不列、要么标注「本课程未实现」）。
 - `exercises` 是练习路线页（内容见 `references/verification-and-gates.md`），指引读者回看的正文段落必须真实存在——指向不存在小节的引用是阻断项。
 - `divergence` 是差异清单页（正文每处「本课程简化为…」的集中登记：简化项 + 未实现项，各注正文出处），由管线汇总正文声明生成、与速查表互相对账。
@@ -79,13 +79,13 @@ features:
 - **图片**：markdown 相对路径引用（`![alt](assets/x.png)`），资产放 `docs/assets/`——由 vite 打包，自动带 base 前缀，单课与聚合站两种上下文都正确。**不要放 `docs/public/` 用绝对路径 `/x.png`**：聚合站构建不拷贝课程的 public/，绝对路径在聚合站必坏。
 - **音频等媒体**：raw HTML 标签的 `src` 不经 vite 处理——用 `<script setup>` 导入资产再绑定（`import url from './assets/x.wav'` + `<audio controls :src="url">`），同样获得打包与 base 处理。
 - 资产必须由验证物的真实代码现场产出（写一个可重跑的生成/导出脚本放 companion 内，README 记录再生成命令；worksheet 档的图表数据同规——固定种子、两次运行逐字节一致，正文数字一律以导出输出为事实源）——图和声音永远来自读者将亲手复现的实现，不手造、不外采。
-- 演示组件必须 `import` 验证物/数据脚本的产物，**禁止平行手抄**（webgl 的平行手抄组件是反面教材——演示与实验场两套代码，演进即漂移）。
-- **测试输出不算可感知面**（011 P1-5）：可感知 = 读者能看到画面/听到声音/看到曲线/算出可核对的数。
+- 演示组件必须 `import` 验证物/数据脚本的产物，**禁止平行手抄**（演示与实验场两套代码，演进即漂移）。
+- **测试输出不算可感知面**：可感知 = 读者能看到画面/听到声音/看到曲线/算出可核对的数。
 - 形态不允许的课程（纯 CLI、纯配置、纯导读）不硬造内嵌资产：正文给「亲手运行」指引即可，可感知性降级要在 README 写明。
 
 ## 可视化与交互组件配方（判据驱动，不设使用配额）
 
-a-share 课反哺的现成模式（自研 echarts 组件体系：5 个 Vue 组件 + theme 注册，skill 零规范时代的作者补救，v4 收编为配方）。**用不用、用几个，只回答一个问题：不加它，本章的验证信号或承重概念会不会塌**（公理 2）；profile.presentation.visual 只是能力开关，不是使用义务。
+现成配方：echarts 组件体系（若干 Vue 图表组件 + theme 统一注册）。**用不用、用几个，只回答一个问题：不加它，本章的验证信号或承重概念会不会塌**（公理 2）；profile.presentation.visual 只是能力开关，不是使用义务。
 
 - **主题统一**：`docs/.vitepress/theme/index.ts` 全局注册图表组件与 echarts 主题（一次注册，全课程一致配色），组件放 `docs/.vitepress/theme/components/`。
 - **数据由脚本产出**：组件的 props 吃 `docs/assets/data/*.json`——由 companion 的导出脚本生成（固定种子），正文不手写图表数据；数据变了重跑导出，图随事实走。
@@ -150,7 +150,7 @@ export default {
 
 包含：怎么跑（两条路——项目根 `pnpm dev` 从聚合站进入，或本课程内 `pnpm install && pnpm docs:dev` 单独预览；验证物工程 `cd companion && npm install && npm test`）、章节目录、终点里程碑、（如有）资产再生成命令、（observation/纯导读）可感知性降级说明。
 
-## 终检（仪器化，011 P1-6：凡能脚本化的对账不得留给自觉）
+## 终检（凡能脚本化的对账不得留给自觉）
 
 **第一步，跑脚本**（仓库级共享资产，提交；用于新仓库时与 lint 脚本一并原样复制进目标仓库 `scripts/`）：
 
@@ -159,17 +159,17 @@ node scripts/course-final-check.mjs courses/{course}            # 全量（含�
 node scripts/course-final-check.mjs courses/{course} --skip-gates   # 快速（跳过门槛实跑）
 ```
 
-机械覆盖（脚本已对账，不再靠肉眼）：章文件数/序号/slug/附录页与大纲一致；frontmatter title；hero 长度与首页链接相对化及死链；glossary 页 = bible 条目集；术语全书出现（容 3）；`src/` `tests/` 标注块与验证物终态逐字 diff（拼版豁免）；站内相对链接与资产死链；promises.json 核销；obligations surfaces 存在性；zero-trace 抽查（github blob/tree 链接、`.course/repo` 痕迹）/ walkthrough 引用路径存在性；降级章占位核验；伴生 typecheck/test 实跑 + README/index/about/终章的测试数与行数断言比对（现实是事实源——a-share 终章「430 vs 404」式漂移由它拦住）。
+机械覆盖（脚本已对账，不再靠肉眼）：章文件数/序号/slug/附录页与大纲一致；frontmatter title；hero 长度与首页链接相对化及死链；glossary 页 = bible 条目集；术语全书出现（容 3）；`src/` `tests/` 标注块与验证物终态逐字 diff（拼版豁免）；站内相对链接与资产死链；promises.json 核销；obligations surfaces 存在性；zero-trace 抽查（github blob/tree 链接、`.course/repo` 痕迹）/ walkthrough 引用路径存在性；降级章占位核验；伴生 typecheck/test 实跑 + README/index/about/终章的测试数与行数断言比对（现实是事实源——终章「430 vs 404」式数字漂移由它拦住）。
 
 **第二步，脚本外人工项**（机械做不了或成本不划算，逐条过）：
 
 1. `pnpm install && pnpm docs:build` 构建成功；正文内嵌资产（如有）在单课与聚合两种构建下路径正确（脚本验死链，构建验打包）。
 2. 附录**语义**对账（脚本验互链，语义靠人）：速查表与实现一致（未实现项有标注）；差异清单登记了正文声明的全部简化；无指向不存在小节的引用。
 3. acceptance 全书回查：大纲验收条目（含文验收）逐条核对兑现，未兑现项要么修文要么改大纲——两头不一致是事故。
-4. **能力对账**（终检升级语义，011 P0-3）：终章「你已经能 X」的每项能力、README 的终点里程碑，在正文与验证物里真实建立过；验证物里存在而全书无章节教学来历的产物（超纲测试、来历不明模块）是账本违约。
+4. **能力对账**：终章「你已经能 X」的每项能力、README 的终点里程碑，在正文与验证物里真实建立过；验证物里存在而全书无章节教学来历的产物（超纲测试、来历不明模块）是账本违约。
 5. **零输入体验**（问一句，不是开关）：形态允许时，终章的可运行产物自带课程自产的内置输入（测试 fixture 导出），访客不自备文件就能看到成果；不允许（需真实密钥/数据集）时在 README 写明。
 6. 验证物资产清白：无大纲外的测试文件与产物；无版权输入物（public/ 或资源目录里不得出现外部下载的受版权文件——grep 一遍资源目录）；实验场对外承诺（如「零外部输入」）与仓库内容一致。
 7. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
 8. 向用户汇报：课程路径、聚合与单课预览命令、降级章清单、带病放行项（如有）及其原因；交付口径统一为：根目录 `pnpm dev` 看全部课程，`cd courses/{course} && pnpm docs:dev` 只看本课程。
 
-> 变更说明（v4）：终检清单的机械项已全部收进 `scripts/course-final-check.mjs`（脚本本体以仓库 `scripts/` 为正本，本文件不再内嵌脚本文本——内嵌文本在 12 门课里零已提交副本、逐课漂移，issues/011 P2-9）；清单余下的是机械做不了的语义与构建项。
+> 终检清单的机械项已全部收进 `scripts/course-final-check.mjs`（脚本正本在仓库 `scripts/`，本文件不内嵌脚本文本）；清单余下的是机械做不了的语义与构建项。

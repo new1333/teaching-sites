@@ -1,6 +1,6 @@
 # 课程形态层（Course Profile）
 
-v4 的通用性主菜：同一套流程骨架，服务从「coding 原理课」到「非编程知识课」「仓库走读课」的全部形态。机制保证只有一条——**不变量与形态细则分层**（SKILL.md 公理 1）：骨架的每根承重梁必须是跨形态不变量，形态差异全部收进本文件定义的 profile，由大纲期判定、用户确认、落盘 `outline.json` 顶层。
+同一套流程骨架，服务从「coding 原理课」到「非编程知识课」「仓库走读课」的全部形态。机制保证只有一条——**不变量与形态细则分层**（SKILL.md 公理 1）：骨架的每根承重梁必须是跨形态不变量，形态差异全部收进本文件定义的 profile，由大纲期判定、用户确认、落盘 `outline.json` 顶层。
 
 profile 是**预设起点 + 可覆盖维度**，不是封闭分类：未知主题走 `mixed` 并在大纲期与用户把每个维度定下来；schema 缺失字段走缺省修润（宽松校验原则不变）。
 
@@ -15,7 +15,7 @@ CourseProfile = {
   source_policy: 'zero-trace' | 'guided-walkthrough'   // 仓库源码可否进正文，默认 zero-trace（见 repo-ingestion.md）
   code_density: 'full' | 'collapsed' | 'minimal'
     // 正文代码密度档位：full 现行默认 | collapsed 超过 ~10 行的代码块默认折叠（<details> 包裹）| minimal 只保留承重最小切片
-    // 受众是非程序员时默认 collapsed 或 minimal（a-share 实测 40–45% 代码篇幅负担的教训）
+    // 受众是非程序员时默认 collapsed 或 minimal（实测教训：代码占到全书四成篇幅，非程序员读者的负担陡增）
   obligations?: { kind: 'timeliness' | 'compliance' | 'legal' | 'ethics', note: string, surfaces: string[] }[]
     // 领域义务（见下节），空缺合法——不给纯技术课强加仪式
   presentation?: { visual?: 'none' | 'static-asset' | 'interactive' }
@@ -31,9 +31,9 @@ CourseProfile = {
 
 | 形态 | 机械验证物（先于正文存在） | 适用 | 双硬门槛等价物 |
 |---|---|---|---|
-| code-lab | 测试 + 实现（v3 的 library / cli-golden / config-validate / dom-test 四变体归此） | 库/框架/内核原理重实现 | `tsc --noEmit` + `vitest run`（等价物按变体，不变） |
+| code-lab | 测试 + 实现（四变体：library / cli-golden / config-validate / dom-test） | 库/框架/内核原理重实现 | `tsc --noEmit` + `vitest run`（等价物按变体，不变） |
 | canvas-app | 可运行页面工程 + 由实验场代码现场产出的资产 | 渲染/音频/可视化 | typecheck + test + build + 资产再生成脚本（两次运行输出一致） |
-| worksheet | 题目 fixture + 唯一数值答案 + 核对脚本；正文全部承重数字由脚本导出 | 数值/演算/决策类知识课（股票、统计、金融） | 答案核对脚本通过 + 正文数字与脚本输出一致（export-docs 守门，a-share 已验证的模式） |
+| worksheet | 题目 fixture + 唯一数值答案 + 核对脚本；正文全部承重数字由脚本导出 | 数值/演算/决策类知识课（股票、统计、金融） | 答案核对脚本通过 + 正文数字与脚本输出一致（export-docs 守门） |
 | observation | 验证任务清单：每条写明读者操作 + 应看到的具体现象（可判定描述） | 实地操作/工具使用/现象观察 | 任务清单过「可判定性」审查：现象具体到可对照，不写「感受一下」（lint 的 observation 检查 + 评审核对） |
 | repo-probe（配 guided-walkthrough） | 探针脚本：在锁定 ref 上跑 grep/断言/最小运行 | 源码走读课 | 探针脚本全绿 + 引用代码块与 repo 逐字一致（lint/final-check 机械比对） |
 
@@ -56,11 +56,11 @@ CourseProfile = {
 | 仓库解读课 | source-walkthrough | repo-probe | full | legal（许可证） |
 | 摄影入门课（假设） | skill-training | observation | minimal | — |
 
-校准语义：现有课程是 profile 的金样例语料库（issues/012 风险边界：选择面变大 → 生成不稳定，每个 profile 配金样例对冲）。
+校准语义：现有课程是 profile 的金样例语料库——形态选择面大，生成才稳；每个 profile 配一门金样例对冲。
 
 ## 领域义务槽（obligations）
 
-缺口来源：a-share 评审 P0-1（全书零合规声明）——领域特有义务在 skill 里无表达位置。v4 在 bible（阶段 1 推导）与 outline（落盘 + surfaces 指定呈现面）增加 obligations 槽位，四类：
+领域特有义务（合规、时效、法律、伦理）需要一个表达位置，否则金融课的免责声明无家可归。bible（阶段 1 推导）与 outline（落盘 + surfaces 指定呈现面）各有 obligations 槽位，四类：
 
 | kind | 触发 | 落点（surfaces 指定，final-check 查存在性） |
 |---|---|---|

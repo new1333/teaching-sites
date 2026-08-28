@@ -1,32 +1,32 @@
 ---
 name: vitepress-teaching-site
-description: Turn any topic — a coding principle, a non-coding knowledge domain (investing, statistics, photography), or a GitHub repo to be read and explained — into a complete VitePress teaching site. A course profile decides the verification form (code lab, worksheet with answer-checking scripts, observation task lists, repo probes, canvas apps) so every chapter's prose is backed by mechanical verification artifacts that must pass their gates before prose is written. Outline first for user review (form + profile confirmed together), then chapter-by-chapter content in plain, jargon-free prose that explains every technical term at first mention, with quota-free quality rules (no "every chapter must have N of X"). Use whenever the user wants to turn a topic or repo into a tutorial, course, or teaching site ("把这个仓库背后的原理讲透", "帮我生成一个教学网站/课程", "用 VitePress 做一个讲 X 的课程", "讲讲怎么读某某仓库", "做一个股票/统计入门课", "generate a VitePress course/tutorial for X", "teach X from scratch"), or mentions building a teaching/course site with VitePress.
+description: Turn a topic (a coding principle, investing, statistics, any knowledge domain) or a GitHub repo into a complete VitePress teaching site — verification artifacts before prose, outline and course profile confirmed with the user, plain-language chapters for zero-background readers. Use when the user wants a tutorial, course, or teaching site from a topic or repo ("把这个仓库背后的原理讲透", "帮我生成一个教学网站/课程", "用 VitePress 做一个讲 X 的课程", "讲讲怎么读某某仓库", "做一个股票/统计入门课", "generate a VitePress course for X", "teach X from scratch"), or mentions building a teaching/course site with VitePress.
 ---
 
 # VitePress 教学站点生成
 
 输入是一句主题（topic），或一个 GitHub 仓库地址。产物是一门 `pnpm docs:dev` 直接可跑的 VitePress 课程，统一收纳在项目的 `courses/` 目录下；项目根另有聚合入口，`pnpm dev` 一条命令可预览全部课程。质量标准只有一条：**读者读完达到课程的终点能力**——终点随课程原型（archetype）而变：原理重实现课是「能讲清核心原理，并亲手做出验证原理的最小实现」；知识路径课是「能独立演算与判断」（学股票课的读者能自己算净值、判断费率陷阱，而不是写出实现）；源码走读课是「能独立读懂并讲解该库的机制」；技能训练课是「能独立完成操作」。共同的下限：不是 API 文档，也不是复刻任何源码。
 
-## 三条公理（v4 的宪法，写规则前先过这三关）
+## 三条公理（写规则前先过这三关）
 
 1. **不变量与形态细则分层。** 每条规则必须二选一标注：**不变量**（跨一切课程形态必须成立，如「承重概念必须教透」「正文断言与机械现实一致」「零死链」）或**形态细则**（只对某课程形态生效，如「code-lab 双硬门槛」「worksheet 答案可核对」）。细则层不得冒充不变量——这是通用性的机制保证：非编程课程不受代码课细则管辖，但逃不掉任何不变量。
-2. **判据化，禁配额。** 任何「每章必须 N 个 X」式配额（可视化组件、图示、比喻、自查题数的「必须达到」侧）不得进入任何规则。一切「加东西」的决策只回答一个问题：**不加它，本章的验证信号或承重概念会不会塌**。数值上限（加粗 ≤8、闪前 ≤3 这类防御性阈值）不是配额，保留且可按课程调参。反噬教训引 issues/010：pain-point 信号词催生硬造踩坑故事、term-intro 句式催生全书模板化——**检测意图，别催生模板**。
+2. **判据化，禁配额。** 任何「每章必须 N 个 X」式配额（可视化组件、图示、比喻、自查题数的「必须达到」侧）不得进入任何规则。一切「加东西」的决策只回答一个问题：**不加它，本章的验证信号或承重概念会不会塌**。数值上限（加粗 ≤8、闪前 ≤3 这类防御性阈值）不是配额，保留且可按课程调参。反噬教训：pain-point 信号词催生硬造踩坑故事、term-intro 句式催生全书模板化——**检测意图，别催生模板**。
 3. **先验证物后文。** 写正文之前必须先存在该课程形态的**机械验证物**——测试也好、答案核对脚本也好、探针输出也好、可判定任务清单也好——正文数字与断言一律以验证物输出为事实源。代码只是验证物的一种；「先代码后文」是本公理在 code-lab 档的特例。
 
 ## 仓库输入的两档政策
 
-- **zero-trace（默认）**：仓库只是**作者侧备课资料**——帮你把特性与原理拆对，产物零仓库痕迹：不引源码、不列行数、不做「与真源码对照」、不改编官方测试。可以提真实库的公开概念与行为（「Vue 没有官方 isComputed」），但它的代码一行不进正文。
-- **guided-walkthrough（走读课）**：仓库是**教学对象本身**——「解读这个仓库」是合法课程。此档源码可进正文，受硬约束管辖：大纲期锁定 ref（commit SHA）为全书唯一事实源；引用代码块标注 `owner/repo@sha:path` 且逐字一致（机械比对）；读者用探针脚本亲手验证；标注源码许可证，许可不友好即降回 zero-trace 并告知用户。细则见 `references/repo-ingestion.md` 与 `references/verification-and-gates.md`。
+- **zero-trace（默认）**：仓库只是**作者侧备课资料**——帮你把特性与原理拆对，产物零仓库痕迹，真实库的代码一行不进正文（公开概念与行为可以提）。
+- **guided-walkthrough（走读课）**：仓库是**教学对象本身**，源码可进正文——大纲期锁定 commit SHA 为全书唯一事实源，引用逐字一致（机械比对），许可不友好即降回 zero-trace 并告知用户。细则见 `references/repo-ingestion.md`。
 
 默认用中文写全部内容；用户明确要求其他语言时切换，并跳过中文特有的 lint 规则（`--lang en`），跨语言通用规则照跑。
 
-**语言基调：说人话。** 全部正文面向「聪明、但没接触过这个领域」的读者：专业名词第一次出现，必须当场用一句大白话说清它是什么、拿来干嘛——只标英文原文不算解释；行话能不用就不用，能用日常词说清的概念不发明新词。读者读到某处停下来想「这词什么意思」却又找不到下文解释，就是写作事故——不能要求读者先查百科再回来上课。细则与机械检查见 `references/chapter-writing.md`（硬要求 2，及 lint 的 term-intro / jargon / long-sentence 检查）。
+**语言基调：说人话。** 全部正文面向「聪明、但没接触过这个领域」的读者：专业名词第一次出现，必须当场用一句大白话说清它是什么、拿来干嘛——只标英文原文不算解释；行话能不用就不用，能用日常词说清的概念不发明新词。解释是否合格以**费曼检验**为准：念给一个没接触过这行的人听，他能复述个大概才算讲清。读者读到某处停下来想「这词什么意思」却又找不到下文解释，就是写作事故——不能要求读者先查百科再回来上课。细则与机械检查见 `references/chapter-writing.md`（硬要求 2，及 lint 的 term-intro / jargon / long-sentence 检查）。
 
 ## 四条不可谈判的原则
 
 1. **大纲先行，确认后才动笔。** 先产出结构化大纲——它是带验收项的数据契约，不是目录树——连同**课程形态画像（profile）**一并呈现给用户；有反馈就整纲重生成或单章改条目；确认后才进入逐章生成。用户明确说「别问我、直接生成」时可跳过确认。
-2. **先验证物后文（公理 3 的执行版）。** 每个动手章：先演进本章的验证物并让它通过对应门槛（code-lab 是 `tsc --noEmit` + `vitest run`；worksheet 是答案核对脚本；repo-probe 是探针全绿；observation 是任务清单可判定性——形态菜单见 `references/verification-and-gates.md`），**再**基于真实产物写正文。长篇一致性靠外部机械信号背书，不靠模型自觉——禁止先写文后补验证物。
-3. **一章一特性，钩子开章。** 每章只教一个特性；开章是一个具体到现象的钩子——bug 故事、公开事故、现象观察、「已能什么 vs 还差什么」四选一（大纲 `hook.kind` 声明），验收只看「具体到现象」，不再强制「必须是 bug」；章末验证物有一个可运行的增量（里程碑）。
+2. **先验证物后文（公理 3 的执行版）。** 每个动手章：先演进本章验证物并过对应门槛（形态菜单见 `references/verification-and-gates.md`），**再**基于真实产物写正文——长篇一致性靠外部机械信号背书，不靠模型自觉。
+3. **一章一特性，钩子开章。** 每章只教一个特性；开章是一个具体到现象的钩子（bug 故事、公开事故、现象观察、能力差距是常见形态，`hook.kind` 开放自定义），验收只看「具体到现象」；章末验证物有一个可运行的增量（里程碑）。
 4. **滚动摘要前向传递，承诺有账。** 每章结束产出一则 ≤200 字的前情摘要（已建立的概念、本章验证物变更点、读者已能做什么），下一章生成时必须带上；向前章开出的每条承诺（「第 N 章细算」）登记 `.course/promises.json`，目标章生成时注入清账、全书评审机械核销。这是全书连贯性的机制，不是可选项。并行模式下由蓝图的计划摘要预付、缝合审计按实际产物校准——机制等价（见 `references/subagents.md`）。
 
 ## 工作流总览
@@ -59,7 +59,7 @@ courses/
     ├── package.json              # vitepress@^1.6.4 + docs:dev / docs:build 脚本
     ├── README.md                 # 运行说明 + 章节目录 + 终点里程碑
     └── .course/                  # 管线状态（outline/bible/rolling/calibration/promises 五个 JSON 随课程提交，
-                                   #   snapshots/repo 等可再生物 gitignore——issues/011 P2-9 可审计性）
+                                   #   snapshots/repo 等可再生物 gitignore）
 ```
 
 项目根是**聚合入口**（首门课程时创建一次，之后所有课程共用；脚手架与生成脚本见 `references/portal.md`）：
@@ -127,22 +127,22 @@ audience 若只是首页文案，教学就只能靠猜。这一步把「作者�
 - **术语表**：中文术语 + 英文 + 一句话**大白话**定义；glossary 附录页由它渲染，且必须 ⊇ 全书全部 new_concepts（final-check 对账）。
 - **代码/验证约定**：验证物工程的模块命名、目录结构、错误处理；命名服务于教学清晰，不与任何真实库刻意对齐。
 - **API 契约**（code-lab 档）：验证物公共导出面——单一事实源，只增不破。
-- **权威文档清单（门槛必填——011 P0-2）**：凡正文将出现客观事实断言的课程（OS/协议/运行时/硬件/监管规则——编程课与非编程课同规），清单必配（硬件文档、协议规范、语言标准、监管文件、权威数据源）；final-check 与评审查存在性，缺失即阻断。纯主观工程实践类主题可缺省，但要在大纲期明示「本课无客观事实断言」。
+- **权威文档清单（门槛必填）**：凡正文将出现客观事实断言的课程（OS/协议/运行时/硬件/监管规则——编程课与非编程课同规），清单必配（硬件文档、协议规范、语言标准、监管文件、权威数据源）；final-check 与评审查存在性，缺失即阻断。纯主观工程实践类主题可缺省，但要在大纲期明示「本课无客观事实断言」。
 - **obligations 推导**：问一句「这个领域有没有不做就会被下架/教坏人的表述义务」——有则按四类登记（schema 见 course-profiles.md），无则空缺，**空缺合法**。
 
 风格规则与章节骨架不进圣经——已固化在 `references/chapter-writing.md`，存两份只会漂移。
 
 ## 阶段 2 · 大纲 + profile + 用户确认
 
-产出 CourseOutline JSON（schema 见 `references/outline-schema.md`）：**章数、分部数、章型、钩子形态全部由内容决定**——备课拆出几个值得单独成章的核心特性就几章（一章一特性），每章带 hook / milestone / depends_on / acceptance 与 new_concepts，可选 appendices 与 length_exempt 豁免。**profile 随大纲一并产出与确认**：archetype / verification / source_policy / code_density / obligations / scale 六个维度 + 验证物形态与规模——呈现为一句话形态画像（「非编程知识课 · 演算核对验证 · 代码默认折叠 · 含合规义务」），用户纠正即反馈循环。
+产出 CourseOutline JSON（schema 见 `references/outline-schema.md`）：**章数、分部数、章型、钩子形态全部由内容决定**——备课拆出几个值得单独成章的核心特性就几章（一章一特性），每章带 hook / milestone / depends_on / acceptance 与 new_concepts / misconceptions，课程可带 driving_question（读者视角的一句主线大问题，全书回答它——收敛不出就省略，不硬造），可选 appendices 与 length_exempt。**profile 随大纲一并产出与确认**：archetype / verification / source_policy / code_density / obligations / scale 六个维度 + 验证物形态与规模——呈现为一句话形态画像（「非编程知识课 · 演算核对验证 · 代码默认折叠 · 含合规义务」），用户纠正即反馈循环。
 
-向用户呈现：分部章节表（`# | 章 | 类型 | 钩子 | 里程碑`）+ 终点里程碑 + 形态画像 + 读者画像一句话。反馈循环：整纲反馈 → 带反馈重生成整纲（反馈必须落实）；单章不满 → 只改该章条目；profile 纠正 → 同路。收敛不出该形态的机械验证物时，按「何时不适用」与用户前置澄清，不要硬生成。确认后进入阶段 3；并行模式先做蓝图冻结（见 `references/subagents.md`）。
+向用户呈现：分部章节表（`# | 章 | 类型 | 钩子 | 里程碑`）+ 终点里程碑 + 主线问题（如有）+ 形态画像 + 读者画像一句话。反馈循环：整纲反馈 → 带反馈重生成整纲（反馈必须落实）；单章不满 → 只改该章条目；profile 纠正 → 同路。收敛不出该形态的机械验证物时，按「何时不适用」与用户前置澄清，不要硬生成。确认后进入阶段 3；并行模式先做蓝图冻结（见 `references/subagents.md`）。
 
 ## 阶段 3 · 逐章生成（主智能体编排，默认串行）
 
 每章（按全局序号）依次走四步循环；spawn 模板与失败降级见 `references/subagents.md`：
 
-1. **spawn 章写作智能体**：整章一次做完——快照 → 验证物先行（红：测试/题目答案/探针断言/任务清单先写先跑）→ 演进转绿 → 门槛（按 profile 形态，失败回灌最多 3 轮，仍败回滚快照、降级为占位章，**不中断全书**）→ 按五槽位骨架写正文（开章钩子 → 原理 → 演练 → 验证（读者动作，验证物输出两侧可见）→ 收束（小结 + 自查）；新概念按四步教；承重概念分级；承诺面=交付面；事实断言对照权威文档；术语首现说人话；**标注 `src/…` 的内容与验证物终态一致**）→ lint 机械自检（`node scripts/course-lint.mjs …`，带 `--pain` 传钩子现象词）。若本章有待清承诺（promises.json 中 target= 本章），spawn 时注入逐条清账。门槛与写作细则见 `references/verification-and-gates.md` 与 `references/chapter-writing.md`。
+1. **spawn 章写作智能体**：整章一次做完——快照 → 验证物先行（红）→ 演进转绿 → 门槛（按 profile 形态，失败回灌最多 3 轮，仍败回滚快照、降级为占位章，**不中断全书**）→ 按写作纪律写正文 → lint 机械自检（带 `--pain` 传钩子现象词）。若本章有待清承诺（promises.json 中 target= 本章），spawn 时注入逐条清账。门槛循环见 `references/verification-and-gates.md`，骨架与全部写作硬要求见 `references/chapter-writing.md`。
 2. **spawn 评审智能体**：新鲜眼按三轴（概念教学最重 / 实现完整性按验证形态实例化 / 结构契约）评审本章落盘产物，文验收条目逐条回查回报兑现状态，产出阻断/建议清单。占位章跳过。
 3. **阻断修订**：正文类主智能体亲自定向修（只修所指，修完重跑该章 lint）；验证物类回灌章写作智能体。修订→复查最多 2 轮，仍未清零 → 保留正文、交付汇报点名。
 4. **记录滚动摘要与承诺账**到 `.course/rolling.json` / `.course/promises.json`（写作智能体的草稿；修复后以修复版为准），进入下一章。

@@ -13,7 +13,7 @@
 //                                      不奖励硬造踩坑故事，issues/010 教训）
 //   --lang <zh|en>                     默认 zh。en 时跳过中文专用规则（中英空格/被字句/长句/黑话/翻译腔/
 //                                      term-intro 句式信号），跨语言通用规则（出处真实、承诺账、判词密度、
-//                                      省略纪律、snippet 存在性、痛点开章、字数下限）全语言生效
+//                                      省略纪律、snippet 存在性、痛点开章、字数参考线）全语言生效
 //   --source-policy <zero-trace|guided-walkthrough>
 //                                      默认读 <course_dir>/.course/outline.json 的 profile.source_policy，
 //                                      缺省 zero-trace。walkthrough 档允许带 owner/repo@sha:path 标注的
@@ -21,9 +21,9 @@
 //   --verification <code-lab|canvas-app|worksheet|observation|repo-probe|mixed|none>
 //                                      默认读 outline.profile.verification。observation 档启用任务清单
 //                                      可判定性检查
-//   --min-chars <N>                    teaching 章正文下限（中文字符，不含代码），默认 1200；
-//                                      --min-chars 0 关闭（review/总览章在 outline 声明 length_exempt，
-//                                      本脚本读到 spec 会自动豁免，无需手动传）
+//   --min-chars <N>                    teaching 章正文参考线（中文字符，不含代码），默认 1200；低于只出
+//                                      info 提示、不阻断——讲透即收；--min-chars 0 关闭（review/总览章在
+//                                      outline 声明 length_exempt，本脚本读到 spec 会自动豁免，无需手动传）
 //
 // outline.json 存在时自动读取本章 spec（按文件名 NN-slug 匹配）：hook.phenomena / pain_point 现象词
 // 兜底、type=review 或 length_exempt 自动豁免字数、source_policy / verification 兜底。CLI 显式参数优先。
@@ -209,12 +209,12 @@ if (painWords.length) {
     issues.push('pain-point: 开篇 1500 字内无钩子现象词（建议改用 --pain 传大纲现象词，或在大纲 hook.phenomena 声明）')
 }
 
-// ---- 字数下限（teaching 章；review/length_exempt 已豁免；是防御下限不是目标值）----
+// ---- 字数参考线（teaching 章；review/length_exempt 免提示；只提示不阻断——讲透即收，单薄先补教学再补字数）----
 if (minChars > 0) {
   const cjk = (text.match(/[\u4e00-\u9fff]/g) ?? []).length
   const words = zh ? cjk : (text.match(/[A-Za-z][A-Za-z'-]*/g) ?? []).length
   const need = zh ? minChars : Math.round(minChars / 1.6)
-  if (words < need) issues.push(`length: 正文 ${words} ${zh ? '字' : '词'}，低于下限 ${need}（review/总览章请在 outline 声明 length_exempt）`)
+  if (words < need) infos.push(`length: 正文 ${words} ${zh ? '字' : '词'}，低于参考线 ${need}——若已讲透可忽略；若单薄，先补概念教学（review/总览章在 outline 声明 length_exempt 免提示）`)
 }
 
 // ---- 任务清单可判定性（observation 形态；任何课的勾选任务单同规）----
