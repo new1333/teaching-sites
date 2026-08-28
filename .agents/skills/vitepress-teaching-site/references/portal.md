@@ -134,6 +134,14 @@ console.log(`[portal] 已生成聚合站：${courses.map((c) => `${c.title}(${c.
 /courses/.vitepress/
 ```
 
+## 可视化与重依赖课程的聚合约束（profile.presentation.visual 声明时）
+
+聚合站把全部课程构建进同一个 VitePress 产物，重依赖课程要守三条，否则聚合构建与首屏一起垮：
+
+1. **依赖装在课程目录**：echarts 等重依赖声明在课程自己的 `package.json`（`courses/{course}/`），根 package.json 保持纯聚合站语义——CI/本地构建按课程循环安装（本仓库现行实践）。把课程级依赖提升到根，会让没用到它的课程也被迫背上安装与审计成本。
+2. **动态导入分包**：重依赖在组件内 `import()` 动态加载（配方见 `vitepress-assembly.md` 可视化一节）——聚合站首屏不吞几百 KB，课程间依赖互不渗漏。
+3. **课程自定义主题/组件收敛在自己目录**：`courses/{course}/docs/.vitepress/theme/` 内自注册，不碰聚合配置——sync 脚本派生 sidebar 时不受影响。
+
 ## 已知边界（无需修，知道即可）
 
 - 课程内部写的站内**绝对**链接（如正文里的 `/about`）在聚合站里指向根路径会 404——所以课程内站内链接一律**相对**（首页模板已保证，见 `vitepress-assembly.md`）；残余绝对链接由 `ignoreDeadLinks: true` 兜底，翻章靠 sidebar（已带前缀）。课程间正文互链本来就不该有。

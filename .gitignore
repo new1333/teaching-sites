@@ -1,8 +1,13 @@
 # 依赖
 node_modules/
 
-# 课程管线状态与克隆的参考仓库（可再生）
-.course/
+# 课程管线状态：五个关键 JSON 随课程提交（issues/012 E-8 可审计性）；snapshots/repo/lint 等可再生，继续忽略
+**/.course/*
+!**/.course/outline.json
+!**/.course/bible.json
+!**/.course/rolling.json
+!**/.course/calibration.json
+!**/.course/promises.json
 
 # 聚合站生成文件（pnpm sync 可再生）
 /courses/index.md
