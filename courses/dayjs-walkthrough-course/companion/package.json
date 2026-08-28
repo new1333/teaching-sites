@@ -1,0 +1,9 @@
+{
+  "name": "companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --import ./probes/register.mjs probes/run-all.mjs",
+    "probes": "node --import ./probes/register.mjs probes/run-all.mjs"
+  }
+}

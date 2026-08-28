@@ -1,0 +1,44 @@
+[
+ {
+  "from": "factory-and-instance",
+  "from_n": 1,
+  "target": "parse-date",
+  "what": "无参调用走哪条分支",
+  "status": "fulfilled"
+ },
+ {
+  "from": "init-cache",
+  "from_n": 3,
+  "target": "immutability",
+  "what": "$set 尾部 this.init() 的呼应",
+  "status": "fulfilled"
+ },
+ {
+  "from": "format",
+  "from_n": 6,
+  "target": "locale-registry",
+  "what": "语言包是 format 语言占位符的家",
+  "status": "fulfilled"
+ },
+ {
+  "from": "locale-registry",
+  "from_n": 7,
+  "target": "plugin-system",
+  "what": "插件系统拿到类+工厂+工具集",
+  "status": "fulfilled"
+ },
+ {
+  "from": "factory-and-instance",
+  "from_n": 1,
+  "target": "immutability",
+  "what": "克隆防御是不可变性的第一块砖",
+  "status": "fulfilled"
+ },
+ {
+  "from": "factory-and-instance",
+  "from_n": 1,
+  "target": "plugin-system",
+  "what": "cfg.args（出生参数）在插件协议里再遇到",
+  "status": "fulfilled"
+ }
+]

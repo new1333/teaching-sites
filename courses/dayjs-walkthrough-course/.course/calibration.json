@@ -1,0 +1,14 @@
+{
+ "skipped": true,
+ "reason": "回归运行（issues/012 回归课 2）自主模式，无用户确认轮；按大纲 audience 保守默认",
+ "default_profile": {
+  "can_do": [
+   "JavaScript/ESM 基础",
+   "用过日期库 API"
+  ],
+  "treat_as_unfamiliar": [
+   "未打包源码直跑",
+   "库设计层面的不可变与插件协议"
+  ]
+ }
+}

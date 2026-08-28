@@ -1,0 +1,97 @@
+{
+ "reader_model": {
+  "audience_defaulted": true,
+  "known": [
+   "JavaScript 基础与 ESM 语法",
+   "用过 dayjs 或 moment 的 API 面",
+   "正则表达式入门"
+  ],
+  "unfamiliar": [
+   {
+    "concept": "打包器式无扩展名导入",
+    "why": "平时用 npm 包，没直接跑过未打包源码",
+    "anchor": "源码是食材，npm 包是做好的菜",
+    "first_chapter": "factory-and-instance"
+   },
+   {
+    "concept": "库级不可变约定",
+    "why": "业务代码原地修改是常态，库内部却走克隆路径",
+    "anchor": "银行流水只增不改，要改就开新条目",
+    "first_chapter": "immutability"
+   },
+   {
+    "concept": "插件协议",
+    "why": "没用过把类和工厂同时交给第三方函数的写法",
+    "anchor": "给机器人开放两个接口随便装配件",
+    "first_chapter": "plugin-system"
+   }
+  ]
+ },
+ "glossary": [
+  {
+   "term": "工厂函数",
+   "en": "factory function",
+   "definition": "不暴露 new、用普通函数创建并返回对象的封装方式，dayjs() 就是"
+  },
+  {
+   "term": "鸭子类型标记",
+   "en": "duck typing flag",
+   "definition": "用对象上的标志属性（如 $isDayjsObject）判断类型，不依赖 instanceof"
+  },
+  {
+   "term": "正则解析回退",
+   "en": "regex parse fallback",
+   "definition": "字符串先用正则拆字段，拆不动交给 new Date 兜底的分层解析策略"
+  },
+  {
+   "term": "预计算缓存",
+   "en": "precomputed cache",
+   "definition": "构造时把年月日等字段先算好存在实例上，getter 直接读"
+  },
+  {
+   "term": "不可变实例",
+   "en": "immutable instance",
+   "definition": "任何修改操作都返回新实例、原实例保持不变的约定，dayjs 的核心承诺"
+  },
+  {
+   "term": "单位对齐",
+   "en": "unit alignment",
+   "definition": "把日期推到某单位边界（周初/月初/年首）的操作，startOf/endOf 的本质"
+  },
+  {
+   "term": "占位符替换",
+   "en": "token replacement",
+   "definition": "用正则逐段匹配格式串占位符并换成对应值的格式化方式"
+  },
+  {
+   "term": "注册表模式",
+   "en": "registry pattern",
+   "definition": "用一张表登记全部可用项、按名取用的组织方式，locale 的 Ls 就是"
+  },
+  {
+   "term": "幂等安装",
+   "en": "idempotent install",
+   "definition": "重复执行无副作用——插件用 $i 标记保证 extend 两次只装一次"
+  }
+ ],
+ "verification_conventions": {
+  "probes": "每个探针 = 行为断言（对锁定 ref 源码跑出的真实结果）+ 结构断言（源码文本含预期形态）；正文断言与探针输出一致",
+  "quoting": "正文代码块一律标注 iamkun/dayjs@0f6c19e3b63bcc3ff74917cb3a60125020c75648:路径，与锁定 ref 逐字一致",
+  "source_of_truth": "锁定 ref（commit 0f6c19e）是全书唯一事实源，上游新提交不追"
+ },
+ "authority_docs": [
+  {
+   "name": "锁定 ref 的仓库源码（iamkun/dayjs@0f6c19e3b63bcc3ff74917cb3a60125020c75648）",
+   "why": "走读课的事实源：全部断言以它为准"
+  },
+  {
+   "name": "仓库内 test/ 目录与 types/ 类型声明",
+   "why": "行为语义的官方对照"
+  },
+  {
+   "name": "MIT LICENSE（仓库根）",
+   "why": "引用与再分发的许可边界"
+  }
+ ],
+ "factual_claims": true
+}

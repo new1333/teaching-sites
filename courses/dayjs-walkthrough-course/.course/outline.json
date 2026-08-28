@@ -1,0 +1,378 @@
+{
+  "title": "dayjs 源码走读：一个日期库的最小内核",
+  "audience": "看得懂 JavaScript、想读一个真实开源库的工程师",
+  "input": {
+    "kind": "repo",
+    "ref": "iamkun/dayjs@0f6c19e3b63bcc3ff74917cb3a60125020c75648"
+  },
+  "profile": {
+    "archetype": "source-walkthrough",
+    "verification": "repo-probe",
+    "source_policy": "guided-walkthrough",
+    "code_density": "full",
+    "obligations": [
+      {
+        "kind": "legal",
+        "note": "源码遵循 MIT 许可，引用逐字标注出处；课程为独立教学解读，非官方文档",
+        "surfaces": [
+          "docs/about.md",
+          "docs/01-factory-and-instance.md"
+        ]
+      }
+    ],
+    "presentation": {
+      "visual": "none"
+    },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "repo-probe",
+    "language": "Node.js ESM 探针脚本（零依赖，resolve hook 直连锁定 ref 源码）",
+    "scope": "8 组探针（行为断言 + 结构断言），53 条检查在锁定 ref 上全绿（单文件总线形态，README 已声明取舍）"
+  },
+  "parts": [
+    {
+      "title": "一、内核：一个类与一条解析路径",
+      "chapters": [
+        {
+          "slug": "factory-and-instance",
+          "title": "dayjs() 是个工厂：入口与实例",
+          "goal": "读懂入口函数如何把任意输入变成 Dayjs 实例，clone 防御在哪里",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "observation",
+            "point": "dayjs() 不是类也不是普通函数返回值——传一个 Dayjs 进去它居然原样克隆一个还你",
+            "phenomena": [
+              "克隆",
+              "还你"
+            ]
+          },
+          "new_concepts": [
+            "工厂函数",
+            "鸭子类型标记"
+          ],
+          "milestone": "探针 ch01 全绿：入口行为断言 + isDayjs 分支结构断言",
+          "milestone_verify": "跑 npm test 看到 ch01 全部 ✓，行为可在 node 里亲手复现",
+          "depends_on": [],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "走读对象：dayjs 工厂函数与 isDayjs"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch01 全绿（行为与结构断言）",
+            "引用代码块标注 iamkun/dayjs@0f6c19e:src/index.js 且逐字一致",
+            "讲清「为什么传 Dayjs 进来返回 clone 而不是原对象」"
+          ]
+        },
+        {
+          "slug": "parse-date",
+          "title": "parseDate：四类输入，一条路径",
+          "goal": "读懂日期输入的解析顺序与 REGEX_PARSE 的作用",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "bug-story",
+            "point": "dayjs(\"2026-8-28\") 能解析，dayjs(\"2026年8月28日\") 得到 Invalid Date——分水岭在一条正则",
+            "phenomena": [
+              "Invalid Date",
+              "正则"
+            ]
+          },
+          "new_concepts": [
+            "正则解析回退"
+          ],
+          "milestone": "探针 ch02 全绿：null/字符串/斜杠格式/回退路径断言",
+          "milestone_verify": "run-all 中 ch02 ✓；读者可在 node 里对任意字符串试出走哪条分支",
+          "depends_on": [
+            "factory-and-instance"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "parseDate"
+            },
+            {
+              "path": "src/constant.js",
+              "why": "REGEX_PARSE 定义"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch02 全绿",
+            "引用逐字标注且一致",
+            "null → Invalid 的设计意图讲清（而非当 bug）"
+          ]
+        },
+        {
+          "slug": "init-cache",
+          "title": "init：为什么实例上挂满了 $ 变量",
+          "goal": "读懂 parse/init 的预计算缓存，$ 前缀的私有约定",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "你已经会调用 date() 和 month()，但还没看过它们的返回值早在构造时就存好了",
+            "phenomena": [
+              "存好",
+              "构造"
+            ]
+          },
+          "new_concepts": [
+            "预计算缓存"
+          ],
+          "milestone": "探针 ch03 全绿：$ 缓存与 getter 对齐断言",
+          "milestone_verify": "run-all 中 ch03 ✓；d.$y === d.year() 类比可亲手复现",
+          "depends_on": [
+            "factory-and-instance"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "parse/init 与末尾的 getter 注册"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch03 全绿",
+            "引用逐字标注且一致",
+            "$ 前缀约定与 getter 注册表讲清"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "二、三根支柱：不可变、单位对齐、格式化",
+      "chapters": [
+        {
+          "slug": "immutability",
+          "title": "不可变性：add/set 为什么返回新对象",
+          "goal": "读懂 wrapper 与 clone().$set 的实现路径，理解库级不可变约定",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "bug-story",
+            "point": "const a = dayjs(); a.add(1, \"day\"); console.log(a.date())——加了一天却纹丝不动，不是 bug 是承诺",
+            "phenomena": [
+              "纹丝不动",
+              "承诺"
+            ]
+          },
+          "new_concepts": [
+            "不可变实例"
+          ],
+          "milestone": "探针 ch04 全绿：add/set 后原实例不变断言",
+          "milestone_verify": "run-all 中 ch04 ✓；先猜后跑：猜 a.add 后 a 变不变",
+          "depends_on": [
+            "init-cache"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "wrapper、$set/set、add"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch04 全绿",
+            "引用逐字标注且一致",
+            "不可变的实现边界讲清（哪些方法原地改 $d、为什么对外仍安全）"
+          ]
+        },
+        {
+          "slug": "startof-endof",
+          "title": "startOf/endOf：单位对齐的两个工厂",
+          "goal": "读懂 instanceFactory 的统一套路与 week 边界的 locale 依赖",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "observation",
+            "point": "startOf(\"week\") 在英文环境回到周日，切到中文环境同一行代码回到周一——同一函数，两种答案",
+            "phenomena": [
+              "周日",
+              "周一"
+            ]
+          },
+          "new_concepts": [
+            "单位对齐"
+          ],
+          "milestone": "探针 ch05 全绿：月/周对齐断言 + daysInMonth 技巧断言",
+          "milestone_verify": "run-all 中 ch05 ✓；周末边界读者可亲手切 locale 复现",
+          "depends_on": [
+            "immutability"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "startOf/endOf、daysInMonth"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch05 全绿",
+            "引用逐字标注且一致",
+            "week 对齐依赖 locale.weekStart 的机制讲透"
+          ]
+        },
+        {
+          "slug": "format",
+          "title": "format：一次正则替换的全文翻译器",
+          "goal": "读懂 REGEX_FORMAT 的占位符替换、meridiem 兜底与 [字面量] 逃逸",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "你已经天天写 YYYY-MM-DD，还没看过这串字符是怎么被逐段翻译出来的",
+            "phenomena": [
+              "逐段",
+              "翻译"
+            ]
+          },
+          "new_concepts": [
+            "占位符替换"
+          ],
+          "milestone": "探针 ch06 全绿：YY 截断、meridiem、字面量逃逸断言",
+          "milestone_verify": "run-all 中 ch06 ✓；读者可加自定义占位符观察 default 分支",
+          "depends_on": [
+            "init-cache"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "format"
+            },
+            {
+              "path": "src/constant.js",
+              "why": "REGEX_FORMAT"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch06 全绿",
+            "引用逐字标注且一致",
+            "[方括号] 逃逸与 $1 的关系讲清"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "三、生态：语言包与插件",
+      "chapters": [
+        {
+          "slug": "locale-registry",
+          "title": "locale：L 与 Ls 的一张注册表",
+          "goal": "读懂全局语言注册、实例级切换与 fallback 链",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "observation",
+            "point": "未加载 zh-cn 时 dayjs().locale(\"zh-cn\") 静默回落——不报错也不生效，机制藏在 split(\"-\") 里",
+            "phenomena": [
+              "静默",
+              "回落"
+            ]
+          },
+          "new_concepts": [
+            "注册表模式"
+          ],
+          "milestone": "探针 ch07 全绿：全局切换、实例切换互不污染、fallback 断言",
+          "milestone_verify": "run-all 中 ch07 ✓；切换后 format(\"dddd\") 的差异可亲手看到",
+          "depends_on": [
+            "format"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "L/Ls、parseLocale、实例 locale 方法"
+            },
+            {
+              "path": "src/locale/zh-cn.js",
+              "why": "语言包的真实形态"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch07 全绿",
+            "引用逐字标注且一致",
+            "全局 vs 实例级切换的区别与 fallback 链讲清"
+          ]
+        },
+        {
+          "slug": "plugin-system",
+          "title": "extend：三十多个插件共用的三个参数",
+          "goal": "读懂插件协议 plugin(option, Dayjs, dayjs) 与 $i 幂等安装",
+          "type": "walkthrough",
+          "hook": {
+            "kind": "bug-story",
+            "point": "一个团队把 dayjs.extend(plugin) 写进了两个模块，第二次调用发生了什么——什么都没发生，而且这是对的",
+            "phenomena": [
+              "什么都没发生",
+              "两个模块"
+            ]
+          },
+          "new_concepts": [
+            "幂等安装"
+          ],
+          "milestone": "探针 ch08 全绿：weekOfYear 安装、$i 标记、双次安装断言",
+          "milestone_verify": "run-all 中 ch08 ✓；extend 前后 d.week 的存在性变化可亲手看到",
+          "depends_on": [
+            "locale-registry"
+          ],
+          "relevant_files": [
+            {
+              "path": "src/index.js",
+              "why": "extend"
+            },
+            {
+              "path": "src/plugin/weekOfYear/index.js",
+              "why": "一个真实插件的完整源码"
+            }
+          ],
+          "acceptance": [
+            "本章验证信号通过：探针 ch08 全绿",
+            "引用逐字标注且一致",
+            "插件三参数各自给插件什么能力讲清"
+          ]
+        },
+        {
+          "slug": "review",
+          "title": "复盘：这张源码地图你现在走完了",
+          "goal": "概念对账与自查，确认走读建立的每项能力",
+          "type": "review",
+          "length_exempt": true,
+          "hook": {
+            "kind": "ability-gap",
+            "point": "九章之前你只用过 dayjs 的 API，现在你能定位它每个行为的实现行号——清点一遍",
+            "phenomena": [
+              "清点",
+              "实现行号"
+            ]
+          },
+          "new_concepts": [],
+          "milestone": "概念对账表 + 8 问自查（附答案锚点）",
+          "milestone_verify": "每问附可回查的小节锚点",
+          "depends_on": [
+            "factory-and-instance",
+            "parse-date",
+            "init-cache",
+            "immutability",
+            "startof-endof",
+            "format",
+            "locale-registry",
+            "plugin-system"
+          ],
+          "acceptance": [
+            "本章验证信号通过：全部探针 run-all 全绿（全书口径）",
+            "自查 8 问至少 3 问预测/动手型且附答案锚点",
+            "含 MIT 许可与独立解读声明（obligations surface）"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "source-map",
+      "title": "源码地图速查",
+      "kind": "reference-table"
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一张可复走的源码地图，8 组探针在锁定 ref 全绿",
+    "verify": "cd companion && npm test：探针 run-all 全绿，全部断言跑在锁定 ref 的源码上"
+  }
+}

@@ -1,0 +1,58 @@
+{
+ "chapters": [
+  {
+   "n": 1,
+   "file": "01-factory-and-instance.md",
+   "degraded": false,
+   "summary": "走读入口：dayjs 工厂四行（isDayjs 分流→cfg 组装→new Dayjs）；克隆防御 + $isDayjsObject 鸭子标记。读者已能：画出入口逻辑并解释双保险。"
+  },
+  {
+   "n": 2,
+   "file": "02-parse-date.md",
+   "degraded": false,
+   "summary": "parseDate 四分支（null→无效/无参→今天/Date→复制/字符串→正则再兜底）；REGEX_PARSE 分水岭；错误哲学=携带而非中断。"
+  },
+  {
+   "n": 3,
+   "file": "03-init-cache.md",
+   "degraded": false,
+   "summary": "构造四步（语言/解析/缓存/标记）；init 预计算八字段；$ 私有约定与 getter 注册表；九字段全景图。"
+  },
+  {
+   "n": 4,
+   "file": "04-immutability.md",
+   "degraded": false,
+   "summary": "set=clone().$set；add 按单位分流，出口皆 wrapper（新值+旧上下文）；月末夹持；badMutable 边界。"
+  },
+  {
+   "n": 5,
+   "file": "05-startof-endof.md",
+   "degraded": false,
+   "summary": "startOf=switch+两工厂（instanceFactory/instanceFactorySet）；endOf=startOf(arg,false)；week 对齐依赖 locale.weekStart；daysInMonth 借 endOf。"
+  },
+  {
+   "n": 6,
+   "file": "06-format.md",
+   "degraded": false,
+   "summary": "format=一条正则+查表+一次 replace；方括号捕获组逃逸、default 保留原文、ZZ 兜底链；meridiem 内置兜底。"
+  },
+  {
+   "n": 7,
+   "file": "07-locale-registry.md",
+   "degraded": false,
+   "summary": "L/Ls 注册表 + parseLocale 回退链（zh-cn→zh→保持）+ isLocal 分全局/实例两档切换；语言包=带 name 的普通对象。"
+  },
+  {
+   "n": 8,
+   "file": "08-plugin-system.md",
+   "degraded": false,
+   "summary": "extend 六行：plugin(option,Dayjs,dayjs) 三参数权限面 + $i 幂等；weekOfYear 全源码走读=只用公开面。"
+  },
+  {
+   "n": 9,
+   "file": "09-review.md",
+   "degraded": false,
+   "summary": "复盘：8 行能力对账表 + 8 问自查（预测/动手型过半，附答案锚点）+ MIT 与独立解读边界声明。"
+  }
+ ]
+}
