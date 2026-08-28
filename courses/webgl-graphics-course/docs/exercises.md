@@ -21,7 +21,7 @@ title: 练习路线：把 minigl 再写一遍
 | 3 | `vectors.test.ts` | vec3 八件套：3-4-5 手算、点积交换律、右手定则、零向量约定 | [第 4 章](./04-vectors) |
 | 4 | `transform-matrices.test.ts` | mat4 八件套：rotY(90°) 落轴、T·R ≠ R·T、齐次平移 | [第 5 章](./05-transform-matrices) |
 | 5 | `projection.test.ts` | perspective/ortho：视锥映射、w = −z、平行线保持 | [第 6 章](./06-projection) |
-| 6 | `camera-lookat.test.ts` | lookAt：原点落位、轴不翻转、16 数对账 | [第 7 章](./07-camera-lookAt) |
+| 6 | `camera-lookat.test.ts` | lookAt：原点落位、轴不翻转、16 数对账 | [第 7 章](./07-camera-lookat) |
 | 7 | `depth-and-cube.test.ts` | 立方体几何：24 顶点 36 索引、法线朝外、UV 铺满 | [第 8 章](./08-depth-and-cube) |
 | 8 | `textures.test.ts` | checkerboard：字节数、(0,0) 黑、格数 = cells | [第 9 章](./09-textures) |
 | 9 | `lighting.test.ts` | 法线矩阵逆转置、Phong 三件套与 GLSL 同形 | [第 10 章](./10-lighting) |

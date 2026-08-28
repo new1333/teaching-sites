@@ -1,6 +1,6 @@
 # VitePress 组装
 
-nav/sidebar 由 `.course/outline.json` **100% 渲染生成，不扫文件系统**——降级章在数据里有标记，sidebar 才能置灰。
+nav/sidebar 的结构由 `.course/outline.json` **100% 渲染生成，不扫文件系统**；章节状态只叠加 `rolling.json` / `run.json` 的 complete、degraded、blocked，不在配置里另建状态源。
 
 ## 版本与根 package.json
 
@@ -121,7 +121,6 @@ export default {
   title: '{outline.title}',
   description: '{outline.audience}',
   base: '/',
-  ignoreDeadLinks: true,
   themeConfig: {
     nav: [{ text: '首页', link: '/' }, { text: '关于', link: '/about' }],
     sidebar: [ /* 每个分部一项；大纲声明 appendices 时末尾再追加 { text: '附录', items: [...] }： */
@@ -143,12 +142,12 @@ export default {
 ## 章文件与后处理
 
 - 文件名：`{两位序号}-{ascii-slug}.md`（如 `08-store-to-refs.md`）；slug ≤50 字符、纯 ASCII——中文文件名在 Windows 路径长度、编码和 ZIP 三处都出过坑。
-- 每章写完后过一遍后处理：整文被 ``` 围栏包裹的剥掉一层；指向不存在 `.md` 的内站死链改回纯文本（`ignoreDeadLinks: true` 只是兜底）。
+- 每章写完后过一遍后处理：整文被 ``` 围栏包裹的剥掉一层；站内链接要么指向真实页面，要么改成不承诺跳转的纯文本。保持 VitePress 默认的死链构建失败。
 - frontmatter `title:` 与大纲章标题一致（终检项）。
 
 ## README.md（课程根）
 
-包含：怎么跑（两条路——项目根 `pnpm dev` 从聚合站进入，或本课程内 `pnpm install && pnpm docs:dev` 单独预览；验证物工程 `cd companion && npm install && npm test`）、章节目录、终点里程碑、（如有）资产再生成命令、（observation/纯导读）可感知性降级说明。
+包含：怎么跑（聚合入口、单课预览、验证物门槛，命令与仓库实际 package manager/manifest 一致）、章节目录、终点里程碑、（如有）资产再生成命令、（observation/纯导读）可感知性降级说明。
 
 ## 终检（凡能脚本化的对账不得留给自觉）
 
@@ -159,7 +158,7 @@ node scripts/course-final-check.mjs courses/{course}            # 全量（含�
 node scripts/course-final-check.mjs courses/{course} --skip-gates   # 快速（跳过门槛实跑）
 ```
 
-机械覆盖（脚本已对账，不再靠肉眼）：章文件数/序号/slug/附录页与大纲一致；frontmatter title；hero 长度与首页链接相对化及死链；glossary 页 = bible 条目集；术语全书出现（容 3）；`src/` `tests/` 标注块与验证物终态逐字 diff（拼版豁免）；站内相对链接与资产死链；promises.json 核销；obligations surfaces 存在性；zero-trace 抽查（github blob/tree 链接、`.course/repo` 痕迹）/ walkthrough 引用路径存在性；降级章占位核验；伴生 typecheck/test 实跑 + README/index/about/终章的测试数与行数断言比对（现实是事实源——终章「430 vs 404」式数字漂移由它拦住）。
+机械覆盖（脚本已对账，不再靠肉眼）：章文件数/序号/slug/附录页与大纲一致；frontmatter title；hero 长度与首页链接相对化及死链；glossary 页 = bible 条目集；术语全书出现（容 3）；`src/` `tests/` 标注块与验证物终态逐字 diff（拼版豁免）；站内相对链接与资产死链；promises.json 核销；obligations surfaces 存在性；zero-trace 抽查（github blob/tree 链接、`.course/repo` 痕迹）/ walkthrough 引用路径存在性；v2 run/rolling 的完成状态；伴生 typecheck/test 实跑 + README/index/about/终章的测试数与行数断言比对。模式额外门槛（build、资产双跑、export-docs 等）按对应 `verification/*.md` 执行。
 
 **第二步，脚本外人工项**（机械做不了或成本不划算，逐条过）：
 
@@ -170,6 +169,6 @@ node scripts/course-final-check.mjs courses/{course} --skip-gates   # 快速（�
 5. **零输入体验**（问一句，不是开关）：形态允许时，终章的可运行产物自带课程自产的内置输入（测试 fixture 导出），访客不自备文件就能看到成果；不允许（需真实密钥/数据集）时在 README 写明。
 6. 验证物资产清白：无大纲外的测试文件与产物；无版权输入物（public/ 或资源目录里不得出现外部下载的受版权文件——grep 一遍资源目录）；实验场对外承诺（如「零外部输入」）与仓库内容一致。
 7. 聚合入口：根脚手架缺失则按 `references/portal.md` 创建；`node scripts/portal-sync.mjs` 成功，根目录 `pnpm build` 构建成功。
-8. 向用户汇报：课程路径、聚合与单课预览命令、降级章清单、带病放行项（如有）及其原因；交付口径统一为：根目录 `pnpm dev` 看全部课程，`cd courses/{course} && pnpm docs:dev` 只看本课程。
+8. 向用户汇报：课程路径、聚合与单课预览命令，以及任何 degraded/blocked 章节及原因。存在 degraded/blocked 时把课程标为未完成，不使用“带病完成”口径；根目录 `pnpm dev` 看全部课程，`cd courses/{course} && pnpm docs:dev` 只看本课程。
 
 > 终检清单的机械项已全部收进 `scripts/course-final-check.mjs`（脚本正本在仓库 `scripts/`，本文件不内嵌脚本文本）；清单余下的是机械做不了的语义与构建项。

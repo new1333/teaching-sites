@@ -66,7 +66,6 @@ const config = `// 由 scripts/portal-sync.mjs 生成，勿手改。改课程请
 export default {
 ${baseLine}  title: '课程中心',
   description: '全部教学课程的聚合入口',
-  ignoreDeadLinks: true,
   srcExclude: ['**/README.md', '**/companion/**', '**/.course/**'],
   rewrites: { ':course/docs/:path*': ':course/:path*' },
   themeConfig: {

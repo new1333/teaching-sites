@@ -1,0 +1,65 @@
+{
+  "kind": "topic",
+  "label": "nginx 实现原理",
+  "description": "nginx 为什么又快又稳：事件驱动架构、master-worker 进程模型、HTTP 状态机、内存池、配置继承、反向代理与负载均衡。课程目标是讲清核心原理并亲手做出验证原理的最小事件驱动 HTTP 服务器（TypeScript + node:net），不复刻 C 源码。",
+  "features": [
+    {
+      "name": "event-driven",
+      "summary": "事件驱动与 reactor 模式：epoll 级联唤醒 + 非阻塞 I/O，让单线程管住成千上万连接——nginx 高并发的根基"
+    },
+    {
+      "name": "conn-lifecycle",
+      "summary": "连接生命周期管理：连接注册表、读写事件分发、超时收割、优雅关闭——连接作为一等公民被管理"
+    },
+    {
+      "name": "http-parser",
+      "summary": "HTTP/1.1 解析状态机：从字节流增量解析请求行与头部，天然应对粘包/半包；为什么逐字符状态机而不是攒完整包再解析"
+    },
+    {
+      "name": "keepalive",
+      "summary": "keep-alive 连接复用：一个 TCP 连接顺序服务多个请求；超时与 Connection: close 的语义"
+    },
+    {
+      "name": "memory-pool",
+      "summary": "请求级内存池：一次向系统要一大块、请求结束整池归还；为什么比逐次 malloc/free 快、如何天然防泄漏"
+    },
+    {
+      "name": "config",
+      "summary": "配置系统：指令/块嵌套/context 继承——server{} 覆盖 http{}、未覆盖则继承的规则从何而来"
+    },
+    {
+      "name": "process-model",
+      "summary": "master-worker 进程模型：master 管配置与信号、worker 干活；为什么多进程而不是多线程；reload 与热升级为何流量无损"
+    },
+    {
+      "name": "reverse-proxy",
+      "summary": "反向代理：收到请求后建 upstream 连接、双向非阻塞转发、响应缓冲回写——nginx 的主场"
+    },
+    {
+      "name": "load-balance",
+      "summary": "upstream 负载均衡：轮询/最少连接、失败摘除与重试——流量在多台后端之间怎么分"
+    },
+    {
+      "name": "rate-limit",
+      "summary": "漏桶限流：limit_req 的 rate + burst + nodelay 语义；为什么是漏桶不是令牌桶"
+    },
+    {
+      "name": "zero-copy",
+      "summary": "写回路径的省法：响应缓冲、writev 聚合写、sendfile 零拷贝——数据从文件到网卡的路能少走几步"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "conn-lifecycle", "to": "event-driven" },
+      { "from": "http-parser", "to": "conn-lifecycle" },
+      { "from": "keepalive", "to": "http-parser" },
+      { "from": "memory-pool", "to": "http-parser" },
+      { "from": "process-model", "to": "event-driven" },
+      { "from": "reverse-proxy", "to": "keepalive" },
+      { "from": "reverse-proxy", "to": "config" },
+      { "from": "load-balance", "to": "reverse-proxy" },
+      { "from": "rate-limit", "to": "keepalive" },
+      { "from": "zero-copy", "to": "reverse-proxy" }
+    ]
+  }
+}

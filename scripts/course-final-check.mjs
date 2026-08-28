@@ -42,16 +42,28 @@ let outline = {}
 let chapters = [] // { n, slug, title, type }
 let appendices = []
 let profile = {}
+let outlineVersion = 1
 if (!existsSync(outlinePath)) {
   say(`outline 缺失: ${relative('.', outlinePath).split(sep).join('/')}——终检对账失去事实源（管线状态应随课程提交，issues/012 E-8）`)
 } else try {
   outline = JSON.parse(readText(outlinePath))
+  outlineVersion = outline.schema_version ?? 1
   profile = outline.profile ?? {}
   let n = 0
   for (const part of outline.parts ?? [])
     for (const ch of part.chapters ?? []) { n += 1; chapters.push({ n, ...ch }) }
   appendices = outline.appendices ?? []
 } catch (e) { say(`outline.json 解析失败: ${e.message}`) }
+
+if (outlineVersion >= 2) {
+  for (const ch of chapters) {
+    const resolved = ch.verification ?? ((ch.type === 'principle' || ch.type === 'review') ? 'none' : profile.verification)
+    if (!resolved || resolved === 'mixed')
+      say(`outline: ${ch.slug} 无法解析到具体 verification（profile=mixed 时 build/walkthrough 章必须显式声明）`)
+    if (!Array.isArray(ch.acceptance) || ch.acceptance.some((a) => typeof a !== 'object' || !a.kind || !a.criterion))
+      say(`outline: ${ch.slug} 的 acceptance 必须使用 v2 { kind, criterion } 结构`)
+  }
+}
 
 // ---- 1. 章文件与大纲对账 ----
 const docsDir = join(courseDir, 'docs')
@@ -182,11 +194,15 @@ for (const f of mdFiles.concat(readdirSync(docsDir).filter((x) => x.endsWith('.m
   const raw = readText(join(docsDir, f)).replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '')
   for (const m of raw.matchAll(/(?<!!)\[[^\]]*\]\(([^)]+)\)/g)) {
     const link = m[1].trim()
-    if (/^(https?:|mailto:|#)/.test(link) || link.startsWith('/')) continue // 绝对链接交由 review 口径，不在此重复
+    if (/^(https?:|mailto:|#)/.test(link)) continue
+    if (link.startsWith('/')) {
+      say(`${f}: 绝对站内链接 ${link} 会丢失课程挂载前缀；课程内链接必须相对`)
+      continue
+    }
     const target = link.replace(/^\.\//, '').split('#')[0]
     if (!target) continue
     if (!existsSync(join(docsDir, target)) && !existsSync(join(docsDir, `${target}.md`)))
-      say(`${f}: 站内相对链接 ${link} 目标不存在（死链——ignoreDeadLinks 只是兜底，不是免检）`)
+      say(`${f}: 站内相对链接 ${link} 目标不存在（死链必须让构建失败）`)
   }
 }
 
@@ -234,19 +250,67 @@ if ((profile.source_policy ?? 'zero-trace') === 'zero-trace' && ownerRepo) {
 
 // ---- 10. 降级章 ----
 const rollingPath = join(courseDir, '.course', 'rolling.json')
+let rollingEntries = []
 if (existsSync(rollingPath)) {
   try {
     const roll = JSON.parse(readText(rollingPath))
     const entries = Array.isArray(roll) ? roll : roll.chapters ?? []
-    const degraded = entries.filter((e) => e.degraded)
-    for (const d of degraded) infos.push(`第 ${d.n ?? '?'} 章为降级章（实验场保持上一章形态）——交付汇报点名`)
-    for (const d of degraded) {
+    if (!Array.isArray(entries)) throw new Error('chapters 必须是数组')
+    rollingEntries = entries
+    const incomplete = rollingEntries.filter((e) => e.status === 'degraded' || e.status === 'blocked' || e.degraded)
+    for (const d of incomplete) {
+      const state = d.status ?? 'degraded'
+      const message = `第 ${d.n ?? '?'} 章状态为 ${state}——课程不能标记 complete`
+      if (outlineVersion >= 2) say(message)
+      else infos.push(message)
+    }
+    for (const d of incomplete.filter((e) => (e.status ?? 'degraded') === 'degraded')) {
       const fc = chapterMd(d.n)
       if (fc && !readText(join(docsDir, fc.file)).includes('::: warning'))
         say(`第 ${d.n} 章标记降级但章文件无 ::: warning 占位块——占位格式漂移`)
     }
-  } catch { /* rolling 损坏不阻断终检 */ }
+  } catch (e) {
+    if (outlineVersion >= 2) say(`rolling.json 解析失败: ${e.message}`)
+    else infos.push(`rolling.json 解析失败: ${e.message}`)
+  }
 } else infos.push('.course/rolling.json 缺失（管线状态应随课程提交——issues/012 E-8）')
+
+// ---- 10.5 v2 管线状态 ----
+if (outlineVersion >= 2) {
+  for (const name of ['run.json', 'ingestion.json', 'calibration.json', 'bible.json', 'rolling.json', 'promises.json']) {
+    if (!existsSync(join(courseDir, '.course', name))) say(`v2 管线状态缺失: .course/${name}`)
+  }
+  const runPath = join(courseDir, '.course', 'run.json')
+  if (existsSync(runPath)) {
+    try {
+      const run = JSON.parse(readText(runPath))
+      if (run.schema_version !== 2) say('run.json schema_version 必须为 2')
+      if ((run.degraded_chapters ?? []).length || (run.blocked_chapters ?? []).length)
+        say(`run.json 仍有 degraded/blocked 章节：${[...(run.degraded_chapters ?? []), ...(run.blocked_chapters ?? [])].join('、')}`)
+      const expected = new Set(chapters.map((ch) => ch.slug))
+      const completed = new Set(run.completed_chapters ?? [])
+      const incomplete = new Set([...(run.degraded_chapters ?? []), ...(run.blocked_chapters ?? [])])
+      const classified = [...(run.completed_chapters ?? []), ...(run.degraded_chapters ?? []), ...(run.blocked_chapters ?? [])]
+      const duplicated = [...new Set(classified.filter((slug, i) => classified.indexOf(slug) !== i))]
+      if (duplicated.length) say(`run.json 章状态重复分类：${duplicated.join('、')}`)
+      const unknown = [...new Set(classified.filter((slug) => !expected.has(slug)))]
+      if (unknown.length) say(`run.json 含 outline 外章节：${unknown.join('、')}`)
+      const missing = [...expected].filter((slug) => !completed.has(slug) && !incomplete.has(slug))
+      if (missing.length) say(`run.json 未提交 ${missing.length} 章：${missing.join('、')}`)
+      const rollingBySlug = new Map(rollingEntries.map((entry) => [entry.slug, entry]))
+      if (rollingBySlug.size !== rollingEntries.length) say('rolling.json 存在重复 slug')
+      for (const slug of completed)
+        if (rollingBySlug.get(slug)?.status !== 'complete')
+          say(`run/rolling 状态漂移：${slug} 在 run 标为 complete，但 rolling 不是 complete`)
+      for (const slug of run.degraded_chapters ?? [])
+        if (rollingBySlug.get(slug)?.status !== 'degraded')
+          say(`run/rolling 状态漂移：${slug} 在 run 标为 degraded，但 rolling 不是 degraded`)
+      for (const slug of run.blocked_chapters ?? [])
+        if (rollingBySlug.get(slug)?.status !== 'blocked')
+          say(`run/rolling 状态漂移：${slug} 在 run 标为 blocked，但 rolling 不是 blocked`)
+    } catch (e) { say(`run.json 解析失败: ${e.message}`) }
+  }
+}
 
 // ---- 11. 门槛实跑 + 数字断言比对（现实是事实源）----
 let testCount = null, fileCount = null

@@ -1,0 +1,153 @@
+{
+  "kind": "repo",
+  "label": "vision-rag-course",
+  "description": "基于视觉大模型的多模态 RAG：用「先通读做卡片索引、再按卡片定位精读」的两阶段架构，让 AI 真正看懂 PDF 与视频并给出带页码/时间戳引用的可核对回答。",
+  "source": {
+    "repo_url": "https://github.com/liangdabiao/glm-5.3-flash-vision-rag",
+    "clone_dir": ".course/repo",
+    "acquire_method": "codeload tarball (git clone 因网络重置失败，回退 tar.gz/HEAD 解包)",
+    "repo_shape": "三个同构的 agent-skill 子项目：PDF 视觉 RAG、视频视觉 RAG、带货视频提示词生成；无 package.json，入口为各 skill 的 scripts/*.py"
+  },
+  "features": [
+    {
+      "name": "视觉模型客户端基座",
+      "summary": "多模态 API 客户端：图片 base64 data URL 内联、密钥三级加载（环境变量/家目录文件，绝不硬编码）、指数退避重试、容忍代码围栏与尾逗号的宽容 JSON 解析、按任务选推理档位（批量用 low、深读用 high）。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/glm_client.py",
+        "glm-5.3-flash-vision-rag/references/api-notes.md"
+      ]
+    },
+    {
+      "name": "两阶段索引-提问架构与成本漏斗",
+      "summary": "「先通读做笔记、再按笔记翻书」：索引按文件内容指纹缓存一次建好，每次提问走三层漏斗——免费本地粗筛 → 便宜的看图确认 → 昂贵的深读只用在刀刃上。",
+      "relevant_files": [
+        "readme.md",
+        "glm-5.3-flash-vision-rag/README.md"
+      ]
+    },
+    {
+      "name": "PDF 页面渲染与文字层抽取",
+      "summary": "把每页渲染成可控 DPI 的 PNG（页码与图像物理绑定，引用天然精确）并零成本抽出文字层供本地检索；理解图片按分辨率计费下的 DPI 取舍。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/ingest.py",
+        "glm-5.3-flash-vision-rag/scripts/show.py"
+      ]
+    },
+    {
+      "name": "批量视觉索引与页卡片",
+      "summary": "每页一张结构化读书卡（页型/标题/摘要/关键词/含何元素）：批量打标时图前带 [第N页] 标签、输出规整化校验、截断或失败对半拆批递归重试、失败页文字层兜底、由页级标题去重派生全书大纲。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/ingest.py"
+      ]
+    },
+    {
+      "name": "本地零成本粗筛（中文 TF-IDF）",
+      "summary": "纯 Python 字符串运算的检索：中文二字滑窗分词+停用词、标题/摘要/关键词 3 倍加权的页面文档、稀有度 idf 乘以封顶词频的打分排序——毫秒级零费用圈出候选页。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/ask.py"
+      ]
+    },
+    {
+      "name": "视觉精排",
+      "summary": "让模型看候选页截图+摘要做内容级把关，挑出真正相关的 top-k（JSON 输出、失败回退本地排序），补上词面匹配「词对主题不对、主题对用词不同」的盲区。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/ask.py"
+      ]
+    },
+    {
+      "name": "深读作答与引用诚实性",
+      "summary": "命中页±邻页的图与文字层摊开做高强度推理，每个论点标 [第N页]；页面不足以回答时明确说缺什么、索引不全时如实声明，不编造。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/ask.py"
+      ]
+    },
+    {
+      "name": "可核对交付：引用页与自包含 HTML",
+      "summary": "从答案正文回收引用页码，导出引用页原图，并生成 base64 内嵌全部证据图的离线 HTML 预览页——回答必须可核对是整个系统的第一约定。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/scripts/ask.py"
+      ]
+    },
+    {
+      "name": "视频宏观抽帧与元数据",
+      "summary": "ffprobe 读元数据，ffmpeg 按时长自适应采样密度（短片段 1fps 到长监控 0.1fps），配合本地场景切换检测——视觉模型没有视频模态，正确做法是带时间标签的帧序列。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-video-rag/scripts/ingest.py"
+      ]
+    },
+    {
+      "name": "帧卡片与段聚合",
+      "summary": "每帧六字段卡（场景/摘要/关键词/OCR 可见文字/相对前帧事件/运动强度），30 秒段聚合出段卡与运动统计——运动强度是后续微观放大窗口的数据依据。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-video-rag/scripts/ingest.py"
+      ]
+    },
+    {
+      "name": "视频问答管线与时间戳引用",
+      "summary": "把 PDF 的三层漏斗迁移到时间段：段粗筛 → 段代表帧精排 → 选中段全帧按时间轴深读，论点标 [MM:SS]；解析答案时刻导出关键帧、ffmpeg 切可播放片段（无损 copy 失败自动重编码）、生成内嵌 video 的 HTML。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-video-rag/scripts/ask.py",
+        "glm-5.3-flash-vision-video-rag/scripts/show.py"
+      ]
+    },
+    {
+      "name": "微观层：两级采样放大",
+      "summary": "快速动作（百毫秒级）宏观帧必漏：动作类问题自动或手动指定时间窗，对该时刻 12fps 高密度抽帧 + 中心裁切放大重看，并混入一张全图锚点防丢上下文——省着看全局、按需放大局部。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-video-rag/scripts/ask.py"
+      ]
+    },
+    {
+      "name": "引擎差异与双引擎互验",
+      "summary": "同一套流水线移植到不同视觉引擎的三个改动点（思考能否关闭→推理档位替代、有无 Files API→内联传图、图片计费模型→渲染分辨率取舍），以及同一素材跑两个引擎对照答案的互验习惯。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/references/api-notes.md",
+        "glm-5.3-flash-vision-video-rag/README.md"
+      ]
+    },
+    {
+      "name": "打包成可分发的 agent skill",
+      "summary": "SKILL.md 用 frontmatter 声明触发条件、正文给 agent 工作流与回答规范；密钥与缓存只在本机、代码可公开分发——把脚本集变成 agent 能自动调用的技能的交付纪律。",
+      "relevant_files": [
+        "glm-5.3-flash-vision-rag/SKILL.md",
+        "glm-5.3-flash-vision-video-rag/SKILL.md"
+      ]
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "两阶段索引-提问架构与成本漏斗", "to": "视觉模型客户端基座" },
+      { "from": "PDF 页面渲染与文字层抽取", "to": "两阶段索引-提问架构与成本漏斗" },
+      { "from": "批量视觉索引与页卡片", "to": "PDF 页面渲染与文字层抽取" },
+      { "from": "批量视觉索引与页卡片", "to": "视觉模型客户端基座" },
+      { "from": "本地零成本粗筛（中文 TF-IDF）", "to": "批量视觉索引与页卡片" },
+      { "from": "视觉精排", "to": "本地零成本粗筛（中文 TF-IDF）" },
+      { "from": "视觉精排", "to": "视觉模型客户端基座" },
+      { "from": "深读作答与引用诚实性", "to": "视觉精排" },
+      { "from": "可核对交付：引用页与自包含 HTML", "to": "深读作答与引用诚实性" },
+      { "from": "可核对交付：引用页与自包含 HTML", "to": "PDF 页面渲染与文字层抽取" },
+      { "from": "视频宏观抽帧与元数据", "to": "两阶段索引-提问架构与成本漏斗" },
+      { "from": "帧卡片与段聚合", "to": "视频宏观抽帧与元数据" },
+      { "from": "帧卡片与段聚合", "to": "批量视觉索引与页卡片" },
+      { "from": "视频问答管线与时间戳引用", "to": "帧卡片与段聚合" },
+      { "from": "视频问答管线与时间戳引用", "to": "本地零成本粗筛（中文 TF-IDF）" },
+      { "from": "视频问答管线与时间戳引用", "to": "视觉精排" },
+      { "from": "视频问答管线与时间戳引用", "to": "深读作答与引用诚实性" },
+      { "from": "微观层：两级采样放大", "to": "视频宏观抽帧与元数据" },
+      { "from": "微观层：两级采样放大", "to": "帧卡片与段聚合" },
+      { "from": "微观层：两级采样放大", "to": "视频问答管线与时间戳引用" },
+      { "from": "引擎差异与双引擎互验", "to": "视觉模型客户端基座" },
+      { "from": "引擎差异与双引擎互验", "to": "两阶段索引-提问架构与成本漏斗" },
+      { "from": "打包成可分发的 agent skill", "to": "视觉模型客户端基座" },
+      { "from": "打包成可分发的 agent skill", "to": "两阶段索引-提问架构与成本漏斗" }
+    ]
+  },
+  "notes": {
+    "scope_decision": "仓库含三个子项目。课程聚焦 vision RAG，特性只拆自 PDF 视觉 RAG 与视频视觉 RAG 两个子项目；第三个子项目 glm-ecom-video-seedance-prompt（带货视频逆向拆解→Seedance 提示词生成）是同一视觉索引思想的生成式应用而非 RAG 问答，默认不拆特性。",
+    "open_questions": [
+      "带货视频→提示词子项目是否要作为「应用篇」收尾章（镜头 S-A-C-S-C 拆解卡 + 风格化改写生成）？默认排除，作者可要求补 1-2 个特性。",
+      "「视觉精排」与「深读作答」目前按漏斗两段拆成两章；若嫌章多可合并为一章「两段式模型调用」，取舍留给大纲阶段。"
+    ],
+    "access_note": "git clone 两次失败（连接重置/超时），按纪律回退 codeload tar.gz/HEAD 解包成功；.course/repo 目录非 git 工作区，不影响阶段 3 按 relevant_files 查阅。"
+  }
+}

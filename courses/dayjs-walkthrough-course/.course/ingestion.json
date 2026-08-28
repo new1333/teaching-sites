@@ -1,0 +1,119 @@
+{
+ "kind": "repo",
+ "label": "dayjs",
+ "locked_ref": "0f6c19e3b63bcc3ff74917cb3a60125020c75648",
+ "description": "2KB 的不可变日期库：一个类、一条解析路径、注册表式 locale、三参数插件协议",
+ "features": [
+  {
+   "name": "入口工厂与 clone 防御",
+   "summary": "dayjs() 包装任意输入；Dayjs 实例再入参时原样克隆"
+  },
+  {
+   "name": "parseDate 四路解析",
+   "summary": "null/今天/Date/字符串(正则)→new Date 回退"
+  },
+  {
+   "name": "init 预计算缓存",
+   "summary": "$y/$M/$D/$W/$H/$m/$s/$ms 构造时算好"
+  },
+  {
+   "name": "不可变操作",
+   "summary": "add/set/startOf 全经 wrapper 返回新实例"
+  },
+  {
+   "name": "startOf/endOf 单位对齐",
+   "summary": "instanceFactory 统一构造；week 依赖 locale.weekStart"
+  },
+  {
+   "name": "format 正则替换",
+   "summary": "REGEX_FORMAT 逐段翻译；[] 字面量逃逸"
+  },
+  {
+   "name": "locale 注册表",
+   "summary": "L/Ls 全局表 + parseLocale 回退 + 实例级切换"
+  },
+  {
+   "name": "extend 插件协议",
+   "summary": "plugin(option, Dayjs, dayjs) 三参数 + $i 幂等"
+  }
+ ],
+ "capabilities": {
+  "edges": [
+   {
+    "from": "parseDate 四路解析",
+    "to": "入口工厂与 clone 防御"
+   },
+   {
+    "from": "init 预计算缓存",
+    "to": "入口工厂与 clone 防御"
+   },
+   {
+    "from": "不可变操作",
+    "to": "init 预计算缓存"
+   },
+   {
+    "from": "startOf/endOf 单位对齐",
+    "to": "不可变操作"
+   },
+   {
+    "from": "format 正则替换",
+    "to": "init 预计算缓存"
+   },
+   {
+    "from": "locale 注册表",
+    "to": "format 正则替换"
+   },
+   {
+    "from": "extend 插件协议",
+    "to": "locale 注册表"
+   }
+  ]
+ },
+ "profile_hint": "适合 source-walkthrough + repo-probe：核心集中在 467 行的 src/index.js，机制边界清晰，MIT 友好",
+ "source_map": [
+  {
+   "path": "src/index.js",
+   "one_liner": "全部内核：工厂、解析、类、格式化、locale、插件挂载（467 行）",
+   "role": "入口"
+  },
+  {
+   "path": "src/constant.js",
+   "one_liner": "单位枚举、毫秒换算、两条核心正则",
+   "role": "支撑"
+  },
+  {
+   "path": "src/utils.js",
+   "one_liner": "给插件用的工具集（补零、类型判断、包装）",
+   "role": "支撑"
+  },
+  {
+   "path": "src/locale/en.js",
+   "one_liner": "默认英文语言包：星期、月份、序数词",
+   "role": "数据"
+  },
+  {
+   "path": "src/locale/zh-cn.js",
+   "one_liner": "中文语言包样例：weekStart 周一起始",
+   "role": "数据"
+  },
+  {
+   "path": "src/plugin/weekOfYear/index.js",
+   "one_liner": "一个完整插件：给原型挂 week 方法",
+   "role": "插件样例"
+  },
+  {
+   "path": "test/",
+   "one_liner": "官方测试：行为语义的对照面",
+   "role": "对照"
+  },
+  {
+   "path": "types/",
+   "one_liner": "TypeScript 声明：API 面的正式描述",
+   "role": "对照"
+  }
+ ],
+ "license": {
+  "kind": "MIT",
+  "note": "Copyright (c) 2018-present, iamkun——允许引用与再分发，保留许可声明"
+ }
+}

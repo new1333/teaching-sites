@@ -1,155 +1,88 @@
-# 聚合入口（课程中心）
+# 聚合入口
 
-项目根是全部课程的聚合入口：`pnpm dev` 一条命令预览所有课程。课程自身零侵入——每门课仍是独立可跑的 VitePress 站点，聚合机制只发生在根目录。
+项目根的课程中心把 `courses/*-course/docs/` 挂到 `/{course}/`。每门课仍可独立运行；聚合层只负责发现、重写路径、汇总导航与注册课程主题。
 
-## 机制
+## 单一事实源
 
-聚合站就是一个以 `courses/` 为 root 的 VitePress 站点（根 `package.json` 的 `dev`/`build` 即 `vitepress dev|build courses`）：
+- 课程元数据来自各课程已提交的 `docs/.vitepress/config.mjs`。
+- 聚合首页与聚合配置是生成物，不建立第二份 manifest。
+- `scripts/portal-sync.mjs` 是实现正本；本文只描述输入/输出契约，不内嵌脚本副本。
+- `scripts/course-lint.mjs` 与 `scripts/course-final-check.mjs` 同样是运行时正本。
 
-- **挂载**：rewrites 把每门课的 `docs/` 映射到 `/{课程名}/` 路径——`':course/docs/:path*': ':course/:path*'`（path-to-regexp 语法）。`courses/{course}/docs/01-x.md` → URL `/{course}/01-x`。
-- **派生不双源**：聚合站的 nav/sidebar/课程卡片全部由各课程**已提交的** `docs/.vitepress/config.mjs` 派生（sync 脚本动态 import 后给 sidebar link 加 `/{课程名}` 前缀），不读 `.course/`（那是管线状态，可能缺席），也不另立 manifest——两份事实源必漂移。
-- **生成物可再生**：`courses/index.md`（聚合首页）与 `courses/.vitepress/config.mjs`（聚合配置）由 sync 脚本生成、gitignore；`dev`/`build` 前置执行 sync，永远新鲜。
+若当前仓库缺少这些 canonical scripts，把它视为 skill 包装缺失：从同一 skill 发行包复制正本，或报告阻塞。不要根据文档重新手写一个“近似版”。
 
-## 根脚手架（首门课程时创建一次，提交）
+## 根脚手架契约
 
-**`package.json`**：
+新仓库沿用已有 package manager；没有 lockfile 时默认 pnpm。根 `package.json` 至少暴露：
 
 ```json
 {
-  "name": "{项目名——取所在仓库的目录名，小写 ASCII 连字符，不写死任何具体仓库名}",
   "private": true,
   "scripts": {
     "sync": "node scripts/portal-sync.mjs",
     "dev": "node scripts/portal-sync.mjs && vitepress dev courses",
     "build": "node scripts/portal-sync.mjs && vitepress build courses",
     "preview": "vitepress preview courses"
-  },
-  "devDependencies": { "vitepress": "^1.6.4", "vue": "^3.5.0" }
-}
-```
-
-**`scripts/portal-sync.mjs`**（原样落盘，这是脚本正本）：
-
-```js
-// 扫描 courses/*-course，生成聚合站文件（courses/index.md 与 courses/.vitepress/config.mjs）。
-// 数据唯一来源：各课程已提交的 docs/.vitepress/config.mjs。勿手改生成物——重跑本脚本即可。
-import { readdirSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { pathToFileURL, fileURLToPath } from 'node:url'
-
-const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const coursesDir = join(root, 'courses')
-
-const courseNames = readdirSync(coursesDir, { withFileTypes: true })
-  .filter((d) => d.isDirectory() && d.name.endsWith('-course'))
-  .map((d) => d.name)
-  .sort()
-
-const courses = []
-for (const name of courseNames) {
-  const cfgPath = join(coursesDir, name, 'docs', '.vitepress', 'config.mjs')
-  if (!existsSync(cfgPath)) {
-    console.warn(`[portal] 跳过 ${name}：缺少 docs/.vitepress/config.mjs`)
-    continue
   }
-  const cfg = (await import(pathToFileURL(cfgPath).href)).default
-  let chapterCount = 0
-  const sidebar = (cfg.themeConfig?.sidebar ?? []).map((part) => ({
-    ...part,
-    items: (part.items ?? []).map((item) => {
-      if (item.link?.startsWith('/')) {
-        chapterCount++
-        return { ...item, link: `/${name}${item.link}` }
-      }
-      return item
-    }),
-  }))
-  if (existsSync(join(coursesDir, name, 'docs', 'about.md')))
-    sidebar.push({ text: '关于本课', items: [{ text: '关于', link: `/${name}/about` }] })
-  courses.push({
-    name,
-    title: cfg.title ?? name,
-    description: cfg.description ?? '',
-    sidebar,
-    chapterCount,
-  })
 }
-
-if (!courses.length) {
-  console.error('[portal] courses/ 下没有可用课程（需 *-course/docs/.vitepress/config.mjs）')
-  process.exit(1)
-}
-
-const j = JSON.stringify
-// 先在普通代码里算好，模板里只留 ${j(...)} 插值——插值内写对象字面量会触发模板插值提前闭合
-const nav = [{ text: '首页', link: '/' }, ...courses.map((c) => ({ text: c.title, link: `/${c.name}/` }))]
-const sidebarMap = Object.fromEntries(courses.map((c) => [`/${c.name}/`, c.sidebar]))
-const config = `// 由 scripts/portal-sync.mjs 生成，勿手改。改课程请改该课程自己的 config.mjs 后重跑 pnpm sync。
-export default {
-  title: '课程中心',
-  description: '全部教学课程的聚合入口',
-  ignoreDeadLinks: true,
-  srcExclude: ['**/README.md', '**/companion/**', '**/.course/**'],
-  rewrites: { ':course/docs/:path*': ':course/:path*' },
-  themeConfig: {
-    nav: ${j(nav)},
-    sidebar: ${j(sidebarMap)},
-    outline: { level: [2, 3] },
-    search: { provider: 'local' },
-    docFooter: { prev: '上一章', next: '下一章' },
-  },
-}
-`
-
-const index = `---
-layout: home
-hero:
-  name: 课程中心
-  text: ${courses.length} 门从零实现的课程
-  tagline: 根目录 pnpm dev 聚合预览；每门课程也可在 courses/ 下独立运行
-features:
-${courses
-  .map(
-    (c) => `  - icon: 📘
-    title: ${JSON.stringify(c.title)}
-    details: ${JSON.stringify(`${c.description}（${c.chapterCount} 章）`)}
-    link: /${c.name}/
-    linkText: 进入课程`,
-  )
-  .join('\n')}
----
-`
-
-mkdirSync(join(coursesDir, '.vitepress'), { recursive: true })
-writeFileSync(join(coursesDir, '.vitepress', 'config.mjs'), config)
-writeFileSync(join(coursesDir, 'index.md'), index)
-console.log(`[portal] 已生成聚合站：${courses.map((c) => `${c.title}(${c.chapterCount} 章)`).join('、')}`)
 ```
 
-**`.gitignore` 追加**（已有 pattern 不动）：
+VitePress/Vue 版本优先复用当前仓库 manifest；脚手架不在 reference 里缓存版本号。
+
+`.gitignore` 忽略可再生聚合文件：
 
 ```gitignore
-# 聚合站生成文件（pnpm sync 可再生）
 /courses/index.md
 /courses/.vitepress/
 ```
 
-## 可视化与重依赖课程的聚合约束（profile.presentation.visual 声明时）
+课程 `.course/` 状态按 [`state-contracts.md`](state-contracts.md) 单独配置，不能被这两条误伤。
 
-聚合站把全部课程构建进同一个 VitePress 产物，重依赖课程要守三条，否则聚合构建与首屏一起垮：
+## Sync 输入
 
-1. **依赖装在课程目录**：echarts 等重依赖声明在课程自己的 `package.json`（`courses/{course}/`），根 package.json 保持纯聚合站语义——CI/本地构建按课程循环安装（本仓库现行实践）。把课程级依赖提升到根，会让没用到它的课程也被迫背上安装与审计成本。
-2. **动态导入分包**：重依赖在组件内 `import()` 动态加载（配方见 `vitepress-assembly.md` 可视化一节）——聚合站首屏不吞几百 KB，课程间依赖互不渗漏。
-3. **课程自定义主题/组件收敛在自己目录**：`courses/{course}/docs/.vitepress/theme/` 内自注册，不碰聚合配置——sync 脚本派生 sidebar 时不受影响。
+`scripts/portal-sync.mjs` 扫描 `courses/*-course`。一门课可进入聚合站的最低条件：
 
-## 已知边界（无需修，知道即可）
+- `docs/.vitepress/config.mjs` 可 import；
+- `docs/index.md` 存在；
+- sidebar link 使用课程根相对语义；
+- 自定义组件收敛在本课程 `docs/.vitepress/theme/`。
 
-- 课程内部写的站内**绝对**链接（如正文里的 `/about`）在聚合站里指向根路径会 404——所以课程内站内链接一律**相对**（首页模板已保证，见 `vitepress-assembly.md`）；残余绝对链接由 `ignoreDeadLinks: true` 兜底，翻章靠 sidebar（已带前缀）。课程间正文互链本来就不该有。
-- 课程的 `docs/public/` 资源目录不会进聚合站（VitePress 只认一个 public）。本 skill 生成的课程不依赖 public 资源；若未来加了，sync 脚本需顺带拷贝到 `courses/public/{课程名}/`。
-- 课程 config 的 `base: '/'` 保持不变——单课独立运行优先，聚合前缀由 rewrites + sidebar 前缀化解决。
+缺配置的目录应明确告警并跳过；零可用课程时退出码非 0。
 
-## 验证（阶段 4 第 4 步）
+## Sync 输出
 
-1. `node scripts/portal-sync.mjs` 无报错，且输出列出的课程数 = `courses/` 下 `*-course` 目录数。
-2. 根目录 `pnpm install && pnpm build` 成功；`courses/.vitepress/dist/` 下每门课都有 `/{课程名}/index.html` 与全部章 html。
-3. `pnpm dev` 后：`/` 是课程卡片首页，点进任一课程 hero 正常、sidebar 翻章正常、本地搜索能搜到各课内容。
+1. `courses/index.md`：课程卡片由 config title/description/sidebar 章数派生。
+2. `courses/.vitepress/config.mjs`：
+   - rewrites 将 `{course}/docs/*` 映射为 `/{course}/*`；
+   - sidebar link 加课程前缀；
+   - nav 使用可扩展的课程菜单；
+   - 保持 VitePress 默认死链失败行为。
+3. `courses/.vitepress/theme/index.ts`：当课程存在自定义 theme 时，串联各课程 `enhanceApp`，让图表/演示组件在聚合构建中注册。
+
+附录不计入“课程章数”。生成物每次完整覆盖，不手改。
+
+## Base 与资产
+
+- 本地聚合默认根路径。
+- GitHub Pages 等项目级站点通过显式 `PAGES_BASE` 注入 base；本地不设置。
+- 课程 Markdown 内部链接使用相对路径，避免丢失课程前缀。
+- 图片/数据放课程 `docs/assets/` 交给 Vite 打包。
+- raw HTML 媒体由 `<script setup>` import URL。
+- 不依赖课程 `docs/public/` 的绝对路径；聚合站只有一个 public 根。
+
+## 重依赖与主题
+
+- 课程级依赖声明在课程自己的 package manifest。
+- 图表等重依赖按需或动态导入。
+- 课程 theme 不直接修改聚合配置；sync 负责组合。
+- 两个课程注册同名全局组件时，sync/构建必须报出冲突或课程改名，不能静默覆盖。
+
+## 验证
+
+1. `node scripts/portal-sync.mjs` 退出码 0，日志课程数与可用课程目录一致。
+2. 生成配置可 import，聚合 theme 包含全部有自定义主题的课程。
+3. 根 build 退出码 0；死链、组件解析或资产路径错误必须让构建失败。
+4. dist 下每门课有首页与全部章节 HTML。
+5. 启动 dev 后抽查课程首页、sidebar、上一/下一章、本地搜索和至少一个自定义组件。
+
+完成后只保留脚本与课程源文件；生成的 `courses/index.md`、`courses/.vitepress/` 不提交。

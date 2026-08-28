@@ -18,9 +18,9 @@
 //                                      默认读 <course_dir>/.course/outline.json 的 profile.source_policy，
 //                                      缺省 zero-trace。walkthrough 档允许带 owner/repo@sha:path 标注的
 //                                      仓库引用块，且必须带标注
-//   --verification <code-lab|canvas-app|worksheet|observation|repo-probe|mixed|none>
-//                                      默认读 outline.profile.verification。observation 档启用任务清单
-//                                      可判定性检查
+//   --verification <code-lab|canvas-app|worksheet|observation|repo-probe|none>
+//                                      默认先读本章 verification，再读 outline.profile.verification。
+//                                      profile=mixed 时本章必须显式消歧
 //   --min-chars <N>                    teaching 章正文参考线（中文字符，不含代码），默认 1200；低于只出
 //                                      info 提示、不阻断——讲透即收；--min-chars 0 关闭（review/总览章在
 //                                      outline 声明 length_exempt，本脚本读到 spec 会自动豁免，无需手动传）
@@ -81,18 +81,25 @@ const md = readFileSync(mdResolved, 'utf8')
 const outlinePath = join(courseDir, '.course', 'outline.json')
 let chapterSpec = null
 let profile = {}
+let outlineVersion = 1
 if (existsSync(outlinePath)) {
   try {
     const outline = JSON.parse(readFileSync(outlinePath, 'utf8'))
+    outlineVersion = outline.schema_version ?? 1
     profile = outline.profile ?? {}
     const slugFromName = (mdPath.split(/[\\/]/).pop() ?? '').match(/^\d+-(.+)\.md$/)?.[1]
     chapterSpec = outline.parts?.flatMap((p) => p.chapters ?? []).find((c) => c.slug === slugFromName) ?? null
   } catch { /* outline 损坏不阻断 lint，按 CLI 参数与默认值跑 */ }
 }
-const lang = flags.lang ?? 'zh'
+let runLanguage
+const runPath = join(courseDir, '.course', 'run.json')
+if (existsSync(runPath)) {
+  try { runLanguage = JSON.parse(readFileSync(runPath, 'utf8')).language } catch { /* final-check owns state validation */ }
+}
+const lang = flags.lang ?? runLanguage ?? 'zh'
 const zh = lang === 'zh'
 const sourcePolicy = flags.sourcePolicy ?? profile.source_policy ?? 'zero-trace'
-const verification = flags.verification ?? profile.verification ?? 'code-lab'
+const verification = flags.verification ?? chapterSpec?.verification ?? profile.verification ?? 'code-lab'
 const minChars = flags.minChars !== undefined ? flags.minChars
   : (chapterSpec && (chapterSpec.type === 'review' || chapterSpec.length_exempt)) ? 0 : 1200
 
@@ -109,6 +116,8 @@ const terms = termsFromCli
 const mdRel = relative(process.cwd(), mdResolved).split(sep).join('/')
 const issues = []
 const infos = []
+if (outlineVersion >= 2 && verification === 'mixed')
+  issues.push('verification: profile=mixed 时本章必须声明具体 verification；mixed 不是可执行模式')
 
 const text = md.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '') // 剥代码
 const blocks = md.match(/```\w*\n[\s\S]*?```/g) ?? []

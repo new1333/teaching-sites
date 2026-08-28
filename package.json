@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@10.32.1",
   "scripts": {
+    "check:skill": "node .agents/skills/vitepress-teaching-site/scripts/check-skill.mjs",
     "sync": "node scripts/portal-sync.mjs",
     "dev": "node scripts/portal-sync.mjs && vitepress dev courses",
     "build": "node scripts/portal-sync.mjs && vitepress build courses",
