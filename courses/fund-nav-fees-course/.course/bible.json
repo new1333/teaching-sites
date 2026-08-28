@@ -1,0 +1,154 @@
+{
+ "reader_model": {
+  "audience_defaulted": true,
+  "known": [
+   "四则运算与百分数",
+   "中学水平的复利概念",
+   "用手机银行或支付宝买过至少一支基金",
+   "看得懂基金页面上的净值和涨跌幅"
+  ],
+  "unfamiliar": [
+   {
+    "concept": "单位净值怎么来",
+    "why": "页面只给结果不给算法，普通人没有记账视角",
+    "anchor": "几个人拼单买锅，锅的总价值除以份数",
+    "first_chapter": "unit-nav"
+   },
+   {
+    "concept": "外扣法",
+    "why": "直觉是「钱减手续费再买」，制度实际是「含费价还原」",
+    "anchor": "含税价与不含税价",
+    "first_chapter": "purchase-fee"
+   },
+   {
+    "concept": "日计提",
+    "why": "从不见扣款记录，费用去向不可见",
+    "anchor": "工资里代扣的社保公积金——看不见但天天在算",
+    "first_chapter": "management-fee-daily"
+   },
+   {
+    "concept": "七日年化",
+    "why": "名字像收益率承诺，实际是折算口径",
+    "anchor": "把一天的流水折算成全年——像用今天车速估一整年的里程",
+    "first_chapter": "money-fund-numbers"
+   },
+   {
+    "concept": "A/C 份额的费用结构差",
+    "why": "销售页面并排放着，没人给判定式",
+    "anchor": "包月停车 vs 按次收费",
+    "first_chapter": "share-class-break-even"
+   }
+  ]
+ },
+ "glossary": [
+  {
+   "term": "基金份额",
+   "en": "fund shares",
+   "definition": "把基金总资产切成的等份凭证，你持有的份数乘净值就是你的市值"
+  },
+  {
+   "term": "单位净值",
+   "en": "NAV per unit",
+   "definition": "一份基金当天值多少钱，等于总资产减负债再除以总份额"
+  },
+  {
+   "term": "累计净值",
+   "en": "cumulative NAV",
+   "definition": "单位净值加上历史上每份累计分掉的红利，用来还原不分红情况下的净值轨迹"
+  },
+  {
+   "term": "基金分红",
+   "en": "dividend",
+   "definition": "基金把一部分收益按份额发给持有人，发完当日净值等额下调，账面总值不变"
+  },
+  {
+   "term": "份额折算",
+   "en": "share split",
+   "definition": "基金把持有人的份额按比例调整、净值反向调整的记账动作，总值不变，常见于净值归一"
+  },
+  {
+   "term": "未知价法",
+   "en": "forward pricing",
+   "definition": "申购赎回按提交当日收盘后算出的净值成交，下单时谁也不知道成交价"
+  },
+  {
+   "term": "T 日",
+   "en": "trade date",
+   "definition": "一笔申赎被受理的交易日，15:00 前提交算当天，之后或非交易日顺延到下一交易日"
+  },
+  {
+   "term": "外扣法",
+   "en": "external deduction",
+   "definition": "申购费的算法：净申购金额等于申购金额除以一加费率，费用隐含在价内"
+  },
+  {
+   "term": "赎回费",
+   "en": "redemption fee",
+   "definition": "卖出基金时按金额和持有期收取的费用，持有越久费率越低"
+  },
+  {
+   "term": "惩罚性赎回费",
+   "en": "punitive redemption fee",
+   "definition": "持有不足 7 日赎回时收取的不低于 1.5% 的费用，全额归基金财产，意在抑制超短期申赎"
+  },
+  {
+   "term": "管理费",
+   "en": "management fee",
+   "definition": "付给基金管理人的报酬，按前一日净资产乘年费率除以当年天数逐日计提，藏在净值里"
+  },
+  {
+   "term": "托管费",
+   "en": "custody fee",
+   "definition": "付给托管银行的费用，计提方式与管理费相同，费率更低"
+  },
+  {
+   "term": "销售服务费",
+   "en": "sales service fee",
+   "definition": "C 类份额按日计提的渠道服务费，替代申购费；持有满一年停收（货基除外，2027-01 起执行）"
+  },
+  {
+   "term": "万份收益",
+   "en": "income per 10,000 units",
+   "definition": "货币基金每持有一万份当天赚到的钱（元），是最直接的当日收益口径"
+  },
+  {
+   "term": "七日年化",
+   "en": "7-day annualized yield",
+   "definition": "把最近七天万份收益平均后折算成的年化收益率，是折算口径不是承诺"
+  },
+  {
+   "term": "A 类/C 类份额",
+   "en": "share classes",
+   "definition": "同一支基金按收费方式分的两类：A 类收一次性申购费，C 类免申购费但按日计提销售服务费"
+  }
+ ],
+ "verification_conventions": {
+  "rounding": "金额四舍五入到分（2 位）；份额保留 2 位；净值保留 4 位；比率以百分数表示保留 2 位；七日年化百分数保留 2 位",
+  "fixtures": "每道演算题是 fixtures/ 下一条记录：{ fn, args, pick, round, answer }——输入确定、答案唯一",
+  "doc_claims": "正文每个承重数字在 fixtures/doc-claims.json 有一条对应记录，check-answers 逐条与求解器输出比对，漂移即红",
+  "solver_discipline": "求解器是零依赖纯函数；正文数字一律由脚本产出后誊写，禁止手算誊写"
+ },
+ "authority_docs": [
+  {
+   "name": "《公开募集证券投资基金运作管理办法》（证监会）",
+   "why": "净值计算与估值、份额登记的上位规则"
+  },
+  {
+   "name": "《公开募集证券投资基金销售费用管理规定》（证监会 2025-12-31 修订发布，2026-01-01 施行）",
+   "why": "赎回费三档最低标准与全额计入基金财产、销售服务费上限与满一年停收、认申购费上限的最直接出处"
+  },
+  {
+   "name": "《公开募集开放式证券投资基金流动性风险管理规定》（证监会，2017 发布及后续修订）",
+   "why": "惩罚性赎回费等流动性管理要求的历史出处（2026 起以销售费用管理规定修订版为准）"
+  },
+  {
+   "name": "各基金《基金合同》《招募说明书》及定期报告",
+   "why": "具体费率、费率折扣、份额类别与分红条款的唯一逐支依据"
+  },
+  {
+   "name": "中国证监会、中国证券投资基金业协会（AMAC）官网披露口径",
+   "why": "申购费外扣法等行业统一执行口径的权威来源"
+  }
+ ],
+ "factual_claims": true
+}

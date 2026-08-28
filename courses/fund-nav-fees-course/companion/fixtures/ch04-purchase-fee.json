@@ -1,0 +1,52 @@
+{
+ "chapter": "ch04 申购费外扣法",
+ "entries": [
+  {
+   "id": "net-amount",
+   "fn": "purchase",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "pick": "net",
+   "round": 2,
+   "answer": 9985.02
+  },
+  {
+   "id": "fee",
+   "fn": "purchase",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "pick": "fee",
+   "round": 2,
+   "answer": 14.98
+  },
+  {
+   "id": "shares",
+   "fn": "purchase",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "pick": "shares",
+   "round": 2,
+   "answer": 9759.58
+  },
+  {
+   "id": "cost-nav-incl-fee",
+   "fn": "costNavInclFee",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "round": 4,
+   "answer": 1.0246
+  }
+ ]
+}

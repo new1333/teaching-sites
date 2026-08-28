@@ -1,0 +1,10 @@
+{
+  "name": "companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node src/check-answers.mjs",
+    "check-answers": "node src/check-answers.mjs",
+    "export-docs": "node src/export-docs.mjs"
+  }
+}

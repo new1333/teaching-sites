@@ -1,0 +1,6 @@
+{ "chapter": "ch08 万份收益与七日年化", "entries": [
+  { "id": "seven-day", "fn": "sevenDayAnnualized", "args": { "dailyReturns": [0.52, 0.54, 0.55, 0.56, 0.57, 0.58, 0.6] }, "pick": "pct", "round": 2, "answer": 2.04 },
+  { "id": "income-1w", "fn": "oneDayIncome", "args": { "amount": 10000, "per10k": 0.56 }, "round": 2, "answer": 0.56 },
+  { "id": "income-5w", "fn": "oneDayIncome", "args": { "amount": 50000, "per10k": 0.56 }, "round": 2, "answer": 2.8 },
+  { "id": "year-estimate", "fn": "applyRate", "args": { "amount": 10000, "rate": 0.0204 }, "round": 2, "answer": 204 }
+] }

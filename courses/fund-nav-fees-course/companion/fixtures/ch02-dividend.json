@@ -1,0 +1,6 @@
+{ "chapter": "ch02 分红与折算", "entries": [
+  { "id": "cum-nav", "fn": "cumNav", "args": { "unit": 1.2, "dividends": [0.3] }, "round": 4, "answer": 1.5 },
+  { "id": "split-shares", "fn": "splitTo", "args": { "shares": 10000, "nav": 2.1, "target": 1.05 }, "pick": "newShares", "round": 2, "answer": 20000 },
+  { "id": "split-nav", "fn": "splitTo", "args": { "shares": 10000, "nav": 2.1, "target": 1.05 }, "pick": "newNav", "round": 4, "answer": 1.05 },
+  { "id": "dividend-value-check", "fn": "sharesFor", "args": { "amount": 12600, "nav": 1.26 }, "round": 2, "answer": 10000 }
+] }

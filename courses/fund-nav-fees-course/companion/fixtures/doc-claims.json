@@ -1,0 +1,900 @@
+{
+ "chapter": "doc-claims 正文承重数字",
+ "entries": [
+  {
+   "id": "c01-nav",
+   "fn": "unitNav",
+   "args": {
+    "assets": 231000000,
+    "liabilities": 1000000,
+    "shares": 225000000
+   },
+   "round": 4,
+   "claim": 1.0222
+  },
+  {
+   "id": "c01-shares-y",
+   "fn": "sharesFor",
+   "args": {
+    "amount": 10000,
+    "nav": 1.0231
+   },
+   "round": 2,
+   "claim": 9774.22
+  },
+  {
+   "id": "c01-shares-x",
+   "fn": "sharesFor",
+   "args": {
+    "amount": 10000,
+    "nav": 3.8475
+   },
+   "round": 2,
+   "claim": 2599.09
+  },
+  {
+   "id": "c02-cum",
+   "fn": "cumNav",
+   "args": {
+    "unit": 1.2,
+    "dividends": [
+     0.3
+    ]
+   },
+   "round": 4,
+   "claim": 1.5
+  },
+  {
+   "id": "c02-split",
+   "fn": "splitTo",
+   "args": {
+    "shares": 10000,
+    "nav": 2.1,
+    "target": 1.05
+   },
+   "pick": "newShares",
+   "round": 2,
+   "claim": 20000
+  },
+  {
+   "id": "c04-net",
+   "fn": "purchase",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "pick": "net",
+   "round": 2,
+   "claim": 9985.02
+  },
+  {
+   "id": "c04-fee",
+   "fn": "purchase",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "pick": "fee",
+   "round": 2,
+   "claim": 14.98
+  },
+  {
+   "id": "c04-shares",
+   "fn": "purchase",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015,
+    "nav": 1.0231
+   },
+   "pick": "shares",
+   "round": 2,
+   "claim": 9759.58
+  },
+  {
+   "id": "c04-naive",
+   "fn": "sharesFor",
+   "args": {
+    "amount": 9985,
+    "nav": 1.0231
+   },
+   "round": 2,
+   "claim": 9759.55
+  },
+  {
+   "id": "c04-gap",
+   "fn": "diff",
+   "args": {
+    "a": 9774.22,
+    "b": 9759.58
+   },
+   "round": 2,
+   "claim": 14.64
+  },
+  {
+   "id": "c05-amount",
+   "fn": "redemption",
+   "args": {
+    "shares": 9759.58,
+    "nav": 1.0865,
+    "feeRate": 0.015
+   },
+   "pick": "amount",
+   "round": 2,
+   "claim": 10603.78
+  },
+  {
+   "id": "c05-fee-p",
+   "fn": "redemption",
+   "args": {
+    "shares": 9759.58,
+    "nav": 1.0865,
+    "feeRate": 0.015
+   },
+   "pick": "fee",
+   "round": 2,
+   "claim": 159.06
+  },
+  {
+   "id": "c05-net-p",
+   "fn": "redemption",
+   "args": {
+    "shares": 9759.58,
+    "nav": 1.0865,
+    "feeRate": 0.015
+   },
+   "pick": "net",
+   "round": 2,
+   "claim": 10444.73
+  },
+  {
+   "id": "c05-net-n",
+   "fn": "redemption",
+   "args": {
+    "shares": 9759.58,
+    "nav": 1.0865,
+    "feeRate": 0.0025
+   },
+   "pick": "net",
+   "round": 2,
+   "claim": 10577.27
+  },
+  {
+   "id": "c05-gap",
+   "fn": "diff",
+   "args": {
+    "a": 10577.27,
+    "b": 10444.72
+   },
+   "round": 2,
+   "claim": 132.55
+  },
+  {
+   "id": "c06-mgmt",
+   "fn": "dailyAccrual",
+   "args": {
+    "assets": 20000,
+    "annualRate": 0.015
+   },
+   "round": 2,
+   "claim": 0.82
+  },
+  {
+   "id": "c06-cust",
+   "fn": "dailyAccrual",
+   "args": {
+    "assets": 20000,
+    "annualRate": 0.0025
+   },
+   "round": 2,
+   "claim": 0.14
+  },
+  {
+   "id": "c06-active",
+   "fn": "yearAccrual",
+   "args": {
+    "assets": 20000,
+    "annualRate": 0.0175
+   },
+   "round": 2,
+   "claim": 350
+  },
+  {
+   "id": "c06-index",
+   "fn": "yearAccrual",
+   "args": {
+    "assets": 20000,
+    "annualRate": 0.006
+   },
+   "round": 2,
+   "claim": 120
+  },
+  {
+   "id": "c06-gap",
+   "fn": "diff",
+   "args": {
+    "a": 350,
+    "b": 120
+   },
+   "round": 2,
+   "claim": 230
+  },
+  {
+   "id": "c07-days",
+   "fn": "breakEvenDays",
+   "args": {
+    "purchaseFeeRate": 0.0015,
+    "serviceRate": 0.004
+   },
+   "round": 0,
+   "claim": 137
+  },
+  {
+   "id": "c07-costA",
+   "fn": "costA",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0015
+   },
+   "round": 2,
+   "claim": 15
+  },
+  {
+   "id": "c07-costC90",
+   "fn": "costC",
+   "args": {
+    "amount": 10000,
+    "serviceRate": 0.004,
+    "days": 90
+   },
+   "round": 2,
+   "claim": 9.86
+  },
+  {
+   "id": "c07-costC1y",
+   "fn": "costC",
+   "args": {
+    "amount": 10000,
+    "serviceRate": 0.004,
+    "days": 365
+   },
+   "round": 2,
+   "claim": 40
+  },
+  {
+   "id": "c08-7d",
+   "fn": "sevenDayAnnualized",
+   "args": {
+    "dailyReturns": [
+     0.52,
+     0.54,
+     0.55,
+     0.56,
+     0.57,
+     0.58,
+     0.6
+    ]
+   },
+   "pick": "pct",
+   "round": 2,
+   "claim": 2.04
+  },
+  {
+   "id": "c08-1w",
+   "fn": "oneDayIncome",
+   "args": {
+    "amount": 10000,
+    "per10k": 0.56
+   },
+   "round": 2,
+   "claim": 0.56
+  },
+  {
+   "id": "c08-5w",
+   "fn": "oneDayIncome",
+   "args": {
+    "amount": 50000,
+    "per10k": 0.56
+   },
+   "round": 2,
+   "claim": 2.8
+  },
+  {
+   "id": "c08-year",
+   "fn": "applyRate",
+   "args": {
+    "amount": 10000,
+    "rate": 0.0204
+   },
+   "round": 2,
+   "claim": 204
+  },
+  {
+   "id": "c09-net",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "netAmount",
+   "round": 2,
+   "claim": 19970.04
+  },
+  {
+   "id": "c09-fee-in",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "purchaseFee",
+   "round": 2,
+   "claim": 29.96
+  },
+  {
+   "id": "c09-shares",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "shares",
+   "round": 2,
+   "claim": 19519.15
+  },
+  {
+   "id": "c09-gross",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "grossOut",
+   "round": 2,
+   "claim": 22735.91
+  },
+  {
+   "id": "c09-fee-out",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "redemptionFee",
+   "round": 2,
+   "claim": 56.84
+  },
+  {
+   "id": "c09-net-out",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "netOut",
+   "round": 2,
+   "claim": 22679.07
+  },
+  {
+   "id": "c09-profit",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "profit",
+   "round": 2,
+   "claim": 2679.07
+  },
+  {
+   "id": "c09-ret",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "returnPct",
+   "round": 2,
+   "claim": 13.4
+  },
+  {
+   "id": "c09-naive",
+   "fn": "sharesFor",
+   "args": {
+    "amount": 20000,
+    "nav": 1.0231
+   },
+   "round": 2,
+   "claim": 19548.43
+  },
+  {
+   "id": "c09-naive-out",
+   "fn": "diff",
+   "args": {
+    "a": 22770.01,
+    "b": 22679.07
+   },
+   "round": 2,
+   "claim": 90.94
+  },
+  {
+   "id": "c06-sum",
+   "fn": "dailyAccrual",
+   "args": {
+    "assets": 20000,
+    "annualRate": 0.0175
+   },
+   "round": 2,
+   "claim": 0.96
+  },
+  {
+   "id": "c06-perw",
+   "fn": "dailyAccrual",
+   "args": {
+    "assets": 10000,
+    "annualRate": 0.0175
+   },
+   "round": 2,
+   "claim": 0.48
+  },
+  {
+   "id": "c09-naive-total",
+   "fn": "mul",
+   "args": {
+    "a": 19548.43,
+    "b": 1.1648
+   },
+   "round": 2,
+   "claim": 22770.01
+  },
+  {
+   "id": "c07-nodiscount",
+   "fn": "breakEvenDays",
+   "args": {
+    "purchaseFeeRate": 0.015,
+    "serviceRate": 0.004
+   },
+   "round": 0,
+   "claim": 1369
+  },
+  {
+   "id": "c09-two-fees",
+   "fn": "sum",
+   "args": {
+    "items": [
+     29.96,
+     56.84
+    ]
+   },
+   "round": 2,
+   "claim": 86.8
+  },
+  {
+   "id": "c09-gap-shares",
+   "fn": "diff",
+   "args": {
+    "a": 19548.43,
+    "b": 19519.15
+   },
+   "round": 2,
+   "claim": 29.28
+  },
+  {
+   "id": "c09-fee-in-effect",
+   "fn": "diff",
+   "args": {
+    "a": 22770.01,
+    "b": 22735.91
+   },
+   "round": 2,
+   "claim": 34.1
+  },
+  {
+   "id": "c09-decomp",
+   "fn": "sum",
+   "args": {
+    "items": [
+     34.1,
+     56.84
+    ]
+   },
+   "round": 2,
+   "claim": 90.94
+  },
+  {
+   "id": "c09-resid",
+   "fn": "diff",
+   "args": {
+    "a": 90.94,
+    "b": 86.8
+   },
+   "round": 2,
+   "claim": 4.14
+  },
+  {
+   "id": "c09-quiz-shares",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0012,
+    "navIn": 1.5,
+    "navOut": 1.8,
+    "holdDays": 400,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "shares",
+   "round": 2,
+   "claim": 6658.68
+  },
+  {
+   "id": "c09-quiz-gross",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0012,
+    "navIn": 1.5,
+    "navOut": 1.8,
+    "holdDays": 400,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "grossOut",
+   "round": 2,
+   "claim": 11985.62
+  },
+  {
+   "id": "c09-quiz-net",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 10000,
+    "feeRate": 0.0012,
+    "navIn": 1.5,
+    "navOut": 1.8,
+    "holdDays": 400,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "netOut",
+   "round": 2,
+   "claim": 11955.65
+  },
+  {
+   "id": "c05-fee-8d",
+   "fn": "redemption",
+   "args": {
+    "shares": 9759.58,
+    "nav": 1.0865,
+    "feeRate": 0.01
+   },
+   "pick": "fee",
+   "round": 2,
+   "claim": 106.04
+  },
+  {
+   "id": "c05-net-8d",
+   "fn": "redemption",
+   "args": {
+    "shares": 9759.58,
+    "nav": 1.0865,
+    "feeRate": 0.01
+   },
+   "pick": "net",
+   "round": 2,
+   "claim": 10497.74,
+   "answer": 10497.75
+  },
+  {
+   "id": "c05-tier-8d",
+   "fn": "redemptionRate",
+   "args": {
+    "holdDays": 8,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "round": 4,
+   "claim": 0.01
+  },
+  {
+   "id": "c06-navdrag-day",
+   "fn": "dailyAccrual",
+   "args": {
+    "assets": 1.0231,
+    "annualRate": 0.0175
+   },
+   "round": 6,
+   "claim": 0.000049
+  },
+  {
+   "id": "c06-navdrag-year",
+   "fn": "mul",
+   "args": {
+    "a": 1.0231,
+    "b": 0.0175
+   },
+   "round": 4,
+   "claim": 0.0179
+  }
+ ]
+}

@@ -1,0 +1,79 @@
+[
+ {
+  "from": "unit-nav",
+  "from_n": 1,
+  "target": "dividend-and-cum-nav",
+  "what": "同一支基金出现 1.0231 与 3.8475 两个数的谜（累计净值）",
+  "status": "fulfilled"
+ },
+ {
+  "from": "unit-nav",
+  "from_n": 1,
+  "target": "unknown-price",
+  "what": "下单到底按哪一天的净值成交",
+  "status": "fulfilled"
+ },
+ {
+  "from": "unit-nav",
+  "from_n": 1,
+  "target": "purchase-fee",
+  "what": "买入金额÷份额与净值的误差（费用）每一分钱算出来",
+  "status": "fulfilled"
+ },
+ {
+  "from": "unknown-price",
+  "from_n": 3,
+  "target": "purchase-fee",
+  "what": "费用怎么算（手续费到分）",
+  "status": "fulfilled"
+ },
+ {
+  "from": "purchase-fee",
+  "from_n": 4,
+  "target": "full-statement",
+  "what": "两头费用串成一张完整对账单",
+  "status": "fulfilled"
+ },
+ {
+  "from": "purchase-fee",
+  "from_n": 4,
+  "target": "redemption-fee",
+  "what": "卖出那头的阶梯费率",
+  "status": "fulfilled"
+ },
+ {
+  "from": "redemption-fee",
+  "from_n": 5,
+  "target": "management-fee-daily",
+  "what": "藏在净值里的费用",
+  "status": "fulfilled"
+ },
+ {
+  "from": "management-fee-daily",
+  "from_n": 6,
+  "target": "share-class-break-even",
+  "what": "费用的决策型结论（A/C）",
+  "status": "fulfilled"
+ },
+ {
+  "from": "share-class-break-even",
+  "from_n": 7,
+  "target": "money-fund-numbers",
+  "what": "货基的两个数",
+  "status": "fulfilled"
+ },
+ {
+  "from": "money-fund-numbers",
+  "from_n": 8,
+  "target": "full-statement",
+  "what": "毕业题：全链路对账单",
+  "status": "fulfilled"
+ },
+ {
+  "from": "full-statement",
+  "from_n": 9,
+  "target": "review",
+  "what": "复盘与边界声明",
+  "status": "fulfilled"
+ }
+]

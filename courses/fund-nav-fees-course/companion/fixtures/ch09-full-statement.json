@@ -1,0 +1,293 @@
+{
+ "chapter": "ch09 全链路对账单",
+ "entries": [
+  {
+   "id": "stmt-net",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "netAmount",
+   "round": 2,
+   "answer": 19970.04
+  },
+  {
+   "id": "stmt-fee-in",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "purchaseFee",
+   "round": 2,
+   "answer": 29.96
+  },
+  {
+   "id": "stmt-shares",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "shares",
+   "round": 2,
+   "answer": 19519.15
+  },
+  {
+   "id": "stmt-gross-out",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "grossOut",
+   "round": 2,
+   "answer": 22735.91
+  },
+  {
+   "id": "stmt-fee-out",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "redemptionFee",
+   "round": 2,
+   "answer": 56.84
+  },
+  {
+   "id": "stmt-net-out",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "netOut",
+   "round": 2,
+   "answer": 22679.07
+  },
+  {
+   "id": "stmt-profit",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "profit",
+   "round": 2,
+   "answer": 2679.07
+  },
+  {
+   "id": "stmt-return",
+   "fn": "fullRoundTrip",
+   "args": {
+    "amount": 20000,
+    "feeRate": 0.0015,
+    "navIn": 1.0231,
+    "navOut": 1.1648,
+    "holdDays": 220,
+    "tiers": [
+     [
+      7,
+      0.015
+     ],
+     [
+      30,
+      0.01
+     ],
+     [
+      180,
+      0.005
+     ],
+     [
+      730,
+      0.0025
+     ],
+     [
+      null,
+      0
+     ]
+    ]
+   },
+   "pick": "returnPct",
+   "round": 2,
+   "answer": 13.4
+  }
+ ]
+}

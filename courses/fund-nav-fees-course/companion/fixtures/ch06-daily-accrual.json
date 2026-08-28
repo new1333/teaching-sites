@@ -1,0 +1,6 @@
+{ "chapter": "ch06 管理费托管费日计提", "entries": [
+  { "id": "mgmt-daily", "fn": "dailyAccrual", "args": { "assets": 20000, "annualRate": 0.015 }, "round": 2, "answer": 0.82 },
+  { "id": "custody-daily", "fn": "dailyAccrual", "args": { "assets": 20000, "annualRate": 0.0025 }, "round": 2, "answer": 0.14 },
+  { "id": "active-year", "fn": "yearAccrual", "args": { "assets": 20000, "annualRate": 0.0175 }, "round": 2, "answer": 350 },
+  { "id": "index-year", "fn": "yearAccrual", "args": { "assets": 20000, "annualRate": 0.006 }, "round": 2, "answer": 120 }
+] }
