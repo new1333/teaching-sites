@@ -1,0 +1,95 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "gui-skeleton",
+      "file": "01-gui-skeleton.md",
+      "degraded": false,
+      "summary": "已建立概念：窗口本体在 OS、JS 侧只有句柄；GUI 程序靠「取消息—分发」的消息循环活着，循环被占住界面冻结、没有循环进程秒退；跨边界只能传纯数据副本（序列化）；JS 无 GUI 能力，一切由宿主注入。无代码变更。读者已能解释桌面 GUI 公共骨架与两类冻结/秒退事故根因。"
+    },
+    {
+      "n": 2,
+      "slug": "message-loop",
+      "file": "02-message-loop.md",
+      "degraded": false,
+      "summary": "已建立 API：src/native/eventQueue.ts 的 createEventQueue()（NativeEvent{type,targetId,payload}，FIFO，push/next/size）与 src/native/runLoop.ts 的 createRunLoop()（on 按 type 注册、run 到 quit 即止且 quit 仍分发、pumpOnce 单条驱动）。读者已能手写并测试原生世界的心跳。"
+    },
+    {
+      "n": 3,
+      "slug": "embedded-runtime",
+      "file": "03-embedded-runtime.md",
+      "degraded": false,
+      "summary": "已建立概念：引擎只提供计算（空全局槽位），宿主嵌入引擎并注入全局能力（浏览器 window / Node process / Electron 双进程两套清单）；setTimeout 等也是宿主挂的；注入是单向字典。无代码变更。读者已能解释「JS 从未获得 GUI 能力，只是被放进有 GUI 的宿主」。"
+    },
+    {
+      "n": 4,
+      "slug": "binding-layer",
+      "file": "04-binding-layer.md",
+      "degraded": false,
+      "summary": "已建立 API：src/runtime/host.ts 的 createRuntime(name)→{name,globals,inject,run}（隔离世界）；src/runtime/bridge.ts 的 createBridge()→{register(name,fn),invoke(name,...args)}：查表→参数 serialize 深拷贝（原始/数组/纯对象过，函数/symbol/class 实例拒收，[binding] 前缀报错）→调用→返回值再 serialize。读者已能实现 JS↔原生调用边界并解释副本语义。"
+    },
+    {
+      "n": 5,
+      "slug": "window-handle",
+      "file": "05-window-handle.md",
+      "degraded": false,
+      "summary": "已建立 API：src/native/windowManager.ts 的 createWindowManager()（id→记录资源表，create/setTitle/show/hide/destroy/snapshot，未知 id 抛 [windowManager] unknown window）；src/windows.ts 的 installWindowApi(runtime,bridge,manager) 注册 win.* 六个原生实现并注入 createWindow，返回 WindowHandle(id,bridge)，方法全走桥，snapshot 是副本。读者已能解释句柄生命周期短于本体、失效句柄报错。"
+    },
+    {
+      "n": 6,
+      "slug": "async-bridge",
+      "file": "06-async-bridge.md",
+      "degraded": false,
+      "summary": "已建立 API：src/runtime/asyncBridge.ts 的 createAsyncBridge(bridge)→{runAsync(name,...args):Promise（立刻返回，活进 nativeQueue，Promise.resolve().then(pump) 自动兑现）、flush():Promise（显式泵）、pending():number}；错误走 reject；bridge.invoke 序列化不变。读者已能解释同步调用锁死 JS 单线程的根因与队列回投模型。"
+    },
+    {
+      "n": 7,
+      "slug": "process-model",
+      "file": "07-process-model.md",
+      "degraded": false,
+      "summary": "已建立概念：多进程三步逻辑——崩溃隔离（进程=内存隔离单位）、权限收缴（渲染进程无系统能力）、能力外借（IPC 代办，决定权在主进程）；序列化规则从语言边界升级为进程边界（函数不能传→id 反查）；Electron 渲染进程=整套 Chromium。无代码变更。读者已能解释双进程架构动因与代价。"
+    },
+    {
+      "n": 8,
+      "slug": "ipc-channel",
+      "file": "08-ipc-channel.md",
+      "degraded": false,
+      "summary": "已建立 API：src/ipc/channel.ts 的 createIpcChannel()→{main,renderer}，端点有 invoke(channel,payload):Promise（id 配对，no handler 报 [ipc] no handler）、handle(channel,fn)（异步执行、结果/错误串过通道）、send(channel,payload)、on(channel,cb)→解绑函数；payload/结果过 serialize（[ipc] payload is not serializable）；收件箱微任务投递；bridge.ts 新增导出 serialize。读者已能实现双 runtime 消息通道。"
+    },
+    {
+      "n": 9,
+      "slug": "native-events-to-js",
+      "file": "09-native-events-to-js.md",
+      "degraded": false,
+      "summary": "已建立 API：src/events/dispatch.ts 的 createEventDispatch(loop)→{onWindowEvent(targetId,type,cb)→解绑函数}：两级路由（runLoop 按 type 惰性挂钩 + 订阅表按 targetId::type 精确匹配）；emitNative(loop,e) 模拟 OS 投消息；回调在泵转动时执行。读者已能解释「点击没反应」的四种根因。"
+    },
+    {
+      "n": 10,
+      "slug": "assemble-mini-electron",
+      "file": "10-assemble-mini-electron.md",
+      "degraded": false,
+      "summary": "已建立 API：src/app/miniElectron.ts 的 createApp({main})→App{runtime,bridge,asyncBridge,manager,loop,dispatch,elIdByPath}：按依赖装配全部零件；AppContext 注入 createWindow/renderUI/onAction；renderUI 给节点定稳定元素 id（winId+树路径）、onClick 字符串经 actionByEl/actionFns 两段路由回流；windowManager 增 UiNode/setUI，windows.ts 增 win.setUI 桥接；simulateClick(app,winId,path)=投消息+泵。计数器回路全绿。"
+    },
+    {
+      "n": 11,
+      "slug": "wasm-binding",
+      "file": "11-wasm-binding.md",
+      "degraded": false,
+      "summary": "已建立 API：src/wasm/realBinding.ts 的 WASM_MODULE_BYTES（41 字节手工 wasm：type/func/export/code 四节）与 loadNativeMath(bytes?)→{add}；实测 i32 截断值语义、模块纯数据可复制、真原生函数可挂第 4 章桥（bridge.register(\"native.add\")）。读者已第一次真的跨过语言边界。"
+    },
+    {
+      "n": 12,
+      "slug": "terminal-app",
+      "file": "12-terminal-app.md",
+      "degraded": false,
+      "summary": "已建立 API：src/app/terminalApp.ts 的 renderWindow(app,winId)（快照→字符窗口）、step(app,key)（+→simulateClick、q→emitNative quit+pump）、bootCounterApp()；src/app/demo.ts（npm run demo，TTY 交互/非 TTY 放映）；src/app/native-window.mjs（Bun FFI：GetTickCount 验证、--msgbox 真弹 user32.MessageBoxW）。companion 新增 tsx/@types/node 与 demo 脚本。"
+    },
+    {
+      "n": 13,
+      "slug": "ecosystem-tradeoffs",
+      "file": "13-ecosystem-tradeoffs.md",
+      "degraded": false,
+      "summary": "由原第 11 章重编号而来；内文已按 13 章体系修订（写到第 12 章、55 断言、真机两章纳入）。全书完：13 章（3 原理 + 10 实验）。"
+    }
+  ]
+}

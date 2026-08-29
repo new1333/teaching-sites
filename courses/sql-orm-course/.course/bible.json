@@ -1,0 +1,175 @@
+{
+  "reader_model": {
+    "known_assets": [
+      "JavaScript/TypeScript 日常：函数、对象、class、Promise/async、基础泛型",
+      "npm/pnpm、ESM import、在终端跑命令与跑测试的习惯",
+      "JSON 与对象数组操作：filter/map/reduce、按 id 匹配两个数组",
+      "对象引用 vs 值拷贝的区别（赋值是拿引用）",
+      "localStorage 存 JSON 的小伎俩及其局限",
+      "fetch 调接口、序列化的概念",
+      "至少一个前端框架的使用经验（不确定具体是哪个——锚点避免绑定具体框架 API）",
+      "知道 XSS 是「用户输入变成了页面里执行的代码」"
+    ],
+    "unknown_concepts": [
+      { "concept": "关系模型（表/行/列）", "why_unfamiliar": "前端的数据形态是对象与数组，没有「带类型的列」这一层", "anchor": "一张带表头的 Excel：表头定形状，一行一条记录；或 JSON 对象数组——但列的类型是先讲好的", "first_chapter": "tables-and-rows" },
+      { "concept": "数据库是独立进程", "why_unfamiliar": "前端的数据都活在自己的页面/Node 进程里，没打过「跟另一个程序对话」的交道", "anchor": "像浏览器与服务器的关系：你发请求（SQL），它回结果（行）", "first_chapter": "tables-and-rows" },
+      { "concept": "SQL（结构化查询语言）", "why_unfamiliar": "零基础读者第一次见", "anchor": "跟数据库说话的固定句式：SELECT … FROM … WHERE …", "first_chapter": "tables-and-rows" },
+      { "concept": "声明式查询", "why_unfamiliar": "日常写的是「怎么做」的命令式代码", "anchor": "CSS 选择器：你说「要哪些」，不说「怎么找」", "first_chapter": "where-order-limit" },
+      { "concept": "NULL 三值逻辑", "why_unfamiliar": "JS 只有真假的布尔判断，`= NULL` 查不出 NULL 行反直觉", "anchor": "像 NaN：NaN === NaN 是 false——「没有值」参与比较结果不是真假而是「未知」", "first_chapter": "where-order-limit" },
+      { "concept": "主键", "why_unfamiliar": "JS 对象没有「这一行的身份证号」概念", "anchor": "数组下标会随删除漂移，主键是永不复用的永久下标", "first_chapter": "update-delete-constraints" },
+      { "concept": "外键", "why_unfamiliar": "前端关联两个数组靠字段名约定，数据库把这变成硬约束", "anchor": "对象里存的 userId：一个「指向另一张表某行」的指针，但数据库会帮你验证指针有效", "first_chapter": "update-delete-constraints" },
+      { "concept": "约束（NOT NULL/UNIQUE 等）", "why_unfamiliar": "前端校验靠自己写 if，数据库层「写入时守门」是新事物", "anchor": "像 TS 类型检查：非法数据在进门那一步就被拦下，而不是运行到一半炸", "first_chapter": "update-delete-constraints" },
+      { "concept": "聚合函数", "why_unfamiliar": "算总数靠 reduce，不知道数据库内置这些动作", "anchor": "reduce 的 count/sum 版本，但发生在数据库里、不把行搬过来", "first_chapter": "aggregate-group-by" },
+      { "concept": "分组（GROUP BY）", "why_unfamiliar": "分桶统计在前端是手写 Map 的活", "anchor": "Map 分组再各自 reduce：按 key 分桶，每桶出一个数", "first_chapter": "aggregate-group-by" },
+      { "concept": "JOIN（连接）", "why_unfamiliar": "前端合并两个数组是双重循环或 Map 索引，不知道数据库一句就能拼", "anchor": "两个接口返回的数组按 userId 匹配成一条——JOIN 就是这个匹配，但在数据库里做", "first_chapter": "join-tables" },
+      { "concept": "索引", "why_unfamiliar": "前端的数据结构选型少有「为查询加目录」的操作", "anchor": "字典的部首目录／书的目录：先查目录拿到页码，再翻那一页", "first_chapter": "index-query-plan" },
+      { "concept": "B-tree", "why_unfamiliar": "前端几乎不碰树形查找结构", "anchor": "一本按拼音排好的通讯录：从中间翻开决定往左还是往右，几步定位", "first_chapter": "index-query-plan" },
+      { "concept": "查询计划（EXPLAIN）", "why_unfamiliar": "没见过「数据库自己解释它打算怎么执行」的工具", "anchor": "DevTools 的 Performance 面板：不是猜慢在哪，是让执行者自己交代", "first_chapter": "index-query-plan" },
+      { "concept": "ORM（对象关系映射）", "why_unfamiliar": "三个字母第一次见，没写过 model 定义", "anchor": "一层翻译器：这边写对象和链式调用，那边生成 SQL——像编译器之于源码与机器码", "first_chapter": "what-is-orm" },
+      { "concept": "Active Record / Data Mapper", "why_unfamiliar": "两类设计流派的名字，读者连 ORM 本身都是初见", "anchor": "AR：数据对象自己会 save（像组件自带状态又能自己持久化）；DM：数据只是数据，存取交给独立的 mapper（像纯展示组件 + store 各管各的）", "first_chapter": "what-is-orm" },
+      { "concept": "SQL 注入", "why_unfamiliar": "没拼过 SQL 字符串就没踩过这个坑", "anchor": "数据库世界的 XSS：用户输入被当成了代码执行", "first_chapter": "sql-injection" },
+      { "concept": "参数化查询 / 预编译语句", "why_unfamiliar": "不知道占位符 ? 与参数分开传的机制", "anchor": "信封与信封里的字：信封（SQL 模板）先定死，内容（参数）永远只是数据、成不了信封本身", "first_chapter": "sql-injection" },
+      { "concept": "DDL（数据定义语言）", "why_unfamiliar": "CREATE TABLE 这类「描述结构」的 SQL 对零基础读者是新词", "anchor": "盖楼前的图纸：DDL 是描述表长什么样的那类 SQL", "first_chapter": "schema-to-ddl" },
+      { "concept": "schema（表结构定义）", "why_unfamiliar": "前端口中的 schema 多指 JSON Schema/表单校验，数据库语境是列清单", "anchor": "TS 的 interface：一份「这行数据有哪些字段、什么类型」的契约", "first_chapter": "schema-to-ddl" },
+      { "concept": "查询构建器（query builder）", "why_unfamiliar": "链式调用生成 SQL 的模式第一次见", "anchor": "数组的 filter().sort().slice() 链——每步攒条件，最后一步才真正执行", "first_chapter": "what-is-orm" },
+      { "concept": "水合（hydration，行→对象）", "why_unfamiliar": "与 SSR 的 hydration 撞词但含义不同，必须显式消歧", "anchor": "接口回来的裸 JSON 经过 new User(json) 变成带 save() 方法的实例——把「死数据」泡「活」", "first_chapter": "hydration-dirty-tracking" },
+      { "concept": "脏跟踪（dirty tracking）", "why_unfamiliar": "前端表单的 dirty 语义（改过没有）读者熟，但「只更新变化列」的机制是新的", "anchor": "git 的暂存区：改了哪些文件它都记着，提交时只提交这些", "first_chapter": "hydration-dirty-tracking" },
+      { "concept": "N+1 查询问题", "why_unfamiliar": "没写过关联加载就没见过这个症状", "anchor": "循环里逐条 await fetch 一百次 vs 一次批量请求——数量词是它的一切", "first_chapter": "relations-n-plus-1" },
+      { "concept": "事务（transaction）", "why_unfamiliar": "前端没有「多步操作捆绑成败」的原生机制", "anchor": "git：commit 之前随便改、可整体回滚；commit 一出，全部生效", "first_chapter": "transactions" },
+      { "concept": "连接池", "why_unfamiliar": "前端不管连接的创建成本", "anchor": "浏览器的 keep-alive 连接复用：建好的连接不扔，排队轮流用", "first_chapter": "finale-gaps" },
+      { "concept": "迁移（migration）", "why_unfamiliar": "表结构怎么随代码演进是后端的日常、前端的盲区", "anchor": "代码的 git 历史：表结构的每次变更是一个可回放、可回滚的提交", "first_chapter": "finale-gaps" },
+      { "concept": "方言（dialect）", "why_unfamiliar": "不知道各数据库 SQL 有差异", "anchor": "同一门语言的各地口音：MySQL 的 LIMIT offset,n 与 SQLite/PG 的 LIMIT n OFFSET m", "first_chapter": "finale-gaps" },
+      { "concept": "类型映射（TS 类型 ↔ 列类型）", "why_unfamiliar": "两套类型系统各自长大，前端不知道数据库缺布尔与日期类型", "anchor": "出国旅行的电源转换头——插头与插座形状不同，转换头没覆盖的形状要么自己带备用插头、要么别带这类电器", "first_chapter": "schema-to-ddl" }
+    ]
+  },
+  "glossary": [
+    { "term": "数据库", "en": "database", "definition": "一个专门负责存数据和查数据的独立程序，你用 SQL 跟它对话，它把结果按行还给你。" },
+    { "term": "表", "en": "table", "definition": "数据库里的一张二维表：列定形状和类型，一行就是一条记录，像一张带表头的 Excel。" },
+    { "term": "行", "en": "row", "definition": "表里的一条记录，对应前端世界里的一个对象。" },
+    { "term": "列", "en": "column", "definition": "表的一竖条，规定名字和类型，对应对象的一个字段——但类型是全表统一的。" },
+    { "term": "SQL", "en": "Structured Query Language", "definition": "跟数据库说话的固定句式语言，读数据写 SELECT、写数据用 INSERT/UPDATE/DELETE、描述表结构用 CREATE TABLE。" },
+    { "term": "声明式", "en": "declarative", "definition": "只说要什么、不说怎么做的写法，像 CSS 选择器；SQL 是声明式的：写条件，遍历交给数据库。" },
+    { "term": "主键", "en": "primary key", "definition": "一行数据的身份证号：全表唯一，靠它精确定位某一行；「永不复用」是本分，SQLite 里要显式加 AUTOINCREMENT 才兑现。" },
+    { "term": "外键", "en": "foreign key", "definition": "一列里存的是另一张表某行的主键，相当于数据库帮你验证过的「指向另一行的指针」。" },
+    { "term": "约束", "en": "constraint", "definition": "写在表定义里的守门规则（非空、唯一等），非法数据在写入那一刻就被数据库拦下。" },
+    { "term": "聚合函数", "en": "aggregate function", "definition": "把多行压成一个数的内置动作，如 COUNT 数行数、SUM 求和、AVG 求平均。" },
+    { "term": "分组", "en": "GROUP BY", "definition": "按某列的值把行分桶，每个桶各自出聚合结果，像先 Map 分组再各自 reduce。" },
+    { "term": "连接", "en": "JOIN", "definition": "按两表的关联列把行配成对的 SQL 写法，把前端手写的「两数组按 id 匹配」搬进数据库。" },
+    { "term": "索引", "en": "index", "definition": "为某列额外建的一份排好序的目录，让按这列查不用从头翻到尾。" },
+    { "term": "B-tree", "en": "B-tree", "definition": "索引常用的有序树结构：从中间分叉、逐层缩小范围，几步就定位目标，像按拼音排好的通讯录。" },
+    { "term": "查询计划", "en": "query plan", "definition": "数据库自述的执行方案；EXPLAIN 命令让它交代打算全表扫还是走索引。" },
+    { "term": "全表扫描", "en": "full table scan", "definition": "没有可用索引时数据库只能从第一行翻到最后一行的执行方式，行数涨多少它就慢多少。" },
+    { "term": "ORM", "en": "object-relational mapping", "definition": "对象关系映射：一层翻译器，这边写对象与链式调用，那边生成并执行 SQL，行与对象互相自动转换。" },
+    { "term": "Active Record", "en": "Active Record", "definition": "ORM 一派：数据对象自带增删改能力，user.save() 直接写库。" },
+    { "term": "Data Mapper", "en": "Data Mapper", "definition": "ORM 另一派：数据只是纯数据，读写交给独立的映射器对象，两者分开。" },
+    { "term": "SQL 注入", "en": "SQL injection", "definition": "拼接字符串时用户输入被当成了 SQL 代码执行，数据库世界的 XSS。" },
+    { "term": "参数化查询", "en": "parameterized query", "definition": "SQL 模板里放 ? 占位符、数据单独传的写法，用户输入永远只是数据、成不了代码。" },
+    { "term": "预编译语句", "en": "prepared statement", "definition": "先把 SQL 模板交给数据库解析好、再反复填参数执行的机制，参数化查询的底层实现。" },
+    { "term": "数据定义语言", "en": "DDL, data definition language", "definition": "描述数据结构的那类 SQL（CREATE/ALTER/DROP），盖楼的图纸；与之相对的 DML 是搬家具（增删改查）。" },
+    { "term": "查询构建器", "en": "query builder", "definition": "用链式调用攒条件、最后一步编译成 SQL 的库， knex 是典型；ORM 的查询半身。" },
+    { "term": "水合", "en": "hydration", "definition": "把查回来的裸行变成带方法的类实例的过程——注意与 SSR 的同名概念无关。" },
+    { "term": "脏跟踪", "en": "dirty tracking", "definition": "实例自己记着哪些字段被改过，save 时只把这些字段的列写回数据库。" },
+    { "term": "N+1 问题", "en": "N+1 query problem", "definition": "查 1 次列表再逐行查关联、共发出 N+1 条 SQL 的病症，靠批量加载治愈。" },
+    { "term": "事务", "en": "transaction", "definition": "把多条 SQL 捆成一个整体：全部成功才提交，任何一步失败就整体回滚，像可撤销的 git commit。" },
+    { "term": "原子性", "en": "atomicity", "definition": "事务的核心承诺：里面的一串操作要么全发生、要么全没发生，不存在做一半。" },
+    { "term": "迁移", "en": "migration", "definition": "把表结构的每次变更写成带序号的脚本，像表结构的 git 历史，可回放可回滚。" },
+    { "term": "连接池", "en": "connection pool", "definition": "预建好一组数据库连接排队复用的机制，免得每个请求都付一次建连接的成本。" },
+    { "term": "方言", "en": "dialect", "definition": "各家数据库 SQL 的细微差异，如分页写法 MySQL 与 SQLite 就不同。" }
+  ],
+  "code_conventions": {
+    "core_metaphors": [
+      "数据库=管家/房子的管家（第 1 章立，贯穿全书：数据住进有形状的家，管家负责存与查）",
+      "SQL 与对象两个世界之间隔一层翻译器（第 7 章立，用于讲 ORM）"
+    ],
+    "structure": "companion/ 是 TypeScript 库形态：src/ 放实验场源码，tests/ 按章 append-only。数据库用 Node 内置 node:sqlite 的内存库（:memory:），零外部依赖、测试即开即跑。工具链锁定：TypeScript ^5.6 + vitest ^3.2（2.x 不识别 node:sqlite，勿降级）+ @types/node ^24；门槛命令统一 cd companion && npx tsc --noEmit && npx vitest run。",
+    "files_plan": "src/db.ts（第 1 章：内存库薄封装）→ src/schema.ts（第 9 章：defineTable 与 DDL 生成）→ src/builder.ts（第 10 章：链式查询构建器）→ src/table.ts（第 11 章：水合与脏跟踪）→ src/relations.ts（第 12 章：关联加载）→ src/tx.ts（第 13 章：事务）。SQL 语法章（1-5）与注入章（8）只增测试，不动 src。",
+    "naming": "导出函数 camelCase、类型 PascalCase；SQL 列名 snake_case；schema 定义的字段名与列名保持同名（真实 ORM 的驼峰映射收进差异清单，不做）。API 命名服务于教学清晰，不与任何真实 ORM 刻意对齐。",
+    "errors": "错误一律 throw new Error，消息用中文写清「哪一步、为什么」；SQL 生成函数对未知运算符/未知列抛错而不是静默吞掉。",
+    "tests": "每章一个 tests/{slug}.test.ts：createDb() 开内存库、seed 固定小数据集、断言行为（查回什么/生成什么 SQL/发出几条语句），不依赖网络、不 sleep、不断言内部存储格式。"
+  },
+  "api_contract": {
+    "initial_exports": [
+      {
+        "module": "src/db.ts",
+        "since": "第 1 章 tables-and-rows",
+        "signatures": [
+          "export type SqlValue = null | number | bigint | string | Uint8Array",
+          "export interface RunResult { changes: number; lastInsertRowid: number | bigint }",
+          "export interface Db { exec(sql: string): void; run(sql: string, ...params: SqlValue[]): RunResult; all<T = Record<string, SqlValue>>(sql: string, ...params: SqlValue[]): T[]; get<T = Record<string, SqlValue>>(sql: string, ...params: SqlValue[]): T | undefined }",
+          "export function createDb(): DbWithTx  // 打开 :memory: 数据库并包一层薄封装，PRAGMA foreign_keys = ON；第 13 章起经 attachTx 包装、返回值多出 tx（DbWithTx 是 Db 的超集，赋给 Db 恒成立——只增不破）"
+        ],
+        "semantics": "run/all 的 ...params 按 ? 占位符顺序绑定；exec 只跑无结果的批语句（建表、开外键）；tx 的实现户口在 src/tx.ts（第 13 章）"
+      },
+      {
+        "module": "src/schema.ts",
+        "since": "第 9 章 schema-to-ddl",
+        "signatures": [
+          "export type ColumnType = 'integer' | 'text' | 'real'",
+          "export interface ColumnDef { type: ColumnType; primaryKey?: boolean; notNull?: boolean; unique?: boolean; default?: number | string | null; references?: { table: string; column: string } }",
+          "export interface Table { readonly db: Db; readonly name: string; readonly columns: Record<string, ColumnDef> }",
+          "export function generateCreateTableSql(name: string, columns: Record<string, ColumnDef>): string  // 纯函数：columns 进、CREATE TABLE 文本出，不碰数据库",
+          "export function defineTable(db: Db, name: string, columns: Record<string, ColumnDef>): Table  // 生成 DDL、db.exec 建表、返回表句柄"
+        ],
+        "semantics": "列按定义顺序输出（对象字符串键保序）；约束固定顺序 PRIMARY KEY→NOT NULL→UNIQUE→DEFAULT→REFERENCES；default 数字裸写、字符串加引号、null 写 NULL；不生成 AUTOINCREMENT（第 3 章结论：INTEGER PRIMARY KEY 已是 rowid 别名）；未知列类型抛中文错误（白名单 integer/text/real）；字段名与列名同名，不做驼峰映射、不做 boolean/Date 映射（差异清单登记）；Table 携带 db/name/columns 作为第 10-12 章方法的生长点"
+      },
+      {
+        "module": "src/builder.ts",
+        "since": "第 10 章 query-builder",
+        "signatures": [
+          "export type Operator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE'",
+          "export type OrderDirection = 'asc' | 'desc'",
+          "export interface CompiledQuery { sql: string; params: SqlValue[] }",
+          "export class QueryBuilder { constructor(table: Table); where(column: string, op: Operator, value: SqlValue): this; orderBy(column: string, direction: OrderDirection): this; limit(count: number): this; offset(count: number): this; toSQL(): CompiledQuery; all<T = Record<string, SqlValue>>(): T[]; get<T = Record<string, SqlValue>>(): T | undefined }"
+        ],
+        "semantics": "两阶段：链式方法只把参数记进内部数组并返回 this，toSQL() 才编译。产物：SELECT 列清单（schema 列名全录、按定义序）FROM 表名 WHERE col op ? AND …（多次 where 按 AND 叠加，OR 分组不做、差异清单登记）ORDER BY col ASC|DESC（多次调用逗号叠加）LIMIT ? OFFSET ?（成对编译，只设 limit 补 offset 0、只设 offset 补 limit -1，SQLite 负 LIMIT 不设上界）；值全走 ?、按 ? 出现顺序进 params；未知操作符/未知列/未知排序方向在记账当场抛中文错误（操作符白名单 OPERATORS 与列名白名单 table.columns——标识符不能参数化，呼应第 8 章）；toSQL 为纯编译、不改账本可反复调用；all()/get() 编译后直查，get 不偷加 LIMIT 1。配套：src/schema.ts 的 Table 只增不破长出 query(): QueryBuilder（defineTable 返回的句柄携带实现，运行时 schema→builder 单向导入），第 9 章正文引用已按终态回写"
+      },
+      {
+        "module": "src/table.ts",
+        "since": "第 11 章 hydration-dirty-tracking",
+        "signatures": [
+          "export class Row { [column: string]: unknown; constructor(table: Table, row: Record<string, SqlValue>); dirtyColumns(): string[]; save(): this; remove(): void }",
+          "export function hydrate(table: Table, row: Record<string, SqlValue>): Row",
+          "export function insertAndHydrate(table: Table, data: Record<string, SqlValue>): Row",
+          "export function findByPrimaryKey(table: Table, id: SqlValue): Row | undefined"
+        ],
+        "semantics": "水合：裸行装进带 save()/remove()/dirtyColumns() 的 Row 实例——Object.assign 装列值、{ ...row } 抄一份快照；脏跟踪用快照 diff（不用 Proxy）：save() 前逐列与快照对账（只在 schema 列清单内比），只把脏列拼进 UPDATE 表 SET col = ? WHERE 主键 = ?（列名走 schema 白名单、值走 ?，WHERE 的主键值取自快照），无脏列不发任何 SQL，UPDATE 后重拍快照；remove() 发 DELETE 表 WHERE 主键 = ? 并置 removed，作废实例再 save/remove 抛中文错误。insertAndHydrate 按 schema 白名单收列（未知列、空对象抛中文错误）、参数化 INSERT、按 lastInsertRowid 回查水合（默认值与自动发号以库里为准）；findByPrimaryKey 按主键 SELECT 后水合，查不到返回 undefined；无主键的表在 find/save/remove/回查处抛中文错误。Row 列值类型层放宽为 unknown（schema 生成类型不做）、乐观锁/版本号不做（丢更新只缓解不根治）——均登记差异清单。配套：src/schema.ts 的 Table 只增不破长出 create(data: Record<string, SqlValue>): Row 与 find(id: SqlValue): Row | undefined（defineTable 句柄转发 insertAndHydrate/findByPrimaryKey，运行时 schema→table 单向导入、table 对 schema 仅类型引用），第 9、10 章正文引用已按终态回写"
+      },
+      {
+        "module": "src/relations.ts",
+        "since": "第 12 章 relations-n-plus-1",
+        "signatures": [
+          "export interface RelationDef { kind: 'hasMany' | 'belongsTo'; table: Table; from: string; to: string }",
+          "export interface RelationOptions { table: Table; from: string; to: string }",
+          "export function declareRelation(table: Table, name: string, kind: RelationDef['kind'], options: RelationOptions): Table  // hasMany/belongsTo 的共同实现：校验 + 记进 table.relations",
+          "export function loadRelations(table: Table, rows: Record<string, SqlValue>[], names: string[]): Row[]  // with 的第二跳：IN 批量查询 + 水合 + 按 to 分桶挂载"
+        ],
+        "semantics": "声明：hasMany(name, { table, from, to }) 一对多、belongsTo 多对一；from 是本表列、to 是对方表列；注册表记在 Table.relations（只增不破）。四道校验当场抛中文错误：同名重复声明、关联名撞本表列名（挂载会盖掉列值）、from 不在本表列、to 不在对方表列——列名/表名由此白名单化。加载：query().with(name) 只记账（未知关联名记账当场抛错，重复名字只记一次；不影响 toSQL——with 管的是查询之后补一跳），all()/get() 执行两跳：第一跳主查询得裸行并水合成 Row（第 11 章 hydrate 复用）；第二跳每个关联一条 SELECT 对方列 FROM 对方表 WHERE to IN (?, ?, …)——from 值收集时跳过 NULL 并按出现序去重，占位符按收集到的值个数生成、值走 params，列名/表名走注册表（白名单）；值清单为空不发第二条；关联行水合后按 to 值分桶（Map 键 String 化）挂到实例 name 属性：hasMany 挂数组（一条没有也是空数组）、belongsTo 挂单对象（查不到挂 null）。无 with 时 all()/get() 与第 10 章行为完全一致（裸行、不水合、不发关联查询）；带 with 的查询总数恒为 1 + 关联数；多个 with 各装一跳（with('a').with('b') → 3 条）。配套：src/schema.ts 的 Table 长出 readonly relations 注册表与 hasMany/belongsTo（转发 declareRelation），src/builder.ts 长出 with() 与两跳 all()/get()；第 9、10、11 章正文引用已按终态回写"
+      },
+      {
+        "module": "src/tx.ts",
+        "since": "第 13 章 transactions",
+        "signatures": [
+          "export type DbWithTx = Db & { tx<T>(fn: (db: DbWithTx) => T): T }",
+          "export function attachTx(inner: Db): DbWithTx  // 给裸 Db 装上 tx：四方法原样转发，BEGIN/COMMIT/ROLLBACK 走 db 自身的 exec，不另开连接、不绕过包装"
+        ],
+        "semantics": "db.tx(fn) 回调式事务：执行 BEGIN 后跑 fn（fn 参数就是同一个 db——同连接语义，事务内语句互相可见未提交改动）；fn 正常返回则执行 COMMIT 并原样返回其返回值（泛型 T 透传）；fn 抛错则执行 ROLLBACK 再把同一个错误对象原样向上抛（不包装、不改写、不吞）；finally 把占用旗归零，两条路走完连接都干净——不悬账。嵌套从简不支持：单连接下嵌套 BEGIN 会报错，本课程不用 SAVEPOINT（保存点）模拟嵌套，嵌套调用当场抛中文错误声明取舍（登记差异清单）。类型层取舍：不给 Db 接口加必选 tx（第 11、12 章记账皮手写了只满足 Db 的包装对象，接口一收紧旧测试即红），另立超集 DbWithTx；配套：src/db.ts 的 createDb 改为 return attachTx({...})、返回类型 DbWithTx（只增不破，Db 原接口一字未动），第 1 章正文引用已按终态回写"
+      }
+    ],
+    "evolution_notes": [
+      "第 8 章只增测试（注入复现 + 参数化防御），无新导出",
+      "第 9 章 src/schema.ts：defineTable(db, name, columns) 生成 CREATE TABLE 并建表，返回表句柄",
+      "第 10 章 src/builder.ts：query().where(col, op, value).orderBy(col, dir).limit(n).offset(n)，.toSQL() 出 { sql, params }，.all()/.get() 直查",
+      "第 11 章 src/table.ts：create(data) 水合并插入、find(id)、instance.save() 只写脏列、instance.remove()",
+      "第 12 章 src/relations.ts：hasMany/belongsTo 声明 + query().with(name) 两跳批量加载",
+      "第 13 章 src/tx.ts：db.tx(fn) 回调式事务，抛错自动 ROLLBACK",
+      "后续章新增导出随手记回本文件，只增不破——旧章测试持续全绿是兼容性哨兵"
+    ]
+  },
+  "authoritative_docs": [
+    { "name": "SQLite SQL 语法官方文档", "url": "https://www.sqlite.org/lang.html", "use": "正文一切 SQLite SQL 行为断言的依据" },
+    { "name": "SQLite 查询计划器与 EXPLAIN", "url": "https://www.sqlite.org/eqp.html", "use": "第 6 章查询计划断言依据" },
+    { "name": "Node.js node:sqlite 官方文档", "url": "https://nodejs.org/api/sqlite.html", "use": "实验场驱动的 API 行为依据（DatabaseSync/prepare/参数绑定）" },
+    { "name": "MySQL 8.0 参考手册", "url": "https://dev.mysql.com/doc/refman/8.0/en/", "use": "方言差异标注的对照来源" },
+    { "name": "PostgreSQL 官方文档", "url": "https://www.postgresql.org/docs/", "use": "方言差异标注的对照来源" }
+  ]
+}

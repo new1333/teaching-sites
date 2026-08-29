@@ -1,0 +1,89 @@
+{
+  "terms": [
+    {
+      "term": "宿主",
+      "en": "host",
+      "definition": "把 JS 引擎当库嵌入、并向其注入全局能力的那个原生程序。"
+    },
+    {
+      "term": "消息循环",
+      "en": "message loop / run loop",
+      "definition": "GUI 程序反复「取一条事件—分发—再取」的循环，循环一停界面就冻结。"
+    },
+    {
+      "term": "绑定层",
+      "en": "binding",
+      "definition": "JS 函数名与原生函数之间的注册表与转发层，跨语言调用的必经之路。"
+    },
+    {
+      "term": "句柄",
+      "en": "handle",
+      "definition": "原生对象在 JS 侧的轻量代表——一个 ID 加一组转发方法，本体始终留在原生世界。"
+    },
+    {
+      "term": "序列化",
+      "en": "serialization",
+      "definition": "跨边界传数据只能复制成纯数据（可 JSON 化的结构），函数、引用、句柄本体过不去。"
+    },
+    {
+      "term": "任务队列",
+      "en": "task queue",
+      "definition": "原生世界的耗时结果回投 JS 线程的排队处，保证 JS 单线程不被阻塞。"
+    },
+    {
+      "term": "主进程",
+      "en": "main process",
+      "definition": "拥有系统能力（开窗口、读写文件）的那一方 runtime。"
+    },
+    {
+      "term": "渲染进程",
+      "en": "renderer process",
+      "definition": "只负责画界面、被有意剥夺系统能力的那一方 runtime。"
+    },
+    {
+      "term": "进程间通信",
+      "en": "IPC",
+      "definition": "两个独立 runtime 之间通过消息通道交换序列化数据的机制。"
+    },
+    {
+      "term": "事件推送",
+      "en": "event push",
+      "definition": "IPC 的一种语义：一方主动 send，订阅方 on 收到，无返回值。"
+    },
+    {
+      "term": "请求-响应",
+      "en": "request-response",
+      "definition": "IPC 的一种语义：invoke 发出带 id 的请求，handle 注册的处理方回传结果，一问一答。"
+    },
+    {
+      "term": "嵌入",
+      "en": "embedding",
+      "definition": "JS 引擎本身只是库；创建隔离环境、注入全局对象都由宿主完成。"
+    },
+    {
+      "term": "结构快照",
+      "en": "snapshot",
+      "definition": "实验场专用：用纯数据结构描述窗口/UI 的当前状态，代替像素做断言。"
+    },
+    {
+      "term": "订阅",
+      "en": "subscription",
+      "definition": "JS 侧注册回调等待原生事件，返回解绑函数。"
+    }
+  ],
+  "code_conventions": {
+    "structure": "src/ 下按世界分层：native/ 是模拟的原生世界（队列、窗口管理器、事件源），runtime/ 是嵌入层（宿主、binding 桥、异步桥），ipc/ 是进程间通信，app/ 是最终组装。JS 侧面向读者的 API 放各层入口文件。",
+    "naming": "模块 camelCase 文件名；工厂函数 createXxx；类型 PascalCase；原生侧类型前缀 Native（NativeEvent、NativeWindowRecord）；JS 侧句柄类 XHandle。错误一律 throw Error，message 以模块名开头，如 `[binding] unknown api: fs.read`。",
+    "style": "TypeScript strict + ESM；零运行时依赖；不追求功能完整，够验证原理即止；每个文件顶部一行注释说明它属于哪个世界。"
+  },
+  "api_contract": [
+    "初始（第 1-2 章前仅约定，随章落地，只增不破）：",
+    "src/native/eventQueue.ts — createEventQueue(): { push(e: NativeEvent), next(): NativeEvent | null, size(): number }；NativeEvent = { type: string; targetId?: number; payload?: unknown }；drain 由 runLoop 负责",
+    "src/native/runLoop.ts — createRunLoop(queue): { on(type, handler), run(quitType?), pumpOnce() }",
+    "后续章节的新导出随章记入本文件，命名以教学清晰为先，不与任何真实库 API 面刻意对齐。",
+    "src/wasm/realBinding.ts — WASM_MODULE_BYTES（手工组装的 wasm 模块，导出 add(i32,i32):i32）；loadNativeMath(bytes?) → Promise<NativeMath{add}>",
+    "src/app/terminalApp.ts — renderWindow(app, winId): string（结构快照→字符窗口）；step(app, key, winId?): \"running\"|\"quit\"；bootCounterApp(): App",
+    "src/app/demo.ts — npm run demo（TTY 交互：+ 加一、q 退出；非 TTY 自动放映）",
+    "src/app/native-window.mjs — bun src/app/native-window.mjs [--msgbox]（Bun FFI：kernel32.GetTickCount 验证；--msgbox 调 user32.MessageBoxW 真弹窗）"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "answered_at": "2026-08-17",
+  "answers": {
+    "sql_level": "完全零基础（第一部分从「表、行、列是什么」讲起，类比 JSON 数组）",
+    "orm_experience": "完全没接触过（第 7 章从「为什么会有 ORM」讲起，三个字母第一次见）",
+    "dialect": "SQLite（零安装即学即练，正文标注与 MySQL/PostgreSQL 的语法差异）",
+    "node_ts_level": "写过 Node 脚本或接口（npm/ESM 已会，TS 类型标注不用从零讲，但不按专家密度写）"
+  },
+  "reader_profile_one_line": "会 JS/TS 与 Node 脚本的前端开发者：SQL 与 ORM 双零基础，宁多解释不少讲"
+}

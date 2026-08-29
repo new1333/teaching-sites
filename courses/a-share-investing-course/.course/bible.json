@@ -1,0 +1,642 @@
+{
+  "course": "从零基础小白到A股投资入门",
+  "disclaimer": "课程立场：技术分析是一套概率与纪律的工具，不是稳赚公式。全书教的是『看懂盘面语言 + 用统计思维验证 + 用风控活着』，任何章节不得承诺或暗示『学完必赚』；正文的每条『投资建议』都必须以条件句出现（出现X且满足Y时，常见的应对是Z，失效条件是W）。",
+  "reader_model": {
+    "persona": "已开户、买卖过股票的成年人：会打开券商App下单、见过红绿K线，但从没系统学过任何分析框架；熟悉 JS/TS（能读写函数、数组方法、跑测试），百分比与平均数无障碍，但标准差、概率、期望值要按陌生概念教。",
+    "known_assets": [
+      "JS/TS 读写能力：函数、数组方法（map/filter/reduce）、对象解构、跑 npm 脚本",
+      "百分比、平均数的日常运算",
+      "券商App的基本操作：挂单、撤单、看持仓盈亏",
+      "生活语感里对『涨停』『大盘』『牛市熊市』有模糊印象"
+    ],
+    "unfamiliar": [
+      {
+        "concept": "开高低收（OHLC）",
+        "why_strange": "见过K线但从没想过四个价格各自怎么产生",
+        "anchor": "一天的四个关键读数：开门价、最高价、最低价、关门价",
+        "first_taught": "candle-anatomy"
+      },
+      {
+        "concept": "集合竞价 / 连续竞价",
+        "why_strange": "以为开盘价是『定好的』，不知道 9:15-9:25 在发生什么",
+        "anchor": "早上先集中收一轮报价定开盘价，之后全天持续撮合",
+        "first_taught": "order-journey"
+      },
+      {
+        "concept": "盘口五档",
+        "why_strange": "没注意过买卖队列，以为只有一个现价",
+        "anchor": "排队买菜：买方出价排五层、卖方要价排五层，中间的差价是成交的空隙",
+        "first_taught": "order-journey"
+      },
+      {
+        "concept": "T+1",
+        "why_strange": "没被套住过就不理解为什么今天买的明天才能卖",
+        "anchor": "当日买入的股票像『次日达』包裹，当天到不了手",
+        "first_taught": "order-journey"
+      },
+      {
+        "concept": "涨跌停 / 10% 与 20%",
+        "why_strange": "新闻里听过，不知道主板创业板科创板幅度不同、ST 另算",
+        "anchor": "交易所给当天价格划的两条硬边界",
+        "first_taught": "order-journey"
+      },
+      {
+        "concept": "实体与影线",
+        "why_strange": "以为K线红绿就是全部信息",
+        "anchor": "蜡烛的身子是开盘到收盘，两条芯是当天摸过的高低点",
+        "first_taught": "candle-anatomy"
+      },
+      {
+        "concept": "标准差",
+        "why_strange": "统计课睡觉内容，从没在真实场景用过",
+        "anchor": "每个数离平均数有多远的『平均距离』",
+        "first_taught": "bollinger"
+      },
+      {
+        "concept": "概率与期望值",
+        "why_strange": "凭直觉觉得『胜率高就该赢』",
+        "anchor": "期望值=长期平均每次的盈亏：赢的多大、输的多大都要算",
+        "first_taught": "expectancy-risk"
+      },
+      {
+        "concept": "正态分布直觉",
+        "why_strange": "不知道『±2σ 覆盖约 95%』这套说法的来历与局限",
+        "anchor": "钟形曲线：离中心越远越稀罕，但现实价格有肥尾",
+        "first_taught": "bollinger"
+      },
+      {
+        "concept": "动量与均值回归",
+        "why_strange": "两种市场观没听说过",
+        "anchor": "动量=跑起来的东西倾向继续跑；均值回归=离家太远总会回家吃饭",
+        "first_taught": "moving-averages"
+      },
+      {
+        "concept": "道氏理论与波峰波谷",
+        "why_strange": "以为趋势是形容词，不知道它有严格定义",
+        "anchor": "更高的高点+更高的低点不断出现=上升趋势，像上台阶",
+        "first_taught": "trend-anatomy"
+      },
+      {
+        "concept": "趋势线与通道",
+        "why_strange": "看别人画线觉得玄",
+        "anchor": "把台阶的脚跟连成扶手：回撤的低点连成上行扶手，平移到头顶就是天花板",
+        "first_taught": "trend-anatomy"
+      },
+      {
+        "concept": "支撑与阻力",
+        "why_strange": "以为是画线玄学",
+        "anchor": "历史上买卖双方反复成交、挂单扎堆的价格小区间——人多的路口",
+        "first_taught": "support-resistance"
+      },
+      {
+        "concept": "斐波那契回调",
+        "why_strange": "听说过黄金分割，不知道在行情软件里怎么用、为什么有人信",
+        "anchor": "在一段涨幅上按0.382/0.5/0.618画刻度：用的人多了，刻度本身变成路口",
+        "first_taught": "support-resistance"
+      },
+      {
+        "concept": "换手率",
+        "why_strange": "听过没算过",
+        "anchor": "今天有多少百分比的股东换了人",
+        "first_taught": "volume-analysis"
+      },
+      {
+        "concept": "筹码分布",
+        "why_strange": "A股软件特色指标，看不懂山峰图",
+        "anchor": "每个价位上还压着多少持仓的地图：山峰=拥挤的历史成本，山谷=换干净的真空",
+        "first_taught": "chip-distribution"
+      },
+      {
+        "concept": "市盈率 PE / 市净率 PB / ROE",
+        "why_strange": "财务词劝退",
+        "anchor": "PE=按现在的利润几年回本；PB=价格是净资产的几倍；ROE=公司拿股东的钱一年能赚百分之几",
+        "first_taught": "fundamentals-peek"
+      },
+      {
+        "concept": "金叉死叉",
+        "why_strange": "听过词不知道指哪两条线",
+        "anchor": "短期均线从下穿上/从上穿破长期均线",
+        "first_taught": "moving-averages"
+      },
+      {
+        "concept": "背离",
+        "why_strange": "看不出两个指标『不一起走』意味着什么",
+        "anchor": "价格创新高、指标却不认——领唱和伴唱唱反调",
+        "first_taught": "macd"
+      },
+      {
+        "concept": "KDJ",
+        "why_strange": "A股软件默认指标，满屏KDJ线看不懂来历",
+        "anchor": "今天的收盘价在最近几天高低区间的位置百分比（RSV），再平滑两次",
+        "first_taught": "rsi-kdj"
+      },
+      {
+        "concept": "凯利公式",
+        "why_strange": "赌桌词汇",
+        "anchor": "按优势大小决定下注比例的算式，全押永远错",
+        "first_taught": "expectancy-risk"
+      },
+      {
+        "concept": "回测 / 未来函数 / 过拟合 / 幸存者偏差",
+        "why_strange": "没做过实验，不知道历史验证有多少坑",
+        "anchor": "回测=拿历史数据彩排；未来函数=偷看答案；过拟合=把答案背下来当规律；幸存者偏差=只统计了没死掉的样本",
+        "first_taught": "backtest-engine"
+      },
+      {
+        "concept": "处置效应",
+        "why_strange": "亏损时以为是心态问题，不知道是有名字的行为偏差",
+        "anchor": "赚一点急着卖、亏了死扛不认——拔鲜花浇野草",
+        "first_taught": "trading-system"
+      },
+      {
+        "concept": "最大回撤",
+        "why_strange": "只看收益率，没想过中途最深跌过多少",
+        "anchor": "从山顶到谷底最深的那次下坡",
+        "first_taught": "backtest-engine"
+      }
+    ]
+  },
+  "glossary": [
+    {
+      "term": "股票",
+      "en": "stock",
+      "definition": "一家公司所有权的一小份凭证，拿着它你就是这家公司的小股东。"
+    },
+    {
+      "term": "A股",
+      "definition": "在中国大陆交易所（上交所、深交所、北交所）上市、以人民币交易的中国公司股票。"
+    },
+    {
+      "term": "交易所",
+      "definition": "提供集中撮合买卖的官方市场，中国内地共三家：上交所、深交所、北交所。"
+    },
+    {
+      "term": "指数",
+      "en": "index",
+      "definition": "把一篮子股票的价格加权成一个数，用来看整体市场的冷热，如上证指数、沪深300。"
+    },
+    {
+      "term": "多头",
+      "en": "bull / long",
+      "definition": "认为价格会涨而买入的一方；买入力量。"
+    },
+    {
+      "term": "空头",
+      "en": "bear / short",
+      "definition": "认为价格会跌而卖出的一方；卖出力量。A股普通账户只能先买后卖，空头是持股的卖出方。"
+    },
+    {
+      "term": "流动性",
+      "en": "liquidity",
+      "definition": "想买时有人卖、想卖时有人买的容易程度；排队的人越多越容易成交。"
+    },
+    {
+      "term": "盘口",
+      "definition": "买方五档出价与卖方五档要价的实时排队表，撮合发生的地方。"
+    },
+    {
+      "term": "集合竞价",
+      "definition": "开盘前 9:15-9:25 集中收一轮买卖申报、按最大成交量原则定出开盘价的机制。"
+    },
+    {
+      "term": "连续竞价",
+      "definition": "开盘后全天持续的逐笔撮合：价格优先、时间优先。"
+    },
+    {
+      "term": "价格优先时间优先",
+      "definition": "撮合排队规则：出价更高的买单先成交、要价更低的卖单先成交；同价先到先得。"
+    },
+    {
+      "term": "买一卖一",
+      "definition": "盘口上最接近成交的一档买价和卖价，两者之差叫价差。"
+    },
+    {
+      "term": "T+1",
+      "definition": "A股规则：当天买入的股票最快下一个交易日才能卖；资金卖出当天可再用。"
+    },
+    {
+      "term": "涨跌停",
+      "definition": "交易所给当天价格相对昨收盘划的硬边界，超出边报价申报无效；主板±10%（2026年7月起主板ST股同为±10%，此前为±5%）、创业板科创板±20%、北交所±30%。"
+    },
+    {
+      "term": "ST股票",
+      "definition": "被交易所标注风险警示的股票（财务或规范出过问题），风险显著更高；2026年7月起主板ST涨跌幅与普通股一致为±10%，此前为±5%。"
+    },
+    {
+      "term": "手",
+      "definition": "A股的买卖单位，1手=100股；买入必须以手的整数倍，卖出可以有零股。"
+    },
+    {
+      "term": "印花税",
+      "definition": "卖出股票时交给国家的税，当前为成交金额的0.05%（买入不收）。"
+    },
+    {
+      "term": "佣金",
+      "definition": "交给券商的手续费，买卖双向收取，常见万分之一到万分之三，通常单笔最低5元。"
+    },
+    {
+      "term": "K线",
+      "en": "candlestick",
+      "definition": "把一段时间内的开盘价、收盘价、最高价、最低价画成一根蜡烛状图形的价格记录。"
+    },
+    {
+      "term": "开高低收",
+      "en": "OHLC",
+      "definition": "一段时间内的开盘价、最高价、最低价、收盘价，一根K线的四个原始数据。"
+    },
+    {
+      "term": "实体",
+      "en": "body",
+      "definition": "K线中开盘价到收盘价的粗段，代表这段时间多空拉锯后的净结果。"
+    },
+    {
+      "term": "影线",
+      "en": "wick / shadow",
+      "definition": "K线实体上下伸出的细线，上影线摸过最高价、下影线探过最低价，记录盘中被反击回去的攻防。"
+    },
+    {
+      "term": "阳线 / 阴线",
+      "definition": "收盘价高于开盘价的K线（A股软件默认画成红色）叫阳线；反之为阴线（默认绿色）。"
+    },
+    {
+      "term": "分时图",
+      "definition": "把当天每分钟成交价连成一条线的图，是日K线背后那一天的『显微镜视图』。"
+    },
+    {
+      "term": "周期聚合",
+      "definition": "把小周期K线合并成大周期：周K线的开=本周第一根日K的开、收=最后一根的收、高=最高的高、低=最低的低。"
+    },
+    {
+      "term": "复权",
+      "definition": "把分红除权造成的价格跳空修补回连续序列的方法，看长期图必开前复权，否则形态全是假的。"
+    },
+    {
+      "term": "大阳线 / 大阴线",
+      "definition": "实体特别长的阳线/阴线：一方从开盘压到收盘的全场大胜。"
+    },
+    {
+      "term": "锤子线",
+      "en": "hammer",
+      "definition": "长下影、小实体的单根K线：盘中被深砸但收盘收了回来，显示下方出现强承接。"
+    },
+    {
+      "term": "上吊线",
+      "en": "hanging man",
+      "definition": "形状与锤子线相同但出现在上涨之后：同样的图，位置不同，含义反转。"
+    },
+    {
+      "term": "射击之星",
+      "en": "shooting star",
+      "definition": "上涨后的长上影小实体K线：向上冲锋被当场打了回来，上方抛压的实弹测试。"
+    },
+    {
+      "term": "倒锤子",
+      "en": "inverted hammer",
+      "definition": "下跌后的长上影小实体：第一次认真试探上方抛压，收阳确认才有意义。"
+    },
+    {
+      "term": "光头光脚",
+      "definition": "没有影线的K线：开盘即一路单边到收盘，一方全天压着打。"
+    },
+    {
+      "term": "十字星",
+      "en": "doji",
+      "definition": "开盘价≈收盘价、只剩影线的K线：多空打了一天打成平手，常是变盘前兆。"
+    },
+    {
+      "term": "长腿十字",
+      "en": "long-legged doji",
+      "definition": "上下影都特别长的十字星：巨大的分歧，两边都被推翻过一次。"
+    },
+    {
+      "term": "蜻蜓线",
+      "en": "dragonfly doji",
+      "definition": "开盘收盘都贴着最高点的长下影十字：全天砸下去又被全额买回。"
+    },
+    {
+      "term": "墓碑线",
+      "en": "gravestone doji",
+      "definition": "开盘收盘都贴着最低点的长上影十字：冲高的买盘全军覆没。"
+    },
+    {
+      "term": "一字线",
+      "en": "four-price doji",
+      "definition": "开=高=低=收四价合一：一字板，想买买不到、想卖卖不掉。"
+    },
+    {
+      "term": "纺锤线",
+      "en": "spinning top",
+      "definition": "实体影线都小的K线：多空都无意恋战，市场在打盹。"
+    },
+    {
+      "term": "吞没形态",
+      "en": "engulfing",
+      "definition": "今天的实体把昨天实体整个包住：今天的胜方不只是赢，还把昨天的战果整个收回。"
+    },
+    {
+      "term": "乌云盖顶",
+      "en": "dark cloud cover",
+      "definition": "上涨后高开却收在昨天实体中点之下的阴线：高开是最后的乐观，收不回去是反转信号。"
+    },
+    {
+      "term": "刺透形态",
+      "en": "piercing",
+      "definition": "下跌后低开却收进昨天阴线实体中点之上：恐慌盘被低位买盘正面顶回。"
+    },
+    {
+      "term": "孕线",
+      "en": "harami",
+      "definition": "今天的小实体整个缩在昨天大实体之内：攻势骤然踩了刹车，市场在犹豫。"
+    },
+    {
+      "term": "十字孕线",
+      "en": "doji harami",
+      "definition": "昨天大实体、今天十字星缩在其内：犹豫到极致，常是变盘前夜。"
+    },
+    {
+      "term": "平顶 / 平底",
+      "en": "tweezer top / bottom",
+      "definition": "两根K线的高点（低点）几乎落在同一价位：同一个位置两次证明有人守。"
+    },
+    {
+      "term": "早晨之星",
+      "en": "morning star",
+      "definition": "下跌末端『大阴+小实体星线+跳涨阳线』三根组合：卖压枯竭、买方接管的完整剧本。"
+    },
+    {
+      "term": "黄昏之星",
+      "en": "evening star",
+      "definition": "上涨末端『大阳+星线+跳跌阴线』：早晨之星的镜像，涨势熄火剧本。"
+    },
+    {
+      "term": "红三兵 / 黑三鸦",
+      "definition": "连续三根温和递进的小阳线/小阴线：趋势按节奏推进，没有剧烈反扑。"
+    },
+    {
+      "term": "红三兵受阻",
+      "definition": "红三兵之后紧跟高位小实体或长上影：推进撞上了墙的警示。"
+    },
+    {
+      "term": "上升三法 / 下降三法",
+      "en": "rising / falling three methods",
+      "definition": "趋势中继五根组合：一根大实体、三根缩在其影线范围内的小回撤、再一根同向大实体——歇脚不折返。"
+    },
+    {
+      "term": "趋势",
+      "en": "trend",
+      "definition": "价格留下的方向性足迹：更高的高点和更高的低点不断出现就是上升趋势。"
+    },
+    {
+      "term": "道氏理论",
+      "en": "Dow theory",
+      "definition": "查尔斯·道留下的趋势分析框架：趋势由波峰波谷的方向定义，且分主要/次级/日间三级。"
+    },
+    {
+      "term": "趋势线 / 通道",
+      "definition": "连接回撤枢轴点的直线；把趋势线平移到对侧波峰得到通道的轨道。"
+    },
+    {
+      "term": "均线",
+      "en": "moving average, MA",
+      "definition": "最近N天收盘价的滑动平均，把噪声抹掉只留趋势的平滑线。"
+    },
+    {
+      "term": "指数移动平均",
+      "en": "EMA",
+      "definition": "给越新的价格越大权重的均线，对最新变化反应更快但仍滞后。"
+    },
+    {
+      "term": "金叉 / 死叉",
+      "definition": "短期均线上穿/下穿长期均线：短期共识转向的迟到信号。"
+    },
+    {
+      "term": "成交量",
+      "en": "volume",
+      "definition": "一段时间内实际成交的股数，衡量参与度和分歧度：有人卖还得有人买才算成交。"
+    },
+    {
+      "term": "换手率",
+      "definition": "成交量除以流通股本，今天有多少百分比的筹码换了主人。"
+    },
+    {
+      "term": "量价背离",
+      "definition": "价格创新高/新低而成交量萎缩：推进的燃料不足，趋势可疑。"
+    },
+    {
+      "term": "支撑 / 阻力",
+      "definition": "历史上买卖挂单反复扎堆的价格小区间：跌到有人接、涨到有人抛的位置。"
+    },
+    {
+      "term": "枢轴点",
+      "en": "pivot",
+      "definition": "局部的高点或低点拐角，画趋势线和支撑阻力的原材料。"
+    },
+    {
+      "term": "假突破",
+      "en": "false breakout",
+      "definition": "价格刺破支撑/阻力后又迅速收回：专门收割止损盘和追单的走势。"
+    },
+    {
+      "term": "斐波那契回调",
+      "en": "Fibonacci retracement",
+      "definition": "在一段涨跌幅上按0.236/0.382/0.5/0.618等比例画的潜在回撤刻度：信的人多了，刻度本身成了路口。"
+    },
+    {
+      "term": "筹码分布",
+      "en": "chip distribution / CYQ",
+      "definition": "估算每个价位上还压着多少持仓量的图：山峰=拥挤的历史成本区，获利盘/套牢盘比例由它算出。"
+    },
+    {
+      "term": "头肩顶",
+      "en": "head and shoulders",
+      "definition": "中间高点更高的三峰结构与颈线：涨势三次冲顶、两次回撤后买方接力枯竭的经典反转结构。"
+    },
+    {
+      "term": "双顶 / 双底",
+      "en": "double top / bottom",
+      "definition": "两次冲击同一价位失败形成的M顶/W底：同一个位置证明卖压/买压守得住。"
+    },
+    {
+      "term": "颈线",
+      "en": "neckline",
+      "definition": "头肩/双顶结构中连接回撤低点的参考线，跌破它才算结构成立。"
+    },
+    {
+      "term": "缺口",
+      "en": "gap",
+      "definition": "两根K线之间没有任何成交的价格真空区，常由隔夜消息或情绪跳空造成。"
+    },
+    {
+      "term": "MACD",
+      "definition": "两条不同周期EMA的差值及其平滑线的组合指标，用来度量动量的方向与衰减。"
+    },
+    {
+      "term": "背离",
+      "en": "divergence",
+      "definition": "价格创新高/新低而指标拒绝跟随：推着价格走的燃料与价格本身唱反调。"
+    },
+    {
+      "term": "RSI",
+      "en": "relative strength index",
+      "definition": "最近一段上涨幅度占全部波动的百分比：衡量买方力量的持久度，而非超买超卖开关。"
+    },
+    {
+      "term": "KDJ",
+      "en": "stochastic oscillator",
+      "definition": "A股软件默认的摆动指标：收盘价在近期高低区间的位置（RSV）经两次平滑，对价格变化极敏感。"
+    },
+    {
+      "term": "布林带",
+      "en": "Bollinger bands",
+      "definition": "均线±若干倍标准差构成的三条带：用波动率而不是固定百分比画的弹性通道。"
+    },
+    {
+      "term": "标准差",
+      "en": "standard deviation",
+      "definition": "衡量一组数离平均数平均有多远的量，价格波动的『颠簸幅度』。"
+    },
+    {
+      "term": "胜率",
+      "definition": "盈利交易次数占全部交易次数的比例，单独看没有意义，必须配盈亏比。"
+    },
+    {
+      "term": "盈亏比",
+      "definition": "平均每笔盈利金额与平均每笔亏损金额之比。"
+    },
+    {
+      "term": "期望值",
+      "en": "expectancy",
+      "definition": "胜率×平均盈利−败率×平均亏损：长期平均每次交易的期望盈亏。"
+    },
+    {
+      "term": "止损",
+      "en": "stop loss",
+      "definition": "进场前就定好的认输价位：单次亏损的硬上限，让错误变得廉价。"
+    },
+    {
+      "term": "仓位",
+      "en": "position sizing",
+      "definition": "一笔交易投入的资金比例；决定错了多痛、对了多赚的旋钮。"
+    },
+    {
+      "term": "凯利公式",
+      "en": "Kelly criterion",
+      "definition": "按胜率与盈亏比算出的最优下注比例公式；实战取其分数，因为参数是估计值。"
+    },
+    {
+      "term": "破产风险",
+      "en": "risk of ruin",
+      "definition": "连续亏损把本金打到无法继续（或心态崩溃）的概率；仓位越重、盈亏比越差越高。"
+    },
+    {
+      "term": "回测",
+      "en": "backtest",
+      "definition": "用历史数据按规则彩排交易、统计成绩的实验方法。"
+    },
+    {
+      "term": "未来函数",
+      "definition": "回测里用了当时不可能知道的数据（如用收盘价决定当天开盘买入）：偷看答案，胜率虚高。"
+    },
+    {
+      "term": "过拟合",
+      "en": "overfitting",
+      "definition": "把历史噪声当规律背下来：参数调到历史完美，遇到未来就碎。"
+    },
+    {
+      "term": "幸存者偏差",
+      "en": "survivorship bias",
+      "definition": "只用活到今天的样本做统计，退市股、爆雷股不在样本里，结论偏乐观。"
+    },
+    {
+      "term": "最大回撤",
+      "en": "max drawdown",
+      "definition": "账户从历史最高点到之后最低点的最大跌幅：最深那次下坡有多疼。"
+    },
+    {
+      "term": "滑点",
+      "en": "slippage",
+      "definition": "预期成交价与实际成交价的差，急市里按市价吃单要多付的成本。"
+    },
+    {
+      "term": "市盈率",
+      "en": "PE",
+      "definition": "股价÷每股盈利：按现在的利润，几年回本；衡量市场给公司多少倍溢价。"
+    },
+    {
+      "term": "市净率",
+      "en": "PB",
+      "definition": "股价÷每股净资产：价格是家底的几倍；银行等重资产行业常用。"
+    },
+    {
+      "term": "ROE",
+      "definition": "净资产收益率：公司拿股东的钱一年能赚回百分之几，长期赚钱能力的核心指标。"
+    },
+    {
+      "term": "处置效应",
+      "en": "disposition effect",
+      "definition": "赚一点急着落袋、亏了死扛不认账的行为偏差：拔鲜花、浇野草。"
+    },
+    {
+      "term": "交易系统",
+      "definition": "把入场、止损、仓位、离场写成可执行清单的完整规则集，作用是替你挡住盘中情绪。"
+    }
+  ],
+  "code_conventions": {
+    "language": "TypeScript（ESM、strict）+ vitest",
+    "style": "小模块纯函数优先；数据不可变，函数返回新数组；公共导出面最小化，一个概念一个文件",
+    "naming": "camelCase 函数与变量；PascalCase 类型；文件名与概念同名（candles.ts、patterns.ts、indicators.ts）",
+    "data_direction": "一切K线数组按时间旧→新排列（index 0 最旧），API 契约固定，禁止混用",
+    "errors": "对结构性非法输入（空数组、长度不足、NaN）throw new Error，消息以中文写清期望",
+    "testing": "断言公共 API 行为，不断言内部实现；合成数据用固定种子的确定性生成器，不依赖网络与随机",
+    "prose_convention": "正文一律写「K 线」（K 与线之间带空格），避免 lint spacing 超限"
+  },
+  "api_contract": {
+    "core_types": "type Tick = { time: number; price: number; size: number }；type Candle = { date: string; open: number; high: number; low: number; close: number; volume: number }",
+    "seeded_rng": "createRng(seed: number) → () => number：确定性伪随机（mulberry32 或等价），全书合成数据的唯一随机源",
+    "initial_exports": [
+      "src/data/generate.ts: createRng(seed), generateTicks(rng, opts), generateCandles(rng, opts) —— 合成行情生成器",
+      "src/candles/aggregate.ts: aggregateTicks(ticks, session) → Candle[]；resample(daily, n) → Candle[]（n日并1日）",
+      "src/candles/anatomy.ts: candleAnatomy(c) → { body, upperWick, lowerWick, bodyRatio, ... }",
+      "src/types.ts: Tick / Candle / Session 类型定义（core_types 的落点）",
+      "src/time.ts: UTC 时间基元（交易日序列等）",
+      "src/candles/aggregate.ts: aggregateTicks(ticks, session) → Candle[]；resample(daily, n) → Candle[]（尾组不足 n 根照样并成一根、date 取组内首日）",
+      "src/candles/anatomy.ts: candleAnatomy(c) → { direction, body, upperWick, lowerWick, range, bodyRatio, ... }（四价合一时 body 记 0）",
+      "src/data/generate.ts: createRng(seed) → () => number；generateTicks(rng, opts)；generateCandles(rng, opts) —— 随机游走合成行情",
+      "src/render/toSvg.ts: toSvg(candles, opts) → SVG 字符串（一根K线=一个 rect+两条 line、A股红涨绿跌、可选 logScale 与成交量副图）——与 docs 组件 KLineChart.vue 的几何映射一致",
+      "companion/scripts/export-docs-data.ts: npm run export-docs 固定种子产出 docs/assets/data/*.json（确定性输出，含教学不变量自检）",
+      "src/patterns/context.ts: trendContext(candles, index, { lookback=5, threshold=0.05 }) → 'falling'|'rising'|'flat'（用形态前窗口收盘判背景，不看未来）",
+      "src/patterns/wicks.ts: classifyWicks(c, context) → 形态 id 数组：大阳/大阴（实体占比≥0.7）、光头光脚（双影各≤5%）、锤子/上吊、倒锤子/射击之星（影线≥2×实体、对侧影≤实体、实体占比>5%；同形状由背景换名，flat 不命名；≤5% 留给十字星族）",
+      "src/patterns/doji.ts: classifyDoji(c, ctx) → 十字族分类（普通/长腿/蜻蜓/墓碑/一字/纺锤，实体占比≤5% 与影线族互补）+ 犹豫程度三级；dojiContext 复用 trendContext 窗口另量前五根平均振幅与昨收；一字线按昨收核对涨跌停语境（limitRatio 默认 0.1 可传参）",
+      "src/patterns/two.ts: detectTwoCandle(candles, opts?) → 九种双根形态列表 {id,index,direction,position}（看涨/看跌吞没、乌云盖顶、刺透、看涨/看跌孕线、十字孕线、平顶/平底；中点严格越线才判、吞没须严格包住、孕线收缩不超三分之一、平顶平底容差=参照振幅一成；flat 不命名）",
+      "src/patterns/three.ts: detectThreeCandle(candles, opts?) → 七种多根形态（晨星/暮星带 confirmed 层：收复过首根实体中点为硬判据、第三根量能≥前两根较大者1.2倍才确认；红三兵/受阻/黑三鸦为推进族不设背景门；升降三法五根中继：背景同向、框内回撤、收回收盘）",
+      "src/stats/evaluate.ts: evaluatePattern(candles, matcher, horizon, direction?) → { winRate, sampleSize, baseline }（收盘对收盘、平手算输、窗口外不计）；shuffleControl(candles, matcher, opts?) → { beatRatio, rates }（默认 200 组随机对照，固定种子）",
+      "src/indicators/ma.ts: sma(candles, n) 与 ema(candles, n) → (number|null)[]（头部不足窗口 null；EMA 首窗用 SMA 种子、α=2/(n+1) 递推）；crossovers(candles, fast, slow) → 金叉死叉信号列表（SMA 口径、严格穿越）",
+      "src/volume/features.ts: volumeFeatures(candles, opts?) → 放量/缩量（当根量对前五根均量≥1.5×/≤0.7×）、天量/地量（再加 20 根极值窗内严格最值、同根只记最高档）与量价背离（收盘创五根新高/新低且量≤0.7×）逐根记账；turnoverRate(candles, floatShares)=成交量÷流通股本",
+      "src/levels/pivots.ts: pivots(candles, k=3) → 枢轴点列表（严格局部极值+同类去重，与第10章教学标注同口径）",
+      "src/levels/levels.ts: levels(candles, opts?) → 支撑阻力位（位价=簇均值、触碰数=簇大小、角色按最新收盘价比出、破位互换）",
+      "src/levels/fib.ts: fibLevels(from, to) → 0.236/0.382/0.5/0.618 回调刻度",
+      "src/chips/distribution.ts: chipDistribution(candles, opts?) → 逐日筹码快照（价位直方图、获利盘/套牢盘比例、平均成本、筹码峰；换手衰减模型：历史筹码×(1−t)、当日量均匀分摊区间、首日全流通落位、总量恒等流通股本）",
+      "src/levels/structures.ts: detectStructures(candles, opts?) → 反转结构列表（头肩顶：两肩同水平、头高出一截、颈线=两谷均值；双顶/双底：两端同水平、中间拉开深度；收盘破线才成立；量度目标=2×颈线−顶价）——复用 pivots",
+      "src/indicators/macd.ts: macd(candles, opts?) → { dif, dea, hist }（DIF=EMA12−EMA26、DEA=DIF 再 EMA9、柱=DIF−DEA，头部 null：DIF 第26根、DEA与柱第34根成形）；detectDivergence(candles, indicator, opts?) → 顶/底背离点（复用 pivots 峰对峰比价与指标值）",
+      "src/indicators/rsi.ts: rsi(candles, n) → (number|null)[]（Wilder 平滑 α=1/n；只涨钉 100、全平记 50、头部 null）",
+      "src/indicators/kdj.ts: kdj(candles, n) → { rsv, k, d, j }（RSV=收盘在近 n 根高低区间的位置百分比；K/D 各 1/3 平滑、种子 50；J=3K−2D 会越界）",
+      "src/indicators/bollinger.ts: bollinger(candles, n=20, k=2) → { mid, upper, lower, bandwidth }（中轨=sma、轨=MA±kσ）；squeezes(candles, opts?) → 带宽收口段；outsideStats(candles, n=20, k=2) → 带外占比统计",
+      "src/stats/stdev.ts: stdev(values) 总体标准差（÷n）；normalDraws/leptokurticDraws（正态与尖峰肥尾构造序列，总 σ 恒等）",
+      "src/risk/expectancy.ts: expectancy(stats) → 期望值（胜率×平均盈利−败率×平均亏损）；assertEdgeStats 输入守门",
+      "src/risk/kelly.ts: kellyFraction(stats) → f=胜率−败率÷盈亏比（负数原样返回=别上桌）；仓位=风险÷止损距离的教学桥",
+      "src/risk/ruin.ts: monteCarloRuin(stats, bets, trials, fraction) 固定种子破产概率；equityPaths 资金路径",
+      "src/backtest/engine.ts: backtest(candles, strategy, costOpts?) → { trades, equity, totalReturn, maxDrawdown, winRate, payoff }（T+1 次日开盘成交、佣金/最低5元/印花税/滑点默认档、整手全仓、买入持有基准）",
+      "src/backtest/metrics.ts: maxDrawdown/totalReturn/tradeStats 等绩效指标"
+    ],
+    "growth_rule": "后续章新导出随手记回本文件，只增不破；模块目录按 candles/ patterns/ indicators/ volume/ levels/ chips/ risk/ backtest/ stats/ render/ 生长；形态识别按 single（wicks族/doji族）、two、three 分文件"
+  },
+  "authoritative_docs": [
+    "上海证券交易所交易规则（竞价、涨跌幅、申报单位）——上交所官网「规则」栏目",
+    "深圳证券交易所交易规则——深交所官网「规则」栏目",
+    "北京证券交易所股票交易规则——北交所官网",
+    "证监会投资者保护局/投资者教育基地（开户、适当性、风险警示）",
+    "财政部/税务总局关于证券交易印花税减半征收的公告（2023年8月起卖出0.05%）",
+    "沪深交易所收费表（佣金上限、经手费、过户费）",
+    "注：交易规则会修订。正文凡断言具体数字（涨跌幅、费率、竞价时段），以「截至写作时」口径表述并标注以交易所最新规则为准；实验场不硬编码会变的规则常量，作为参数传入"
+  ]
+}

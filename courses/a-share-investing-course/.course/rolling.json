@@ -1,0 +1,92 @@
+{
+  "chapters": [
+    {
+      "slug": "what-moves-price",
+      "summary": "已建立：股票=公司所有权一小份凭证；A股与三家交易所；价格=最新成交价，由多头（买方）与空头（持股卖方）的供需拔河实时决定；流动性=买卖队列厚度；指数=一篮子加权合成+权重效应；核心世界观「价格消化预期」。读者已能：复述「真消息为何套人」（逐档吃单演算）、用加权算式解释指数与个股背离、用行情 App 验证消息日跳空。无代码产出（principle 章）。"
+    },
+    {
+      "slug": "order-journey",
+      "summary": "已建立：集合竞价9:15-9:25最大成交量单一定价；连续竞价价格优先时间优先、吃单按对手档位成交；盘口五档/买一卖一/价差；手=100股；T+1与涨跌停（主板10%、创业科创20%、北交30%、主板ST 2026年7月起同为10%）；费用闭环（印花税卖出0.05%、佣金双向、最低5元边界）。读者已能：纸笔推演集合竞价定价、跌停排队与一轮费用账，用交割单复算。无代码产出。"
+    },
+    {
+      "slug": "candle-anatomy",
+      "summary": "已建立：Tick/Candle/Session 类型；createRng 固定种子与 generateTicks/generateCandles 合成行情；aggregateTicks 逐笔聚日K、resample 周期聚合、candleAnatomy 量实体/影线占比。读者已能手算 OHLC、把日线并成周线。19 项测试全绿。"
+    },
+    {
+      "slug": "candle-rendering",
+      "summary": "已建立：toSvg（src/render/toSvg.ts）价格→像素映射，一根K线=一个rect+两条line、红涨绿跌、logScale、成交量副图独立归一化；export-docs 脚本固定种子产出 docs/assets/data/*.json。读者已能解释同一根K线随纵轴区间变脸、复现全书图表数据。32 项测试全绿。"
+    },
+    {
+      "slug": "single-patterns-wicks",
+      "summary": "已建立 src/patterns/：trendContext 判背景 falling/rising/flat（只用形态前窗口）；classifyWicks 识别大阳/大阴（实体≥0.7）、光头光脚（影≤5%）、锤子/上吊、倒锤子/射击之星（长影≥2×实体，位置换名，flat 不命名）。读者已能按数值判据认七种单根形态。45 项测试全绿。"
+    },
+    {
+      "slug": "single-patterns-doji",
+      "summary": "已建立 src/patterns/doji.ts：classifyDoji 六分类（普通/长腿/蜻蜓/墓碑/一字/纺锤，实体≤5% 与第5章互补）+犹豫三级；dojiContext 量前五根均幅与昨收；一字线按昨收核对涨跌停语境。读者已能认六种十字族、讲清「次日确认」推演。64 项测试全绿。"
+    },
+    {
+      "slug": "multi-patterns-two",
+      "summary": "已建立 src/patterns/two.ts：detectTwoCandle 扫九种双根形态（看涨/看跌吞没、乌云盖顶、刺透、看涨/看跌孕线、十字孕线、平顶/平底），返回类型/完成日/方向/背景；中点为乌云与刺透共用战线（严格越线才判），吞没须严格包住，孕线收缩不超三分之一，平顶平底容差为参照振幅一成；flat 不命名。读者已能让代码代替眼睛数双根形态。87 项测试全绿。"
+    },
+    {
+      "slug": "multi-patterns-three",
+      "summary": "已建立 src/patterns/three.ts：detectThreeCandle 扫七种多根形态——晨星/暮星带 confirmed 层（收复过首根实体中点为硬判据、量能≥前两根较大者1.2倍才确认，不足降级未确认）；红三兵/受阻/黑三鸦为推进族不设背景门；升降三法五根中继。读者已能用两条数值线判确认。113 项测试全绿（本章 26 项）。"
+    },
+    {
+      "slug": "pattern-stats",
+      "summary": "第9章：已建立 src/stats/evaluate.ts——evaluatePattern → {winRate,sampleSize,baseline}（收盘对收盘、平手算输）；shuffleControl 随机对照（默认200组）。读者已能用胜率、样本量、基准、随机对照验货形态：合成行情验不出优势、注入剧本被检出。135 项测试全绿。"
+    },
+    {
+      "slug": "trend-anatomy",
+      "summary": "第10章（principle）：趋势=波峰波谷方向——HH+HL 升、LH+LL 降、混杂横盘；道氏三级；趋势线四步（定义先行/两枢轴起步/第三点验证/收盘跌破口径），通道=平移；「趋势没变」两级判据。export-docs 新增教学标注段与 3 个 JSON（pivots 第13章建）。"
+    },
+    {
+      "slug": "moving-averages",
+      "summary": "第11章：已建立 src/indicators/ma.ts——sma/ema（首窗 SMA 种子、α=2/(n+1)）/crossovers 金叉死叉（严格穿越），头部不足窗口 null。读者已能手算 MA/EMA、讲清滞后与金叉迟到，会用等回踩/多周期过滤。export-docs 新增 3 个 JSON。159 项测试全绿。"
+    },
+    {
+      "slug": "volume-analysis",
+      "summary": "第12章：已建立 src/volume/features.ts——volumeFeatures 记放量/缩量（≥1.5×/≤0.7×前五均量）、天量/地量（20根极值窗）、量价背离（收盘创五根新高/新低且量≤0.7×）；turnoverRate=量÷流通股本。读者已能讲清撮合机制与量在价先、手算换手率。export-docs 新增 3 个 JSON。189 项测试全绿。"
+    },
+    {
+      "slug": "support-resistance",
+      "summary": "第13章：已建立 src/levels/——pivots（k=3 严格局部极值，与第10章同口径）、levels（枢轴聚类成位：位价=簇均值、触碰数、破位互换）、fibLevels（0.236/0.382/0.5/0.618 刻度）。读者已能让位可算可复核、讲清假突破收割与斐波那契自我实现。export-docs 新增 3 个 JSON。218 项测试全绿。"
+    },
+    {
+      "slug": "chip-distribution",
+      "summary": "第14章：已建立 src/chips/distribution.ts——chipDistribution 换手衰减模型（历史筹码×(1−t)、当日量均匀分摊区间、首日全流通落位），逐日快照含价位直方图、获利盘/套牢盘比例、平均成本、筹码峰，总量恒等流通股本。读者已能手算三轮换手、讲清反弹滞涨的套牢峰机制。export-docs 新增 3 个 JSON。239 项测试全绿。"
+    },
+    {
+      "slug": "reversal-structures",
+      "summary": "第15章：已建立 src/levels/structures.ts——detectStructures 复用 pivots 扫反转结构：头肩顶（两肩同水平、头高出一截、颈线=两谷均值）、双顶/双底（两端同水平、中间拉开深度），收盘破线才成立，量度目标=2×颈线−顶价。读者已能提前量出颈线与目标、给缺口三性格分诊（缺口标记为导出段教学扫描）。export-docs 新增 3 个 JSON。254 项测试全绿。"
+    },
+    {
+      "slug": "macd",
+      "summary": "第16章：已建立 src/indicators/macd.ts——macd(candles,opts)→{dif,dea,hist}（DIF=EMA12−EMA26、DEA=DIF 再 EMA9、柱=DIF−DEA，头部 null：DIF 第26根、DEA与柱第34根成形）；detectDivergence 复用第13章 pivots 峰对峰比价与 DIF。读者已能手推三层读数与柱正负、讲清背离=动量衰减并给条件句应对。export-docs 新增 4 个 JSON。268 项测试全绿。"
+    },
+    {
+      "slug": "rsi-kdj",
+      "summary": "第17章：已建立 src/indicators/rsi.ts 与 kdj.ts——rsi 用 Wilder 平滑（只涨钉 100、全平记 50）；kdj→{rsv,k,d,j}（RSV 位置百分比，K/D 各 1/3 平滑、种子 50，J=3K−2D 会越界）。读者已能手推两指标、讲清钝化成因与对策（趋势过滤、看背离不看阈值）。export-docs 新增 5 个 JSON。289 项测试全绿。"
+    },
+    {
+      "slug": "bollinger",
+      "summary": "第18章：src/indicators/bollinger.ts——bollinger→{mid,upper,lower,bandwidth}（中轨=sma、轨=MA±kσ）、squeezes 收口、outsideStats 带外占比；src/stats/stdev.ts（stdev/正态与肥尾构造）。读者已能手算σ、识破肥尾边界、读带宽收口开口。export-docs 新增 3 个 JSON。317 项测试全绿。"
+    },
+    {
+      "slug": "fundamentals-peek",
+      "summary": "第19章（principle）：PE=按现在利润几年回本、PB=价格是家底几倍、ROE=股东的钱一年赚几个点，恒等式 PE×ROE=PB；排雷三条条件句+失效条件（PE 为负连亏、ROE 常年个位数、PB 数倍于行业而 ROE 不高、ST 不碰）；银行看 PB、消费看 PE、成长看 ROE-PE 组合；技术管时机、基本面管资格。export-docs 新增 19-payback.json。无 src 新增。"
+    },
+    {
+      "slug": "expectancy-risk",
+      "summary": "第20章：已建立 src/risk/——expectancy（胜率×平均盈利−败率×平均亏损）、kellyFraction（f=胜率−败率÷盈亏比；仓位=风险÷止损距离）、monteCarloRuin/equityPaths（固定种子破产概率曲线与资金路径）。读者已能手算期望值与凯利仓位、讲清实战取分数两因与马丁格尔死路。export-docs 新增 2 个 JSON。357 项测试全绿。"
+    },
+    {
+      "slug": "backtest-engine",
+      "summary": "第21章：已建立 src/backtest/——backtest(candles,strategy,costOpts)（T+1 次日开盘成交、佣金/最低5元/印花税/滑点、整手全仓、买入持有基准）→交易列表/资金曲线/总收益/最大回撤/胜率/盈亏比；metrics 另出绩效指标。读者已能彩排任意 Strategy，亲手复现未来函数、过拟合、样本内外切分、幸存者偏差三坑。export-docs 新增 2 个 JSON。404 项测试全绿。"
+    },
+    {
+      "slug": "trading-system",
+      "summary": "第22章（principle，终章）：处置效应四步教＋三个机械对策（止损进场前写好、离场清单盘中只执行、买入理由入日志卖出对照）；交易系统=入场/止损/仓位/离场四栏可打印清单（站内回链）＋全书工具地图＋防骗五信号＋回测→小仓实盘→复盘→改清单循环。无代码。404 项测试全绿。读者已能打印清单并进入迭代循环。"
+    }
+  ]
+}

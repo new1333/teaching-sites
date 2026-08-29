@@ -1,0 +1,36 @@
+{
+  "glossary": [
+    { "term": "store", "en": "store", "definition": "由 defineStore 定义、挂在容器上的响应式单例，持有 state/getters/actions" },
+    { "term": "容器", "en": "Pinia instance", "definition": "createPinia() 的返回值，一个应用一个：根 state、store 注册表 _s、插件列表 _p 与效应作用域 _e" },
+    { "term": "状态树", "en": "StateTree", "definition": "一个 store 的全部状态的普通对象形态，集中存放在容器 state 下的同名键" },
+    { "term": "单例身份", "en": "store identity", "definition": "同一容器内同一 id 的 store 只创建一次，处处取到同一实例" },
+    { "term": "选项式 store", "en": "Option Store", "definition": "用 state/getters/actions 三个选项定义的 store，语法面向对象" },
+    { "term": "组合式 store", "en": "Setup Store", "definition": "用类似组件 setup 的函数定义的 store，返回 ref/computed/函数；一切 store 最终都归一为它" },
+    { "term": "运行时分类", "en": "runtime classification", "definition": "创建 store 时逐属性判断 isRef/isReactive/isComputed/typeof function，决定它是状态、getter 还是 action" },
+    { "term": "深合并", "en": "mergeReactiveObjects", "definition": "$patch 时的递归合并：对象递归、Map 逐键 set、Set 逐项 add、ref 与 reactive 直接整体替换" },
+    { "term": "订阅", "en": "subscription", "definition": "$subscribe 监听 state 变化、$onAction 监听 action 生命周期，返回解绑函数" },
+    { "term": "refs 化", "en": "storeToRefs", "definition": "把 store 的状态与 getter 转成 ref 活引用以安全解构，函数天然免疫不需要转" },
+    { "term": "插件", "en": "PiniaPlugin", "definition": "pinia.use 注册的扩展函数，每个 store 创建时收到 context，返回值合并进该 store" },
+    { "term": "活动容器", "en": "activePinia", "definition": "模块级变量记录「当前哪个容器在干活」，让组件外 useStore 也能找到家" },
+    { "term": "效应作用域", "en": "effectScope", "definition": "Vue 的响应式效果收集器：scope.stop() 一次性停掉其中所有 computed/watch，$dispose 靠它收拾现场" },
+    { "term": "伴生实现", "en": "pinia-mini", "definition": "读者在本课程中亲手写的 pinia 蒸馏版，约 400 行，API 与真 pinia 同构" }
+  ],
+  "code_conventions": {
+    "file_layout": "与真 pinia 同构：src/createPinia.ts、src/rootStore.ts、src/store.ts、src/storeToRefs.ts、src/subscriptions.ts、src/types.ts——文件名对齐真源码，便于最后一章对照",
+    "naming": "导出用 camelCase（createPinia、defineStore、storeToRefs）；内部字段用下划线前缀（_s、_p、_e、_a）与真 pinia 一致",
+    "dependencies": "伴生实现直接使用 vue 的响应式原语（ref/reactive/computed/effectScope/watch/toRef/inject），不重新发明响应式系统；不依赖 vue 之外的运行时库",
+    "app_stub": "测试用最小 app 桩对象（{ provide, runWithContext, config.globalProperties }）代替完整 Vue 应用——install 只需要这三个口",
+    "error_handling": "错误用 throw new Error，消息前缀 '🍍'；setup store 调 $reset 抛错（与真 pinia 行为一致）",
+    "dev_only": "真源码的 __DEV__ 分支、devtools、HMR、diagnostics 一律不进伴生实现；伴生只保留生产语义"
+  },
+  "api_contract": {
+    "createPinia": "createPinia(): Pinia——install(app) 时 setActivePinia 并 app.provide(piniaSymbol, pinia)；state: Ref<Record<string, StateTree>>；_s: Map<string, Store>；_e: EffectScope；_p: PiniaPlugin[]；use(plugin) 支持在 install 之前调用（缓冲到 install）",
+    "defineStore": "defineStore(id, options | setup)：返回 useStore(pinia?)——首次调用惰性创建并注册进 _s，此后返回同一实例；组件外调用走 activePinia；无活动容器时抛错",
+    "store_surface": "store 上：$id、$state（getter/setter，set 走 $patch）、$patch(obj|fn)、$reset、$subscribe(cb, opts?)→unwatch、$onAction(cb, detached?)→unbind、$dispose；状态、getter、action 直接以属性挂载",
+    "patch_semantics": "$patch 无论嵌套多深、改了多少键，恰好触发一次 $subscribe 回调（mutation.type: 'patch object' | 'patch function'）",
+    "reset_semantics": "$reset 仅选项式 store 可用：重跑 state() 工厂并 $patch 回去；组合式 store 调用抛错",
+    "onAction_semantics": "$onAction 回调收到 { store, name, args, after, onError }；同步与异步 action 的 after/onError 都会触发；action 抛错时错误继续向上抛",
+    "storeToRefs": "storeToRefs(store)：状态字段→toRef 活引用（改 .value 即改 store），getter→可写 computed，action/普通属性不出现在结果里",
+    "plugin_semantics": "插件在每个 store 创建时收到 { store, app, pinia, options }；返回对象的每个键合并进 store；install 前注册的插件在 install 时补挂"
+  }
+}

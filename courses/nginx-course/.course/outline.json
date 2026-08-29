@@ -1,0 +1,215 @@
+{
+  "title": "Nginx 前端实战课",
+  "audience": "会打包部署前端应用、但遇到 Nginx 配置只会复制粘贴的前端工程师",
+  "input": { "kind": "topic", "ref": "Nginx 配置，主要涉及前端开发可能使用的场景" },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript (strict) + node:http + node:zlib + vitest，零运行时第三方依赖",
+    "scope": "mini-nginx：用 Node 重实现面向前端场景的 Nginx 核心（静态服务 / location 匹配 / try_files / 反向代理 / 请求头透传 / 负载均衡 / gzip / 缓存 / CORS），配置键与 nginx.conf 指令一一对应，预计 ~700 行 src"
+  },
+  "parts": [
+    {
+      "title": "地基：从一份 dist 说起",
+      "chapters": [
+        {
+          "slug": "nginx-mental-model",
+          "title": "Nginx 心智模型：一个请求到底被谁处理了",
+          "goal": "建立 master/worker 进程模型与请求处理阶段的整体图景，把「前端构建产物」和「线上服务」连接起来",
+          "type": "principle",
+          "pain_point": "npm run build 之后 dist 交给运维上线，用户反馈线上白屏，前端查代码、运维查机器，没人说得清一个 URL 进来后先后经过谁、在哪一步 404 的",
+          "depends_on": [],
+          "acceptance": [
+            "开章复现痛点场景，指明缺的正是「请求生命周期」的图景",
+            "讲清 master/worker、事件驱动、server/location 选择流程，配 ASCII 图",
+            "给出全书伴生工程 mini-nginx 的路线图，说明配置键与 nginx.conf 指令的一一对应关系"
+          ]
+        },
+        {
+          "slug": "serve-static",
+          "title": "静态文件服务：root、index 与 MIME",
+          "goal": "实现 root/index 指令与扩展名→Content-Type 映射，正确伺服一份前端构建产物",
+          "type": "build",
+          "pain_point": "把 dist 丢上服务器后首页能开，但 main.js 被当成 text/plain 返回，浏览器拒绝执行脚本直接白屏；图片能显示、字体文件却 403",
+          "milestone": "mini-nginx 能按 root 指令伺服 fixtures 目录：GET / 返回 index.html，GET /app.js 返回 application/javascript，不存在的文件 404，含 .. 的路径 403",
+          "milestone_verify": "tests/serve-static.test.ts 断言状态码 + Content-Type 全部通过（tsc --noEmit + vitest run 双门槛）",
+          "depends_on": ["nginx-mental-model"],
+          "acceptance": [
+            "伴生实现门槛通过：新测试转绿且旧章测试全量通过",
+            "正文含「没有正确 MIME 映射时」的白屏复现段落",
+            "讲清 root 与 alias 的差异（alias 不拼接 location 前缀）",
+            "源码/指令引用 ≤10 行且只用于对照真实 Nginx 行为"
+          ]
+        },
+        {
+          "slug": "location-matching",
+          "title": "location 匹配：一个 URI 命中哪条规则",
+          "goal": "实现精确 =、前缀、^~、正则 ~/~* 的完整匹配算法与优先级",
+          "type": "build",
+          "pain_point": "配了 location /api 代理后端后，新上线的 /api-docs 文档页也被整个转发给后端，返回一串 JSON 把文档站干挂了",
+          "milestone": "matcher(locationBlocks, uri) 返回命中块：= 精确命中优先于一切，^~ 阻断正则，正则按声明顺序，兜底最长前缀",
+          "milestone_verify": "tests/location-matching.test.ts 用 ≥8 组 uri/配置断言命中结果与优先级",
+          "depends_on": ["serve-static"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现 /api 误伤 /api-docs 的现象并解释前缀匹配的本质",
+            "给出「Nginx 选 location 的五步判定流程」可背诵版",
+            "实现段引用伴生代码讲解匹配算法与真实 Nginx 的对齐点"
+          ]
+        },
+        {
+          "slug": "spa-fallback",
+          "title": "try_files 与 SPA History 路由回退",
+          "goal": "实现 try_files 指令语义，解决前端路由刷新 404",
+          "type": "build",
+          "pain_point": "Vue Router history 模式的站点首页一切正常，用户在 /orders/42 页面按 F5 刷新直接 404，客服每周都要接「页面丢了」的工单",
+          "milestone": "try_files: ['$uri', '/index.html'] 生效：深层路由 URI 返回 200 的 index.html，真实存在的静态资源不受影响仍然精确命中，两者都不存在才 404",
+          "milestone_verify": "tests/spa-fallback.test.ts 断言三种 URI 的状态码与响应体",
+          "depends_on": ["location-matching"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现刷新 404 并解释 hash 模式为什么没这个问题",
+            "讲清 try_files 最后一项以 / 开头 = 内部回退而非文件名的语义",
+            "给出 hash 路由 vs history 路由 + 回退配置的完整对照"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "代理：前端与后端之间的桥",
+      "chapters": [
+        {
+          "slug": "reverse-proxy",
+          "title": "反向代理 proxy_pass：本地联调与同源部署",
+          "goal": "实现 proxy_pass 转发，掌握带/不带路径的 URI 改写语义",
+          "type": "build",
+          "pain_point": "本地联调时 fetch('/api/user') 因跨域被浏览器 CORS 拦截，前端被迫在 webpack devServer 配一遍 proxy、上线再求运维在 Nginx 配一遍，两边语义还不一样",
+          "milestone": "location /api 的 proxy_pass 转发到 mock 后端：响应原样返回；proxy_pass 带路径（如 http://backend/v2）时按前缀替换改写 URI，不带路径时透传",
+          "milestone_verify": "tests/reverse-proxy.test.ts 起 mock 上游断言：透传路径、改写路径、上游 500 原样透传 500",
+          "depends_on": ["location-matching"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现本地联调 CORS 报错并说明为什么同源部署 + 代理能根治",
+            "带尾斜杠/不带尾斜杠语义差异配对照表与可运行例子",
+            "正文与伴生实现行为一一对应（转发、透传状态码）"
+          ]
+        },
+        {
+          "slug": "proxy-headers",
+          "title": "请求头透传与 WebSocket：X-Forwarded-For 和 Upgrade",
+          "goal": "实现 proxy_set_header，传递客户端真实信息并支持 WebSocket 升级",
+          "type": "build",
+          "pain_point": "上了 Nginx 后后端日志里所有请求 IP 都是 Nginx 机器的 10.0.0.2，风控把全站用户判成同一个人；同时聊天室 WebSocket 每分钟断线报 1006，因为 Upgrade 头没被透传",
+          "milestone": "代理请求自动携带 X-Real-IP、X-Forwarded-For（逐跳追加）、X-Forwarded-Proto；可配置 proxy_set_header 覆盖 Host；收到 Upgrade: websocket 请求时完成 101 升级并双向转发",
+          "milestone_verify": "tests/proxy-headers.test.ts 断言上游收到的各请求头值 + 用原生 socket 完成一次 101 握手并互发一帧",
+          "depends_on": ["reverse-proxy"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现「所有用户同一个 IP」与「1006 断线」两个现象",
+            "讲清逐跳头与端到端头的区别、X-Forwarded-For 可被伪造的安全含义",
+            "WebSocket 升级流程配握手时序图（ASCII）"
+          ]
+        },
+        {
+          "slug": "load-balancing",
+          "title": "upstream 负载均衡：发版不再 502",
+          "goal": "实现 upstream 后端组、轮询与权重、故障实例摘除",
+          "type": "build",
+          "pain_point": "后端单实例每次发版都 502 三分钟，高峰期重启直接雪崩；老板问「为什么不能两台轮着发」时没人答得上来怎么配",
+          "milestone": "proxy_pass 引用 upstream 名：请求按轮询分发到两台上游（权重生效），某实例拒绝连接时自动重试下一台，全部不可达才 502",
+          "milestone_verify": "tests/load-balancing.test.ts 断言：8 次请求两台上游各收 4 次（权重 2:1 时 4/2 分布）；关掉一台后所有请求仍 200；全关后返回 502",
+          "depends_on": ["reverse-proxy"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现单实例发版 502 雪崩场景",
+            "讲清轮询/权重/ip_hash 的适用场景与 session 亲和问题",
+            "故障摘除 + 重试语义与真实 Nginx proxy_next_upstream 对齐并说明差异"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "上线：性能、缓存与排障",
+      "chapters": [
+        {
+          "slug": "gzip",
+          "title": "gzip 压缩：把 2.3MB 的 vendor.js 降到 600KB",
+          "goal": "实现 gzip 响应压缩与 Accept-Encoding 协商、按类型选择性压缩",
+          "type": "build",
+          "pain_point": "Lighthouse 报「启用文本压缩」红项，vendor.js 2.3MB 在 4G 下首屏 9 秒，运营投放页一半流量在白屏期间流失",
+          "milestone": "gzip: on 生效：带 Accept-Encoding: gzip 的请求收到 Content-Encoding: gzip 且 zlib 解压后与原文件一致；text/* 与 JS 压缩、png 已压缩格式跳过；未带该头的请求不压缩",
+          "milestone_verify": "tests/gzip.test.ts 断言响应头、解压一致性、类型选择、无头不压缩四种情形",
+          "depends_on": ["serve-static"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章给出压缩前后传输体积与首屏时间的量化对比",
+            "讲清为什么图片不该再压（已压缩格式收益为负）",
+            "提及 brotli 与 gzip_static 等生产常用延伸并说明 mini-nginx 未实现的原因"
+          ]
+        },
+        {
+          "slug": "cache-control",
+          "title": "缓存控制：一半用户新一半用户旧的怪事",
+          "goal": "实现 expires/Cache-Control 策略与 ETag 协商缓存，搭出 hash 资源 + index.html 的标准缓存方案",
+          "type": "build",
+          "pain_point": "每次发版，一半用户看到新版本一半还停留在旧版；更糟的是 index.html 被强缓存，引用的还是旧 hash 的 js 文件名，直接白屏报 404",
+          "milestone": "按 location 分别下发策略：带 hash 的 /assets/* 返回 Cache-Control: max-age=31536000, immutable；index.html 返回 no-cache；开启 etag 后 If-None-Match 命中返回 304 空体",
+          "milestone_verify": "tests/cache-control.test.ts 断言三类响应头 + 一次 304 往返（If-None-Match 与 ETag 匹配）",
+          "depends_on": ["serve-static"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现「新旧行为不一致」与「旧 index 引新 hash 白屏」两个现象并归因到缓存层",
+            "强缓存/协商缓存两级机制配对照表（谁发起请求、谁判定新鲜）",
+            "给出 Vite/CRA 产物 + mini-nginx/Nginx 的完整缓存配置结论"
+          ]
+        },
+        {
+          "slug": "cors-headers",
+          "title": "CORS 与 add_header：跨域资源共享在网关层怎么做",
+          "goal": "实现 add_header 指令与 OPTIONS 预检处理，理解跨域响应头注入的正确位置",
+          "type": "build",
+          "pain_point": "图片服务搬去 CDN 域名后，canvas 的 getImageData 全报跨域污染；另一个站点预检 OPTIONS 请求被 405 拒绝，Fetch 层层报错但后端说接口明明是好的",
+          "milestone": "add_header 往响应注入任意头（Access-Control-Allow-Origin 等）；cors 配置自动应答 OPTIONS 预检（204 + Allow-* 头）；仅指定 location 放行跨域",
+          "milestone_verify": "tests/cors-headers.test.ts 断言：简单跨域请求带头、预检 204、未配置的 location 不带头",
+          "depends_on": ["reverse-proxy"],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "开章复现 canvas 污染与预检 405 两个现象",
+            "讲清预检触发条件与 add_header 作用域继承的坑（子块覆盖导致头丢失）",
+            "给出「同源代理」与「CORS 头放行」两条路线的取舍结论"
+          ]
+        },
+        {
+          "slug": "https-and-security",
+          "title": "HTTPS 与安全头：上线 TLS 前前端要懂的常识",
+          "goal": "理解证书链、http→https 跳转、HSTS 与混合内容问题（概念章，无伴生代码）",
+          "type": "principle",
+          "pain_point": "站点升级 HTTPS 后页面锁标变灰：接口走了 http 被浏览器拦成混合内容、WebSocket 还连的 ws:// 直接断开，老用户 http 进来还被运营商插了广告",
+          "depends_on": ["nginx-mental-model"],
+          "acceptance": [
+            "开章复现混合内容与 ws:// 断连现象",
+            "讲清证书链、301 跳转、HSTS 各自解决什么问题（配最小 Nginx 配置片段）",
+            "给出前端侧 checklist：资源协议相对地址、wss、CSP 响应头"
+          ]
+        },
+        {
+          "slug": "troubleshooting-map",
+          "title": "mini-nginx vs 真实 Nginx：差异地图与 502/504 排障手册",
+          "goal": "对照差异清单收束全书，给出读日志定位 502/504 的排障决策树",
+          "type": "source-mapping",
+          "pain_point": "周五晚高峰 502，access_log 里一串 upstream 字段没人看得懂，前端等后端、后端等运维，两小时后才发现是实例 OOM",
+          "depends_on": ["load-balancing", "cache-control"],
+          "acceptance": [
+            "开章复现 502 工单场景",
+            "差异地图成表：逐特性对照 mini-nginx 与真实 Nginx（父子进程/epoll/多阶段管线/缓存锁等未实现项及原因）",
+            "502/504 排障决策树：从 access_log 的 upstream_status 字段出发逐层定位",
+            "指明真实世界延伸阅读入口（官方文档对应模块页）"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个 ~700 行、零依赖的 mini-nginx（TypeScript）：配置键与 nginx.conf 指令一一对应，覆盖静态服务、location 匹配、SPA 回退、反向代理、请求头透传、WebSocket、负载均衡、gzip、缓存控制、CORS 十大前端场景",
+    "verify": "companion 下 pnpm vitest run 全绿（10 个特性各成一组测试文件），且读者能对照差异地图说出每条实现与真实 Nginx 的差距"
+  }
+}

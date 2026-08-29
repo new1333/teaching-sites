@@ -1,0 +1,102 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "gpu-pipeline",
+      "file": "01-gpu-pipeline.md",
+      "degraded": false,
+      "summary": "第 1 章建立四块地基：GPU（几千简单通道并联，赢在人多）、渲染管线（顶点定位→光栅化圈格子→片元上色三段接力）、光栅化的连续到离散翻译、帧率预算（60 帧=16.7ms）与掉帧成因。读者已能解释单核跑满、判断一段代码该交 CPU 还是 GPU、在对比演示看到两种画法差三个数量级。下一章拆开黑盒：GLSL 编译、VBO/attribute、varying 插值，画第一个三角形，复刻「画布一片黑」痛点。"
+    },
+    {
+      "n": 2,
+      "slug": "first-triangle",
+      "file": "02-first-triangle.md",
+      "degraded": false,
+      "summary": "第 2 章拆开黑盒：着色器是管线两端可编程岗位（顶点算 gl_Position、片元算 gl_FragColor，GLSL 书写、类型严格）；进料口三通道 attribute（缓冲区逐顶点喂）、uniform（第 3 章主角）、varying（按片元位置插值）；NDC 是 [-1,1] 标准操场，像素与 NDC 可互算；接线六步（编译→链接→缓冲→attribute→清屏→drawArrays），每步失败都静默，黑屏先查 InfoLog 与 attribute 绑定。实验场新增 geometry/triangle：createTriangle() 返回 9 个 NDC 分量、逆时针、鞋带面积 0.78，测试背书。读者已能从零写出渐变三角形并在 Playground 改 GLSL 看内联报错。"
+    },
+    {
+      "n": 3,
+      "slug": "uniforms-and-animation",
+      "file": "03-uniforms-and-animation.md",
+      "degraded": false,
+      "summary": "第 3 章讲动画正解：随时间变的量走 uniform（一次绘制内全场统一、两次绘制间可改），坐标留缓冲区只传一次；渲染循环 rAF 三步（清屏→更新→重画），更新必须用增量时间缩放并封顶；精度限定符还债：片元着色器必须声明 float 精度（lowp/mediump/highp）。实验场新增 math/interpolate：lerp/clamp/smoothstep 与 GLSL 同语义（lerp 越界外推不钳制、smoothstep 收拢），9 条断言与规范对账。读者已能做出 uniform 驱动的旋转/呼吸动画并解释两种写法的账单差异。"
+    },
+    {
+      "n": 4,
+      "slug": "vectors",
+      "file": "04-vectors.md",
+      "degraded": false,
+      "summary": "第 4 章从零教向量：三个数各管一根轴，装「方向+长度」；减法算指向、加法接力、数乘拉长；length 走勾股（3-4-5 对账 5）；点积=方向一致度打分机（同向正、垂直零、反向负，除模长读 cos θ 与投影）——光照 N·L 的地基；叉积右手定则给垂直方向、长度=面积；归一化剥掉距离，修复飞船忽快忽慢。实验场新增 math/vec3 八件套（add/sub/scale/dot/cross/length/normalize/distance），零向量归一化返回 [0,0,0]（声明的 GLSL 差异），19 条新断言、总数 31。读者已能解释速度混距离的 bug 并手算点积投影。"
+    },
+    {
+      "n": 5,
+      "slug": "transform-matrices",
+      "file": "05-transform-matrices.md",
+      "degraded": false,
+      "summary": "第 5 章从零教矩阵：4×4 变换机器，齐次坐标补 w=1 让平移也成乘法；列主序下标 c×4+r、平移住 m[12..14]；矩阵乘法 = 机器串联、从右往左作用、不可交换（T·R ≠ R·T）；绕中心转 = T·R·T⁻¹；模型矩阵是 MVP 的 M。实验场新增 mat4 八件套（transformPoint 出口除 w 埋透视钩子），共 15 条新断言、总数 46。读者已能修复转飞 bug。"
+    },
+    {
+      "n": 6,
+      "slug": "projection",
+      "file": "06-projection.md",
+      "degraded": false,
+      "summary": "第 6 章教投影：视锥体=眼睛削出的帐篷（fov/aspect/near/far）；裁剪坐标与 NDC 分家——gl_Position 是未除 w 的半成品，w=1 时两者重合（前几章活在特例）；perspective 第 4 行 (0,0,-1,0)→w=-z，透视除法=近大远小；ortho w 恒 1、保平行；aspect 不进矩阵圆变椭圆。实验场 mat4 新增 perspective/ortho（fov 弧度、near/far 正距离），13 条新断言、总数 59。读者已能解释六边形痛点、手算眼空间点→屏幕全链路。"
+    },
+    {
+      "n": 7,
+      "slug": "camera-lookat",
+      "file": "07-camera-lookat.md",
+      "degraded": false,
+      "summary": "第 7 章教相机：WebGL 没有相机岗位，只有矩阵——三要素 eye/center/up（眼在哪/看哪/头正不正）交给 lookAt，现造 f/s/u 三根正交基（sub/cross/normalize 复工），基向量按行装旋转、第 4 列 −R·eye，V 即相机变换的逆过程；up 平行视线时退化（返回 translate 后的约定值，测试锁住）。lookAt((0,0,5),原点) 恰等于 translate(0,0,−5)。MVP 凑齐：坐标先过 M、再过 V、后过 P，除 w 后 viewport 上屏。实验场 mat4 新增 lookAt，9 条新断言、总数 68。读者已能用轨道雏形换视角、解释 z=+5 看不到的账。"
+    },
+    {
+      "n": 8,
+      "slug": "depth-and-cube",
+      "file": "08-depth-and-cube.md",
+      "degraded": false,
+      "summary": "第 8 章教遮挡与第一个 3D 物体：深度缓冲=每像素记远近的账本（clearDepth 1、LESS、near→-1/far→+1 非线性），两片元争一像素演算证明绘制顺序不再影响结果；索引绘制顶点存一份、36 编号引用；顶点=位置+全部逐顶点属性的整包，8 角点拆 24 顶点；缠绕方向从外看逆时针=正面（frontFace(CCw) 默认），背面剔除只裁三角形、省约一半片元，凸物体只靠剔除也画得对。实验场新增 geometry/cube：createCube() 返回 { vertices: 24×8 交错（pos3+normal3+uv2）, indices: 36, stride: 8 }，UV 为第 9 章铺垫。新断言 9 条、总数 77。读者已能解释幽灵方块并用开关复刻与消除。"
+    },
+    {
+      "n": 9,
+      "slug": "textures",
+      "file": "09-textures.md",
+      "degraded": false,
+      "summary": "第 9 章教贴图：纹理=按坐标查表的图片数据，细节住纹理不住顶点；UV 是贴纸上的归一化地址（左下原点、v 向上、分辨率无关）；采样=片元逐个查表，过滤 NEAREST 马赛克/LINEAR 调匀（双线性）；包裹 REPEAT 平铺、CLAMP_TO_EDGE 拉边（WebGL1 非 2 幂只许后者）；上下颠倒=图片行序与 v 轴没对账，UNPACK_FLIP_Y_WEBGL 上传时倒行序；只传第 0 级不动 MIN_FILTER 默认值会黑屏（纹理不完整）。实验场新增 texture/procedural 的 checkerboard(size,cells)（第 0 行=底边、格 (0,0) 黑、相邻互反），cube 的 uv 字段取用。新断言 8 条、总数 85。读者已能贴程序化纹理并复刻/消除三类痛点。mipmap 一句话声明绕开（待登记差异清单）。"
+    },
+    {
+      "n": 10,
+      "slug": "lighting",
+      "file": "10-lighting.md",
+      "degraded": false,
+      "summary": "第 10 章教光照：法线=表面接光的姿势，N·L 打分（45°→0.707、背面钳 0）；法线矩阵=模型矩阵 3×3 逆转置（余子式÷det 一步到位），X 拉伸 2 倍时直乘模型矩阵的法线偏出 cos=0.8 夹角；Phong 三件套=环境光+漫反射+高光（reflect 同 GLSL、shininess 取幂、写入前收拢 [0,1]）；点光源逐片元量方向；光照逐片元算，插值缩短靠 normalize 补回。实验场新增 mat4.normalFromMat4 与 light/phong（reflect/diffuse/specular/computePhong，与 GLSL 同形），新断言 9 条、总数 94。读者已能解释「六个面一模一样/拉伸后明暗错位」并手算三件套。"
+    },
+    {
+      "n": 11,
+      "slug": "scene-graph",
+      "file": "11-scene-graph.md",
+      "degraded": false,
+      "summary": "第 11 章教层级：场景图=父子上级的树（组织架构图：工位先在部门内算、再由部门搬进公司）；局部矩阵只写相对父级，世界矩阵=从根链乘；updateWorld 深度优先一次结算，world 是快照非活引用；层级动画=每帧只重建 local（角度是唯一真相，杜绝误差累积）；遍历绘制=深度优先、各节点拿当时 world 当模型矩阵，MVP 的 M 升级成链；自转写在叶子网格上才拖不动行星。实验场新增 scene/node 的 SceneNode（class 例外：local/children/world/add/updateWorld），新断言 8 条、总数 102（公转 90° 月亮世界 (0,0,−5.5) 对账）。读者已能搭多层场景、解释月亮轨道飘掉的账。"
+    },
+    {
+      "n": 12,
+      "slug": "camera-controls",
+      "file": "12-camera-controls.md",
+      "degraded": false,
+      "summary": "第 12 章教相机操控：轨道相机＝球坐标（方位角绕 Y、极角从 +Y 量起、半径）出眼位，极角收进 [1°,90°] 防极点退化；漫游＝yaw/pitch 固定「先 pitch 后 yaw」出 forward/right/up 相机基向量（与 lookAt 的 f/s/u 同套手艺），WASD 沿基向量移动；角度是唯一状态、每帧重建，姿态不累积不翻车；滚轮只碰半径＝沿视线进退（直接改眼位分量则效果随朝向三象限乱变）。实验场新增 scene/camera（orbitEye/viewBasis/CameraBasis，度数约定、手性同 rotY），新断言 14 条、总数 116。读者已能把拖拽、滚轮、键盘接进 lookAt。"
+    },
+    {
+      "n": 13,
+      "slug": "build-3d-world",
+      "file": "13-build-3d-world.md",
+      "degraded": false,
+      "summary": "第 13 章装配终点世界：材质=皮肤参数包（baseColor/三强度/shininess/emissive，挂 SceneNode 可选 data 挂件、柱子共享同一材质对象示范共享）；渲染清单=遍历树收 (mesh, world, material) 三元组、一个循环画完；雾=mix(色, 雾色, smoothstep(8,28,d))，距眼 20 混 64.8%，兑第 3 章 mix 账（lerp 不钳制的 bug 形状）；程序化布局=mulberry32 种子随机（>>>0 摁回无符号），消费顺序=生成顺序（房子 1 根数+每房 6 笔），同种子同世界。实验场新增 world/world（createWorld/collectRenderList/materialOf 与五类型，FogParams 固定不随种子、不查碰撞为声明简化），SceneNode 加可选 data，新断言 10 条、总数 126。读者已能亲手开机漫游最终世界（WASD+拖拽+昼夜+换种子）。"
+    },
+    {
+      "n": 14,
+      "slug": "beyond-webgl",
+      "file": "14-beyond-webgl.md",
+      "degraded": false,
+      "summary": "第 14 章终章收官（principle，无新代码、无新断言）：逐项对账库的公开概念与读者手写件同账（BufferGeometry/PerspectiveCamera/MeshPhongMaterial/Scene）；库真正增值五件（glTF 解析、异步资源、剔除批处理、阴影后期、跨设备）；「自写 vs 上库」决策清单，上库仍靠原理归因；新教视锥剔除（包围球纸面推演 √(0.55²+1.75²+0.55²)≈1.92、正方形画布 aspect 1 声明，对账第 6 章视锥）与实例化渲染（省 CPU 发单，对账第 1 章），WebGL2 几乎严格超集（MDN 口径）、WebGPU 对齐现代图形 API。读者已能选型、读库文档与图形学文章。全书 14 章、126 条断言完结。"
+    }
+  ]
+}

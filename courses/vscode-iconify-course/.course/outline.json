@@ -1,0 +1,260 @@
+{
+  "title": "编辑器里的图标智能:VSCode 扩展原理十二讲",
+  "audience": "想理解 VSCode 扩展如何对代码文本做识别、补全与内联渲染的前端开发者;不要求写过扩展,但需要 TypeScript 基础",
+  "input": { "kind": "repo", "ref": "antfu/vscode-iconify@main" },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript(strict, ESM)+ vitest",
+    "scope": "最小图标智能引擎(纯库形态,零 VSCode 依赖):输入文本与配置,输出装饰描述符、补全项与悬停 markdown;图标数据三级缓存(网络与磁盘全部注入,测试零网络);含 mini 依赖追踪与自定义集合热重载。约 600 行"
+  },
+  "parts": [
+    {
+      "title": "识别:从文本里找出图标名",
+      "chapters": [
+        {
+          "slug": "extension-channels",
+          "title": "一个插件的边界:文本智能的三条通道",
+          "goal": "讲清 VSCode 扩展模型(激活、贡献点、提供方)与装饰/补全/悬停三条文本渲染通道的选型依据",
+          "type": "principle",
+          "pain_point": "团队里自研的「TODO 高亮」插件用 * 激活,全员 VSCode 启动慢了 800ms;想做图标内联预览,又在语义 token、装饰、inline hint 之间选错了路,渲染出来的图标随主题错位",
+          "depends_on": [],
+          "relevant_files": [
+            { "path": "package.json", "why": "备课:activationEvents 与 contributes 的真实结构" },
+            { "path": "src/index.ts", "why": "备课:扩展入口的组装顺序" }
+          ],
+          "acceptance": [
+            "正文含「没有选型意识时」的痛点段落",
+            "三条通道(装饰/补全/悬停)各有明确适用边界与反例",
+            "零外部源码引用",
+            "无实验场增量,产出一张全书管线地图"
+          ]
+        },
+        {
+          "slug": "configurable-regex",
+          "title": "可配置的正则组装:识别规则不该写死",
+          "goal": "把 prefixes/delimiters/suffixes 三组配置拼装成识别正则,实现 findIconKeys",
+          "type": "build",
+          "pain_point": "团队规范是 UnoCSS 风格 i-carbon-home,插件只认 carbon:home,满屏该亮的不亮;找作者改一行正则,等下一次发版等了两周",
+          "milestone": "createConfig + buildRegexes(config) 组装出 full/prefixed/namespace 三条正则;findIconKeys(text, config) 返回全部图标键匹配",
+          "milestone_verify": "测试断言:默认配置识别 mdi:home;改 prefixes 后识别 i-carbon-home;正则分段由配置驱动",
+          "depends_on": [],
+          "relevant_files": [
+            { "path": "src/config.ts", "why": "备课:RE_PART_* 正则分段的组装方式" }
+          ],
+          "acceptance": [
+            "实验场门槛通过:新测试转绿且旧章测试全量通过",
+            "含「硬编码正则之痛」的痛点段落",
+            "正则转义与空串前缀的处理有专门测试",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "offset-to-position",
+          "title": "偏移、行列与范围:装饰为什么盖错了地方",
+          "goal": "实现 offset → (行, 列) 的换算,让匹配带上编辑器可用的 Range",
+          "type": "build",
+          "pain_point": "多行模板字符串里的图标装饰整体错位,图标盖到了下一行的逗号上——Windows 下 CRLF 让每个换行多算了一个字符,offset 换算全部偏移",
+          "milestone": "positionAt(text, offset) 行列换算(LF 与 CRLF 双正确);collectMatches 把 findIconKeys 的结果升级为带行列 Range 的匹配",
+          "milestone_verify": "测试断言:CRLF 文本与 LF 文本中同一图标的行列一致;越界 offset 的行为符合约定",
+          "depends_on": ["configurable-regex"],
+          "relevant_files": [
+            { "path": "src/annotation.ts", "why": "备课:positionAt 与 Range 构造的真实用法" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「装饰错位」的痛点段落",
+            "CRLF/LF 双用例 + 行列 0 基约定写入圣经并被测试锁定",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "icon-parsing",
+          "title": "图标名解析与别名:mdi-light 不是 mdi",
+          "goal": "实现 parseIcon:集合 id 按长度降序消歧、分隔符剥离、别名表展开",
+          "type": "build",
+          "pain_point": "代码里 save 是别名、fa:save 才是全名,两种混用解析崩了一半;更隐蔽的是 mdi-light:foo 被解析成集合 mdi 的图标 light:foo——前缀重叠时贪婪顺序错了",
+          "milestone": "parseIcon(str, collectionIds) 返回 {collection, icon};applyAlias(key, aliases) 先展开别名再解析;集合 id 列表按长度降序消歧",
+          "milestone_verify": "测试断言:mdi-light:foo 解析为集合 mdi-light;别名 save 映射后指向真实键;无分隔符残余",
+          "depends_on": ["configurable-regex"],
+          "relevant_files": [
+            { "path": "src/config.ts", "why": "备课:verifyCollection 与 parseIcon 的消歧顺序" },
+            { "path": "src/loader.ts", "why": "备课:getIconInfo 中别名的展开时机" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「前缀重叠解析错」的痛点段落",
+            "长度降序消歧与别名优先级各有专测",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "数据:图标从哪来、怎么渲染",
+      "chapters": [
+        {
+          "slug": "cache-chain",
+          "title": "三级缓存与在途去重:同一本书只取一次",
+          "goal": "实现 loadIconSet 的逐级回源(内存 → 磁盘 → 远程)与 uniqPromise 并发去重",
+          "type": "build",
+          "pain_point": "打开一个满是 mdi 图标的文件,网络面板 30 个并发请求全是 mdi.json;第二天重启,同样 30 个请求原样再来一遍;补全和装饰同时触发,同一集合下载了两次",
+          "milestone": "createLoader({fetchIconSet, cacheDir, log}) 返回 {loadIconSet, clearCache}:首次回源注入的 fetcher 并把结果写入 cacheDir;再次命中内存;清内存后命中磁盘;uniqPromise 保证并发调用只触发一次 fetcher",
+          "milestone_verify": "测试断言:并发 5 次 loadIconSet('mdi') 只调 fetcher 一次;clearCache 后磁盘缓存仍在;fetcher 失败不落盘且下次可重试",
+          "depends_on": ["icon-parsing"],
+          "relevant_files": [
+            { "path": "src/loader.ts", "why": "备课:LoadIconSet 的回源顺序与 UniqPromise/deleteTask 的去重语义" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「重复下载」的痛点段落",
+            "网络与磁盘全部注入,测试零网络",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "svg-pipeline",
+          "title": "SVG 渲染管线:currentColor、宽高比与 data URL",
+          "goal": "把图标 body 包进 svg 壳、替换主题色、base64 成 data URL",
+          "type": "build",
+          "pain_point": "浅色主题下满屏图标集体消失——SVG 里的 currentColor 没人替换,渲染成了白底白图标;旗帜类 24×16 的图标被硬压成正方形,变形到认不出",
+          "milestone": "pathToSvg(info, fontSize) 按 ratio 撑宽、按 viewBox 对齐;toDataUrl(svg) base64 编码;getIconDataUrl(info, fontSize, color) 完成 currentColor 替换并按 (颜色, 字号, 键) 缓存",
+          "milestone_verify": "测试断言:24×16 图标输出宽度按比例撑开;浅色主题输出含替换后的颜色;同一 (色,号,键) 只编码一次;data URL 可解码回原 SVG",
+          "depends_on": ["cache-chain"],
+          "relevant_files": [
+            { "path": "src/utils/svgs.ts", "why": "备课:pathToSvg 的壳结构与 ratio 计算" },
+            { "path": "src/loader.ts", "why": "备课:getDataURL 的缓存键构成" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「图标消失/变形」的痛点段落",
+            "base64 实现自带编解码往返测试",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "build-vs-runtime",
+          "title": "构建期与运行期的分界:索引卡片与书",
+          "goal": "讲清「元数据打包 + 数据按需下载」的取舍,以及 data URL 内联的约束",
+          "type": "principle",
+          "pain_point": "想离线可用,把全部图标集打进扩展包,vsix 涨到 100MB 被市场拒收;反过来什么都不带,断网时插件全瞎、启动还要先等下载",
+          "depends_on": ["cache-chain", "svg-pipeline"],
+          "relevant_files": [
+            { "path": "scripts/prepare.ts", "why": "备课:构建期从 icon 数据抽取轻量元数据的方式" },
+            { "path": "src/collections.ts", "why": "备课:运行期元数据的形态" }
+          ],
+          "acceptance": [
+            "正文含「包体爆炸 vs 断网全瞎」的取舍推演",
+            "讲清三级缓存如何在断网时降级为磁盘命中",
+            "零外部源码引用",
+            "无实验场增量,产出数据流图"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "智能:补全、悬停与活的配置",
+      "chapters": [
+        {
+          "slug": "inplace-decorations",
+          "title": "装饰收集器与 in-place 模式:光标行不藏字",
+          "goal": "汇总扫描、解析、渲染为完整装饰描述符;实现 in-place 模式的光标行豁免",
+          "type": "build",
+          "pain_point": "开了 in-place 模式,图标名文字被 CSS 藏起来只留图标;光标移到那一行想改名,却看不见自己在改什么——盲改了三次都改错",
+          "milestone": "collectDecorations(text, opts) 输出装饰描述符 {range, key, dataUrl, hoverMarkdown};in-place 开启时对光标所在行的匹配不产出隐藏描述符",
+          "milestone_verify": "测试断言:普通模式全部匹配有装饰;in-place 模式光标行豁免、其余行照常;装饰按出现顺序排列",
+          "depends_on": ["offset-to-position", "svg-pipeline"],
+          "relevant_files": [
+            { "path": "src/annotation.ts", "why": "备课:装饰计算与光标行过滤的时机" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「盲改图标名」的痛点段落",
+            "装饰描述符的形状写入圣经 API 契约",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "providers-lazy-docs",
+          "title": "补全与悬停:延迟出图的提供方",
+          "goal": "实现两段式补全(集合 id → 图标名)与 resolveCompletion 延迟文档、悬停 markdown 预览",
+          "type": "build",
+          "pain_point": "7000 个 carbon 图标名没人记得住,每回都切去浏览器查;review 拷贝来的代码,ph:cycle 长什么样要跑起项目才知道",
+          "milestone": "provideCompletions(linePrefix, ctx) 在集合名后补图标、无命名空间时补集合 id;resolveCompletion(item, ctx) 延迟取 markdown;getIconMarkdown / getCollectionMarkdown 产出悬停预览(内嵌 data URL 图标)",
+          "milestone_verify": "测试断言:carbon: 前缀只出 carbon 图标项;裸前缀出集合 id 项;resolve 后带文档且只在 resolve 时才触发加载;悬停 markdown 含图标链接与预览图",
+          "depends_on": ["icon-parsing", "cache-chain", "svg-pipeline"],
+          "relevant_files": [
+            { "path": "src/completions.ts", "why": "备课:行前缀两段式匹配与触发字符注册" },
+            { "path": "src/markdown.ts", "why": "备课:markdown 表格内嵌图标的形态" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「查图标要开浏览器」的痛点段落",
+            "延迟加载语义(fetcher 调用次数)有专测",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "reactive-config",
+          "title": "活的配置:最小依赖追踪",
+          "goal": "实现 computed/watchEffect 的最小依赖追踪,让正则与装饰随配置自动重算",
+          "type": "build",
+          "pain_point": "用户把分隔符从 : 改成 -,装饰纹丝不动,必须「重新加载窗口」——正则是启动时算死的,配置没有进入任何依赖关系",
+          "milestone": "defineConfig(defaults) 返回可写配置对象;computed(fn) / watchEffect(fn) 在读取时收集依赖、写入时触发重算;接入既有引擎:改 delimiter 后 buildRegexes 的产物自动换新",
+          "milestone_verify": "测试断言:改配置字段后 watchEffect 重跑且只重跑依赖它的;未读取的 computed 不计算(惰性);同一 effect 依赖多个字段时其一变更即重算",
+          "depends_on": ["configurable-regex"],
+          "relevant_files": [
+            { "path": "src/config.ts", "why": "备课:配置派生正则的真实结构" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「改配置不生效」的痛点段落",
+            "依赖追踪的最小语义(惰性、精准重算)有专测",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "custom-collections",
+          "title": "自定义集合与热重载:私有图标库天天改",
+          "goal": "实现本地/远程自定义集合的加载、监听与卸载,统一以 URL 为键管理",
+          "type": "build",
+          "pain_point": "设计同学每天改私有图标库的 SVG,改完都要在群里喊「重启窗口重新加载」;远程集合配置改了地址,旧的还留在内存里和新的一起生效,图标随机抽风",
+          "milestone": "createCustomCollections({watchFiles, readJson, fetchJson}) 支持本地路径(fs 变更即重载)与远程 URL(增删自动加载/卸载);全部条目收进一个以规范化 href 为键的集合表,并注入引擎的集合元数据",
+          "milestone_verify": "测试断言:保存本地集合文件后 reload 回调收到新数据;配置删除远程 URL 后对应集合被卸载;本地 file:// 路径与远程 http 键互不冲突",
+          "depends_on": ["cache-chain", "reactive-config"],
+          "relevant_files": [
+            { "path": "src/config.ts", "why": "备课:本地/远程分流、href 键与 watcher 的接线" }
+          ],
+          "acceptance": [
+            "实验场门槛通过",
+            "含「改图标要重启」的痛点段落",
+            "监听与网络全部注入,测试零网络零真实 fs 监听",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "activation-lifecycle",
+          "title": "激活、命令与生命周期:别拖慢所有人的启动",
+          "goal": "讲清 activationEvents 的惰性激活策略、命令贡献与缓存治理,回顾全书管线",
+          "type": "principle",
+          "pain_point": "插件上线后全员 VSCode 启动变慢——activationEvents 写了 *,打开任何窗口都要先初始化;三个月后 globalStorage 里的缓存涨到 200MB,没有任何入口能清",
+          "depends_on": ["inplace-decorations", "providers-lazy-docs", "custom-collections"],
+          "relevant_files": [
+            { "path": "src/index.ts", "why": "备课:入口的初始化顺序" },
+            { "path": "src/commands.ts", "why": "备课:命令与配置联动的形态" },
+            { "path": "package.json", "why": "备课:activationEvents 的惰性声明" }
+          ],
+          "acceptance": [
+            "正文含「启动变慢 / 缓存膨胀」的痛点段落",
+            "给出按语言与工作区内容激活的对照推演",
+            "全书终点回顾:从一行文本到一枚图标的完整链路",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个约 600 行、零 VSCode 依赖的最小图标智能引擎(TypeScript 库):输入文本与配置,输出带行列范围的装饰描述符(内嵌 data URL 图标与悬停 markdown)、两段式补全项与延迟文档;图标数据经三级缓存(内存/磁盘/注入式下载)按需加载并在途去重;配置具备 mini 依赖追踪,改动即重算;支持本地/远程自定义集合热重载",
+    "verify": "课程自设的原理断言测试(约 10 个测试文件、40+ 断言)全部通过;tsc --noEmit 零错误"
+  }
+}

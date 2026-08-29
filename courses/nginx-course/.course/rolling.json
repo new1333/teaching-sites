@@ -1,0 +1,76 @@
+{
+  "chapters": {
+    "01-nginx-mental-model": {
+      "title": "Nginx 心智模型：一个请求到底被谁处理了",
+      "file": "docs/01-nginx-mental-model.md",
+      "degraded": false,
+      "summary": "已建立概念：master/worker 模型、事件驱动、请求五步旅程（选 server→选 location→handler→响应处理→日志）、nginx.conf 嵌套结构与指令内层覆盖外层。无代码变更（principle 章，companion 脚手架已就绪：tsc --noEmit + vitest run 双门槛）。读者已能：读懂 nginx.conf 的 http/server/location 层级，把一个线上问题定位到五步中的某一步。"
+    },
+    "02-serve-static": {
+      "title": "静态文件服务：root、index 与 MIME",
+      "file": "docs/02-serve-static.md",
+      "degraded": false,
+      "summary": "代码变更：新增 src/types.ts（MiniNginxConfig/ServerBlock/LocationBlock/MatchRule）、src/mime.ts（扩展名→Content-Type 表）、src/location.ts（朴素前缀 findLocation）、src/static.ts（serveStatic：403 穿越/404 缺失/目录找 index）、src/server.ts（createMiniNginx：listen/close）、src/index.ts 导出。概念：root+URI 拼接、index 默认 index.html、无 index 目录 403、root vs alias。读者已能：用 mini-nginx 正确伺服一份 dist（7 测试全绿）。"
+    },
+    "03-location-matching": {
+      "title": "location 匹配：一个 URI 命中哪条规则",
+      "file": "docs/03-location-matching.md",
+      "degraded": false,
+      "summary": "代码变更：src/location.ts 重写为 matchLocation（完整优先级：= → 最长前缀 → ^~ 阻断正则 → 正则按声明顺序 → 前缀兜底），server.ts 换用 matchLocation，index.ts 导出 matchLocation。概念：四种修饰符、判定五步、/api 吞 /api-docs 事故、匹配与路径翻译互相独立。读者已能：推断任意 URI×配置的命中结果（16 测试全绿）。"
+    },
+    "04-spa-fallback": {
+      "title": "try_files 与 SPA History 路由回退",
+      "file": "docs/04-spa-fallback.md",
+      "degraded": false,
+      "summary": "代码变更：static.ts 增 resolveTryFiles（$uri 展开、末项 / 开头=内部重定向）、TryFilesResult 类型；server.ts handler 升级为 MAX_INTERNAL_REDIRECTS=10 的循环（匹配→try_files→回退 URI 重走匹配，超限 500）。概念：history 路由刷新 404 根因、回退循环、资源块不回退防 200 伪 HTML。读者已能：配置带循环保护的 SPA 回退（21 测试全绿）。"
+    },
+    "05-reverse-proxy": {
+      "title": "反向代理 proxy_pass：本地联调与同源部署",
+      "file": "docs/05-reverse-proxy.md",
+      "degraded": false,
+      "summary": "代码变更：新增 src/proxy.ts（buildUpstreamPath：不带路径透传/带路径替换前缀；proxyPass：http.request+双向 pipe，默认 Host=$proxy_host，拒连 502，上游状态码透传）；server.ts 分发循环接入 proxy_pass（优先于静态）；tests/helpers.ts 新增 startMockUpstream。概念：反向代理三能力、尾斜杠成对口诀、同源部署根治 CORS。读者已能：把 /api 正确代理到后端（27 测试全绿）。"
+    },
+    "06-proxy-headers": {
+      "title": "请求头透传与 WebSocket：X-Forwarded-For 和 Upgrade",
+      "file": "docs/06-proxy-headers.md",
+      "degraded": false,
+      "summary": "代码变更：types.ts LocationBlock 增 proxy_set_header；proxy.ts 增 buildProxyHeaders（X-Real-IP/XFF 链式追加/X-Forwarded-Proto/Host=$proxy_host/覆盖顺序）与 proxyUpgrade（重放握手、101 后双向 pipe end:false、end/close/error 三事件整体拆除）；server.ts 注册 upgrade 事件、close() 增 closeAllConnections。概念：逐跳头 vs 端到点头、XFF 从右往左取、FIN 半开陷阱。读者已能：让后端拿到真实 IP、WebSocket 穿透代理（32 测试全绿）。"
+    },
+    "07-load-balancing": {
+      "title": "upstream 负载均衡：发版不再 502",
+      "file": "docs/07-load-balancing.md",
+      "degraded": false,
+      "summary": "代码变更：新增 src/upstream.ts（createUpstreamPool：down 过滤、权重展开序列、next(exclude) 轮询）；proxy.ts proxyPass 增池参数与 attempt 递归重试（tried 集合、headersSent 守门、全试完 502）；server.ts 建池并以 /^http:\\/\\/([^/:]+)$/ 识别组名。概念：轮询/权重/ip_hash、proxy_next_upstream error 默认、两台轮发 SOP。读者已能：配置多后端分组与故障摘除（37 测试全绿）。"
+    },
+    "08-gzip": {
+      "title": "gzip 压缩：把 2.3MB 的 vendor.js 降到 600KB",
+      "file": "docs/08-gzip.md",
+      "degraded": false,
+      "summary": "代码变更：types.ts 增 GzipOptions 与 ServerBlock.gzip；新增 src/gzip.ts（DEFAULT_GZIP_TYPES、shouldGzip 三条件）；static.ts streamFile 双管线（压缩摘 Content-Length 走 chunked）+ServeContext；server.ts 传 acceptEncoding/gzip；helpers.ts 增 rawGet。概念：AE×CE 协商、gzip_types 默认仅 html 的坑、图片/小文件不压。读者已能：开启文本压缩并解释每个不压的场景（44 测试全绿）。"
+    },
+    "09-cache-control": {
+      "title": "缓存控制：一半用户新一半用户旧的怪事",
+      "file": "docs/09-cache-control.md",
+      "degraded": false,
+      "summary": "代码变更：types.ts 增 ExpiresPolicy 与 LocationBlock.expires/etag；新增 src/cache.ts（cacheControlFor/entityTag mtime-size 十六进制/etagMatches 容噪）；static.ts 304 空体分支+ETag/Cache-Control 头、ServeContext 扩展；server.ts 传 expires/etag/ifNoneMatch。概念：强缓存 vs 协商缓存、no-cache 真义、启发式缓存、hash 产物一年+入口 no-cache 标准答案。读者已能：配出闭环缓存策略（49 测试全绿）。"
+    },
+    "10-cors-headers": {
+      "title": "CORS 与 add_header：跨域资源共享在网关层怎么做",
+      "file": "docs/10-cors-headers.md",
+      "degraded": false,
+      "summary": "代码变更：types.ts 增 CorsOptions 与 LocationBlock.add_header/cors、ServerBlock.add_header；新增 src/headers.ts（effectiveAddHeader 全有全无继承/isPreflight/corsHeadersFor）；static.ts extraHeaders 叠加 200/304；proxyPass 响应合并 extraHeaders；server.ts 预检 204 短路。概念：简单请求 vs 预检、add_header 遮蔽陷阱、同源代理 vs CORS 放行取舍。读者已能：网关应答预检并按块开放跨域（55 测试全绿）。"
+    },
+    "11-https-and-security": {
+      "title": "HTTPS 与安全头：上线 TLS 前前端要懂的常识",
+      "file": "docs/11-https-and-security.md",
+      "degraded": false,
+      "summary": "无代码变更（principle 章）。概念：证书链三层与 fullchain/自动续期、301 跳转 + HSTS 补明文窗口、混合内容拆除清单（http 接口/ws://wss/crossorigin）、CSP Report-Only 起步、add_header always 搭配。读者已能：执行上线 TLS 的前后端 checklist 并用 SSL Labs/Security 面板验证。"
+    },
+    "12-troubleshooting-map": {
+      "title": "mini-nginx vs 真实 Nginx：差异地图与 502/504 排障手册",
+      "file": "docs/12-troubleshooting-map.md",
+      "degraded": false,
+      "summary": "无代码变更（source-mapping 章）。产出：12 条差异地图（教学保真 5/语义近似 6/未实现 2，逐条对应 src 模块）+ 502/504 排障决策树（upstream 字段 + errno 111/104/110 分流）+ 官方文档模块入口。读者已凭全书终点：642 行 src、55 测试全绿的 mini-nginx + 排障能力。"
+    }
+  }
+}

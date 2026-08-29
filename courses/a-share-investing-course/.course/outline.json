@@ -1,0 +1,597 @@
+{
+  "title": "从零基础小白到A股投资入门",
+  "audience": "零基础开户新手，看懂K线、算清概率、装上风控",
+  "input": {
+    "kind": "topic",
+    "ref": "从零基础小白到A股投资入门：技术流主线，K线形态深入原理（30余种），配可视化图表组件"
+  },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript（ESM、strict）+ vitest",
+    "scope": "最小技术分析引擎：确定性合成行情生成器、逐笔→K线聚合、SVG渲染映射、单根/双根/三根以上共30余种形态识别、均线/MACD/RSI/KDJ/布林带、量价与支撑阻力与斐波那契、筹码分布、期望值与破产概率蒙特卡洛、含费用与T+1的回测引擎，预计 约 3000 行（终态实测 2968）；另含 export-docs-data 脚本把图表数据写成 docs/assets/data/*.json"
+  },
+  "docs_visuals": {
+    "components": "docs/.vitepress/theme/components/KLineChart.vue：props { candles: Candle[], overlays?: {name,values,color?}[], markers?: {index,label,kind}[], logScale?: boolean }，SVG 渲染主图（K线+叠加线+标记）与成交量副图，几何映射与 companion 的 toSvg 一致；LineChart.vue：props { series: {name,values,color?}[], labels? }，用于收益曲线、筹码分布等纯折线/面积图",
+    "data": "docs/assets/data/*.json 由 companion/scripts/export-docs-data.ts 生成（npm run export-docs，固定种子确定性输出）：{ candles, overlays, markers } 形态；正文用 <script setup> import 数据后 <KLineChart :candles=\"...\" :overlays=\"...\" /> 嵌入",
+    "ownership": "组件与 theme 属主智能体的组装层（阶段 4 前的脚手架统一创建）；数据 JSON 只出自 companion 真实计算——图上每一根线都是读者将亲手复现的代码算出来的"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 地基：看懂市场这台机器",
+      "chapters": [
+        {
+          "slug": "what-moves-price",
+          "title": "价格为什么会动：股票、交易所与买卖的拔河",
+          "goal": "理解股票是公司所有权凭证、价格由实时供需决定、指数是什么，建立「价格消化预期」的世界观",
+          "type": "principle",
+          "pain_point": "朋友给的「内幕消息」买进去就套住：消息传到你耳朵里时，价格早涨完了",
+          "new_concepts": [
+            "股票",
+            "A股",
+            "交易所",
+            "指数",
+            "多头",
+            "空头",
+            "流动性"
+          ],
+          "depends_on": [],
+          "acceptance": [
+            "文验收：开章为「内幕消息套牢」的具体现象故事",
+            "文验收：所有权/供需定价按成因+锚点教清，读者能复述「为什么消息不管用」",
+            "文验收：零外部源码引用，规则类数字对照权威文档清单口径"
+          ]
+        },
+        {
+          "slug": "order-journey",
+          "title": "一笔订单的旅程：竞价、盘口与挡住你的那些规则",
+          "goal": "看懂盘口五档与撮合排队规则，掌握 T+1、涨跌停、手、交易费用对实战的硬约束",
+          "type": "principle",
+          "pain_point": "集合竞价挂的买单开盘没成交；跌停那天挂卖单，排到收盘也没卖掉",
+          "new_concepts": [
+            "集合竞价",
+            "连续竞价",
+            "价格优先时间优先",
+            "盘口",
+            "买一卖一",
+            "T+1",
+            "涨跌停",
+            "ST股票",
+            "手",
+            "印花税",
+            "佣金"
+          ],
+          "depends_on": [
+            "what-moves-price"
+          ],
+          "acceptance": [
+            "文验收：开章含挂单不成交/跌停卖不掉的具体现象",
+            "文验收：盘口五档给 ASCII 结构图；撮合规则配一笔可纸笔推演的排队演算",
+            "文验收：费用（印花税/佣金）有一笔闭环演算：买卖一轮后实际盈亏",
+            "仓验收：无（principle 章）；零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · K线的语言：从一根蜡烛到形态字典",
+      "chapters": [
+        {
+          "slug": "candle-anatomy",
+          "title": "一根 K 线的诞生：从逐笔成交到开高低收",
+          "goal": "用代码把逐笔成交聚合成K线，彻底理解实体、影线从哪里来，以及日K与周K的聚合关系",
+          "type": "build",
+          "pain_point": "分时图和K线图对不上：不知道四个价格怎么来的，看K线只会认红绿",
+          "new_concepts": [
+            "开高低收（OHLC）",
+            "实体",
+            "影线",
+            "阳线 / 阴线",
+            "分时图",
+            "周期聚合"
+          ],
+          "milestone": "aggregateTicks(ticks, session) 聚合日K；resample(daily, n) 把日K并成周K；candleAnatomy(c) 量出实体/影线占比",
+          "milestone_verify": "合成逐笔数据聚合出的 OHLC 与手算一致；5 根日K并成 1 根周K的开高低收断言通过",
+          "depends_on": [
+            "order-journey"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：OHLC 按「成因→载体→演算→锚点」四步教；正文含聚合实验与验证段",
+            "文验收：零外部源码引用，代码片段标注 companion 真实出处"
+          ]
+        },
+        {
+          "slug": "candle-rendering",
+          "title": "把开高低收画成图：坐标、缩放与 K 线渲染器",
+          "goal": "实现 OHLC 到 SVG 的几何映射，理解纵轴缩放如何改变形态长相，产出课程图表的数据资产",
+          "type": "build",
+          "pain_point": "形态书里的锤子线又标准又漂亮，实盘里同一根K线被纵轴压缩得认不出来——肉眼判形态不可靠",
+          "new_concepts": [
+            "价格坐标系",
+            "对数坐标",
+            "成交量副图",
+            "归一化"
+          ],
+          "milestone": "toSvg(candles, opts) 输出主图+成交量副图的 SVG 字符串；export-docs-data.ts 首次产出 docs 图表数据",
+          "milestone_verify": "断言每根K线映射为一个 rect 与两条 line、坐标随价格区间缩放正确；npm run export-docs 生成确定性 JSON，docs 首批K线图由该数据渲染",
+          "depends_on": [
+            "candle-anatomy"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿；export-docs 输出可复现（两次运行字节一致）",
+            "文验收：正文嵌由本章数据渲染的 KLineChart 可视化，并演示同一形态在不同纵轴区间的视觉差异",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "single-patterns-wicks",
+          "title": "单根 K 线（上）：大实体与影线家族的攻防剧本",
+          "goal": "实现影线族单根形态识别，讲透大阳大阴、光头光脚、锤子/上吊、射击之星/倒锤子背后的当日攻防故事与位置依赖",
+          "type": "build",
+          "pain_point": "听「锤子线见底」追进去继续跌：影线不够长、位置在下跌中段——教科书没写的隐含条件全踩了",
+          "new_concepts": [
+            "大阳线 / 大阴线",
+            "光头光脚",
+            "锤子线",
+            "上吊线",
+            "射击之星",
+            "倒锤子"
+          ],
+          "milestone": "classifyWicks(c, context) 识别大阳/大阴/光头光脚/锤子/上吊/射击之星/倒锤子，按趋势位置区分锤子与上吊、倒锤子与射击之星",
+          "milestone_verify": "同一形状的K线在下跌末端判为锤子、上涨末端判为上吊；上影小实体在涨末判射击之星、跌末判倒锤子——位置换算断言通过",
+          "depends_on": [
+            "candle-anatomy",
+            "candle-rendering"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：每种形态配「当日多空剧本」讲解与真实渲染图，投资建议以条件句给出并写明失效条件",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "single-patterns-doji",
+          "title": "单根 K 线（下）：十字星家族与「不讲道理」的一字线",
+          "goal": "实现十字星族识别（普通/长腿/蜻蜓/墓碑/一字/纺锤），讲透「打平手」与「四价合一」的市场含义",
+          "type": "build",
+          "pain_point": "看到十字星就以为是「变盘信号」满仓赌方向：十字星只是犹豫，不是路标",
+          "new_concepts": [
+            "十字星",
+            "长腿十字",
+            "蜻蜓线",
+            "墓碑线",
+            "一字线",
+            "纺锤线"
+          ],
+          "milestone": "classifyDoji(c, context) 识别十字星家族六种，输出「犹豫程度」分级",
+          "milestone_verify": "构造的六种十字族样本全部正确分类；一字线（四价合一）被单独标记并给出涨跌停语境",
+          "depends_on": [
+            "single-patterns-wicks"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：每种十字族配剧本与渲染图；「十字星需要次日确认」的理由讲透（不是结论是推演）",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "multi-patterns-two",
+          "title": "双根形态：吞没、乌云盖顶、孕线与平顶平底",
+          "goal": "实现双根组合形态识别，把「今天对昨天的态度」讲透：吞没、乌云盖顶、刺透、孕线、十字孕线、平顶平底",
+          "type": "build",
+          "pain_point": "手工翻一百只股票数形态，数到眼花还数错，复盘坚持不过三天",
+          "new_concepts": [
+            "吞没形态",
+            "乌云盖顶",
+            "刺透形态",
+            "孕线",
+            "十字孕线",
+            "平顶 / 平底"
+          ],
+          "milestone": "detectTwoCandle(candles) 返回带类型、位置、方向的形态列表（含九种双根形态）",
+          "milestone_verify": "构造的吞没/乌云盖顶/刺透/孕线/十字孕线/平顶平底序列被识别，形状接近的干扰序列不误报",
+          "depends_on": [
+            "single-patterns-doji"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：每个形态配「两日连播剧本」讲解与渲染图；乌云盖顶与刺透的「中点」条件配数值演算",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "multi-patterns-three",
+          "title": "三根以上：晨星暮星、三兵三鸦与三法",
+          "goal": "实现三根及以上组合识别：早晨/黄昏之星、红三兵与受阻、黑三鸦、上升/下降三法——完整的多日反转与中继剧本",
+          "type": "build",
+          "pain_point": "早晨之星事后一眼认出、事中永远数不出第三根：多根形态肉眼追踪不可靠",
+          "new_concepts": [
+            "早晨之星",
+            "黄昏之星",
+            "红三兵 / 黑三鸦",
+            "红三兵受阻",
+            "上升三法 / 下降三法"
+          ],
+          "milestone": "detectThreeCandle(candles) 返回晨星/暮星/红三兵/受阻/黑三鸦/升跌三法（五根）等形态列表",
+          "milestone_verify": "构造的晨星/暮星/三兵/三鸦/三法序列被识别；第三根量能不足的晨星被降级为「未确认」",
+          "depends_on": [
+            "multi-patterns-two"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：每个形态的「三幕剧」剧本讲透；确认机制（第三根收复幅度/量能）有明确数值标准",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "pattern-stats",
+          "title": "形态到底灵不灵：用统计给三十种形态验货",
+          "goal": "用胜率、基准对照、随机对照实验检验形态有效性，从此用概率而不是灵异感谈论形态",
+          "type": "build",
+          "pain_point": "「上次锤子线买赚了」当证据用——一次成功不是证据，形态灵不灵全凭感觉吵",
+          "new_concepts": [
+            "胜率",
+            "样本量",
+            "随机对照",
+            "基准概率"
+          ],
+          "milestone": "evaluatePattern(candles, matcher, horizon) → { winRate, sampleSize, baseline }；shuffleControl 同形态随机化对照",
+          "milestone_verify": "无优势的随机序列胜率接近基准、被人为注入优势的序列被检出，断言通过",
+          "depends_on": [
+            "multi-patterns-three"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：胜率/样本量/基准按陌生概念四步教，配一次完整的「跟着算一遍」",
+            "文验收：正文含用真实渲染图+统计表对某形态验货的完整实验",
+            "文验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 趋势与量价：给形态装上上下文",
+      "chapters": [
+        {
+          "slug": "trend-anatomy",
+          "title": "趋势的解剖：道氏理论、波峰波谷与画线",
+          "goal": "学会用波峰波谷的方向严格定义趋势，看懂道氏三级结构、趋势线与通道的画法依据",
+          "type": "principle",
+          "pain_point": "抄底抄在半山腰还坚信「趋势没变」：因为从没给趋势下过定义，全凭感觉",
+          "new_concepts": [
+            "趋势",
+            "道氏理论",
+            "趋势线 / 通道"
+          ],
+          "depends_on": [
+            "candle-rendering"
+          ],
+          "acceptance": [
+            "文验收：上升趋势/下降趋势的波峰波谷定义配 ASCII 图与真实渲染图各一",
+            "文验收：趋势线画法给出可操作的判定步骤（两个枢轴起步、第三点验证），不是玄学画法",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "moving-averages",
+          "title": "均线：把噪声抹掉之后剩下的趋势",
+          "goal": "实现 SMA/EMA 与金叉死叉检测，讲透均线的滞后性从哪来、动量与均值回归两种市场观",
+          "type": "build",
+          "pain_point": "金叉一出就买入，买在山顶：均线永远慢半拍，照着信号追单等于接盘",
+          "new_concepts": [
+            "均线",
+            "指数移动平均",
+            "金叉 / 死叉",
+            "动量与均值回归"
+          ],
+          "milestone": "sma(candles, n)、ema(candles, n)、crossovers(candles, fast, slow) → 金叉死叉信号列表",
+          "milestone_verify": "构造序列的金叉死叉位置与手算一致；ema 与 sma 对新价格的响应速度差异断言通过",
+          "depends_on": [
+            "trend-anatomy"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：滞后性配小样本「跟着算一遍」推导演算；金叉买在山顶的痛点有解法交代（等回踩/多周期过滤，具体到做法）",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "volume-analysis",
+          "title": "成交量：价格是舟，量是水",
+          "goal": "实现放量/缩量判定与量价背离检测，理解量在价先、换手率的含义",
+          "type": "build",
+          "pain_point": "价涨量缩以为要反转、慌忙清仓，结果主升浪刚走到一半",
+          "new_concepts": [
+            "成交量",
+            "换手率",
+            "量价背离",
+            "地量天量"
+          ],
+          "milestone": "volumeFeatures(candles, opts)：放量/缩量/天量/地量标签 + 量价背离点列表",
+          "milestone_verify": "价格创新高而成交量显著萎缩的构造序列被标为背离；正常放量上涨不误报",
+          "depends_on": [
+            "moving-averages"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：成交量为何「有人卖还得有人买」的机制讲透；换手率配一笔演算",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "support-resistance",
+          "title": "支撑、阻力与斐波那契：人多的路口，价格会堵车",
+          "goal": "实现枢轴点检测、支撑阻力位聚类与斐波那契回调位计算，讲透挂单聚集、锚定效应与假突破",
+          "type": "build",
+          "pain_point": "手画的支撑位破了又立、立了又破，同一个位置三次被打脸——画线全凭手感",
+          "new_concepts": [
+            "支撑 / 阻力",
+            "枢轴点",
+            "假突破",
+            "锚定效应",
+            "斐波那契回调"
+          ],
+          "milestone": "pivots(candles, k) → 高低枢轴点；levels(candles, tol) → 聚类后的支撑阻力位（含触碰次数）；fibLevels(from, to) → 0.236/0.382/0.5/0.618 回调刻度",
+          "milestone_verify": "构造的双顶触碰同一价位的序列被聚类为一个阻力位，触碰次数正确；fibLevels 在已知的涨跌幅上算出的刻度与手算一致",
+          "depends_on": [
+            "trend-anatomy",
+            "single-patterns-wicks"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：支撑阻力按成因（挂单聚集/锚定）→载体→演算→锚点教；假突破的收割机制配盘口级解释",
+            "文验收：斐波那契回调按四步教，明确其「自我实现」机制与失效场景",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "chip-distribution",
+          "title": "筹码分布：谁的持仓成本压在哪个价位",
+          "goal": "实现换手衰减模型的筹码分布计算（获利盘比例、平均成本、筹码峰），看懂套牢盘与获利盘的博弈",
+          "type": "build",
+          "pain_point": "反弹到某个位置就莫名滞涨：头顶全是套牢盘等着解套跑路——盘面看不见，筹码图看得见",
+          "new_concepts": [
+            "筹码分布"
+          ],
+          "milestone": "chipDistribution(daily, opts) → 价位-持仓量分布 + 获利盘比例 + 平均成本；固定种子确定性输出",
+          "milestone_verify": "总筹码守恒断言；构造的先跌后涨序列获利盘比例与手算一致；高位套牢峰在反弹路径上被正确标出",
+          "depends_on": [
+            "volume-analysis"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：筹码分布按四步教（成因=换手衰减、载体=价位直方图、演算=三轮换手手算、锚点=老居民搬新房）",
+            "文验收：正文嵌由本章数据渲染的筹码分布图；简化假设（均匀分摊）显式声明并登记差异清单",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "reversal-structures",
+          "title": "头肩顶与双顶：一眼看穿大型反转结构",
+          "goal": "实现双顶双底与简化头肩检测（含颈线价位与量度目标），讲透缺口的三种性格",
+          "type": "build",
+          "pain_point": "头肩顶等跌破颈线才认出来，利润已经跌掉一半——大结构要能提前量出来",
+          "new_concepts": [
+            "头肩顶",
+            "双顶 / 双底",
+            "颈线",
+            "量度目标",
+            "缺口"
+          ],
+          "milestone": "detectStructures(candles) → 双顶/双底/头肩结构列表，含颈线价与量度跌幅目标",
+          "milestone_verify": "构造头肩序列被检出、颈线价位与量度目标数值正确",
+          "depends_on": [
+            "support-resistance",
+            "multi-patterns-three"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：头肩顶配三峰结构 ASCII 图与逐段剧本；量度目标配一笔推演",
+            "文验收：缺口三种类型各有 A 股场景例子；零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第四部分 · 指标与概率：MACD、RSI、KDJ、布林带",
+      "chapters": [
+        {
+          "slug": "macd",
+          "title": "MACD：两条均线的差值能告诉你什么",
+          "goal": "实现 MACD 全链路（DIF/DEA/柱）与背离检测，理解动量衰减的数学表达",
+          "type": "build",
+          "pain_point": "「背离」肉眼看不出来，等肉眼可见时趋势已经走完——要让它可计算",
+          "new_concepts": [
+            "MACD",
+            "背离"
+          ],
+          "milestone": "macd(candles, opts) → { dif, dea, hist }；detectDivergence(candles, indicator) → 顶/底背离点列表",
+          "milestone_verify": "价格创新高而 DIF 拒绝新高的构造序列被标为顶背离；同步新高的序列不误报",
+          "depends_on": [
+            "moving-averages"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：MACD 每层（EMA差→DEA→柱）配一笔小样本演算，读者能手推柱的正负含义",
+            "文验收：背离作为陌生概念按四步教；零外部源码引用"
+          ]
+        },
+        {
+          "slug": "rsi-kdj",
+          "title": "RSI 与 KDJ：超买超卖的双胞胎",
+          "goal": "实现 RSI 与 KDJ（RSV 及其两次平滑），讲透两指标的同源差异、钝化现象与正确用法",
+          "type": "build",
+          "pain_point": "RSI 到 80 就清仓，强势股一路涨到 RSI 95；KDJ 金叉买完就死叉——超买超卖当开关用必挨打",
+          "new_concepts": [
+            "RSI",
+            "KDJ"
+          ],
+          "milestone": "rsi(candles, n) 与 kdj(candles, n) → { k, d, j }；两指标对同一构造序列的响应速度对比",
+          "milestone_verify": "小样本 RSI/KDJ 与手算一致；单调上涨构造序列中两指标的超买钝化（高位粘滞）被断言检出",
+          "depends_on": [
+            "moving-averages",
+            "pattern-stats"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：RSV→K→D→J 每层配小样本演算；钝化的成因（分母消失/平滑粘滞）讲透并给对策（趋势过滤/看背离不看阈值）",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "bollinger",
+          "title": "布林带与波动率：把概率装进指标",
+          "goal": "实现布林带（均线±k倍标准差），讲透标准差、正态直觉的适用边界（肥尾、收口开口）",
+          "type": "build",
+          "pain_point": "布林下轨抄底，抄在半山腰：带子不是地板，是速度表",
+          "new_concepts": [
+            "布林带",
+            "标准差",
+            "正态分布直觉"
+          ],
+          "milestone": "bollinger(candles, n, k) → { mid, upper, lower }；带宽序列与收口检测；带外占比统计",
+          "milestone_verify": "小样本布林带数值与手算一致；±2σ 带外占比在构造正态序列接近约 5%、尖峰肥尾序列显著更高",
+          "depends_on": [
+            "moving-averages",
+            "pattern-stats"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：标准差与正态直觉按陌生概念四步教（锚点用「平均距离」）；肥尾实验与收口-开口的行情含义讲透",
+            "文验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第五部分 · 从看图到下单：风控、回测与交易系统",
+      "chapters": [
+        {
+          "slug": "fundamentals-peek",
+          "title": "下单前的最后一道闸：市盈率、市净率与 ROE",
+          "goal": "会用 PE/PB/ROE 三把尺子给标的排雷，理解技术选时与基本面排雷的分工",
+          "type": "principle",
+          "pain_point": "技术形态完美的妖股一夜公告被 ST，连续一字跌停想卖卖不掉——形态管不了基本面核按钮",
+          "new_concepts": [
+            "市盈率",
+            "市净率",
+            "ROE"
+          ],
+          "depends_on": [
+            "what-moves-price"
+          ],
+          "acceptance": [
+            "文验收：三个指标各配一笔纸笔演算（真实量级的虚构数字），读完能自己算",
+            "文验收：给出「排雷清单」式用法（条件句），不是价值投资劝退长文",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "expectancy-risk",
+          "title": "期望值与仓位：胜率六成也可能亏钱的数学",
+          "goal": "实现期望值/凯利/破产概率计算器，把止损与仓位从口号变成算术",
+          "type": "build",
+          "pain_point": "胜率六成却越亏越多：小赚大亏，亏了还加倍下注想一把回本",
+          "new_concepts": [
+            "期望值",
+            "盈亏比",
+            "止损",
+            "仓位",
+            "凯利公式",
+            "破产风险"
+          ],
+          "milestone": "expectancy(stats)、kellyFraction(stats)、monteCarloRuin(stats, bets, trials, fraction)：蒙特卡洛破产概率模拟",
+          "milestone_verify": "负期望策略破产概率随交易次数单调上升；同一正期望策略下全仓 vs 凯利分数 vs 半凯利的破产概率排序断言通过",
+          "depends_on": [
+            "pattern-stats"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿（蒙特卡洛用固定种子）",
+            "文验收：期望值配完整「跟着算一遍」；凯利公式按四步教且明确实战取分数的原因",
+            "文验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "backtest-engine",
+          "title": "最小回测引擎：拿历史数据彩排你的策略",
+          "goal": "实现含 T+1、手续费、滑点的回测引擎与绩效报告，亲手踩一遍未来函数与过拟合",
+          "type": "build",
+          "pain_point": "「回测年化 50%」的策略实盘亏成狗：未来函数偷看答案、参数调到历史完美",
+          "new_concepts": [
+            "回测",
+            "未来函数",
+            "过拟合",
+            "幸存者偏差",
+            "最大回撤",
+            "滑点"
+          ],
+          "milestone": "backtest(candles, strategy, costOpts) → 交易列表、资金曲线、总收益、最大回撤、胜率、盈亏比",
+          "milestone_verify": "同一策略含/不含未来函数两种写法成绩显著不同；计入手续费后收益下降的断言通过",
+          "depends_on": [
+            "expectancy-risk",
+            "macd",
+            "rsi-kdj"
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit 与 vitest run 全绿",
+            "文验收：三大陷阱各配一个亲手可跑的演示（未来函数对比、参数敏感性、样本内外对比）",
+            "文验收：正文嵌由本章数据渲染的资金曲线图；零外部源码引用"
+          ]
+        },
+        {
+          "slug": "trading-system",
+          "title": "组装你的交易系统：清单、纪律与防骗",
+          "goal": "把全书工具组装成入场/止损/仓位/离场的个人交易清单，识别处置效应与荐股骗局",
+          "type": "principle",
+          "pain_point": "道理全懂，一开盘就手抖：赚 2% 就跑、亏 20% 还在扛——复盘发现全是处置效应",
+          "new_concepts": [
+            "处置效应",
+            "交易系统"
+          ],
+          "milestone": "无代码：一张可打印的交易检查清单 + 全书工具地图（哪章的工具落在清单哪一栏）",
+          "depends_on": [
+            "backtest-engine",
+            "fundamentals-peek",
+            "chip-distribution"
+          ],
+          "acceptance": [
+            "文验收：清单四栏（入场/止损/仓位/离场）每栏都回链到教过它的章节（站内相对链接）",
+            "文验收：处置效应按陌生概念教，并给出至少两个针对它的机械对策（不是「心态要好」）",
+            "文验收：荐股骗局识别给可操作信号列表；零外部源码引用"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "kline-patterns-cheatsheet",
+      "title": "K线形态速查表（30余种）",
+      "kind": "reference-table"
+    },
+    {
+      "slug": "trading-rules-cheatsheet",
+      "title": "A股交易规则与费用速查表",
+      "kind": "reference-table"
+    },
+    {
+      "slug": "exercises",
+      "title": "练习路线：从零重建你的技术分析引擎",
+      "kind": "exercises"
+    },
+    {
+      "slug": "divergence-list",
+      "title": "本课程简化与真实市场的差异清单",
+      "kind": "divergence"
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个两千余行的技术分析引擎：识别近三十种K线形态、算指标、跑回测",
+    "verify": "全书 17 个 build 章的原理断言测试（vitest run）全绿，图表数据全部由引擎现场算出"
+  }
+}

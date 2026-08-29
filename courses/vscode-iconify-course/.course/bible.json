@@ -1,0 +1,213 @@
+{
+  "glossary": [
+    {
+      "term": "装饰",
+      "en": "Decoration",
+      "definition": "在编辑器文本旁渲染视觉元素(如图标)而不改动文本本身的机制"
+    },
+    {
+      "term": "提供方",
+      "en": "Provider",
+      "definition": "编辑器按需回调的接口实现,如补全提供方、悬停提供方"
+    },
+    {
+      "term": "图标集合",
+      "en": "Icon Set / Collection",
+      "definition": "一组共享前缀的图标数据(如 mdi),含前缀、默认尺寸与每个图标的绘制体"
+    },
+    {
+      "term": "图标键",
+      "en": "Icon Key",
+      "definition": "「集合 id + 分隔符 + 图标 id」拼成的字符串,如 mdi:home"
+    },
+    {
+      "term": "前缀 / 分隔符 / 后缀",
+      "en": "Prefix / Delimiter / Suffix",
+      "definition": "三组配置项,共同决定哪些字符串形态会被识别为图标键"
+    },
+    {
+      "term": "data URL",
+      "en": "data URL",
+      "definition": "把 SVG 内联成 base64 字符串、直接当作图片源使用的编码方式"
+    },
+    {
+      "term": "三级缓存",
+      "en": "Cache Chain",
+      "definition": "内存 → 磁盘 → 远程下载的逐级回源加载策略,每层挡掉一部分请求"
+    },
+    {
+      "term": "在途去重",
+      "en": "In-flight Dedup",
+      "definition": "同一 key 的并发请求只发起一次网络调用,后来者共享同一个进行中的 Promise"
+    },
+    {
+      "term": "惰性加载",
+      "en": "Lazy Loading",
+      "definition": "只在真正用到某个集合时才加载它的数据,而不是启动时全量拉取"
+    },
+    {
+      "term": "别名",
+      "en": "Alias",
+      "definition": "把自定义短名映射到真实图标键的对照表,如 save → mdi:content-save"
+    },
+    {
+      "term": "偏移与位置",
+      "en": "Offset / Position",
+      "definition": "文本中的字符偏移(从 0 起)与 (行, 列) 坐标的互换关系"
+    },
+    {
+      "term": "依赖追踪",
+      "en": "Dependency Tracking",
+      "definition": "运行时记录「谁读取了谁」,数据源变化时自动重算下游的机制"
+    },
+    {
+      "term": "激活事件",
+      "en": "Activation Events",
+      "definition": "package.json 里的声明,决定 VSCode 在什么时机(语言/工作区内容/命令)加载扩展"
+    },
+    {
+      "term": "热重载",
+      "en": "Hot Reload",
+      "definition": "数据源(本地文件/远程 URL)变化时无需重启编辑器即自动重新加载"
+    },
+    {
+      "term": "贡献点",
+      "en": "Contribution Point",
+      "definition": "package.json 中向编辑器静态声明的能力:命令、配置、片段等"
+    }
+  ],
+  "core_metaphors": [
+    {
+      "id": "lazy-library",
+      "metaphor": "懒人图书馆",
+      "usage": "贯穿缓存与数据分界各章:集合 id 与图标名清单是印好的索引卡片(构建期打包),完整图标数据是书(读者点名才去仓库取);本地书架是磁盘缓存;几个人同时要同一本书时共用一张取书单(在途去重);新书卡片可以随时塞进目录(自定义集合热加载)。",
+      "registered_chapters": [
+        "build-vs-runtime",
+        "cache-chain",
+        "custom-collections"
+      ]
+    }
+  ],
+  "code_conventions": {
+    "language": "TypeScript(ESM, strict)+ vitest",
+    "structure": "companion/src/ 平铺模块,一个能力一个文件;companion/tests/ 每个构建章一个 {slug}.test.ts,append-only",
+    "naming": "导出函数 camelCase 动词开头(createConfig / buildRegexes / parseIcon / loadIconSet);类型 PascalCase;环境相关的工厂一律 createXxx(options) 命名",
+    "dependency_injection": "网络与磁盘一律注入:fetchIconSet(替代 CDN 下载)、cacheDir(替代 globalStorage)、watchFiles(替代文件系统监听)、log(替代输出通道)。测试零网络、零真实 HOME,全部用注入的假实现",
+    "error_handling": "解析失败返回 undefined,不抛异常;加载失败返回 undefined 并写注入的 log;渲染前对缺失信息静默跳过",
+    "positions": "行与列一律 0 起;findIconKeys 返回匹配按文本出现顺序排列"
+  },
+  "api_contract": {
+    "growth_rule": "只增不破——后续章新增导出时随手记回本文件;旧签名不改,旧测试不动",
+    "modules": [
+      {
+        "path": "src/config.ts",
+        "exports": [
+          "interface IconIntelliConfig { delimiters: string[]; prefixes: string[]; suffixes: string[]; customAliasesOnly?: boolean }",
+          "createConfig(partial?: Partial<IconIntelliConfig>): IconIntelliConfig —— 填充默认值(: 与 - 等、i- 与 ~icons/ 前缀)",
+          "buildRegexes(config): { full: RegExp; prefixed: RegExp; namespace: RegExp } —— full 为 /g 全局正则,识别「集合+分隔符+图标名」完整形态"
+        ],
+        "notes": "前缀/后缀配置里含空串时,前缀段整体可选"
+      },
+      {
+        "path": "src/scan.ts",
+        "exports": [
+          "interface RawMatch { start: number; end: number; key: string }",
+          "findIconKeys(text: string, config): RawMatch[] —— 按出现顺序返回全部图标键匹配",
+          "interface Position { line: number; character: number }",
+          "positionAt(text: string, offset: number): Position —— 偏移换行列,CRLF 与 LF 都正确"
+        ]
+      },
+      {
+        "path": "src/parse.ts",
+        "exports": [
+          "interface ParsedIcon { collection: string; icon: string }",
+          "parseIcon(str: string, collectionIds: string[]): ParsedIcon | undefined —— 集合 id 按长度降序匹配消歧;分隔符剥离;解析不出返回 undefined"
+        ]
+      },
+      {
+        "path": "src/types.ts",
+        "exports": [
+          "interface IconData { body: string; width?: number; height?: number }",
+          "interface IconSetData { prefix: string; width?: number; height?: number; icons: Record<string, IconData> }"
+        ],
+        "notes": "第 5 章引入"
+      },
+      {
+        "path": "src/loader.ts",
+        "exports": [
+          "interface CacheDir { read(id): Promise<string|undefined>; write(id, content): Promise<void>; clear(): Promise<void> }",
+          "uniqPromise(fn): 同参数并发共享同一在途 Promise,结算出表(成功交内存,失败可重试)",
+          "createLoader({fetchIconSet, cacheDir?, log?}) → { loadIconSet, clearCache } —— 三级回源(内存→磁盘→下载),逐级回填,坏盘自愈;clearCache 只清内存"
+        ],
+        "notes": "第 5 章引入;网络与磁盘全部注入"
+      },
+      {
+        "path": "src/base64.ts",
+        "exports": [
+          "utf8ToBase64(input): string",
+          "base64ToUtf8(input): string"
+        ],
+        "notes": "第 6 章引入;手写实现,往返无损"
+      },
+      {
+        "path": "src/render.ts",
+        "exports": [
+          "interface IconRenderInfo { key; body; width; height; ratio }",
+          "toRenderInfo(set, icon, key): 尺寸回退链 图标自身 > 集合默认 > 16",
+          "pathToSvg(info, fontSize): svg 壳,宽按 ratio 撑开",
+          "toDataUrl(svg): data:image/svg+xml;base64 前缀",
+          "createRenderer({toDataUrl?}) → { getIconDataUrl(info, fontSize?, color?) }: 按(色,号,键)缓存,currentColor 替换主题色"
+        ],
+        "notes": "第 6 章引入"
+      },
+      {
+        "path": "src/decorations.ts",
+        "exports": [
+          "interface DecorationDescriptor { range:{start,end}; key; dataUrl; hoverMarkdown; hideText }",
+          "collectDecorations(text, env): 装饰全链;别名表键派生识别配置;in-place 豁免 = inplace && 行 !== cursorLine;坏输入静默跳过;描述符保留原始键"
+        ],
+        "notes": "第 8 章引入;DecorationEnv 注入 loadIconSet 与 render"
+      },
+      {
+        "path": "src/providers.ts",
+        "exports": [
+          "interface CompletionItemDescriptor { label; detail; kind: collection|icon|alias; replaceStart }",
+          "provideCompletions(linePrefix, ctx): 两段式(命名空间补图标名/裸前缀补集合id);computeReplaceStart 锚定行尾分隔结构后的词;无边界上下文返回 null",
+          "resolveCompletion(item, ctx): kind 分发延迟文档"
+        ],
+        "notes": "第 9 章引入;补全路径零加载零编码"
+      },
+      {
+        "path": "src/markdown.ts",
+        "exports": [
+          "getIconMarkdown(key, env): 表格内嵌 data URL 大图,别名展示原始键,失败返回空串",
+          "getCollectionMarkdown(id, env): 标题 + 至多 5 枚小图预览"
+        ],
+        "notes": "第 9 章引入"
+      },
+      {
+        "path": "src/reactivity.ts",
+        "exports": [
+          "ref(value): getter 登记 / setter 派发",
+          "computed(fn): 惰性 + 脏标记 + notify 桥接,链式传播",
+          "watchEffect(fn) → {stop}: 立即执行,重跑前精确清理依赖"
+        ],
+        "notes": "第 10 章引入;track/trigger 双镜像表 + 全局 activeEffect"
+      },
+      {
+        "path": "src/custom-collections.ts",
+        "exports": [
+          "createCustomCollections({readJson, fetchJson, watchFiles?, log?}) → { collections: ReadonlyRef<IconSetData[]>; update(paths); dispose }",
+          "统一键表:本地 file:// 前缀,远程 http(s) 原样;分流/加载/扫除;本地热重载,远程 diff 增删;每次容器变更显式 sync 到 ref;失败清旧不留陈旧"
+        ],
+        "notes": "第 11 章引入"
+      }
+    ],
+    "semantic_conventions": [
+      "full 正则匹配到的完整形态才进 RawMatch;孤立集合名(如只写 mdi:)不算",
+      "buildRegexes 每次调用产出新 RegExp 对象(全局正则带 lastIndex 状态,不可复用)",
+      "collectionIds 由调用方传入,实验场内置一份小型的静态集合元数据用于测试"
+    ],
+    "growth_log": "第 9 章为 config.ts 新增导出 escapeRegExp;IconIntelliConfig 较初版新增 collections/aliases/customAliasesOnly 可选字段(只增不破)。"
+  }
+}

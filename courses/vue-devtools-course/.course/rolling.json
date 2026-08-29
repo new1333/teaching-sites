@@ -1,0 +1,61 @@
+{
+  "chapters": [
+    {
+      "slug": "two-worlds",
+      "file": "01-two-worlds.md",
+      "degraded": false,
+      "summary": "已建立概念：应用与工具是两份独立 bundle；会合点（window 上约定名的全局钩子）解决相遇，加载时序靠重放队列；工具内核与 UI 客户端分处两个世界，靠通道传编码后的消息，双向互调。调试器三件事=能看见/能对话/能修改，对应全书三部分。代码：无（principle 章）。读者已能：画出三段式架构图、解释「未检测到 Vue」与 iframe 子应用不可见的原因。"
+    },
+    {
+      "slug": "global-hook",
+      "file": "02-global-hook.md",
+      "degraded": false,
+      "summary": "已建立 API：src/hook.ts 的 createHook()（on/off/once/emit、apps 列表、on 返回解绑）、queueUntilHookInstalled(target, cb)（无钩子入队 __MINI_DEVTOOLS_REPLAY__、有钩子立即执行）、installHook(target)（幂等、先重放队列后挂名到 __MINI_DEVTOOLS_HOOK__、finally 清空队列）；src/types.ts 定义 Hook/HookTarget/VNodeLike/InstanceLike/AppLike。测试 8 条全绿。设计要点：排队的是回调不是事件；先重放后挂名；幂等防重复安装。读者已能：实现顺序无关的双 bundle 会合机制。"
+    {
+      "slug": "event-system",
+      "file": "03-event-system.md",
+      "degraded": false,
+      "summary": "已建立 API：src/events.ts 的 createEvents<T>()（on 返回解绑、emit 前复制监听列表）与 subscribeHook(hook, events)（钩子原始事件→语义事件转发，isGuarded 守门：载荷不全/app._instance 或 instance 的 type.devtools.hide=true 拦下；返回总解绑）。FORWARDED_EVENTS：app:init/app:unmount/component:added/updated/removed/emit。测试累计 15 条全绿。要点：两层事件分家（钩子层容忍怪载荷、事件层只发干净语义事件）；守门离信源最近；uid 严格 number 判断。读者已能：在转发层实现过滤与成对解绑。"
+    {
+      "slug": "app-record",
+      "file": "04-app-record.md",
+      "degraded": false,
+      "summary": "已建立 API：src/record.ts 的 createAppRegistry()（AppRegistry{apps, activeAppRecord=apps[0] 的 getter, registerApp 幂等/unregisterApp/setActive 挪头}，并把新 registry 设为模块当前登记处）、registerInstance(app, instance)（id=`{app.id}:instance:{n}` 写回实例 __MINI_DEVTOOLS_NEXT_ID__ 复用；uid 不作唯一依据）、getInstance(app, id)。AppRecord{id,name,app,instanceMap:Map<id,活实例>}。测试累计 23 条全绿。要点：身份由工具签发；实例表存活引用非快照；活动应用=列表头。读者已能：多应用登记/切换/注销，跨应用唯一实例 id。"
+    {
+      "slug": "component-tree",
+      "file": "05-component-tree.md",
+      "degraded": false,
+      "summary": "已建立 API：src/tree.ts 的 getComponentTree(app, {filter?, maxDepth?}) → TreeNode{id,name,children,hasChildren,inactive,file}[]。语义：走 vnode subTree 非 DOM；collectInstances 递归收 component；maxDepth 截断处 children=[] 但 hasChildren=true（按需拉取）；filter 自身命中收整棵、未命中向孩子下钻（flatMap，深度不增）；keep-alive 的 __cachedChildren 以 inactive=true 并回；isBeingDestroyed/devtools.hide 排除；每次 capture 调 registerInstance（id 备忘保证两次遍历 id 稳定）。record.ts 新增导出 getCurrentRegistry()。tests/helpers/fake-app.ts：createInstance/createApp/linkChildren/createKeepAlive。测试累计 33 条全绿。读者已能：按需产出可展开的组件树快照。"
+    {
+      "slug": "state-snapshot",
+      "file": "06-state-snapshot.md",
+      "degraded": false,
+      "summary": "已建立 API：src/state.ts 的 getInstanceState(instance) → InspectorStateItem[]{type:'props'|'setup'|'data', key, value, editable}。语义：分类顺序 props→setup→data；safeRead 单项抛错降级为 `[Error] msg` 字符串不毁整份；sanitize 函数→'[Function]' 且 editable=false（其余 editable=true）；嵌套对象按引用保留不深拷贝（深拷贝留给 transfer 章）。测试累计 39 条全绿。读者已能：对活实例拍出分类清洗后的安全快照。"
+    {
+      "slug": "transfer-encoding",
+      "file": "07-transfer-encoding.md",
+      "degraded": false,
+      "summary": "已建立 API：src/transfer.ts 的 encodeState(data)→unknown[]（对象表：槽位一律存索引、原始值躺表项、先登记 seen 再填槽防环爆栈、共享引用只展开一次）、decodeState(list)→unknown（cache 按索引建对象、身份保持、根=索引 0）。产物无环可 JSON.stringify。测试累计 47 条全绿。要点：嵌套装不下图、平铺装得下；「值 42 与索引 42」靠钝约定消灭歧义。读者已能：让任意含环/共享的对象图安全过传输边界。"
+    {
+      "slug": "state-editing",
+      "file": "08-state-editing.md",
+      "degraded": false,
+      "summary": "已建立 API：src/editor.ts 的 editState(instance, path: Array<string|number>, value) → boolean。路径约定：第一段选来源（'props'|'setupState'|'data'，UI 把快照 type 'setup' 映射成 'setupState'），逐层下钻，末段赋值；三层防御（路径走不通/读取抛错/写入被拒）全降级 false 不抛；终点允许新键；写的是活对象本体非拷贝。测试累计 56 条全绿。读者已能：实现「面板改值→页面真变」的回写闭环。"
+    {
+      "slug": "plugin-and-inspector",
+      "file": "09-plugin-and-inspector.md",
+      "degraded": false,
+      "summary": "已建立 API：src/plugin.ts 的 setupDevToolsPlugin(descriptor{id,label,app?}, setupFn)（有匹配活动应用立即执行，否则进 pluginBuffer；matchesApp 按 descriptor.app 过滤）、registerPluginsForApp(app)（先幂等登记应用再重放匹配缓冲、重放即移除防二次执行、不匹配留下）、PluginApi{on（挂 pluginEvents 事件总线，导出可接 subscribeHook）、addCustomInspector({id,label,tree(),state()})}、getInspectorTree/State(id)（查无或插件函数抛错返回 []）。检查器拉取按需不缓存；状态项复用 InspectorStateItem。测试累计 64 条全绿。要点：重放队列思想复用于插件层；函数即接口。读者已能：让第三方库时序无关地挂上自定义面板。"
+    {
+      "slug": "birpc-channel",
+      "file": "10-birpc-channel.md",
+      "degraded": false,
+      "summary": "已建立 API：src/channel.ts 的 Channel{post,on} 与 createMemoryChannelPair()（全双工、post 即达对端 handler）；src/rpc.ts 的 createRpc(functions, channel) → {call(method,...args):Promise}。信封：request{type,id,method,args}/response{type,id,result?|error?}；id 自增配对、并发不串线；方法不存在/服务端抛错走 error 响应（不悬挂）；无超时（迟到响应无人认领则丢）；两侧各 createRpc 即互为客户端。载荷纯数据可 JSON。测试累计 74 条全绿。读者已能：在任意 post/on 传输上铺双向调用轨道。"
+    {
+      "slug": "hosts-and-relay",
+      "file": "11-hosts-and-relay.md",
+      "degraded": false,
+      "summary": "principle 终章：三宿主装配推演——Vite 插件（中间件托管 UI 于 /__devtools__/、script 注入内核、WebSocket 通道、open-in-editor 走插件进程）；扩展三跳中继（panel→background port→content script→window.postMessage，中继只搬运不解析，端口断开处理对端消失）；iframe 多应用（每 iframe 独立 window/会合点，all_frames 注入，多应用记录→切换器）。回望第 1 章两个谜案结案；全书收束图。全书 11 章完成，无降级。读者已能：把最小内核装配进任意宿主并解释每一跳。"
+    }
+  ]
+}

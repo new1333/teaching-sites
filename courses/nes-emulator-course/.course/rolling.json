@@ -1,0 +1,88 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "nes-overview",
+      "file": "01-nes-overview.md",
+      "degraded": false,
+      "summary": "已建立概念:NES = CPU(2A03/6502)+ PPU(2C02,3 倍频)+ APU + 卡带(PRG/CHR/mapper)挂在总线上;RAM 2K 与寄存器段都有镜像;PPU 有自己的显存总线(命名表/图块表/调色板 + 精灵内存 OAM),CPU 经 $2006/$2007 绕道访问;一帧 262 扫描线 × 341 点,VBlank 期拉 NMI;模块边界 ines/cpu/ppu/bus/controller/nes,推进策略为指令级 catch-up。无代码。读者已能解释黑屏根因与整机的模块划分。"
+    },
+    {
+      "n": 2,
+      "slug": "ines-cartridge",
+      "file": "02-ines-cartridge.md",
+      "degraded": false,
+      "summary": "已建立 API:src/ines.ts 的 parseINES(data): Cartridge { prgRom, chrRom(null=CHR-RAM 卡带), mapper, mirroring(horizontal|vertical|fourScreen) }。校验 magic/截断、trainer 跳过、NES 2.0 取 12 位 mapper;已对 20 个真实测试 ROM 验证头字段。读者已能把任意 .nes 拆成结构化卡带。"
+    },
+    {
+      "n": 3,
+      "slug": "cpu-core",
+      "file": "03-cpu-core.md",
+      "degraded": false,
+      "summary": "已建立 API:src/cpu.ts 的 class Cpu(mem: CpuMemory{read,write}),公有寄存器 A/X/Y/SP/PC/P;reset() 读 $FFFC 复位向量(SP=$FD,P=I|U);step() 取指-译码-执行返回周期数;OPS 表为 {mn,mode,cycles,run} 四元组;src/util.ts u8/u16 回卷。读者已能让手写机器码在平坦 64K 内存上跑起来。"
+    },
+    {
+      "n": 4,
+      "slug": "addressing-modes",
+      "file": "04-addressing-modes.md",
+      "degraded": false,
+      "summary": "已建立 API:Cpu 新增 13 种寻址统一入口 operand(mode)(私有)+ 公有 branch(taken, offset);Mode 含 imp/acc/imm/zp/zpX/zpY/abs/absX/absY/ind/indX/indY/rel;OPS 表扩到 40 条(LDA/LDX/LDY/STA/STX/STY 全模式、JMP abs/ind、BEQ);零页绕回、(zp,X)/(zp),Y 指针绕回、JMP 间接页 bug 均按硬件原样实现;pageCrossed/branchTaken 周期记账已埋线。util 新增 i8。读者已能让操作数走 13 条路径。"
+    },
+    {
+      "n": 5,
+      "slug": "instruction-set",
+      "file": "05-instruction-set.md",
+      "degraded": false,
+      "summary": "src/opcodes.ts 建立:151 条官方指令全表(readFamily/writeFamily/rmwFamily 工厂+单例),entry(mn,mode,cycles,run,pageCross,branch);cpu.ts 新增 adc/sbc(cmp 共用)/cmpVal/bit/shift/bump/栈 push8-pull16/jsr/rts/rti/interrupt(vector,isBrk);BRK 走真实中断序列(halted 已移除);N/V/Z/C 全语义+周期表(跨页/分支加成)。真实验证:nestest 自动化模式官方段零失败(/usr/bin/bash2//usr/bin/bash3=0),instr_test-v3 八个 NROM 单项全部跑完官方子测试。cpu_timing_test 待真 PPU 后复跑。"
+    },
+    {
+      "n": 6,
+      "slug": "ppu-bus-registers",
+      "file": "06-ppu-bus-registers.md",
+      "degraded": false,
+      "summary": "src/bus.ts:class Bus(ppu),read/write 四段路由(RAM &0x7ff 镜像/PPU &7 镜像/io 委托/cart 委托,后两者第 10/11 章接)。src/ppu.ts:cpuRead/cpuWrite 八寄存器副作用(STATUS 读清 vblank+w 复位+残影低 5 位;006 双写拼 t 低写后 v=t;007 步进 1/32+读缓冲一拍;调色板直读);005 写 t 位段;PPUCTRL bit0-1→t bit10-11;ppuRead/ppuWrite 显存三段(CHR 后端接口 ChrBackend/ChrRam、命名表 ntIndex 水平/垂直/四屏、调色板 paletteIndex 3F10 折回)。Loopy v/t/x/w 就位。66 用例全绿。"
+    },
+    {
+      "n": 7,
+      "slug": "background-rendering",
+      "file": "07-background-rendering.md",
+      "degraded": false,
+      "summary": "src/palette.ts:NES_RGB 64 色 + rgbOf(color)。src/ppu.ts 渲染流水线:tick() 每帧 89342 dot(scanline 0-261 × dot 0-340,帧尾返回 true);像素先读后移(bit=0x8000>>fineX);8 dot fetch 组(NT/AT/PTlo/PThi + case7 incHorz);16 位移位寄存器 bgShiftLo/Hi + atShiftLo/Hi;dot256 incVert、dot257 水平回抄、预渲染 280-304 垂直回抄;renderPixel 写 frameBuffer(256*240*3),左侧 8px 裁剪 mask bit1、灰度 bit0;渲染关=universal。72 用例全绿;冷启动第一帧第 0 行无预取是真机行为。"
+    },
+    {
+      "n": 8,
+      "slug": "sprite-rendering",
+      "file": "08-sprite-rendering.md",
+      "degraded": false,
+      "summary": "Ppu:oam 256 字节 + 003/004 读写(OAMADDR 推进);evaluateSprites(nextLine) 在每线 dot257 为下线选前 8 精灵并取图案(8x8/8x16 编址、vflip 行翻转、hflip reverseBits);renderPixel 精灵合成(OAM 序优先、attr bit5 behind、左裁剪 mask bit2);sprite0Hit 置位(精灵0×背景不透明,mask&8)与 (261,1) 清零;spriteOverflow 简化为正确计数;oamWrite(val)。Bus:014 记 dmaPage/dmaPending,runPendingDma() 整页搬运(513 周期由主循环入账,第 9 章)。81 用例全绿。"
+    },
+    {
+      "n": 9,
+      "slug": "frame-timing",
+      "file": "09-frame-timing.md",
+      "degraded": false,
+      "summary": "Ppu:(241,1) vblank=1+按 ctrl bit7 拉起 nmiAsserted;(261,1) 清 vblank/sprite0Hit/spriteOverflow;PPUCTRL 写入 vblank 期间使能沿重新拉线;takeNmi() 取走回落;oddFrame 奇数帧渲染开时预渲染行少 1 dot(89342/89341 交替)。Cpu 新增 nmi()(向量 FFFA)/irq()(受 I 屏蔽,FFFE)。src/nes.ts:class Nes(mirroring) {ppu,bus,cpu},runFrame() 指令级 catch-up(cpu.step()*3, DMA 513*3, takeNmi→cpu.nmi)返回 frameBuffer。勘误:ch7 帧长断言改为仅偶数帧。真 ROM 验证:cpu_timing_test 16 秒全量周期测试 PASSED(修复其抓到的 indY 跨页周期 bug:ORA (zp),Y 5→6);vbl_basics、sprite_hit basics/flip PASSED;vbl_set_time/nmi_control/suppression/left_clip FAILED(逐 dot 精度,精度阶梯章素材)。91 用例全绿。"
+    },
+    {
+      "n": 10,
+      "slug": "controller-input",
+      "file": "10-controller-input.md",
+      "degraded": false,
+      "summary": "src/controller.ts:Controller{cpuRead/cpuWrite(016/017), setButton(player,button,down)},内部 Pad 移位寄存器:state/snapshot/index,strobe 高持续重载且读恒为 A 键实时值,落沿定格,读序 A B Select Start Up Down Left Right,读满恒 1;strobe 只认 016 写。Nes 构造器把 ioRead/ioWrite 委托接上(第 11 章兑现)。97 用例全绿。"
+    },
+    {
+      "n": 11,
+      "slug": "assemble-machine",
+      "file": "11-assemble-machine.md",
+      "degraded": false,
+      "summary": "Nes.loadRom(bytes):parseINES→NROM 接线(16K PRG 镜像 000/ 或 32K 直通;CHR-ROM 只读 chr 后端 / CHR-RAM ChrRam;mirroring 写回 ppu,fourScreen 扩 vram)后 cpu.reset();非 mapper0 抛错;setButton 已接。端到端测试用手写机器码自制 .nes(等 vblank×2→上传调色板/CHR-RAM 瓦片/命名表→PPUCTRL NMI+MASK→主循环;NMI 读手柄按 A 写格(2,0),尾部恢复 006 防 t 污染竖移);demo/index.html + demo/app.ts(canvas/rAF/键盘映射),浏览器实测 full_palette 渲染成功。102 用例全绿。"
+    },
+    {
+      "n": 12,
+      "slug": "accuracy-ladder",
+      "file": "12-accuracy-ladder.md",
+      "degraded": false,
+      "summary": "principle 章:四级精度阶梯表(指令/扫描线/点/周期),课程定位指令级及其天花板(四张失败卡带即边界);APU(015 状态先行、通道合成、Web Audio)、mapper 2/1/3 路线(cartRead 换带状态对象)、非官方 opcode/open bus/溢出 bug 边角;社区测试卡带工作流与「按游戏驱动」心态;全课总结。无代码变更,全书 12 章完结。"
+    }
+  ]
+}

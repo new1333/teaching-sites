@@ -1,0 +1,226 @@
+{
+  "title": "Vue DevTools 原理：从零实现一个调试器内核",
+  "audience": "写过 Vue 应用、用过分水岭级调试工具，想知道「面板为什么能看见我的组件和状态」并亲手做出最小实现的开发者",
+  "input": { "kind": "repo", "ref": "vuejs/devtools@main" },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript（strict）+ vitest",
+    "scope": "一个无 DOM 依赖的最小调试器内核（用 vnode 风格的模拟实例替代真实框架），src 约 700 行：全局钩子与重放队列、事件系统、应用登记处、组件树遍历、状态快照、循环引用编码、编辑回写、插件与检查器、双向 RPC 与内存通道"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 连接前夜：页面里的会合点",
+      "chapters": [
+        {
+          "slug": "two-worlds",
+          "title": "两个世界：调试器为什么难做",
+          "goal": "建立全书地图：应用代码与工具代码是两份独立 bundle，中间隔着一道传输边界",
+          "type": "principle",
+          "pain_point": "装了浏览器扩展，图标却是灰的，悬停提示「未检测到 Vue」；同一个页面里 iframe 子应用的组件明明在跑，面板里却一片空白",
+          "depends_on": [],
+          "acceptance": [
+            "开章为「未检测到 Vue」的真实排障故事，具体到现象",
+            "给出三段式架构图：页面内工具内核 ↔ 通道 ↔ UI 客户端",
+            "讲清三类宿主（iframe / 开发服务器 / 扩展面板）各自把 UI 客户端放在哪",
+            "零外部源码引用；无代码或仅伪码示意"
+          ]
+        },
+        {
+          "slug": "global-hook",
+          "title": "全局钩子：window 上的第一次握手",
+          "goal": "理解独立 bundle 的会合问题与加载时序竞态，实现 createHook / installHook / 等待队列",
+          "type": "build",
+          "pain_point": "应用脚本比工具先执行：框架挂载时往 window 上找不到钩子，只能干看着；等工具脚本后到，应用早已初始化完毕，错过的信息再也补不回来",
+          "milestone": "installHook 幂等安装；应用侧 queueUntilHookInstalled 先排队，钩子就位后队列被逐个重放并清空",
+          "milestone_verify": "时序测试：先 queue 后 install，回调恰被执行一次；重复 install 返回同一钩子",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/hook/index.ts", "why": "备课：钩子对象的形态与 once/off 语义" },
+            { "path": "packages/devtools-kit/src/core/index.ts", "why": "备课：安装时重放等待队列的真实顺序" }
+          ],
+          "depends_on": [],
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run 全绿（新测试先红后转绿）",
+            "含「没有重放队列时」的时序事故推演",
+            "零外部源码引用：示例代码全部出自实验场"
+          ]
+        },
+        {
+          "slug": "event-system",
+          "title": "事件系统：从原始事件到语义事件",
+          "goal": "实现事件总线与钩子转发层，理解守门（过滤）与解绑在长会话里的意义",
+          "type": "build",
+          "pain_point": "面板关闭后内核还在全量转发组件事件，控制台持续刷日志；标记了 devtools.hide 的内部组件混进树里，用户在面板里看到一堆不想看的节点",
+          "milestone": "createEvents 提供 on/emit 且 on 返回解绑；subscribeHook 把钩子事件转发进事件系统，hide 组件被守门拦下，解绑后不再转发",
+          "milestone_verify": "三组断言：转发到达、hide 拦截、off 后静默",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/hook/index.ts", "why": "备课：转发层对每个事件的守门条件" },
+            { "path": "packages/devtools-kit/src/ctx/hook.ts", "why": "备课：语义事件的命名与分层" }
+          ],
+          "depends_on": ["global-hook"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清「原始事件」与「语义事件」为何要分两层",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "app-record",
+          "title": "应用登记处：多应用与实例表",
+          "goal": "实现应用记录、活动应用切换与实例唯一 id，理解「为什么 uid 不够可靠」",
+          "type": "build",
+          "pain_point": "微前端页面里两个 Vue 应用并存，面板只显示一个；更糟的是两棵树的组件 uid 撞号，点击 A 组件高亮的却是 B 应用里的同名 id 组件",
+          "milestone": "createAppRegistry 支持双应用注册、activeAppRecord 切换、注销清理；registerInstance 分配自维护唯一 id（同实例重复登记复用同 id）",
+          "milestone_verify": "断言：双应用互不串号、切换后活动记录正确、注销后 apps 清空、同实例两次登记 id 相同",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/core/app/index.ts", "why": "备课：应用记录的生成与命名规则" },
+            { "path": "packages/devtools-kit/src/core/component/tree/walker.ts", "why": "备课：实例唯一 id 的分配与去重时机" }
+          ],
+          "depends_on": ["event-system"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清实例表为什么存「活引用」而不是快照",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 看见：组件树与状态",
+      "chapters": [
+        {
+          "slug": "component-tree",
+          "title": "组件树：走 vnode，不走 DOM",
+          "goal": "实现遍历器：按需走 subTree 产出树快照，控制深度与过滤，处理 keep-alive 缓存实例",
+          "type": "build",
+          "pain_point": "页面 DOM 结构和组件结构对不上：Fragment 让一个组件渲染出三个兄弟节点，面板按 DOM 排树全乱了；千层嵌套的递归组件让面板一次全量递归直接卡死浏览器",
+          "milestone": "getComponentTree(app, { filter, maxDepth }) 输出嵌套快照树：深度截断处 hasChildren 仍为 true（可按需再拉）、filter 命中才保留、keep-alive 缓存实例标记 inactive",
+          "milestone_verify": "断言：截断、过滤、inactive 三种行为；同一棵实例树两次遍历 id 稳定",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/core/component/tree/walker.ts", "why": "备课：subTree 遍历、去重与深度控制" },
+            { "path": "packages/devtools-kit/src/core/component/tree/filter.ts", "why": "备课：过滤命中语义" }
+          ],
+          "depends_on": ["app-record"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清「按需拉取」与「事件推送」两种设计的取舍",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "state-snapshot",
+          "title": "状态快照：分类与清洗",
+          "goal": "把活实例的 props/setup/data 分类成快照项，安全清洗不可传输的值",
+          "type": "build",
+          "pain_point": "面板一选中组件就白屏：状态里的函数值让结构化克隆直接抛 DataCloneError；某个 getter 读取即抛错，一错整份快照全毁",
+          "milestone": "getInstanceState 输出分类快照：函数清洗为占位串、单字段读取抛错只标记该项、editable 按来源标记",
+          "milestone_verify": "断言：分类正确、函数被清洗、抛错字段不毁整份快照",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/core/component/state/process.ts", "why": "备课：props/setup/data 的分类与清洗策略" }
+          ],
+          "depends_on": ["component-tree"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清单项失败不毁整份快照的容错设计",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "transfer-encoding",
+          "title": "序列化：循环引用的过桥方案",
+          "goal": "实现对象表 + 索引的编码/解码，让含循环引用的对象图能安全过传输边界",
+          "type": "build",
+          "pain_point": "组件状态里存了父组件引用形成环，深拷贝当场抛 RangeError: Maximum call stack size exceeded；两个属性引用同一个对象，朴素序列化把它拆成两份，面板上改一个另一个不动",
+          "milestone": "encodeState/decodeState：循环引用成环可还原、共享引用解码后仍是同一对象、原始值直通",
+          "milestone_verify": "断言：自引用环往返等价、共享引用身份保持、嵌套数组往返正确",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/shared/transfer.ts", "why": "备课：对象表编码的真实形态与大小上限思想" }
+          ],
+          "depends_on": ["state-snapshot"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清「传输格式」与「页面内存」是两个世界",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "state-editing",
+          "title": "编辑回写：把修改写回活实例",
+          "goal": "实现路径解析回写：面板上的编辑沿路径下行写回页面里活着的对象",
+          "type": "build",
+          "pain_point": "在面板里把 count 从 3 改成 100，页面纹丝不动——面板拿到的是编码还原后的快照，是一张「照片」，照片上怎么改都影响不了本体",
+          "milestone": "editState(instance, path, value) 沿路径写回活实例；路径中途缺失或非对象安全返回 false 不抛出",
+          "milestone_verify": "断言：嵌套对象与数组索引写回成功、活对象真的变了、坏路径返回 false",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/core/component/state/editor.ts", "why": "备课：路径下行与回写语义" }
+          ],
+          "depends_on": ["state-snapshot"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清快照与活引用的边界：看的是照片，改的是本体",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 对话：RPC、插件与宿主",
+      "chapters": [
+        {
+          "slug": "plugin-and-inspector",
+          "title": "插件 API：第三方库的面板",
+          "goal": "实现 setupDevToolsPlugin 的缓冲重放与自定义检查器注册，理解「库先于工具初始化」的时序问题",
+          "type": "build",
+          "pain_point": "状态管理库想在调试器里加自己的面板，可库的初始化跑在应用登记之前——注册时还没有活动应用，注册请求石沉大海；库升级后用户的面板消失了，因为注册只发生一次",
+          "milestone": "setupDevToolsPlugin 无活动应用时进缓冲，registerPluginsForApp 重放；addCustomInspector 注册的面板可 getInspectorTree / getInspectorState 拉取",
+          "milestone_verify": "断言：先注册后建应用的顺序里插件恰好执行一次；检查器树与状态可读",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/core/plugin/index.ts", "why": "备课：插件缓冲与按应用过滤重放" },
+            { "path": "packages/devtools-kit/src/ctx/inspector.ts", "why": "备课：检查器的注册与读取" }
+          ],
+          "depends_on": ["app-record", "event-system"],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "点出插件缓冲与第 2 章重放队列是同一思想的两次应用",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "birpc-channel",
+          "title": "双向 RPC 与通道抽象",
+          "goal": "实现消息 id 配对的双向 RPC 与 post/on 通道抽象，让 UI 客户端能调页面内函数、页面也能回调 UI",
+          "type": "build",
+          "pain_point": "UI 客户端跑在另一个上下文里，拿不到页面的对象引用：想调 getComponentTree 却连不到那个函数；反过来内核想通知 UI「树变了」也没有对方的句柄——单向消息写出一堆手写的消息类型分支，越来越乱",
+          "milestone": "createRpc(functions, channel) 双方互为服务端：call 返回 Promise 按消息 id 配对；createMemoryChannelPair 提供全双工通道，两侧并发调用不串线",
+          "milestone_verify": "断言：双向调用成功、并发请求响应各自配对、对端无此方法时 reject",
+          "relevant_files": [
+            { "path": "packages/devtools-kit/src/messaging/index.ts", "why": "备课：双向 RPC 的创建形态与通道预设的挂接点" }
+          ],
+          "depends_on": [],
+          "acceptance": [
+            "实验场门槛通过：新测试先红后转绿，旧章测试全绿",
+            "讲清「为什么 timeout 设为永不」对调试器的意义",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "hosts-and-relay",
+          "title": "宿主形态：Vite、扩展与中继",
+          "goal": "融会贯通：同一套内核 + RPC + 通道，如何落进 iframe、开发服务器、浏览器扩展三种宿主",
+          "type": "principle",
+          "pain_point": "扩展面板和页面不在同一个世界：面板脚本摸不到页面 window，直接 postMessage 也过不去扩展的隔离边界；没有中继层，扩展版调试器根本无法与页面内的内核对话",
+          "depends_on": ["birpc-channel", "two-worlds"],
+          "acceptance": [
+            "讲清三种宿主各自的通道落点（iframe postMessage / 开发服务器 ws / 扩展三跳中继）",
+            "给出扩展三跳中继的消息流转时序推演",
+            "收束全书地图：回到第 1 章的两世界问题给出完整答案",
+            "零外部源码引用；无代码或仅伪码示意"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个约 700 行、无 DOM 依赖的最小调试器内核：全局钩子与重放队列、事件系统、应用登记处、组件树遍历、状态快照、循环引用编码、编辑回写、插件与检查器、双向 RPC 与内存通道——调试器「能看见、能对话、能修改」三件事的最小原理实现",
+    "verify": "cd companion && npm install && npm test：约 35 条自设原理断言全绿；pnpm typecheck 通过"
+  }
+}
