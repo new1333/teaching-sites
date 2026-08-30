@@ -1,0 +1,53 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "first-http-server",
+      "file": "docs/01-first-http-server.md",
+      "degraded": false,
+      "summary": "已建 v0 blocking_server（serve/Request/parse_request/build_response，68 行）与 send_raw、13 条测试；概念：套接字/监听/accept、HTTP 报文、Content-Length、阻塞一次一连接。读者已能：起服务、发静态文件、复现干等。简化入差异清单：recv 当读全（第 4 章修）；/big 配速模拟；判罚一律 400。"
+    },
+    {
+      "n": 2,
+      "slug": "thread-per-connection-cost",
+      "file": "docs/02-thread-per-connection-cost.md",
+      "degraded": false,
+      "summary": "已建 v1 threaded_server（一连接一线程）与 bench 探针（线程/RSS/提交、乒乓、接力），23 条测试；概念：进程/线程、栈内存三笔账、上下文切换（约 7.5 µs）、C10K 乘法。实测 300 哑连接=302 线程、RSS +28.1 MiB。读者已能起 v1、复测干等消失。nginx 时间线已按官方来源收窄。"
+    },
+    {
+      "n": 3,
+      "slug": "event-loop",
+      "file": "docs/03-event-loop.md",
+      "degraded": false,
+      "summary": "已建 event_loop.EventLoop 与 event_server（现为 v3 形态）；bench 加 event/fdlimit 模式；35 条测试。实测：300 哑连接事件版 2 线程、RSS +532 KiB（对 v1 的 302/+28.1 MiB）；Windows select 第 513 个 fd 报错。读者已能跑对照与 fdlimit；epoll 断言出自 man7 非实测。"
+    },
+    {
+      "n": 4,
+      "slug": "connection-state-machine",
+      "file": "docs/04-connection-state-machine.md",
+      "degraded": false,
+      "summary": "已建 v3：http_parser（feed→需要更多/完成/坏信）、buffers、slow_client；event_server 演进为 _Connection 状态机（读→入账→切 WRITE→冲完才关），serve 签名不变；49 条测试。欠账（读残/截断）已复现并修复；单发大块本机整吞，截断不可端到端复现（入差异清单）。读者已能修复两起事故。"
+    },
+    {
+      "n": 5,
+      "slug": "master-workers",
+      "file": "docs/05-master-workers.md",
+      "degraded": false,
+      "summary": "已建 v4：worker_pool.run_master（spawn 派 worker 共享监听、补位、reload 轮换）；worker 复用 _Connection；新增 /status 与 X-Fable-Worker 头；52 条测试。实测分摊、杀 worker 补位、连接跨轮换存活；惊群未复现（入差异清单）。读者已能起 1 master+2 worker、验 reload 不断线。"
+    },
+    {
+      "n": 6,
+      "slug": "reverse-proxy",
+      "file": "docs/06-reverse-proxy.md",
+      "degraded": false,
+      "summary": "已建 v5：proxy_server（同一事件循环挂下游监听+上游连接；轮询分单、失败摘除重试、摘空 502、Host 重写、按 Content-Length 判齐）与 upstream_demo（自报名字）；56 条测试。实测 10 请求 5/5、杀一台全落幸存者、大正文逐字节一致。读者已能起两上游+代理、验分单/兜底。Windows 上失败连接约 2 秒才露头（入差异清单）。"
+    },
+    {
+      "n": 7,
+      "slug": "vs-real-nginx",
+      "file": "docs/07-vs-real-nginx.md",
+      "degraded": false,
+      "summary": "终章收口（验证物不动，56 测试全绿）。driving_question 作答；差距地图 11 项分三类，未实现项全挂差异清单附录；新教 sendfile/零拷贝/内存池；清 ch5（惊群三代应对）与 ch6（权重/least_conn/max_fails/keepalive）欠条。读者已能：讲清 fable 与真 nginx 每笔差距的类别与取舍。"
+    }
+  ]
+}

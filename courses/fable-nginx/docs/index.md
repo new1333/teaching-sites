@@ -1,0 +1,50 @@
+---
+layout: home
+hero:
+  name: fable-nginx：亲手复刻一个 nginx
+  text: 会写代码、用过 HTTP，但没碰过网络编程与事件驱动的开发者
+  tagline: 读完本课程，事件驱动、多进程、可反向代理的迷你 nginx（Python 实现，56 项测试全绿）
+  actions:
+    - theme: brand
+      text: 开始阅读
+      link: ./01-first-http-server
+    - theme: alt
+      text: 课程介绍
+      link: ./about
+features:
+  - icon: 🔌
+    title: 一个 HTTP 服务器的最小闭环
+    details: 用 socket 写出第一个能被 curl 访问的阻塞版服务器（v0），讲清 Web 服务器的本质与 HTTP 报文的最小结构。
+    link: ./01-first-http-server
+    linkText: 进入本章
+  - icon: 🧵
+    title: 一连接一线程的代价：C10K 从哪来
+    details: 给 v0 接上「一连接一线程」并发（v1），压测量化每线程内存与上下文切换成本，讲清 C10K 问题与 nginx 的诞生动因。
+    link: ./02-thread-per-connection-cost
+    linkText: 进入本章
+  - icon: 🔁
+    title: 把「等」集中起来：非阻塞 IO 与事件循环
+    details: 非阻塞 socket + selectors 重构成单线程事件循环（v2），一条线程伺候几百连接；select 的上限与 epoll 为什么赢。
+    link: ./03-event-loop
+    linkText: 进入本章
+  - icon: ⚙️
+    title: 半读半写的世界：事件驱动的连接状态机
+    details: 拆掉「读一次当读全」的假设：增量解析状态机、收发缓冲区、部分读与部分写，水平触发与边缘触发。
+    link: ./04-connection-state-machine
+    linkText: 进入本章
+  - icon: 👷
+    title: master 与 worker：nginx 的多进程骨架
+    details: 长成 master + N worker 的多进程形状（v4）：为什么多进程×单线程、worker 配 CPU 核数、accept 惊群与优雅重载。
+    link: ./05-master-workers
+    linkText: 进入本章
+  - icon: 🔄
+    title: 反向代理：既当前台，又当传话员
+    details: 装上当代主职（v5）：事件循环同时挂下游监听与上游连接，转发请求、轮询分单、故障摘除。
+    link: ./06-reverse-proxy
+    linkText: 进入本章
+  - icon: 🗺️
+    title: 对账真 nginx：我们写的和它差在哪
+    details: 差距地图盘点 sendfile/零拷贝、内存池、TLS、SO_REUSEPORT、配置系统——分类为工程优化/架构差异/功能缺口，全书收口。
+    link: ./07-vs-real-nginx
+    linkText: 进入本章
+---

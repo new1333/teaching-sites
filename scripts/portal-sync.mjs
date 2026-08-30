@@ -1,4 +1,5 @@
-// 扫描 courses/*-course，生成聚合站文件（courses/index.md 与 courses/.vitepress/config.mjs）。
+// 扫描 courses/ 下的课程目录（*-course 后缀，或凡含 docs/.vitepress/config.mjs 的目录），
+// 生成聚合站文件（courses/index.md 与 courses/.vitepress/config.mjs）。
 // 数据唯一来源：各课程已提交的 docs/.vitepress/config.mjs。勿手改生成物——重跑本脚本即可。
 import { readdirSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
@@ -8,7 +9,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const coursesDir = join(root, 'courses')
 
 const courseNames = readdirSync(coursesDir, { withFileTypes: true })
-  .filter((d) => d.isDirectory() && d.name.endsWith('-course'))
+  .filter((d) => d.isDirectory() && !d.name.startsWith('.')
+    && (d.name.endsWith('-course') || existsSync(join(coursesDir, d.name, 'docs', '.vitepress', 'config.mjs'))))
   .map((d) => d.name)
   .sort()
 
@@ -46,7 +48,7 @@ for (const name of courseNames) {
 }
 
 if (!courses.length) {
-  console.error('[portal] courses/ 下没有可用课程（需 *-course/docs/.vitepress/config.mjs）')
+  console.error('[portal] courses/ 下没有可用课程（需 *-course 后缀目录或 docs/.vitepress/config.mjs）')
   process.exit(1)
 }
 

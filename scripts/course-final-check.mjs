@@ -264,9 +264,14 @@ if (!skipGates && existsSync(join(companionRoot, 'package.json'))) {
     const out = plain(run('test'))
     testCount = Number(/Tests\s+(\d+)\s+passed/.exec(out)?.[1] ?? NaN) || null
     fileCount = Number(/Test Files\s+(\d+)\s+passed/.exec(out)?.[1] ?? NaN) || null
-    if (/(Tests?\s+\d+\s+failed|✗|FAIL\b)/.test(out) || testCount === null)
+    const vitestPassed = testCount !== null && !/(Tests?\s+\d+\s+failed|✗|FAIL\b)/.test(out)
+    if (testCount === null) { // vitest 格式未命中 → unittest 兜底（Python companion：Ran N tests … OK）
+      testCount = Number(/Ran\s+(\d+)\s+tests?/.exec(out)?.[1] ?? NaN) || null
+    }
+    const unittestOk = testCount !== null && /\bOK\b/.test(out) && !/FAILED/.test(out)
+    if (!(vitestPassed || unittestOk))
       say(`伴生测试未过或计数不可解析——输出尾部：\n${out.slice(-400)}`)
-    else infos.push(`伴生门槛实测：${fileCount} 个测试文件 / ${testCount} 项测试全绿`)
+    else infos.push(`伴生门槛实测：${fileCount !== null ? `${fileCount} 个测试文件 / ` : ''}${testCount} 项测试全绿`)
   }
 }
 if (testCount !== null) {
@@ -286,10 +291,12 @@ if (testCount !== null) {
       if (Number(m[1]) !== fileCount) say(`${t}: 测试文件断言「${m[0]}」与实测 ${fileCount} 不一致`)
   }
 }
-// 行数断言（±20% 容差，README 的「~N 行」）
+// 行数断言（±20% 容差，README 的「~N 行」）——只计源码文件：compileall/unittest 先跑会在
+// src 下生成 __pycache__/*.pyc，把字节码当源码计数会让「约 N 行」断言可复现地误报。
 if (existsSync(join(companionRoot, 'src'))) {
   let srcLines = 0
-  const walk = (d) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) walk(p); else srcLines += readText(p).split('\n').length } }
+  const SRC_EXT = /\.(py|ts|tsx|js|mjs|cjs|jsx|go|rs|c|h|cpp|cc|java|rb|sh|sql)$/
+  const walk = (d) => { for (const e of readdirSync(d, { withFileTypes: true })) { const p = join(d, e.name); if (e.isDirectory()) { if (e.name !== '__pycache__' && e.name !== 'node_modules') walk(p) } else if (SRC_EXT.test(e.name)) srcLines += readText(p).split('\n').length } }
   walk(join(companionRoot, 'src'))
   const readme = join(courseDir, 'README.md')
   if (existsSync(readme)) for (const m of readText(readme).matchAll(/(?:约|~|≈)\s*(\d{3,5})\s*行/g)) {
