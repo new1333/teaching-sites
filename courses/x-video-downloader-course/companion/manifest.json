@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "X 视频下载器（教学版）",
+  "version": "0.2.0",
+  "permissions": ["webRequest", "downloads", "storage"],
+  "action": {},
+  "host_permissions": ["https://x.com/*", "*://*.twimg.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["src/content/loader.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/content/main.js",
+        "src/content/button-state.js",
+        "src/shared/badge.js",
+        "src/shared/messages.js"
+      ],
+      "matches": ["https://x.com/*", "https://twitter.com/*"]
+    }
+  ],
+  "background": { "service_worker": "src/background/sw.js", "type": "module" }
+}

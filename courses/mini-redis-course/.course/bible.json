@@ -1,0 +1,440 @@
+{
+  "reader_model": {
+    "note": "未校准（问卷未获回答），按保守默认画像：会写 TypeScript 的开发者，用过数据库但没读过存储内部，没写过 socket 程序。",
+    "known_assets": [
+      "TypeScript / JavaScript：ES 模块、class、Map/Set、Promise 与 async/await、EventEmitter（setTimeout 的事件循环体感是锚点）",
+      "npm/pnpm 命令行与 package.json 脚本",
+      "数据库泛指概念（知道 MySQL、跑过 SQL 更好，不假设索引 internals）",
+      "基本数据结构词汇：数组、链表、对象（但哈希冲突/扩容细节按「说不清」处理）"
+    ],
+    "unknowns": [
+      {
+        "concept": "TCP 字节流无边界（半包/粘包）",
+        "why": "没写过 socket，以为一次发送对应一次接收",
+        "anchor": "快递按箱签收 vs 传送带上连续流过的货——中间没有箱子隔板",
+        "first_chapter": "02-resp-protocol"
+      },
+      {
+        "concept": "RESP 协议",
+        "why": "只在抓包里见过一串星号美元符号，不知道它是 Redis 的对讲机话术",
+        "anchor": "对讲机通话的固定回令格式：先报类型、再报长度、最后报内容",
+        "first_chapter": "02-resp-protocol"
+      },
+      {
+        "concept": "阻塞 IO 与 IO 多路复用",
+        "why": "没体会过一个阻塞的 recv 卡死整个循环",
+        "anchor": "一个服务员盯死一桌客人 vs 盯着叫号屏谁叫去谁那桌",
+        "first_chapter": "03-single-thread-event-loop"
+      },
+      {
+        "concept": "事件循环与事件驱动",
+        "why": "天天用 setTimeout 却没把它当并发模型看",
+        "anchor": "JS 读者自己的事件循环——Node 的 net 模块就是它的直接延伸",
+        "first_chapter": "03-single-thread-event-loop"
+      },
+      {
+        "concept": "哈希冲突、负载因子、rehash",
+        "why": "Map 用了多年但没见过数组+链表的手工实现",
+        "anchor": "停车场车位满了整体搬家扩容——搬家期间新旧两场各停一半",
+        "first_chapter": "04-hash-table-rehash"
+      },
+      {
+        "concept": "渐进式 rehash",
+        "why": "直觉上扩容就是一次性搬完",
+        "anchor": "搬家摊薄：每来一位客人顺路搬一箱，而不是闭店搬一天",
+        "first_chapter": "04-hash-table-rehash"
+      },
+      {
+        "concept": "跳表",
+        "why": "面试背过 O(logN) 但没画过多层索引",
+        "anchor": "地铁快车线：慢车站站停，快车跳几站，换线直达",
+        "first_chapter": "05-skiplist-zset"
+      },
+      {
+        "concept": "过期字典与惰性/定期删除",
+        "why": "以为 EXPIRE 到点自动消失（每键一个定时器）",
+        "anchor": "药房的有效期登记本：取药时翻一眼，药师每天巡一批",
+        "first_chapter": "06-ttl-expire"
+      },
+      {
+        "concept": "近似 LRU",
+        "why": "以为 LRU 是精确全局有序的链表",
+        "anchor": "抽 5 个人问谁最久没来，而不是给全场每个客人挂计时器",
+        "first_chapter": "07-eviction-lru"
+      },
+      {
+        "concept": "AOF 与写后日志",
+        "why": "常与数据库的 WAL（写前日志）混为一谈",
+        "anchor": "记账本：先花完钱再记一笔，破产（重启）后按账本一笔笔重花",
+        "first_chapter": "08-aof"
+      },
+      {
+        "concept": "fork 与写时复制",
+        "why": "以为拍快照要么停写、要么马上复制翻倍内存",
+        "anchor": "复印一本作业本：说好各改各的，谁先动笔才真的复印那一页",
+        "first_chapter": "09-rdb-snapshot"
+      },
+      {
+        "concept": "主从复制与故障转移",
+        "why": "没运维过 Redis 集群",
+        "anchor": "师父带徒弟：先抄一遍全部作业（全量），之后每写一页同步一页（增量）",
+        "first_chapter": "10-replication-ha"
+      }
+    ]
+  },
+  "glossary": [
+    {
+      "term": "键值存储",
+      "en": "Key-Value Store",
+      "definition": "只会两件事的数据库：按一个键存一个值、按键取回——像一个大号 JS 对象，但活在另一个进程里。"
+    },
+    {
+      "term": "缓存",
+      "en": "Cache",
+      "definition": "把慢的地方取来的数据在快的地方暂存一份，下次直接拿快的——用空间换时间。"
+    },
+    {
+      "term": "旁路缓存模式",
+      "en": "Cache-Aside",
+      "definition": "最常用的缓存姿势：读先查缓存、没有再查库回填；写先写库再删缓存。缓存站在数据库旁边，不在中间。"
+    },
+    {
+      "term": "内存数据库",
+      "en": "In-Memory Database",
+      "definition": "数据平时全部放在内存里的数据库——快是快，断电就忘，所以要配持久化。"
+    },
+    {
+      "term": "数据结构服务器",
+      "en": "Data Structure Server",
+      "definition": "Redis 的自我定位：不只是存字符串，还提供列表、哈希、集合、有序集合这些结构级操作，让计算靠近数据。"
+    },
+    {
+      "term": "RESP 协议",
+      "en": "REdis Serialization Protocol",
+      "definition": "Redis 客户端与服务端之间的对讲机话术：每条消息先标类型（+ $ : - *），再标长度，最后是内容，行尾统一 \\r\\n。"
+    },
+    {
+      "term": "字节流",
+      "en": "Byte Stream",
+      "definition": "TCP 送货的方式：一串连续字节，没有消息边界——切成几段、几段合送都不保证，收货方要自己认边界。"
+    },
+    {
+      "term": "半包与粘包",
+      "en": "partial / coalesced packets",
+      "definition": "字节流的常态：一条消息分两次到达（半包），或几条挤在一次到达（粘包）——不是 bug，是本性。"
+    },
+    {
+      "term": "阻塞 IO",
+      "en": "Blocking IO",
+      "definition": "线程走到 read 门口没数据就原地睡着——等一个人，误所有人。"
+    },
+    {
+      "term": "IO 多路复用",
+      "en": "IO Multiplexing",
+      "definition": "让一个线程同时盯着许多连接的技术：谁有数据到达内核就报告谁（select/poll/epoll 都是它的实现），而不是一个连接一个线程干等。"
+    },
+    {
+      "term": "事件循环",
+      "en": "Event Loop",
+      "definition": "一个永动的调度循环：有事件（连接到达、数据可读）就处理，没事件就歇——单线程也能同时服务上千连接的底层机制。"
+    },
+    {
+      "term": "事件驱动",
+      "en": "Event-Driven",
+      "definition": "程序不主动等事情，而是注册『这事发生时叫我』的回调，控制权交还给循环。"
+    },
+    {
+      "term": "管道",
+      "en": "Pipelining",
+      "definition": "客户端一口气发多条命令、一次收回全部应答——省掉每条命令一个网络往返，RESP 的解析模型天然支持。"
+    },
+    {
+      "term": "哈希函数",
+      "en": "Hash Function",
+      "definition": "把任意键算成一个数组下标的函数——同一个键永远算出同一个下标。"
+    },
+    {
+      "term": "哈希冲突",
+      "en": "Hash Collision",
+      "definition": "两个不同的键被算到同一个桶——用桶里挂链表解决（链地址法）。"
+    },
+    {
+      "term": "链地址法",
+      "en": "Separate Chaining",
+      "definition": "解冲突的主流做法：每个桶住一条链，落到同桶的键在链上排队——查桶 O(1)，再沿链比对。"
+    },
+    {
+      "term": "负载因子",
+      "en": "Load Factor",
+      "definition": "已存键数 ÷ 桶数组长度——这个比值越大链越长，查得越慢，所以要盯着它扩容。"
+    },
+    {
+      "term": "渐进式 rehash",
+      "en": "Incremental Rehash",
+      "definition": "扩容时新旧两张表同时在场，每次操作顺带搬一个桶——把一次长阻塞摊薄成无数次微秒动作。"
+    },
+    {
+      "term": "跳表",
+      "en": "Skip List",
+      "definition": "多层索引的有序链表：底层站站慢车，上层跳站快车——查找/插入 O(logN)，范围查询天然顺手。"
+    },
+    {
+      "term": "有序集合",
+      "en": "Sorted Set / ZSET",
+      "definition": "成员各带一个分数、永远按分数排好队的集合——排行榜的标准答案。"
+    },
+    {
+      "term": "对象编码",
+      "en": "Encoding",
+      "definition": "Redis 的同一类数据（type）底下按大小换不同物理结构（encoding）：小用紧凑省内存，大换高效保性能。"
+    },
+    {
+      "term": "过期字典",
+      "en": "Expires Dict",
+      "definition": "另一张表：键 → 到期时间戳。键本身不知道自己会过期，到期与否查这本登记簿。"
+    },
+    {
+      "term": "惰性删除",
+      "en": "Lazy Expiration",
+      "definition": "过期键在被访问那一刻才检查、才删——不花后台 CPU，代价是没人碰的过期键一直占内存。"
+    },
+    {
+      "term": "定期删除",
+      "en": "Periodic Expiration",
+      "definition": "每隔一小段时间随机抽一批带 TTL 的键，过期的删掉，过期比例高就再抽一轮——惰性删除的补刀。"
+    },
+    {
+      "term": "内存淘汰",
+      "en": "Eviction",
+      "definition": "内存（本课简化为键数上限）满了之后主动腾地方的策略——与『过期』不同：过期删的是到期键，淘汰牺牲的是还活着的键。"
+    },
+    {
+      "term": "近似 LRU",
+      "en": "Approximated LRU",
+      "definition": "不维护全局精确链表，而是随机抽 5 个键、踢掉其中最久未用的——牺牲一点准确换回性能。"
+    },
+    {
+      "term": "AOF",
+      "en": "Append Only File",
+      "definition": "追加式日志文件：每条写命令执行完就追加一笔，重启时从头重放恢复数据。"
+    },
+    {
+      "term": "AOF 重写",
+      "en": "AOF Rewrite",
+      "definition": "按当前内存现状生成一份等价的最小命令集换掉臃肿日志——100 次 SET 同一个键只留最后一条。"
+    },
+    {
+      "term": "刷盘策略",
+      "en": "fsync policy",
+      "definition": "日志什么时候真正写到磁盘：always 最稳最慢、everysec 每秒一次折中、no 交给操作系统最快最险。"
+    },
+    {
+      "term": "RDB 快照",
+      "en": "RDB Snapshot",
+      "definition": "某一瞬间全库的二进制照片——恢复比 AOF 重放快，但两次快照之间的写入会丢。"
+    },
+    {
+      "term": "写时复制",
+      "en": "Copy-On-Write",
+      "definition": "fork 出的子进程先与父进程共享内存页，谁先改哪页才复制哪页——快照期间主进程照常写入的秘密。"
+    },
+    {
+      "term": "fork",
+      "en": "fork",
+      "definition": "操作系统复制出一个几乎一样的子进程的调用——页表先共享、各改各的（配合写时复制）。"
+    },
+    {
+      "term": "主从复制",
+      "en": "Replication",
+      "definition": "从库先要一份全量数据（RDB 传输），之后主库把每条写命令流水线同步过去——数据搬家+读扩容。"
+    },
+    {
+      "term": "哨兵",
+      "en": "Sentinel",
+      "definition": "几个旁观的看门进程：盯主库心跳，多数派认定它挂了就自动把某个从库提成新主——自动故障转移。"
+    },
+    {
+      "term": "哈希槽",
+      "en": "Hash Slot",
+      "definition": "集群把键空间切成 16384 个固定槽，每台节点负责一段——扩容只需搬槽，不用全量重哈希。"
+    },
+    {
+      "term": "缓存雪崩",
+      "en": "Cache Stampede",
+      "definition": "缓存同一时刻大面积失效/清空，请求全部砸向数据库——冷启动重启、批量同刻过期都会触发。"
+    },
+    {
+      "term": "简单串与批量串",
+      "en": "simple string / bulk string",
+      "definition": "RESP 的两种字符串：一行到底不能含换行的短回话（+），和带长度前缀、想装什么装什么的（$）。"
+    },
+    {
+      "term": "多层索引",
+      "en": "multi-level index",
+      "definition": "跳表的上层抽稀链：每升一层约四分之一的节点留下，查找从顶层往下蹭——链表上做出二分的味道。"
+    },
+    {
+      "term": "随机层数",
+      "en": "random level",
+      "definition": "新节点抛硬币决定自己盖几层：每层 1/4 概率晋升、封顶 32——用概率平均换掉全局再平衡。"
+    },
+    {
+      "term": "抽样",
+      "en": "sampling",
+      "definition": "不看清全貌、随机抽一小把来做决定——定期删除抽键、近似 LRU 抽候选，都是拿一点准确换大量时间。"
+    },
+    {
+      "term": "LRU 与 LFU",
+      "en": "Least Recently / Frequently Used",
+      "definition": "两种「热」的定义：新近用过的算热（LRU），用得勤的算热（LFU）——报表扫描洗得动前者，洗不动后者。"
+    },
+    {
+      "term": "idle 时钟",
+      "en": "idle clock",
+      "definition": "每个键记一笔最近被使用的时间戳——谁最久没人碰，谁就是近似 LRU 眼里最该走的。"
+    },
+    {
+      "term": "写后日志",
+      "en": "Write-After Log",
+      "definition": "先执行命令、成功后才记账的日志——与数据库先记账再执行的 WAL 相反，好处是账上不会有被拒的坏账。"
+    },
+    {
+      "term": "重放",
+      "en": "Replay",
+      "definition": "恢复的手段：新进程把日志里的命令从头到尾再执行一遍——重启后的「记忆」其实是重演。"
+    },
+    {
+      "term": "快照一致性",
+      "en": "snapshot consistency",
+      "definition": "快照拍到的是某一瞬间完整一致的状态，而不是写入中途的半张脸——fork+COW 让「那一瞬」被冻结。"
+    },
+    {
+      "term": "页表",
+      "en": "page table",
+      "definition": "操作系统给每个进程记的账：虚拟地址哪一页对应物理内存哪一页——fork 复制的是这本账，不是内存本身。"
+    },
+    {
+      "term": "全量同步",
+      "en": "full sync",
+      "definition": "主从复制的第一次：主库把当时的全部数据（RDB）发给从库——之后的增量才是日常。"
+    },
+    {
+      "term": "增量复制",
+      "en": "Partial Resynchronization",
+      "definition": "断线重连后只补发缺失的那段命令流——靠主库留着的复制积压缓冲圈住最近的写。"
+    },
+    {
+      "term": "故障转移",
+      "en": "failover",
+      "definition": "主库挂了自动把某个从库提成新主、大家改认新主人——哨兵存在的主要理由。"
+    },
+    {
+      "term": "RDB",
+      "en": "Redis Database file",
+      "definition": "Redis 全量快照的代称与文件格式——拍某一瞬全库的照片，恢复比 AOF 重放快。"
+    }
+  ],
+  "code_conventions": {
+    "language": "TypeScript（strict），运行时仅 Node 内置模块（net/fs），零第三方运行时依赖；devDependencies 只有 typescript / vitest / @types/node。",
+    "structure": "companion/src/ 下每个机制一个文件：resp / dict / skiplist / expire / eviction / aof / rdb / db / server / client；companion/tests/ 每章一个 {slug}.test.ts，append-only，只增不改。",
+    "naming": "类 PascalCase（Dict、SkipList、MiniRedis），函数与变量 camelCase；文件名小写连字符或单词；教学命名服务于清晰，不与真实 Redis 源码对齐。",
+    "errors": "命令层错误一律返回 RESP 错误应答（-ERR ...），不 throw 穿透网络层；内部不变量违反才允许抛异常。",
+    "comments": "中文注释；文件头一句话职责注释；承重算法（渐进 rehash、跳表层数、抽样淘汰）在代码处留『为什么』注释，不写『下一步做什么』的流水注释。",
+    "simplifications_declared": [
+      "内存占用以『键数』近似（真 Redis 看字节），大纲附录差异清单登记",
+      "LRU 时钟用毫秒时间戳（真 Redis 是 24bit 秒级时钟 + 随机衰减）",
+      "AOF 重写在同进程同步做（真 Redis fork 子进程），fork/COW 以图解 + 边界声明教学",
+      "只实现 RESP2 子集，RESP3 只作视野提及",
+      "Dict 用教学哈希函数（31-多项式；真 Redis 默认 SipHash）——仅转述公开事实，不引其代码",
+      "Dict 新表一律翻倍（真 Redis 按键数取不小于 2^n 且 used*2 的 2 的幂，另有缩容）",
+      "Dict 渐进搬迁每步必到非空桶（真 Redis 每步至多顺访 10 个空桶）",
+      "解码以 JS 字符串为载体手工折算字节（真 Redis 全程按字节缓冲）"
+    ]
+  },
+  "api_contract": {
+    "src/resp.ts": "encodeSimpleString / encodeBulkString / encodeInteger / encodeError / encodeArrayOfStrings / class RespDecoder { feed(chunk: string): string[][] }",
+    "src/dict.ts": "class Dict<V> { set / get / delete / size / isRehashing / entries / rehashStep }（扩容与渐进搬迁自动触发）",
+    "src/skiplist.ts": "class SkipList { insert(member, score) / rangeByScore(min, max, limit, offset) / length }",
+    "src/expire.ts": "class Expirer { setExpire / getTtl / remove / lazyCheck(key): boolean / activeCycle(collectKeys, sampleN): number }",
+    "src/eviction.ts": "class Evictor { setLimit / touch / onWrite(collectKeys, evictOne): number }（近似 LRU：随机抽样取 idle 最大）",
+    "src/aof.ts": "class Aof { append(cmd) / entries(): string[][] / rewriteFrom(collectWriteCmds) / load / restore(cmds) / size / syncs }，构造可注入 { policy: 'always'|'everysec'|'no', write?, fsync?, reset?, now? }；createFileAof(path, opts) 文件外壳",
+    "src/rdb.ts": "dump(collectEntries): string / load(text): entries（快照序列化与加载）",
+    "src/db.ts": "class MiniRedis { execute(args: string[]): string }——命令分发：PING SET(GET DEL EXPIRE TTL KEYS ZADD ZRANGE ZCARD FLUSHALL INFO；SET 支持 EX 选项；INFO 返回键数/过期数/rehash 状态/淘汰计数等教学统计",
+    "src/server.ts": "createMiniRedisServer(db, port?): Promise<{ port, close }>——net TCP 服务器，每连接独立解码缓冲，天然支持管道",
+    "src/client.ts": "connect(port): Promise<{ cmd(...args): Promise<string>, close }>——最小 RESP 客户端（测试与读者玩具）",
+    "append_only": "以上导出只增不改签名；测试按章 append-only，旧章测试持续全绿是公共 API 兼容的哨兵。"
+  },
+  "authoritative_docs": [
+    {
+      "topic": "RESP 协议规范（类型标记、\\r\\n、RESP2/RESP3 差异）",
+      "url": "https://redis.io/docs/latest/develop/reference/protocol-spec/",
+      "why": "第 2 章逐类型断言的事实源"
+    },
+    {
+      "topic": "键过期：惰性 + 定期删除（抽样与时间上限）",
+      "url": "https://redis.io/docs/latest/commands/expire/（redis.io 文档站 keyspace 页已改版 404，lazy/active 机制与 TTL 语义以 EXPIRE 命令附录为准；经典口径「每秒 10 轮 / 抽 20 / 25% 重复」为历史文档口径，现行实现已自适应——正文按「经典口径 + 差异声明」处理）",
+      "why": "第 6 章 TTL 机制断言"
+    },
+    {
+      "topic": "内存淘汰：近似 LRU、maxmemory-samples、LFU",
+      "url": "https://redis.io/docs/latest/develop/reference/eviction/",
+      "why": "第 7 章淘汰策略断言"
+    },
+    {
+      "topic": "持久化：AOF 写后日志、fsync 三档、重写；RDB 与混合持久化",
+      "url": "https://redis.io/docs/latest/operate/oss_and_stack/management/persistence/（文档站改版后现行地址，AOF/RDB/fork+COW/三档原文均在此页）",
+      "why": "第 8/9 章持久化断言"
+    },
+    {
+      "topic": "主从复制、哨兵、集群（16384 哈希槽）",
+      "url": "https://redis.io/docs/latest/develop/",
+      "why": "第 10 章概览断言（replication / sentinel / cluster 各子页）"
+    },
+    {
+      "topic": "Redis 内部机制：渐进式 rehash、对象编码（int/listpack/skiplist）",
+      "url": "https://github.com/redis/redis/blob/unstable/src/dict.c（头注释与函数注释：chaining、桶数 2 的幂、渐进一步一桶、每步至多顺访 10 空桶；redis.io 文档站 internals 页已改版 404，作者侧以源码注释为事实源，转述零引码）",
+      "why": "第 4/5 章数据结构断言"
+    },
+    {
+      "topic": "延迟数量级（内存 ~100ns / SSD 随机读 ~百µs / 磁盘寻道 ~10ms）",
+      "url": "https://gist.github.com/jboner/2841832（Jeff Dean『Latency Numbers Every Programmer Should Know』的公开转录版）",
+      "why": "第 1 章延迟对照表的数量级事实源"
+    },
+    {
+      "topic": "Redis Virtual Memory 特性史实（2.4 标记废弃、2.6 移除）",
+      "url": "https://redis.io/docs/latest/operate/oss_and_stack/reference/internals/internals-vm/",
+      "why": "第 1 章误区一证伪所引史实的出处"
+    },
+    {
+      "topic": "近似 LRU 的设计动机（为什么不用精确 LRU 链表）",
+      "url": "https://antirez.com/news/109（2016-03-15 发布「Random notes on improving the Redis LRU algorithm」；redis.io eviction 文档亦链向此页）",
+      "why": "第 7 章『抽 5 个』的设计出处（antirez 博客）"
+    },
+    {
+      "topic": "select(2) / epoll(7) 手册（FD_SETSIZE=1024、POSIX 全量检查、interest list 与就绪列表）",
+      "url": "https://man7.org/linux/man-pages/man2/select.2.html 与 https://man7.org/linux/man-pages/man7/epoll.7.html",
+      "why": "第 3 章 IO 多路复用三代演进的事实源"
+    },
+    {
+      "topic": "libuv 设计文档（各平台多路复用实现：epoll/kqueue/IOCP）",
+      "url": "https://docs.libuv.org/en/v1.x/design.html",
+      "why": "第 3 章 Node 事件循环底层机制的事实源"
+    },
+    {
+      "topic": "Redis 官方延迟文档（单线程口径、2.4 起后台线程、慢命令阻塞所有客户端）",
+      "url": "https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/latency/",
+      "why": "第 3 章单线程模型断言的事实源"
+    },
+    {
+      "topic": "Redis 官方管道文档（RTT 账、十倍吞吐、一万条一批）",
+      "url": "https://redis.io/docs/latest/develop/using-commands/pipelining/",
+      "why": "第 3 章管道实验的数字事实源"
+    },
+    {
+      "topic": "16384 哈希槽数量的成因（心跳位图 2KB vs 8KB、约 1000 主节点上限）",
+      "url": "https://github.com/redis/redis/issues/2576（antirez 的公开回答）",
+      "why": "第 10 章槽数量级断言的出处"
+    }
+  ],
+  "obligations": []
+}

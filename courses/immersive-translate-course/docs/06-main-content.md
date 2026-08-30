@@ -1,0 +1,282 @@
+---
+title: 主内容识别：别把额度花在导航栏上
+---
+
+# 主内容识别：别把额度花在导航栏上
+
+## 上章留下的问题
+
+第 5 章收尾时，strong、a、code 都能在译文里活下来了——双语对照的格式这一关过了。可计数翻译器的账本上一直趴着另一笔：fixture 新闻页全页 14 块 14 单，其中 4 单花在页头的站点名和侧栏的推荐位上。还记得第 2 章为什么故意没把 header 塞进跳过清单吗？——文章内部的 header 常包着标题，一刀切会误杀。于是 `h1`「The Daily Byte」成了合法可译块。它合法，但它不是正文。第 2 章末尾记的那笔账——14 块里混着的站点名、作者行、侧栏标签——这一章来清。
+
+## 四十个菜单项的账单
+
+引擎第一次跑在一个真实新闻站上，账单吓人一跳：正文只占翻译字符的三分之一。导航被翻译——顶部 40 个菜单项一个不落；侧栏推荐被翻译——10 条全中；页脚的备案号与法务链接也在花额度。按字符计费的话，你在为废料付费：额度浪费在三块用户根本不会读的地方。奇怪的是，第 2 章明明立过跳过规则——nav、footer、aside 整枝剪掉，为什么没拦住？打开那页的 HTML 一看就明白：顶部导航是一锅 div，没有 nav 标签；侧栏也不是 aside。**跳过规则认的是标签；版面上没有标签可认时，它是瞎的。**防线得从「认标签」升级到「认版面」。
+
+## 正文区长什么样：先称一称
+
+「这一屏是不是正文」你一眼就能看出来——正文是大段连续的文字，导航是一排长得差不多的选项，就像你扫一眼就知道哪屏是正文、哪屏全是广告。把这个直觉拆成可计算的数、放到 DOM 树上称一称，就是这一章的全部工作量。这种「用经验规则猜答案」的做法叫启发式：快、够用，但不保证全对——最后一条性质本章会反复兑现，包括当众认错一次。浏览器的阅读模式做的是同一件事：认出正文，扔掉其余。
+
+对一块区域，称两个数。
+
+**链接密度**：这块文字里，住在链接（a 元素）里的字符占总字符的比例。它为什么能当信号？导航的本质就是一列等价的选项——菜单项、目录项、推荐位，每一条都是「点我」的入口，文字几乎全部住在链接里，是拿来点的、不是拿来读的；正文恰好相反，链接只是引用与点缀，大多数字住在链接外。拿 fixture 现场算：侧栏 52 个可译字符里 44 个在链接里，链接密度 85%；正文区 534 个字符，一个都不住在链接里，密度 0%。反事实也做一遍：不要这个量行不行？不行——带摘要的推荐位文字可以很长，文字量反超一篇短正文；「这些字是否住在链接里」把「用来点击还是用来阅读」变成了一个可计算的数。
+
+**文字密度**：一个区域里可译字符的总量，衡量这地方文字沉不沉。正文区是全页文字最沉的地方，导航、侧栏、页脚都是零碎。（严格说「密度」该有分母，这里按总量用——认区域要找的是「哪块地盘文字最沉」，不是「哪段文字最浓」；链接密度是比值、当折扣用，文字密度当分量用。）它的反事实同样干脆：只看链接密度不看分量，页脚一行版权句密度 0、满分胜出——一行字不配当正文区。
+
+两个数合成一个分数：得分 ＝ 文字分量 ×（1 − 链接密度），展开就是「不住在链接里的可译字符数」：链接里的字全额打折，链接外的字全额计分。
+
+## 语义标签：亲口指认，但只信一半
+
+你大概想：HTML5 早给了版面语义标签——正文写在 main、article 里，引擎直接找标签不就完了？这个直觉对一半，错在两处。
+
+第一处：语义标签是可选的。规范定义了 main 代表文档独有的内容、article 代表独立成篇的内容，但用不用是作者的事，没有任何机制强迫——老页面、不讲究的模板，遍地是纯 div 搭的版面。本章的 legacy fixture 就是这样的现场：同一篇新闻，main 和 article 一个都没有，全靠 div 的 id 撑着版面。
+
+第二处更隐蔽：标签即便在，也可能包得太宽。fixture 新闻页里 main 就裹着侧栏——认了 main，侧栏照样花额度。demo 第一幕的分量表把这事摆得很清楚：main 得分 542（侧栏 44 个链接字全额打折，「Trending」8 个字进了账），article 得分 534。谁也没赢过谁多少，但 article 深一层、包的零碎更少。
+
+所以两者的关系是**配合，不是替代**。语义标签在这套机制里当地标——作者在版面上立的一块「正文在此」的牌子，引擎拿它圈候选；role="main"（ARIA 的角色标注，给读屏软件认版面用的属性）也算一块。密度负责裁决：同量级（分数达到最高候选八成）的候选里，取最深的那个。fixture 上 main 与 article 同量级，article 深，胜出。
+
+两个阈值也得给交代，都过一遍反事实。八成这条份额线：不设它、纯取最高分，会永远选包得最大的容器——legacy 版面上 #page 得分 608 高过 #content 的 534，认了它等于什么都没排除；份额线承认「同量级的容器都在正文的地盘上」，取最深就是取最紧。八成本身是手感值不是定数——太紧退化回「选最大的」，太松会让只装零头的子容器搅局；启发式的参数天生如此，我们只保证它在这套 fixture 与常见版面上踩得准。另一条是区域门槛：托着不足 3 个可译块的容器不叫区域，是块的包装纸（第 2 章测试里 sidebar 自己不成块，是同一条直觉）。
+
+## 演练：从红到 47 绿
+
+靶子 10 条测试，三个 fixture。两个是新面孔：legacy-page（同一篇文章的 div 汤版面，专测密度兜底）与 digest-page（链接摘要页，专测会认错的场景）。第 1 步照例先红——此刻 `src/content.ts` 还不存在：
+
+```text
+// companion · npm test 的真实输出（节选）
+Error: Failed to resolve import "../src/content" from "tests/main-content.test.ts"
+```
+
+头一枪钉最终行为：fixture 新闻页认出的必须是 article，不是包着侧栏的 main：
+
+```ts
+// tests/main-content.test.ts · 地标圈候选，密度裁决选更紧的
+  it('fixture 新闻页认出 <article>：main 也入围但包着侧栏，密度与深度裁决选更紧的', () => {
+    const picked = detectMainContent(parseHTML(NEWS_PAGE_HTML).body)!
+    expect(picked.tagName).toBe('ARTICLE')
+    expect(picked.querySelector('h2')!.textContent).toContain('version 2.0') // 正文标题在选中区域内
+    expect(picked.querySelector('.sidebar')).toBeNull() // 侧栏不在正文区里
+  })
+```
+
+第 2 步实现 `src/content.ts`。先立秤——沿用第 2 章的账本口径：只有可译块的文字进账，链接字符单独立账。
+
+```ts
+// src/content.ts · RegionMass 与 linkCharsOf（import 从略）
+/** 区域分量：可译字符总量（文字密度的账）与住在链接里的字符量（链接密度的分子）。 */
+export interface RegionMass {
+  /** 文字密度：这个区域的可译字符总量——正文区是全页文字最沉的地方 */
+  textChars: number
+  /** 链接字符量：住在 <a> 里的那部分——算文字，但算「用来点击的文字」 */
+  linkChars: number
+}
+
+/** 一个块里住在链接中的字符量：走 collectDirectText 同一条边界，<a> 后代的字单独立账。 */
+function linkCharsOf(block: TranslatableBlock): number {
+  let raw = ''
+  const visit = (node: Node, inLink: boolean): void => {
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3 /* Node.TEXT_NODE */) {
+        if (inLink) raw += child.textContent ?? ''
+      } else if (child.nodeType === 1 /* Node.ELEMENT_NODE */) {
+        const tag = (child as Element).tagName.toLowerCase()
+        if (SKIP.has(tag) || BLOCK_TAGS.has(tag)) continue // 同一条账本边界：跳过族不算，子块的字它自己记
+        visit(child, inLink || tag === 'a')
+      }
+    }
+  }
+  visit(block.element, false)
+  return normalize(raw).length
+}
+```
+
+linkCharsOf 这趟树遍历与第 2 章的 collectDirectText 同构，与第 5 章 weave 的边界也是同一条。SKIP 集合与 normalize 都是从 extract 带过来的同款：跳过族不算、空白折叠。差别只有一个——经过 a 时，把字符记到另一本账上。称重就是把这本账加总：
+
+```ts
+// src/content.ts · weighRegion
+/**
+ * 称一个区域的分量——只认第 2 章账本里的字（可译块），script/pre/button 的字不进账。
+ * 两个密度都从这份账出：文字密度＝可译字符总量（分量），链接密度＝链接字符 ÷ 可译字符（折扣）。
+ */
+export function weighRegion(el: Element): RegionMass {
+  const mass: RegionMass = { textChars: 0, linkChars: 0 }
+  for (const block of extractBlocks(el)) {
+    mass.textChars += block.text.length
+    mass.linkChars += linkCharsOf(block)
+  }
+  return mass
+}
+```
+
+第 3 步，排序与两步走。得分函数就是上文那条公式；候选池在地标缺席时换成密度兜底——凡托着足够多可译块的容器都入围：
+
+```ts
+// src/content.ts · regionScore / regionCandidates / depthWithin
+/** 区域得分：文字分量 ×（1 − 链接密度）——住在链接外的字全额计分，链接里的字全额打折。 */
+function regionScore(el: Element): number {
+  const { textChars, linkChars } = weighRegion(el)
+  if (textChars === 0) return 0
+  return textChars * (1 - linkChars / textChars)
+}
+
+/** 密度兜底的候选池：托着足够多可译块的容器（root 自己除外——选它等于没选）。 */
+function regionCandidates(root: ParentNode): Element[] {
+  const counts = new Map<Element, number>()
+  for (const block of extractBlocks(root)) {
+    for (let el = block.element.parentElement; el !== null && el !== root; el = el.parentElement) {
+      counts.set(el, (counts.get(el) ?? 0) + 1)
+    }
+  }
+  return [...counts].filter(([, n]) => n >= MIN_REGION_BLOCKS).map(([el]) => el)
+}
+
+/** el 在 root 之内的深度——同量级候选里深者更紧：外面包的零碎更少。 */
+function depthWithin(el: Element, root: ParentNode): number {
+  let depth = 0
+  for (let cur: Element | null = el; cur !== null && cur !== root; cur = cur.parentElement) depth++
+  return depth
+}
+```
+
+候选池的收法值得看一眼：抽一遍可译块，给每块的每位祖先记一票——托着几块，容器就攒几票。票不过门槛的容器连参赛资格都没有，`root` 自己也一票不许投（选它等于没选）。主函数把两步走钉在一起：
+
+```ts
+// src/content.ts · detectMainContent
+/**
+ * 认出 root 里的主内容容器，认不出返回 null。
+ * 两步走，地标与密度是配合不是替代：
+ * ① 语义地标圈候选——作者写了 main/article 就信一半：它指认「正文在这」，
+ *    但可能包得太宽（main 里裹着侧栏），也可能一个都没有（div 汤）；
+ * ② 密度裁决——给候选称分量（文字密度），按链接密度打折，
+ *    同量级（最高分的八成）里取最深的那个。
+ * 地标一个都没有时，候选池换成密度兜底：凡托着足够多可译块的容器都入围。
+ * 启发式的本分：快、够用、不保证全对——认错与认不出的场景登记在差异清单。
+ */
+export function detectMainContent(root: ParentNode): Element | null {
+  const landmarks = Array.from(root.querySelectorAll(LANDMARK_SELECTOR))
+  const pool = landmarks.length > 0 ? landmarks : regionCandidates(root)
+  if (pool.length === 0) return null
+  const ranked = pool.map((el) => ({ el, score: regionScore(el), depth: depthWithin(el, root) }))
+  const best = Math.max(...ranked.map((r) => r.score))
+  if (best <= 0) return null // 一行正文都没称出来：没有「主内容」可认
+  return ranked
+    .filter((r) => r.score >= best * TOP_SHARE)
+    .sort((a, b) => b.depth - a.depth || b.score - a.score)[0].el
+}
+```
+
+第 4 步接线。管线组装的最小形态不动，只在抽块前加一道收窄；开关照旧走依赖注入的装配层，从 `EngineOptions` 传进来，默认关：
+
+```ts
+// src/pipeline.ts · runPipeline 的开头（终态）
+export async function runPipeline(
+  root: ParentNode,
+  translator: Translator,
+  preserveInline = false,
+  mainContentOnly = false,
+  concurrency?: number,
+  cache?: TranslationCache,
+): Promise<EngineStats> {
+  // 第 6 章接线：把抽取范围从「整页」收窄到「正文区」（默认关，前两章行为一寸不变）；
+  // 认不出正文（null）就照旧翻整页——启发式的失败模式是多花额度，不是罢工
+  const scope = mainContentOnly ? (detectMainContent(root) ?? root) : root
+  const blocks = extractBlocks(scope)
+```
+
+```ts
+// src/engine.ts · createEngine 的 run（终态）
+    run(root: ParentNode): Promise<EngineStats> {
+      // 第 5、6、7 章接线：preserveInline 保内联格式、mainContentOnly 只翻正文区、
+      // concurrency 与 useCache 切换批量档（默认：前两个开关关、后两个不传＝串行朴素档）
+      return runPipeline(root, translator, opts.preserveInline, opts.mainContentOnly, opts.concurrency, cache)
+    },
+```
+
+第 4、5 章正文引用的这两处代码已同步成终态，回写义务照旧履行（签名末尾多出的 `concurrency` 与 `cache` 两个参数是第 7 章接上的批量档线，正文见第 7 章）。两个开关还可以叠加：mainContentOnly 管抽谁，preserveInline 管怎么保格式——第 5 章在占位标记与内联切分之间选了前者，收窄进来的块照样走占位记号，照样以兄弟节点插入落在原文正后方、带上标记属性；渲染逻辑一个字没动，幂等照旧。还有一条降级纪律：认不出正文不是罢工，是退回全页——启发式的失败模式被刻意设计成「多花额度」，不是「不翻译」。
+
+第 5 步转绿：10 新加 37 旧，47 条全绿。demo 三幕上柜台（清单有删节，输出是真实的；成绩单由包住假翻译器的计数翻译器记出）：
+
+```text
+// companion · npm run demo:content 的真实输出（节选）
+=== 第一幕：fixture 新闻页，detectMainContent 认出的容器 ===
+选中：article（候选：main、article——main 包着侧栏，同量级取最深）
+  main           文字分量  586 字 · 链接密度   8% · 得分 542
+  article        文字分量  534 字 · 链接密度   0% · 得分 534
+  div.sidebar    文字分量   52 字 · 链接密度  85% · 得分 8
+
+=== 第一幕清单：被排除区域 vs 选中区域 ===
+全页 14 块 → 选中区域 article（10 块）
+ 1. ✗ 排除·住在 header h1   The Daily Byte
+ 2. ✓ 正文区          h2   Lightweight DOM library hits version 2.0
+ …
+12. ✗ 排除·住在 div.sidebar h3   Trending
+13. ✗ 排除·住在 div.sidebar li   CSS tricks you forgot
+14. ✗ 排除·住在 div.sidebar li   The quiet return of RSS
+成绩单：10 块渲染 / 10 次请求（全页 14 块 14 单——省下的 4 单就是站点名与侧栏）
+
+=== 第二幕：div 汤版面（main/article 缺席，密度兜底） ===
+候选容器分量表（托着 ≥3 个可译块的容器）：
+  #page          文字分量  681 字 · 链接密度  11% · 得分 608
+  #top           文字分量   14 字 · 链接密度   0% · 得分 14
+  #content       文字分量  534 字 · 链接密度   0% · 得分 534
+  #side          文字分量   52 字 · 链接密度  85% · 得分 8
+  #foot          文字分量   43 字 · 链接密度   0% · 得分 43
+选中：#content（同量级取最深——#page 分数最高但包着全页，#content 是更紧的那个）
+全页 17 块 → 选中区域 #content（10 块）
+
+=== 第三幕：链接摘要页——启发式认错了 ===
+  div.digest     文字分量  247 字 · 链接密度  94% · 得分 16
+  div.promo      文字分量  227 字 · 链接密度   0% · 得分 227
+认成：div.promo（真正的正文 .digest 被当成导航晾在一边——正文住在链接里，链接密度反噬）
+```
+
+三处抬眼。第一幕的裁决：main 与 article 得分只差 8，靠深度分出胜负——侧栏的 44 个链接字全额打折，几乎没给 main 添分。第二幕的全页是 17 块不是 14 块，多出来的三块正是 div 汤特有的伤。导航链接的文字拼进了 #top 自己的直接文本——第 2 章「账记最内层块」的边界：内联元素的文字记给最近的块级元素祖先。Privacy 链接把 #foot 撑成了另一个块；#foot 里还有一句版权文字，新闻页里它住在 footer 标签内、被版面地标那族跳过规则整枝剪掉，div 汤里 footer 缺席剪不着，它自己成了第 17 块。这就是开篇「导航被翻译」在无语义版面上的机制现场：上一道防线失守时，导航会自己拼成一块「假段落」混进账本。第三幕是当众认错：摘要页的正文整个住在链接里，链接密度 94%，比导航还像导航，引擎认成了推销区。测试如实断言这个认错，不粉饰——这类边界登记进书末差异清单。
+
+## 验证：先猜，再开机
+
+1. 亲手开机：`cd companion` 后跑 `npm run demo:content`。跑之前先猜三件事：新闻页认出的容器是什么标签？div 汤版面里 #page 与 #content 谁的分数高、最后选的是谁？摘要页认成了谁？
+   应看到：article；#page 分数高（608 对 534）但选的是 #content——同量级取最深；认成了 div.promo——认错，第三幕。
+2. 指认好的小破坏：打开 `src/content.ts`，把 TOP_SHARE 从 0.8 改成 1.0——份额线收紧成「必须是最高分」。先猜红几条、红在哪一侧（新闻页还是 div 汤），再跑 `npm test`。
+   应看到：红 5 条——「认出 `<article>`」「14 → 10」「密度兜底认出 #content」「14 → 10 单」「与 preserveInline 叠加」。两个版面同时失守：新闻页只剩 main（542 分）、div 汤只剩 #page（608 分），侧栏全部回到账上。改回去恢复 47 绿。
+3. 再来一个小破坏：把 LANDMARK_SELECTOR 里的 article 删掉（改成 `'main, [role="main"]'`）。先猜这回 div 汤那条「密度兜底」红不红，再跑。
+   应看到：红 4 条，全在新闻页那侧（认成 main、13 块）；「密度兜底认出 #content」照绿——legacy 版面本来就没有地标，走的是另一条路。两道防线是否独立，这一改就看清楚了。
+4. 控制台自包含：任一真实页面的控制台贴这三行，算它的粗口径链接密度（简化版，全文本都进账、不筛可译块）。
+   ```js
+   // 用法示例——自包含，不依赖伴生仓
+   const linkChars = (el) => [...el.querySelectorAll('a')].reduce((n, a) => n + a.textContent.trim().length, 0)
+   const allChars = (el) => el.textContent.replace(/\s+/g, ' ').trim().length
+   linkChars(document.querySelector('nav')) / allChars(document.querySelector('nav'))
+   ```
+   应看到：导航、目录类容器的比值明显高出正文段落。两个密度不是本书发明，是版面的物理。
+5. 双门槛：`npm run typecheck && npm test`。
+   应看到：两条命令零报错，47 个测试全绿（第 2 章 9、第 3 章 7、第 4 章 8、第 5 章 13、本章 10——旧章测试持续全绿，公共 API 没破）。
+
+## 小结：额度花在哪，引擎现在自己会看
+
+回头看开篇那张账单。现在你能解释它为什么吓人，也知道怎么治了：跳过规则认标签，div 汤的导航没有标签可认；本章补上第二道防线——语义地标圈候选、密度裁决挑正文，`mainContentOnly: true` 一开，抽取发生在正文容器身上，导航连进账本的机会都没有。开篇三个现象都有了着落：导航被翻译？有 nav 时第 2 章已剪掉，没有 nav 时它整块落在正文区外（第二幕清单里 #top 那两行就是证据）；侧栏推荐被翻译？链接密度 85%、得分 8，同量级的门槛都摸不到；额度浪费？14 块 14 单收成 10 块 10 单，省下的正是废料。
+
+第 2 章点名的那笔承诺账也清了：站点名与侧栏标签随区域出局；作者行 By Jane Doe 留下——密度认的是区域不是句子，作者行是正文的署名，翻它不亏。省下的也不只是额度——少插 4 个译文节点，重排的账也小了一截。
+
+留白照例记账。启发式会认错：正文整个住在链接里的版面（目录、摘要、书签站）会认反，第三幕当众演示过；多文章列表页会在几篇 article 里挑分量最大的一篇，正确答案往往是「都要」；地标缺席时正文的主干若被一层子容器托着（引言在外、长文在内），八成份额线可能把分界收得偏紧、漏掉引言。这些边界全部登记书末差异清单。省下的只是「不该翻的」——一块一单的请求形状一个字没动，批量、并发、缓存那本省钱账，第 7 章细算。
+
+### 自查三问
+
+先自己答，再展开对照。
+
+::: details 1. 预测：mainContentOnly: true 跑在一个认不出正文的页面上（全页只有零散几块），成绩单的 requests 是多少？
+不是 0，也不是罢工——detectMainContent 返回 null，管线退回全页照翻：页面有几块就几单。降级的方向是「多花额度」，不是「不翻译」。回查「演练」里 scope 那三行的注释。
+:::
+
+::: details 2. 反事实：打分只数文字总量、不给链接字符打折，fixture 新闻页会认出谁？可译块数变成多少？
+认出 main——它的 586 字高过 article 的 534。侧栏三块跟着进「正文区」，13 块。链接密度那一折，打的正是「这些字住在链接里」的分。回查「正文区长什么样」的得分公式与第一幕分量表。
+:::
+
+::: details 3. 动手：把 MIN_REGION_BLOCKS 从 3 提到 11，div 汤版面会认出谁？
+#content 只托着 10 个块，出局；候选池里只剩托着 17 块的 #page——认成它，导航、侧栏、页脚全部回到正文区。「包装纸」门槛拧得太紧，会把正文区自己的容器也当包装纸扔掉。回查「语义标签」一节的阈值交代与第二幕分量表。
+:::
+
+### 接下来去哪
+
+| 章 | 接过引擎做什么 |
+|---|---|
+| 07 | 批量、并发上限与内容寻址缓存：一块一单的省钱账，重新算 |
+| 08 | MutationObserver 增量翻译：新内容追加时只翻新增块，拆掉「自触发循环」——译文生译文——的引信 |
+| 09 | content script 与 manifest：引擎装进 Chrome，真页面上核验正文区认得准不准 |

@@ -112,7 +112,8 @@ if (existsSync(biblePath)) {
     const bible = JSON.parse(readText(biblePath))
     glossary = bible.glossary ?? []
     // 权威文档清单门槛（issues/011 P0-2 / 012 E-2）：涉事实断言的课程必配；纯主观工程课须显式声明 factual_claims: false
-    const hasAuthority = Array.isArray(bible.authority_docs) ? bible.authority_docs.length > 0 : Boolean(bible.authority_docs)
+    const authority = bible.authority_docs ?? bible.authoritative_docs // 兼容两种键名（vitepress-teaching-site 用 authoritative_docs）
+    const hasAuthority = Array.isArray(authority) ? authority.length > 0 : Boolean(authority)
     if (!hasAuthority && bible.factual_claims !== false)
       say('bible 缺权威文档清单（authority_docs）——凡正文将出现客观事实断言的课程必配，final-check 查存在性；纯主观工程课请在 bible 显式声明 factual_claims: false')
   } catch (e) { say(`bible.json 解析失败: ${e.message}`) }

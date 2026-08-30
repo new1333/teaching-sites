@@ -1,0 +1,51 @@
+[
+ {
+  "from": "mv3-anatomy",
+  "from_n": 1,
+  "target": "inject-ui",
+  "what": "角标只出现在首次加载的推文上、往下滚新推文没有——X 是 SPA、页面从不重载，这个问题第 5 章解决",
+  "status": "fulfilled"
+ },
+ {
+  "from": "network-watch",
+  "from_n": 2,
+  "target": "download-pipeline",
+  "what": "抓到的播放列表地址怎么变成一个文件——第 4 章给出完整下载管线",
+  "status": "fulfilled"
+ },
+ {
+  "from": "network-watch",
+  "from_n": 2,
+  "target": "permissions-publish",
+  "what": "MV3 为何砍 blocking webRequest、拦改归哪个 API——第 6 章算总账",
+  "status": "fulfilled"
+ },
+ {
+  "from": "m3u8-parse",
+  "from_n": 3,
+  "target": "download-pipeline",
+  "what": "fMP4 的 EXT-X-MAP 初始化分片拼装时排最前、相对 URI 以清单自身 URL 补全——第 4 章下载管线兑现",
+  "status": "fulfilled"
+ },
+ {
+  "from": "download-pipeline",
+  "from_n": 4,
+  "target": "inject-ui",
+  "what": "消息类型 xvd-save-file 是裸字符串、lastVideo 活不过 SW 休眠、入口是工具栏图标而非推文按钮——正式消息协议（MSG 常量表+守卫，shared/messages.js）与按推文下载第 5 章接掉",
+  "status": "fulfilled"
+ },
+ {
+  "from": "download-pipeline",
+  "from_n": 4,
+  "target": "permissions-publish",
+  "what": "host_permissions 与 CORS 豁免的完整规则——第 6 章算清",
+  "status": "fulfilled"
+ },
+ {
+  "from": "inject-ui",
+  "from_n": 5,
+  "target": "permissions-publish",
+  "what": "storage 权限与 web_accessible_resources 资源暴露各值一句凭什么——第 6 章权限总账一并算清",
+  "status": "fulfilled"
+ }
+]

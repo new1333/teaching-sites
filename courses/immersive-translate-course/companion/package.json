@@ -1,0 +1,27 @@
+{
+  "name": "immersive-translate-companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "demo:extract": "tsx demo/extract-demo.ts",
+    "demo:render": "tsx demo/render-demo.ts",
+    "demo:engine": "tsx demo/engine-demo.ts",
+    "demo:inline": "tsx demo/inline-demo.ts",
+    "demo:content": "tsx demo/content-demo.ts",
+    "demo:batch": "tsx demo/batch-demo.ts",
+    "demo:observe": "tsx demo/observe-demo.ts",
+    "demo:shell": "tsx demo/shell-demo.ts",
+    "build:ext": "esbuild extension/content.ts --bundle --format=iife --outfile=extension/dist/content.js"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^30.0.0",
+    "esbuild": "^0.24.0",
+    "@types/node": "^20.14.0",
+    "jsdom": "^25.0.1",
+    "tsx": "^4.23.12",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

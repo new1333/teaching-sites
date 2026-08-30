@@ -1,0 +1,47 @@
+{
+  "collected_at": "2026-08-30",
+  "asked": true,
+  "answers": [
+    {
+      "question": "原生 DOM 操作（querySelector/createElement/insertBefore）熟练度？",
+      "answer": "经常写",
+      "decision": "第 2 章树遍历直接进正题，只补 TreeWalker/childNodes 这类冷门件；不铺 DOM 基础"
+    },
+    {
+      "question": "TypeScript 熟练度？",
+      "answer": "熟练，泛型也常用",
+      "decision": "companion 全 TS，接口设计直接用泛型表达，不专门解释类型语法"
+    },
+    {
+      "question": "浏览器扩展经验？",
+      "answer": "装过没写过",
+      "decision": "终章手把手：目录结构、chrome://extensions 开发者模式加载、每一步应看到什么"
+    },
+    {
+      "question": "用过沉浸式翻译这类双语对照工具吗？",
+      "answer": "没用过",
+      "decision": "第 1 章用现象演示开路（同一页的两种翻译形态对比），不预设任何使用记忆"
+    },
+    {
+      "question": "自动化测试经验？",
+      "answer": "（默认）写过一点",
+      "decision": "第 2 章首写测试时顺带两三句解释断言与红绿含义，不展开教测试框架"
+    },
+    {
+      "question": "并发控制经验？",
+      "answer": "（默认）会 async/await",
+      "decision": "第 7 章先用一节把「同时最多 N 个请求」的最小队列讲透，再实现 limiter"
+    },
+    {
+      "question": "companion 工具链？",
+      "answer": "（默认）TypeScript + vitest + jsdom（推荐档）",
+      "decision": "与 TS 熟练度答案一致：全 TS + jsdom 测试环境，tsx 跑 demo 脚本"
+    }
+  ],
+  "defaults_used": [
+    "测试经验=写过一点",
+    "异步并发=会 async/await",
+    "工具链=TS+vitest+jsdom（推荐档，与第一批答案的 TS 熟练度自洽）"
+  ],
+  "reader_portrait": "会写 TypeScript（泛型熟练）并常写原生 DOM（querySelector/createElement/insertBefore 都是日常）；会 async/await；浏览器扩展装过但没写过；没用过双语对照翻译工具。单测与并发控制按中间档保守处理：断言/红绿首现给解释，批量章先讲最小并发队列再实现。"
+}

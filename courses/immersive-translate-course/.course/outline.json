@@ -1,0 +1,244 @@
+{
+  "title": "复刻沉浸式翻译：双语对照引擎的原理与实现",
+  "audience": "会写 TS 与原生 DOM、想复刻双语翻译工具的开发者",
+  "driving_question": "原文纹丝不动的页面上，译文是怎么逐段长出来的——还跟得上无限滚动？",
+  "input": {
+    "kind": "topic",
+    "ref": "沉浸式翻译原理复刻：把双语对照翻译工具的核心引擎拆开教、动手重做"
+  },
+  "profile": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "full",
+    "obligations": [],
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "code-lab:dom-test",
+    "language": "TypeScript（strict）+ vitest + jsdom；tsx 跑 demo 脚本",
+    "scope": "最小双语引擎：extract / render / translate(假翻译器) / pipeline / inline / content / batch / cache / observe / engine，约 600 行 TS（不含 fixtures 与测试，实测 633 行）+ 44 行扩展壳，每章配 append-only 测试（74 条）与可跑 demo（7 个）；extension/ 壳（manifest + content script，esbuild 打包 14KB）"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 识别与渲染：先把骨架搭起来",
+      "chapters": [
+        {
+          "slug": "panorama",
+          "title": "整页替换 vs 双语对照：两种翻译世界观",
+          "goal": "建立全书世界观：翻译网页不是字符串替换，而是在活的对象树上做增量；拆出引擎的四个部件",
+          "type": "principle",
+          "hook": {
+            "kind": "observation",
+            "point": "同一个英文页面上点两次不同的翻译按钮：浏览器自带「翻译此页」——整页被替换，原文消失，一段 <pre> 代码被翻译得面目全非，想核对原文只能来回切；另一类工具按下快捷键——页面几乎没动，只是每段英文下面多了一行浅色中文，代码块原封不动",
+            "phenomena": ["整页替换", "原文消失", "代码被翻译", "译文逐段出现"]
+          },
+          "new_concepts": ["双语对照", "DOM 树", "块级元素", "内联元素"],
+          "misconceptions": ["翻译网页就是拿到 HTML 字符串、整体翻译再塞回去——字符串一旦整体替换，事件、样式、代码块全毁，页面是活的对象树不是一串文本"],
+          "depends_on": [],
+          "acceptance": [
+            "两种翻译形态的现象对比落到「字符串替换 vs 树上增量」的本质差异，并推出引擎四部件（抽取/翻译/渲染/装配）（文验收：评审回查）",
+            "DOM 是活的对象树配 REPL 可跑的自包含片段演示：改属性立刻可见、事件挂在节点上（自包含载体）",
+            "零外部源码引用：示例代码全部自包含（仓验收：lint + final-check）"
+          ]
+        },
+        {
+          "slug": "extract-blocks",
+          "title": "可译块：找到直接持有文字的节点",
+          "goal": "实现可译块抽取：递归遍历 DOM、按块级/内联分类、只取直接持有文本的块、套用跳过规则",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "第一版引擎把 body.textContent 整串丢给翻译接口：导航菜单、页脚版权声明、按钮里的 Submit 全被翻译；而一个含 <strong> 的段落又被从加粗处拦腰切断——既多翻了废料，又拆碎了正文",
+            "phenomena": ["导航被翻译", "页脚被翻译", "按钮文字被翻译", "段落被切断"]
+          },
+          "new_concepts": ["可译块", "直接文本", "跳过规则", "树遍历"],
+          "misconceptions": ["块级/内联是 HTML 标签与生俱来的属性——其实它来自浏览器默认样式表的 display，HTML 规范只分内容类别；引擎用标签清单只是对它的工程近似（须声明简化）"],
+          "milestone": "extractBlocks 从 fixture 新闻页抽出全部可译块，跳过 code/nav/footer 与过短文本；具体块数以测试输出为事实源",
+          "milestone_verify": "npm run demo:extract 打印每个可译块的标签与前若干字符——亲眼看到「引擎眼中的页面」（可感知）",
+          "depends_on": ["panorama"],
+          "acceptance": [
+            "本章验证信号通过：tsc --noEmit + vitest run 全绿，新增测试先红后绿（仓验收）",
+            "含「块级/内联真身是 CSS display」的成因段与标签清单近似的声明（文验收）",
+            "跳过规则逐条有成因（为什么 code/script 不译），过反事实检验（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "render-bilingual",
+          "title": "双语渲染：原文纹丝不动，译文插到下面",
+          "goal": "实现双语渲染：在可译块后插入带标记的译文节点，不改原文一个字；幂等，重复调用不产生重复译文",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "同事说这还不简单：p.innerText += '\\n' + 译文。一行代码上线，第二天用户反馈：段落里的链接点不动了——innerText 赋值把子元素全部清掉重建成了纯文本节点，<a> 早没了",
+            "phenomena": ["链接消失", "innerText 追加", "子元素被清掉"]
+          },
+          "new_concepts": ["兄弟节点插入", "标记属性", "幂等"],
+          "misconceptions": ["往段落里加译文，最自然的做法是改它自己的 innerText/innerHTML——凡是「重写原文」的路线都在销毁原文的结构"],
+          "milestone": "renderBilingual 在可译块后插入带 data-duo 标记的译文节点；同块重复调用只保留一份（幂等）",
+          "milestone_verify": "npm run demo:render 打印渲染前后的 HTML 片段，原文子元素逐个还在（可感知）",
+          "depends_on": ["extract-blocks"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿，新增测试先红后绿（仓验收）",
+            "「为什么插兄弟节点而不是改原文」过反事实检验：改原文会怎样（文验收）",
+            "幂等语义有测试断言（同一块调两次节点数不变）（仓验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "pipeline-service",
+          "title": "翻译服务抽象：引擎不认识任何 API",
+          "goal": "定义 Translator 接口与确定性假翻译器，组装「抽取→翻译→渲染」最小管线：一次调用整页变双语，且全程离线可测",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "上一章你已经能抽块、能插译文——但译文还是手填的字符串。真接一个翻译 API 试试？网络、密钥、按字符计费全涌进测试，CI 里跑一次测试花一次钱。要让全链路离线可测，得先让引擎「不认识」任何具体翻译服务",
+            "phenomena": ["译文是手填的", "测试依赖网络与密钥", "跑测试花钱"]
+          },
+          "new_concepts": ["依赖注入", "假翻译器", "管线组装"],
+          "milestone": "createEngine({ translator: fake }).run(root) 一键把 fixture 页面变双语；createCountingTranslator 能数出请求次数",
+          "milestone_verify": "npm run demo:engine 打印整页双语 HTML；测试断言原文/译文节点成对出现（可感知：整页输出）",
+          "depends_on": ["extract-blocks", "render-bilingual"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿，新增测试先红后绿（仓验收）",
+            "依赖注入的成因（为什么引擎不该认识具体服务）讲透并落到可测性收益（文验收）",
+            "假翻译器的确定性（同输入同输出）有测试背书（仓验收）",
+            "零外部源码引用（仓验收）"
+          ],
+          "promises_out": [
+            { "target": "batch-cache", "what": "真实管线里请求怎么打包、怎么省钱，第 7 章细算" },
+            { "target": "divergence", "what": "接真实翻译 API 的差异（密钥、计费、流式）登记进差异清单附录" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 像产品一样翻译：格式、正文与成本",
+      "chapters": [
+        {
+          "slug": "inline-format",
+          "title": "内联格式保留：译文里的加粗和链接",
+          "goal": "解决「翻译往返碾平格式」：让译文里的 strong/a/code 结构与原文一一对应（内联切分与占位标记两方案的取舍在此展开）",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "段落原文是 Use <strong>strict mode</strong> in <a>production</a>，译文回来是一根纯文本绳子：加粗没了，链接成了裸文字——格式信息在纯文本的翻译往返中被碾平了",
+            "phenomena": ["加粗消失", "链接变裸文字", "格式被碾平"]
+          },
+          "new_concepts": ["内联切分", "占位标记"],
+          "misconceptions": ["翻译 API 会自己保留 HTML 格式——通用机翻接口以纯文本为主，HTML 支持参差且易碎；格式能不能活下来是调用方的责任"],
+          "milestone": "splitSegments + renderSegments：含 strong/a/code 的段落翻译后结构保留，译文文字来自假翻译器（测试断言结构与文字都对）",
+          "milestone_verify": "npm run demo:inline 打印带格式译文的 DOM 结构，与原文结构并排对照（可感知）",
+          "depends_on": ["pipeline-service"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿，新增测试先红后绿（仓验收）",
+            "两种保格式方案（内联切分 vs 占位标记）的取舍讲清并说明选型理由（文验收）",
+            "结构保留断言到节点层级（译文里 strong 位置与原文对应）（仓验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "main-content",
+          "title": "主内容识别：别把额度花在导航栏上",
+          "goal": "实现主内容区启发式：用文字密度/链接密度给候选容器打分，从全页可译块里筛出正文，跳过导航、侧栏、页脚",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "引擎第一次跑在真实新闻页上：正文只占翻译量的三分之一——顶部导航 40 个菜单项、侧栏 10 条推荐、页脚备案号与法务链接全在花翻译额度，按字符计费的话你在为废料付费",
+            "phenomena": ["导航被翻译", "侧栏推荐被翻译", "额度浪费"]
+          },
+          "new_concepts": ["链接密度", "文字密度", "启发式"],
+          "misconceptions": ["正文一定在 <main>/<article> 语义标签里——真实网页语义标签缺失严重，标签在时优先用，不在时靠密度启发式兜底；两者是配合不是替代"],
+          "milestone": "detectMainContent 在 fixture 新闻页选中正文容器：可译块数从全页降到正文区（具体数字以测试输出为事实源）",
+          "milestone_verify": "npm run demo:content 并排打印「被排除区域 vs 选中区域」的可译块清单（可感知）",
+          "depends_on": ["extract-blocks"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿，新增测试先红后绿（仓验收）",
+            "密度阈值的成因讲透（为什么链接密度高=导航）并过反事实检验（文验收）",
+            "启发式的边界诚实声明（会猜错的场景登记差异清单）（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "batch-cache",
+          "title": "批量、去重与缓存：翻译的经济学",
+          "goal": "实现按字符预算分块、并发上限队列、内容寻址缓存：同样的话只翻一次、同时在飞的请求有上限、二次渲染零请求",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "200 个段落逐条发请求：翻译服务开始返回 429 限流，页面十秒才渲染完；而一个商品列表页里 30 张卡片写着同一句 Add to cart——你为同一句话付了 30 次钱",
+            "phenomena": ["429 限流", "渲染慢", "重复付费", "重复请求"]
+          },
+          "new_concepts": ["并发上限", "内容寻址缓存", "批量接口", "去重"],
+          "milestone": "引擎带 batching + cache：重复段落只请求一次（counting translator 断言调用数）、并发峰值不超上限、二次 run 零请求",
+          "milestone_verify": "npm run demo:batch 打印「请求账单」：N 个段落 → M 个请求，二次运行 0 请求（可感知）",
+          "depends_on": ["pipeline-service"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿，新增测试先红后绿（仓验收）",
+            "并发队列的最小原理一节讲透（柜台叫号锚点）再实现（文验收）",
+            "调用数/并发峰值/二次零请求三组断言齐全（仓验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 上线：活页面与真浏览器",
+      "chapters": [
+        {
+          "slug": "dynamic-observer",
+          "title": "动态内容：别让译文生译文",
+          "goal": "用 MutationObserver 适配动态页面：懒加载内容增量翻译；标记过滤防自触发循环；断开重连语义",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "引擎跑在信息流页面：向下滚动，新推文自动翻译了——但几秒后页面开始卡死，译文下面又长出译文、再长出译文：引擎把自己刚插入的中文当成了新段落，译文生译文，指数增长",
+            "phenomena": ["无限循环", "译文生译文", "页面卡死"]
+          },
+          "new_concepts": ["MutationObserver", "自触发循环", "增量抽取"],
+          "misconceptions": ["只要监听到 DOM 变化就能安全地增量翻译——监听器看得见你自己插入的节点，不把自己摘出去就是死循环"],
+          "milestone": "observeDynamic：fixture 页面追加新段落时只翻译新增块、自身插入的译文节点被忽略、同一块不重复翻译（三组断言）",
+          "milestone_verify": "npm run demo:observe 模拟滚动加载：追加 3 个新段落，只出现 3 个新译文、计数器贴在旁边（可感知）",
+          "depends_on": ["pipeline-service"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿，新增测试先红后绿（仓验收）",
+            "MutationObserver 首现按四步教（成因/载体/演算/锚点），回调时机的坑（微任务时机）如实交代（文验收）",
+            "防自触发的机制（标记过滤）有专门测试：插入译文不再触发翻译（仓验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "browser-shell",
+          "title": "装进浏览器：从 jsdom 到真实页面",
+          "goal": "给引擎一个身体：manifest + content script 最小扩展壳，开发者模式加载，离线假翻译器在真实页面演示双语对照；收束全书主线问题",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "七个测试文件全绿，但这个引擎还从未见过真正的浏览器页面——jsdom 里没有字体、没有无限滚动、没有真实的事件循环节奏。最后一步：给它 manifest 与 content script，装进 Chrome，亲眼看它干活",
+            "phenomena": ["jsdom 全绿", "真浏览器未验证", "亲手加载扩展"]
+          },
+          "new_concepts": ["content script", "manifest"],
+          "milestone": "extension/ 目录：manifest.json + content script 引擎装配（构建脚本打包为可加载的未打包扩展），jsdom 侧对壳的装配逻辑有单测保底",
+          "milestone_verify": "读者亲手：chrome://extensions 开发者模式加载 → 打开任一英文页面 → 译文自动逐段出现在原文下方（可感知，步骤逐条给「应看到什么」）",
+          "depends_on": ["dynamic-observer", "batch-cache", "inline-format", "main-content"],
+          "acceptance": [
+            "本章验证信号通过：tsc + vitest 全绿（含壳装配单测）（仓验收）",
+            "扩展加载指引逐步可判定：每一步写明操作与应看到的现象（文验收）",
+            "收束槽回应主线问题（driving_question）并盘点能力阶梯（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "node-cheatsheet", "title": "节点分类速查表", "kind": "reference-table" },
+    { "slug": "divergence", "title": "与真实产品的差异清单", "kind": "divergence" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "约 600 行的双语对照引擎 + 可装进 Chrome 的扩展壳，离线可演示",
+    "verify": "全链路测试全绿；浏览器加载扩展后，任意英文页面逐段出现对照译文"
+  }
+}

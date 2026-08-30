@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Duo Shell 双语对照教学壳",
+  "version": "0.1.0",
+  "description": "把本书的双语对照引擎装进浏览器：离线假翻译器，零密钥演示逐段对照。",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+  "reader_model": {
+    "known_assets": [
+      "TypeScript（含泛型与接口）",
+      "原生 DOM 操作：querySelector、createElement、appendChild/insertBefore",
+      "async/await 与 Promise 基本形态",
+      "命令行跑 npm/pnpm 脚本",
+      "装过浏览器扩展（知道 chrome://extensions 与开发者模式的存在）"
+    ],
+    "unfamiliar": [
+      { "concept": "双语对照的产品形态", "why_unfamiliar": "没用过这类工具，只见过浏览器自带整页替换翻译", "anchor": "整页替换翻译的「原文消失感」", "first_chapter": "01-panorama" },
+      { "concept": "块级/内联的真实来源（CSS display 与 HTML 内容分类）", "why_unfamiliar": "常写 DOM 但不读规范，普遍以为块内联是标签自带属性", "anchor": "浏览器默认样式表（user agent stylesheet）", "first_chapter": "02-extract-blocks" },
+      { "concept": "手写树遍历（childNodes 递归 / 直接文本判定）", "why_unfamiliar": "querySelector 够用，很少手写遍历", "anchor": "文件系统的递归遍历", "first_chapter": "02-extract-blocks" },
+      { "concept": "依赖注入与测试替身", "why_unfamiliar": "没有离线测试外部服务的经验", "anchor": "函数参数就是依赖注入的最小形态", "first_chapter": "04-pipeline-service" },
+      { "concept": "占位标记法保格式", "why_unfamiliar": "没处理过「结构化内容过纯文本管道」的往返", "anchor": "密文里留口信的暗号", "first_chapter": "05-inline-format" },
+      { "concept": "链接密度/文字密度启发式", "why_unfamiliar": "没写过从 DOM 统计特征猜语义的程序", "anchor": "一眼看出「这屏全是广告」的直觉规则化", "first_chapter": "06-main-content" },
+      { "concept": "并发上限队列", "why_unfamiliar": "会 async/await 但没写过容量闸门", "anchor": "银行柜台叫号：窗口就 N 个，排队叫号进场", "first_chapter": "07-batch-cache" },
+      { "concept": "内容寻址缓存", "why_unfamiliar": "缓存经验止于 Map 按任意键取值", "anchor": "把内容本身算成哈希当字典的键", "first_chapter": "07-batch-cache" },
+      { "concept": "MutationObserver", "why_unfamiliar": "常写 DOM 但用不上变化监听", "anchor": "addEventListener 的「DOM 变了」版本", "first_chapter": "08-dynamic-observer" },
+      { "concept": "扩展开发（manifest / content script）", "why_unfamiliar": "装过没写过", "anchor": "manifest 之于扩展 ≈ package.json 之于包", "first_chapter": "09-browser-shell" }
+    ]
+  },
+  "glossary": [
+    { "term": "双语对照", "en": "bilingual display", "definition": "原文不动、译文紧跟其下逐段显示的翻译呈现方式。" },
+    { "term": "DOM 树", "en": "DOM tree", "definition": "浏览器把 HTML 解析成的活对象树，页面上每个标签是树上一个节点。" },
+    { "term": "块级元素", "en": "block-level element", "definition": "默认独占一行显示的元素（段落、标题、列表项），页面的段落感由它们组成。" },
+    { "term": "内联元素", "en": "inline element", "definition": "默认待在行内不换行的元素（加粗、链接、行内代码）。" },
+    { "term": "可译块", "en": "translatable block", "definition": "直接持有文字的最小块级元素，双语引擎抽取、翻译、插入的基本单位。" },
+    { "term": "直接文本", "en": "direct text", "definition": "一个节点自己名下的文本，不含更深层子块里的文本。" },
+    { "term": "跳过规则", "en": "skip rules", "definition": "判定某节点不该翻译的规则清单（代码块、脚本、纯符号、过短文本）。" },
+    { "term": "树遍历", "en": "tree traversal", "definition": "从根递归走完整棵树、给每个节点分类的算法——文件系统递归遍历的 DOM 版。" },
+    { "term": "兄弟节点插入", "en": "sibling insertion", "definition": "把新节点插到某节点的旁边（同级）而非它里面，原文子树零接触。" },
+    { "term": "依赖注入", "en": "dependency injection", "definition": "把「翻译服务」从引擎内部抽出来当参数传进去，引擎只认接口不认具体服务。" },
+    { "term": "假翻译器", "en": "fake translator", "definition": "确定性的假翻译函数：输入固定输出就固定，让全链路离线可测。" },
+    { "term": "内联切分", "en": "inline splitting", "definition": "按内联边界把一个段落拆成片段分别翻译，再按原结构拼回。" },
+    { "term": "占位标记", "en": "placeholder", "definition": "用翻译过程不会破坏的记号暂代内联标签，译文回来后替换回真实节点。" },
+    { "term": "链接密度", "en": "link density", "definition": "一块文字里链接字符占总字符的比例，高到离谱多半是导航或目录。" },
+    { "term": "文字密度", "en": "text mass", "definition": "一个区域里可译字符的总量，主内容识别里当区域的「分量」用。" },
+    { "term": "启发式", "en": "heuristic", "definition": "用经验规则猜答案的方法：快、够用，但不保证全对。" },
+    { "term": "并发上限", "en": "concurrency limit", "definition": "同时最多允许几个请求在飞的容量闸门，超出的排队等待。" },
+    { "term": "批量接口", "en": "batch API", "definition": "一次调用收发一批文本的接口形态，条数与顺序一一对应，摊薄每次往返的固定开销。" },
+    { "term": "去重", "en": "dedup", "definition": "同一轮送翻前把相同文本合并成一句，重复段落只付一次钱。" },
+    { "term": "内容寻址缓存", "en": "content-addressed cache", "definition": "用内容的哈希当键的缓存，同样的段落永远命中同一条。" },
+    { "term": "管线组装", "en": "pipeline assembly", "definition": "把抽取、翻译、渲染三道工序接成一条流水线，一次调用跑完全程并返回成绩单。" },
+    { "term": "幂等", "en": "idempotent", "definition": "同一操作做一次和做多次结果相同，重复渲染不产生重复译文。" },
+    { "term": "MutationObserver", "definition": "浏览器提供的「DOM 变了就通知我」的监听接口。" },
+    { "term": "增量抽取", "en": "incremental extraction", "definition": "只抽「新上树的子树」里的可译块、老块不重翻的增量口径——观察者对「新」的定义。" },
+    { "term": "自触发循环", "en": "self-triggering loop", "definition": "自己插入的节点又触发自己的监听器，译文生译文直至页面卡死。" },
+    { "term": "标记属性", "en": "marker attribute", "definition": "插入译文节点时打上的 data-* 属性，引擎靠它认出自己的产出。" },
+    { "term": "重排", "en": "reflow", "definition": "浏览器因 DOM 变化重新计算页面布局的过程，大规模重排是卡顿来源。" },
+    { "term": "content script", "definition": "浏览器扩展注入到网页里运行的脚本，引擎在真浏览器里的落脚点。" },
+    { "term": "manifest", "definition": "扩展的身份证兼配置清单，浏览器靠它认识你的扩展。" }
+  ],
+  "code_conventions": {
+    "structure": "companion/src 下按职责一模块一章：extract.ts / render.ts / translate.ts / pipeline.ts / inline.ts / content.ts / batch.ts / cache.ts / observe.ts / engine.ts；fixtures 放 src/fixtures/*.ts（导出 HTML 模板字符串常量）；读者可跑的演示脚本放 companion/demo/*.ts（tsx 运行，各章往 package.json 加 demo:{name} 脚本）；测试共用 tests/helpers.ts 的 parseHTML",
+    "naming": "标识符英文、注释中文；模块命名服务教学清晰，不与任何真实库对齐；引擎产出统一叫「译文节点」",
+    "error_handling": "翻译失败逐块降级：保留原文、跳过该块、不中断整页；observer 与引擎自身错误不向上抛",
+    "testing": "vitest + jsdom（vitest.config.ts 全局 environment: 'jsdom'）；每章 tests/{slug}.test.ts，append-only；断言行为不断言实现细节；fixture 页面放 src/fixtures/，测试与 demo 共用"
+  },
+  "api_contract": {
+    "note": "companion 公共导出面，append-only 只增不破；正文引用以终态为准",
+    "surface": [
+      "extract.ts: interface TranslatableBlock { element: Element; text: string }; interface ExtractOptions { skipTags?: string[]; minChars?: number }; extractBlocks(root: ParentNode, opts?): TranslatableBlock[]",
+      "translate.ts: interface Translator { translate(texts: string[]): Promise<string[]> }; createFakeTranslator(dict?: Record<string,string>): Translator; createCountingTranslator(inner: Translator): { translator: Translator; batches: string[][] }",
+      "render.ts: OWN_ATTR = 'data-duo'; renderBilingual(block: TranslatableBlock, translated: string): Element; isOwnNode(el: Element): boolean",
+      "pipeline.ts + engine.ts: interface EngineOptions { translator?: Translator; concurrency?: number; useCache?: boolean; mainContentOnly?: boolean; preserveInline?: boolean }; interface EngineStats { blocks: number; requests: number; cached: number }; createEngine(opts?): Engine（含 run(root): Promise<EngineStats>）",
+      "inline.ts: splitSegments(block: TranslatableBlock): string[]; renderSegments(block: TranslatableBlock, translations: string[]): Element",
+      "content.ts: detectMainContent(root: ParentNode): Element | null; weighRegion(el: Element): RegionMass（textChars/linkChars/score，分量账的单一事实源，测试与 demo 消费）",
+      "batch.ts: chunkByBudget(texts: string[], charBudget: number): string[][]; createLimiter(max: number): <T>(task: () => Promise<T>) => Promise<T>",
+      "cache.ts: createTranslationCache(): { get(text: string): string | undefined; set(text: string, translated: string): void; size(): number }",
+      "observe.ts: observeDynamic(root: ParentNode, engine: Engine): { disconnect(): void }",
+      "extension/: manifest.json + content script 壳（非 npm 导出面，第 9 章交付）"
+    ]
+  },
+  "authority_docs": [
+    { "name": "WHATWG HTML Standard — Kinds of content（内容分类）", "url": "https://html.spec.whatwg.org/multipage/dom.html#kinds-of-content", "covers": "块级/内联的规范说法（flow / phrasing content），标签分类的事实源" },
+    { "name": "WHATWG HTML Standard — Rendering（UA 默认样式）", "url": "https://html.spec.whatwg.org/multipage/rendering.html#rendering", "covers": "块级/内联观感来自浏览器默认样式表 display 的规范依据" },
+    { "name": "WHATWG DOM Standard", "url": "https://dom.spec.whatwg.org/", "covers": "Node/Element/ParentNode、childNodes、insertAdjacentElement 等 DOM 语义" },
+    { "name": "MDN — MutationObserver", "url": "https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver", "covers": "observer 回调时机、MutationRecord 字段、disconnect 语义" },
+    { "name": "Chrome for Developers — Extensions（MV3）", "url": "https://developer.chrome.com/docs/extensions/develop", "covers": "manifest 字段、content script 注入与扩展加载流程" },
+    { "name": "DeepL API Reference — Translate Text", "url": "https://developers.deepl.com/api-reference/translate/request-translation", "covers": "真实翻译服务按批量收发（text 参数可重复、按序返回）的接口形状证据" },
+    { "name": "Google Cloud Translation — Translate Text", "url": "https://docs.cloud.google.com/translate/docs/translate-text", "covers": "批量翻译接口（q[]/contents[] 按输入顺序返回）的第二家证据" },
+    { "name": "VitePress 之外的开发链文档 — Vitest environment 配置", "url": "https://vitest.dev/config/#environment", "covers": "jsdom 测试环境配置的事实源" }
+  ],
+  "core_metaphors": [
+    { "metaphor": "出生证（ownerDocument / 树自己的 window）", "chapters": ["03", "08"], "note": "新节点该由哪棵树造出来，就问那棵树要工厂" },
+    { "metaphor": "账本（直接文本账 / 请求账 / 缓存账 / 交账）", "chapters": ["02", "04", "06", "07", "08"], "note": "全书统一口径：数字从哪来、算在谁头上" },
+    { "metaphor": "引信（14→28，译文被当新原文）", "chapters": ["03", "04", "08"], "note": "第 3 章埋、第 4 章攥着、第 8 章亲手拆" },
+    { "metaphor": "柜台叫号（并发上限）", "chapters": ["07", "08"], "note": "窗口就 N 个，排队叫号进场" },
+    { "metaphor": "档位（串行朴素档 / 批量缓存档）", "chapters": ["07", "09"], "note": "引擎的两套运行档位，默认不设即朴素档" }
+  ],
+  "obligations": [],
+  "obligations_note": "教学全程使用离线假翻译器，不涉真实 API 密钥、计费与第三方条款；无监管表述义务，obligations 空缺。"
+}
