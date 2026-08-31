@@ -29,7 +29,7 @@ ls -l .git/index
 # -rw-r--r-- 1 you 197609 426 ...  .git/index
 ```
 
-426 字节,五个文件的仓库,清单比 fixture 里任何一个文件都大。它是二进制——cat 出来是乱码,得请第 3 章那套十六进制转储:
+426 字节,四个文件的仓库,清单比 fixture 里任何一个文件都大。它是二进制——cat 出来是乱码,得请第 3 章那套十六进制转储:
 
 ```text
 $ od -A d -t x1 .git/index | head -6
@@ -77,11 +77,11 @@ node -e "const b=require('fs').readFileSync('.git/index'); console.log(b.subarra
 
 第一,十个定长字段里有七个是 stat(2) 数据——ctime、mtime、dev、ino、uid、gid、size,全是操作系统 `stat` 调用一口气报出来的文件属性。格式文档对它们只注释了一句「this is stat(2) data」,没写为什么存。动机可以从机制推:做个反事实,假设没有这七个字段。status 判断「文件改没改」只剩一条路——把每个文件整个读进来算 SHA-1,再与条目里的对象名比;几万文件的大仓库,每敲一次 status 就全库重读。有了它们,先比四五个小数字,mtime 没动过的文件直接跳过,一个字节都不用读。这是实现选择的优化路径,不是格式文档写死的契约。所以 mini-git 这章只照存这些字段、不利用它们跳步(差异记入附录):清单照样与真 git 互认,只是比对永远老实重算。
 
-第二,mode 是 32 位,拆开看才有意义。文档把它分成四段:16 位未用(必须为零)、4 位对象类型、3 位未用、9 位 Unix 权限。对象类型只有三个取值:二进制 1000 普通文件、1010 符号链接、1110 gitlink;权限段对普通文件只许 0755 和 0644。`0x81a4` 展开成二进制是 `1000 0 1 10100100`:类型位 1000,权限位 110100100,即 0o644。第 3 章教过的文件模式——tree 条目里那个六位字符串 `100644`——就是这 32 位砍掉三个零头后的样子。同一个文件模式,tree 与 index 两套记法。
+第二,mode 是 32 位,拆开看才有意义。文档把它分成四段:16 位未用(必须为零)、4 位对象类型、3 位未用、9 位 Unix 权限。对象类型只有三个取值:二进制 1000 普通文件、1010 符号链接、1110 gitlink;权限段对普通文件只许 0755 和 0644。`0x81a4` 展开成二进制是 `1000 000 110100100`:类型位 1000,权限位 110100100,即 0o644。第 3 章教过的文件模式——tree 条目里那个六位字符串 `100644`——就是这 32 位砍掉三个零头后的样子。同一个文件模式,tree 与 index 两套记法。
 
 第三,flags 的 16 位。文档从高到低点名。最高位是「1-bit assume-valid flag」,「别再检查我」的免检标记。次高位是「1-bit extended flag (must be zero in version 2)」,v2 里必须为零。再往下是「2-bit stage (during merge)」,合并冲突时才动用:一个路径最多同时挂三条 stage 条目,第三部分讲合并时回头再谈。最低 12 位是路径字节数,文档写明:长度不足 0xFFF 时直接存长度,否则这个字段存 0xFFF。mini-git 的读法一刀切:高 4 位非零就判损坏,超长路径的 0xFFF 约定也不读。
 
-第四,路径之后那几个 `00` 不是装饰。文档原文引前半:「1-8 nul bytes as necessary to pad the entry」。后半说目的:「to a multiple of eight bytes while keeping the name NUL-terminated」。条目总长凑成 8 的倍数,路径必须以至少一个 NUL 收尾。a.txt 的条目:62 定长加 5 字节名字是 67,垫 5 个 NUL 凑 72。为什么对齐?给随机访问留方便——不必读条目,光从序号就能算出第 n 条在哪。代价是公式里那个例外:62 加名字恰为 8 的倍数时,垫 8 个而不是 0 个,否则路径就没有 NUL 收尾。
+第四,路径之后那几个 `00` 不是装饰。文档原文引前半:「1-8 nul bytes as necessary to pad the entry」。后半说目的:「to a multiple of eight bytes while keeping the name NUL-terminated」。条目总长凑成 8 的倍数,路径必须以至少一个 NUL 收尾。a.txt 的条目:62 定长加 5 字节名字是 67,垫 5 个 NUL 凑 72。为什么对齐?文档只规定了垫齐规则,没给动机;8 字节对齐是文件格式设计里的常见惯例,这里按「实现选择」对待,不替官方编理由。代价是公式里那个例外:62 加名字恰为 8 的倍数时,垫 8 个而不是 0 个,否则路径就没有 NUL 收尾。
 
 条目区读完,还剩尾巴。426 = 12 头 + 304 条目(72 + 72 + 80 + 80)+ 110 尾。尾巴分两截。前一截以 `54 52 45 45` 开头——ASCII 的 `TREE`,扩展(extension)。文档说扩展靠 4 字节签名识别,大写开头的是可选扩展:「Optional extensions can be ignored if Git does not understand them」。TREE 是缓存树:真 git 顺手把「整棵 tree 长什么样」的速算结果记在 index 尾部,下次 write-tree 不用重拼。mini-git 不读也不写扩展,条目数读够就停,直接跳到最后一截。最后一截固定 20 字节,文档:「Hash checksum over the content of the index file before this checksum」。整个文件除末尾 20 字节外全体的 SHA-1。又是老朋友:对象库那边,SHA-1 盖的是对象头加内容,算出来当名字;这边盖的是文件全体,落成末尾当保险丝。文件坏一个字节,账就对不上。
 
@@ -104,7 +104,7 @@ node -e "const b=require('fs').readFileSync('.git/index'); console.log(b.subarra
 
 ## 演练:从红到绿
 
-手术清单先交代。src/index.ts 一个文件装九个函数,编解码与三态对比都在里面:parseIndex、writeIndex 负责字节来回。loadIndex、saveIndex、makeIndexEntry 管清单的读写与造条目。scanWorktree、flattenTree、readHeadHash 负责备三张表,classifyStatus 出四类判定。新增 tests/index.test.ts,25 条。src/trees.ts 动两处:把私有的 compareEntries 导出供 index 侧复用,另增 writeTreeFromIndex——平面清单拼回嵌套树。导出那把私尺只有一个动机:tree 的排序必须与第 3 章同一把尺子,各写一份迟早走岔。src/cli.ts 接 add 与 status 两个子命令,write-tree 改成两路分流。四份旧测试一字未动。
+手术清单先交代。src/index.ts 一个文件装九个函数,编解码与三态对比都在里面:parseIndex、writeIndex 负责字节来回。loadIndex、saveIndex、makeIndexEntry 管清单的读写与造条目。scanWorktree、flattenTree、readHeadHash 负责备三张表,classifyStatus 出四类判定。新增 tests/index.test.ts,25 条。src/trees.ts 动一处:新增 writeTreeFromIndex——平面清单拼回嵌套树,就住在 compareEntries 旁边,直接用那把仍私着的排序尺。不导出它的动机只有一个:tree 的排序必须与第 3 章同一把尺子,谁要拼树都得到 trees.ts 里来拼,各写一份迟早走岔。src/cli.ts 接 add 与 status 两个子命令,write-tree 改成两路分流。四份旧测试一字未动。
 
 测试的牙齿还是金样,这次的骨头最硬:真 git 2.53 对同一套 fixture `git add -A` 写出的 .git/index,426 字节逐字节固化成常量。
 
@@ -270,7 +270,7 @@ export function writeTreeFromIndex(gitDir: string, entries: readonly IndexEntry[
 }
 ```
 
-一次分组,两层递归:本层文件留下,目录分组剥掉第一段路径后递归;递归回来的是子 tree 的名字,当成本层条目。收尾三件全是第 3 章的存货:模式换算回六位字符串、encodeTree 拼字节、compareEntries 排序。这就是把 trees.ts 那把私尺导出来的原因。tree 的排序规则(目录补尾斜杠)与 index 的排序规则(裸字节)不是同一把,混用会拼出另一个名字的树。CLI 的 write-tree 由此改成分流:
+一次分组,两层递归:本层文件留下,目录分组剥掉第一段路径后递归;递归回来的是子 tree 的名字,当成本层条目。收尾三件全是第 3 章的存货:模式换算回六位字符串、encodeTree 拼字节、compareEntries 排序。这就是 writeTreeFromIndex 要住进 trees.ts 的原因。tree 的排序规则(目录补尾斜杠)与 index 条目区的排序规则(裸字节)不是同一把,混用会拼出另一个名字的树——拼树必须来用原厂那把尺。CLI 的 write-tree 由此改成分流:
 
 ```ts
 // src/cli.ts · cmdWriteTree
@@ -401,6 +401,7 @@ $MG $CLI write-tree
 
 ```bash
 # 用法示例 · 提交一笔,然后删掉 index
+printf 'hello world\n' > a.txt   # 恢复成暂存的那一版,让工作区、暂存区、HEAD 三方一致
 export MINI_GIT_TIMESTAMP=1700000000
 T=$($MG $CLI write-tree)
 C=$($MG $CLI commit-tree $T -m '第一次提交')
@@ -411,7 +412,7 @@ rm .git/index
 $MG $CLI status
 ```
 
-删 index 前最后一行报告「干净」,readHeadHash 两跳读到了你手写的 refs/heads/main。删掉后再跑 status,先猜输出有几行、每行什么标签。对答案:八行。已暂存段四条「删除」——清单空了,对 HEAD 比出全删。未跟踪段四条——工作区的文件对空清单全是陌生面孔。第 1 章用真 git 预测过的局面,mini-git 用同一套三态对比复现出来。log 不受影响:历史在对象库和引用里,与清单无关。
+删 index 前最后一行报告「干净」,readHeadHash 两跳读到了你手写的 refs/heads/main。删掉后再跑 status,先猜输出有几行、每行什么标签。对答案:八条文件行,外加两行段头,共 10 行。已暂存段四条「删除」——清单空了,对 HEAD 比出全删。未跟踪段四条——工作区的文件对空清单全是陌生面孔。第 1 章用真 git 预测过的局面,mini-git 用同一套三态对比复现出来。log 不受影响:历史在对象库和引用里,与清单无关。
 
 第四猜,定向破坏。指认一处:src/index.ts 的 parseIndex 末尾,`const body = bytes.subarray(...)` 起的三行——计算并比对末尾校验和的那段——整段删掉,让函数直接 return entries。收集照旧、四类判定照旧、写树照旧,一处都不动。先写预测:pnpm test 红几条?红的是哪一类测试?跑。
 

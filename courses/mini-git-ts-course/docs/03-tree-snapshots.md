@@ -366,11 +366,19 @@ function renderTree(body: Buffer): string {
 
 function cmdWriteTree(cwd: string, args: string[]): string {
   if (args.length !== 0) {
-    throw new Error('用法:mini-git write-tree;不带参数,序列化的是当前目录')
+    throw new Error('用法:mini-git write-tree;不带参数')
   }
-  return writeTree(requireGitDir(cwd), cwd)
+  const gitDir = requireGitDir(cwd)
+  if (!existsSync(join(gitDir, 'index'))) {
+    // mini-git 特有口径:index 还没生过(一次 add 都没做)时,沿用第 3 章的整目录扫描;
+    // 真 git 此时写的是空树,这条分岔登记在差异附录
+    return writeTree(gitDir, cwd)
+  }
+  return writeTreeFromIndex(gitDir, loadIndex(gitDir))
 }
 ```
+
+本章动手时,cmdWriteTree 只有一行 return——整目录扫描就是全部。上面这版是它的最终形态:第 5 章拆开暂存区后,write-tree 长出了第二路,「有清单吃清单」;没清单时的兜底路径,正是本章写的这条整目录扫描。本章用到的、测试钉住的,也是这条兜底路径。
 
 cmdCatFile 里只改了一行:`return type === 'tree' ？ renderTree(body) : body.toString('utf8')`——tree 的「内容」不再是 utf8 文本,按 ls-tree 的口径一行一条;blob 的老路一行未动。HELP 菜单加了两行(write-tree 与 cat-file -p 对 tree 的说明)。
 

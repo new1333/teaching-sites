@@ -5,12 +5,13 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 5,
+  "next_chapter": 6,
   "completed_chapters": [
     "git-mental-model",
     "content-addressed-store",
     "tree-snapshots",
-    "commit-dag"
+    "commit-dag",
+    "index-file"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -19,6 +20,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "commit-dag"
+    "id": "index-file"
   }
 }

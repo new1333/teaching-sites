@@ -75,6 +75,26 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/04-commit-dag.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 --new commit 对象 父提交 提交图 --pain git log 天书 哈希全变", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 5,
+      "slug": "index-file",
+      "file": "docs/05-index-file.md",
+      "status": "complete",
+      "summary": "读者能按字节拆解 index v2(12 字节头、62 字节定长条目、垫齐、TREE 扩展、末尾校验和),说出 add 登记那一刻、commit 收清单、三态对比解释同一文件两段同现。验证物:+src/index.ts(parseIndex/writeIndex/loadIndex/saveIndex/scanWorktree/flattenTree/readHeadHash/classifyStatus)、trees.ts +writeTreeFromIndex、cli 接 add/status 与 write-tree 分流、+tests/index.test.ts(25 例,真 git index 字节金样);互拍:mini-git 写的 index 真 git 全文可读且 write-tree 同哈希。第 3 章正文 cmdWriteTree 引用已回写终态。评审 3 阻断 6 建议已修清。",
+      "artifacts": [
+        "companion/src/index.ts",
+        "companion/tests/index.test.ts",
+        "companion/src/trees.ts",
+        "companion/src/cli.ts",
+        "docs/03-tree-snapshots.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/05-index-file.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 --new index 文件 三态对比 --pain 忘了add Changes not staged 两段", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

@@ -24,7 +24,8 @@
       "from_n": 3,
       "target": "index-file",
       "what": "mini-git write-tree 扫工作区、真 git 吃暂存区——这个差异在 index 章补全,write-tree 将改为从暂存区清单生成树",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "第 5 章开章逐字回收第 3 章原话;writeTreeFromIndex + cmdWriteTree 两路分流落地,测试钉死「暂存旧版后改工作区,write-tree 仍旧值」;第 3 章正文 cmdWriteTree 引用回写终态;评审复核兑现。"
     },
     {
       "id": "p3-commit-record-left",
