@@ -5,7 +5,7 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 8,
+  "next_chapter": 9,
   "completed_chapters": [
     "git-mental-model",
     "content-addressed-store",
@@ -13,7 +13,8 @@
     "commit-dag",
     "index-file",
     "refs-branches",
-    "line-diff"
+    "line-diff",
+    "merge-base"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -22,6 +23,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "line-diff"
+    "id": "merge-base"
   }
 }

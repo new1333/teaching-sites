@@ -134,6 +134,24 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/07-line-diff.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk --new 编辑脚本 最长公共子序列 unified diff hunk --pain 红绿行 删三行加三行 合并成一个大块", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 8,
+      "slug": "merge-base",
+      "file": "docs/08-merge-base.md",
+      "status": "complete",
+      "summary": "读者能纸面圈划可达集并说出三性质,用「引用是根、沿父边走不到即判死」收口第 6 章游离提交账(gc 行刑、两周宽限、reflog 兜底),会判定 merge 三结局(ff ⇔ 一方可达自另一方,相等退化 up-to-date),懂 base 由图形状决定、criss-cross 多候选按声明取法钉死。验证物:+src/graph.ts(ancestorSet/isAncestor/mergeBase)、+tests/graph.test.ts(22 例:链/分叉/菱形/criss-cross×2/ff 三结局/命令)、cli 接 merge-base 与 --is-ancestor;菱形与 criss-cross 与真 git 对拍一致,148/148 全绿。评审 0 阻断 4 建议已修清。",
+      "artifacts": [
+        "companion/src/graph.ts",
+        "companion/tests/graph.test.ts",
+        "companion/src/cli.ts"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/08-merge-base.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward --new 可达性 最近公共祖先 fast-forward --pain Fast-forward Already up to date 新提交", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

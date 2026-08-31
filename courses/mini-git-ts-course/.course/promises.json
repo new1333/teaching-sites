@@ -51,6 +51,15 @@
       "from_n": 6,
       "target": "merge-base",
       "what": "detached 丢弃的提交只能靠哈希找回——没有引用兜底的提交最终命运(被谁清理、凭什么判死),merge-base 章用可达性收口",
+      "status": "fulfilled",
+      "resolution": "第 8 章开章逐字回收第 6 章原话;「对象库的生死簿」一节当面回答(判死=从任何引用走不到,引 fsck 原文;行刑=gc,pruneExpire 两周、reflog 30/90 天兜底),验证节用真 git fsck/gc 亲见三件对象变 unreachable 后被清;评审复核兑现。"
+    },
+    {
+      "id": "p8-ff-gate",
+      "from": "merge-base",
+      "from_n": 8,
+      "target": "sync-operations",
+      "what": "isAncestor 的 ff 判定将在 push 章成为远端拒绝非快进推送的同一把尺子——push 吃的 non-fast-forward,就是远端拿旧尖端对新尖端量了同一把 isAncestor",
       "status": "open"
     },
     {

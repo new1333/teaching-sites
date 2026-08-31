@@ -15,6 +15,7 @@ import {
 } from './index.ts'
 import { attachHead, detachHead, listBranches, readHead, readRef, resolveHead, updateRef } from './refs.ts'
 import { diffLines, renderUnified, splitLines } from './diff.ts'
+import { isAncestor, mergeBase } from './graph.ts'
 
 /** 40 位十六进制;checkout 用它分辨「给的是提交名还是分支名」。 */
 const HASH_RE = /^[0-9a-f]{40}$/
@@ -41,7 +42,10 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
   mini-git commit -m <消息>       一条龙:暂存区清单 → tree → commit → 推进当前分支引用;
                                   名字/邮箱/时间的口径与 commit-tree 相同
   mini-git diff [--cached]        行级差异;不带开关比「工作区 对 暂存区」,
-                                  --cached 比「暂存区 对 HEAD」(HEAD 不存在时全部算新增)`
+                                  --cached 比「暂存区 对 HEAD」(HEAD 不存在时全部算新增)
+  mini-git merge-base <A> <B>     两笔提交(分支名或 40 位哈希)的最近公共祖先,输出它的哈希
+  mini-git merge-base --is-ancestor <A> <B>
+                                  换一个问题:A 是 B 的祖先吗?答「是」或「否」`
 
 /** 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。 */
 export function runCli(argv: string[], cwd: string = process.cwd()): string {
@@ -74,6 +78,8 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdCommit(cwd, args)
     case 'diff':
       return cmdDiff(cwd, args)
+    case 'merge-base':
+      return cmdMergeBase(cwd, args)
     default:
       return `mini-git: 未知命令 '${cmd}'(收到参数:${args.join(' ')})。运行 mini-git --help 查看可用命令。`
   }
@@ -482,6 +488,40 @@ function cmdDiff(cwd: string, args: string[]): string {
     )
   }
   return sections.join('\n')
+}
+
+/**
+ * 找最近公共祖先,或做祖先判定。参数收分支名或 40 位提交名,与 checkout 同款的双口径。
+ * 从简口径:真 git 的 --is-ancestor 用退出码 0/1 回答,mini-git 的命令层只产文本,改答「是/否」;
+ * 没有公共祖先时真 git 静默退出 1,mini-git 抛一行可读的错——两条都登记差异附录。
+ */
+function cmdMergeBase(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git merge-base [--is-ancestor] <提交A> <提交B>;参数收分支名或 40 位提交名'
+  const flags = args.filter((a) => a.startsWith('-'))
+  const rest = args.filter((a) => !a.startsWith('-'))
+  if (flags.length > 1 || (flags.length === 1 && flags[0] !== '--is-ancestor') || rest.length !== 2) {
+    throw new Error(`${usage};恰好两个提交参数,至多一个 --is-ancestor 开关`)
+  }
+  const gitDir = requireGitDir(cwd)
+  const resolveTarget = (target: string): string => {
+    if (HASH_RE.test(target)) {
+      return target
+    }
+    const found = readRef(gitDir, `refs/heads/${target}`)
+    if (found === null) {
+      throw new Error(`merge-base:'${target}' 既不是 40 位提交名,也不是已存在的分支`)
+    }
+    return found
+  }
+  const [a, b] = rest.map(resolveTarget)
+  if (flags[0] === '--is-ancestor') {
+    return isAncestor(gitDir, a, b) ? '是' : '否'
+  }
+  const base = mergeBase(gitDir, a, b)
+  if (base === null) {
+    throw new Error(`merge-base:'${a.slice(0, 7)}' 与 '${b.slice(0, 7)}' 没有公共祖先——两段不相连的历史,给不出 base`)
+  }
+  return base
 }
 
 // 直接用 `tsx src/cli.ts` 运行时才执行;被测试 import 时不执行。
