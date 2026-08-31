@@ -11,8 +11,9 @@
 ## 必读
 
 1. `{skill_dir}/references/chapter-writing.md`
-2. `{skill_dir}/references/verification-and-gates.md`
-3. 当前章解析出的 `verification/{mode}.md`
+2. `{skill_dir}/references/prose-patterns.md`
+3. `{skill_dir}/references/verification-and-gates.md`
+4. 当前章解析出的 `verification/{mode}.md`
 
 读取 outline/profile、bible、rolling、promises、正文与相关 companion。全书评审读取全部章节和完整 companion。
 
@@ -28,7 +29,7 @@
 
 ### 3. 结构与体验
 
-检查钩子闭环、声明结构、一章一特性、验证中的读者动作/先猜后跑、source policy、死链与可运行命令。
+检查钩子闭环、声明结构、一章一特性、验证中的读者动作/先猜后跑、source policy、死链与可运行命令。单章还需看重音预算与段落推理步（chapter-writing.md「呈现服务教学」）。
 
 ## 单章额外检查
 
@@ -45,7 +46,7 @@
 - companion 无超纲/无教学来历的产物；
 - 正文引用、数字、资产与终态全量一致；
 - obligations、appendices、内部链接和主线问题闭环；
-- 文风与章结构是否出现批量模板化。
+- 文风与章结构是否批量模板化：开篇/收束句式重复、自查与验证收尾同款、事故叙事复用；对照 chapter-writing.md「书级节奏与反疲劳」逐条判（句式配额、重音预算、章末分工、密度预算）。
 
 ## 产出
 

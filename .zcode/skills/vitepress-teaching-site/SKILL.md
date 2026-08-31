@@ -32,7 +32,7 @@ description: Build or revise a VitePress course from a topic or repository. Use 
 | 0.5 · 校准 | 取得或保守推导读者已知/未知边界 | `state-contracts.md` 的 `CalibrationState` | `calibration.json` 已写；跳过原因显式，且不保存个人原话或身份信息 |
 | 1 · 课程圣经 | 固定读者模型、术语、事实源与验证约定 | `state-contracts.md` 的 `BibleState` | `bible.json` 完整；有客观事实断言时存在权威来源 |
 | 2 · profile + 大纲 | 选择课程形态并生成能力路径 | [`course-profiles.md`](references/course-profiles.md) + [`outline-schema.md`](references/outline-schema.md) | profile、章级验证解析与依赖 DAG 有效；用户确认或已记录“直接生成” |
-| 3 · 逐章 | 验证物 → 正文 → 新鲜眼评审 → 记账 | [`chapter-writing.md`](references/chapter-writing.md) + [`verification-and-gates.md`](references/verification-and-gates.md) + 解析出的单一验证分支；使用 [`roles/chapter-writer.md`](references/roles/chapter-writer.md) 与 [`roles/reviewer.md`](references/roles/reviewer.md) | 本章 gate、lint、review 均通过；rolling 与 promises 已提交 |
+| 3 · 逐章 | 验证物 → 正文 → 新鲜眼评审 → 记账 | [`chapter-writing.md`](references/chapter-writing.md) + [`prose-patterns.md`](references/prose-patterns.md) + [`verification-and-gates.md`](references/verification-and-gates.md) + 解析出的单一验证分支；使用 [`roles/chapter-writer.md`](references/roles/chapter-writer.md) 与 [`roles/reviewer.md`](references/roles/reviewer.md) | 本章 gate、lint、review 均通过；rolling 与 promises 已提交 |
 | 3.5 · 全书 | 查跨章概念链、能力账与终态漂移 | `roles/reviewer.md` 的全书分支 | 无阻断 finding；所有承诺核销；无来历不明的验证物能力 |
 | 4 · 组装 | 从 outline/bible 渲染站点并构建 | [`vitepress-assembly.md`](references/vitepress-assembly.md)；需要课程中心时再读 [`portal.md`](references/portal.md) | final-check、单课 build、聚合 build 全部通过 |
 

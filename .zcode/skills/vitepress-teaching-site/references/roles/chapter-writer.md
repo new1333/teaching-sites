@@ -13,8 +13,9 @@
 
 1. `{skill_dir}/references/state-contracts.md`
 2. `{skill_dir}/references/chapter-writing.md`
-3. `{skill_dir}/references/verification-and-gates.md`
-4. 解析出的唯一 `verification/{mode}.md`
+3. `{skill_dir}/references/prose-patterns.md`
+4. `{skill_dir}/references/verification-and-gates.md`
+5. 解析出的唯一 `verification/{mode}.md`
 
 再读取 outline 的本章 spec/profile、bible、截至 N-1 的 rolling 与 companion 当前状态。
 

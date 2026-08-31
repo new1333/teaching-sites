@@ -5,7 +5,8 @@
 //   node scripts/course-lint.mjs <course_dir> <章md> [术语...] [flags]
 //
 //   术语（terminology 存在性检查的词条）可直接跟在章文件后，或用 --terms <术语...> 传入；
-//   通行做法：bible 术语表全部条目 + 读者模型陌生概念。
+//   通行做法：截至本章的累积术语（已教过的条目）+ 读者模型陌生概念。全书口径只用于终章与
+//   全书评审——中途章传 bible 全量会因「未到教期的术语」误报缺失。
 //
 // flags：
 //   --new <术语...>                    本章新教术语（term-intro 首现解释检查只看它们；没有就省略）
@@ -28,10 +29,15 @@
 // outline.json 存在时自动读取本章 spec（按文件名 NN-slug 匹配）：hook.phenomena / pain_point 现象词
 // 兜底、type=review 或 length_exempt 自动豁免字数、source_policy / verification 兜底。CLI 显式参数优先。
 //
+// 书级反疲劳检查（info 级，zh，对照 chapter-writing.md「书级节奏与反疲劳」）：
+//   rhythm-info  开篇首句与同书各章的句式相似度（剥数字标点后 bigram Jaccard≥0.3）、二级节加粗>3、句尾立论连发>4
+//   leak-info    流水线词汇（锚点：/phenomena/pain_point/new_concepts）进入正文——<details> 内的回查指针豁免
+//   timeliness-info  即时性措辞（就在你读/的这周/撰稿时）——会自我过期
+//
 // 退出码：有阻断问题 1，干净 0；「info:」前缀的行不阻断。
 
-import { readFileSync, existsSync } from 'node:fs'
-import { join, relative, sep } from 'node:path'
+import { readFileSync, existsSync, readdirSync } from 'node:fs'
+import { join, relative, sep, basename } from 'node:path'
 
 const argv = process.argv.slice(2)
 if (argv.length < 2) {
@@ -176,10 +182,33 @@ const fwdMatches = [...text.matchAll(/第\s*(\d+)\s*章/g)].filter((m) => Number
 if (fwdMatches.length > 3) issues.push(`forward-ref: 闪前「第 N 章」${fwdMatches.length} 处（上限 3，去向收在章末地图）`)
 if (fwdMatches.length) {
   const targets = [...new Set(fwdMatches.map((m) => m[1]))].sort((a, b) => a - b)
+  // promise 登记核对：按账本实际形状解析目标章（target_ch 数字 / target slug→outline 章号），字符串包含只作兜底——
+  // 旧实现搜「第 N 章」/「"N"」，数字型 target_ch 永远匹配不上，已登记的闪前也会误报未登记。
   const promisesPath = join(courseDir, '.course', 'promises.json')
-  const known = existsSync(promisesPath) ? readFileSync(promisesPath, 'utf8') : ''
-  const unregistered = fwdMatches.filter((m) => !known.includes(`第 ${m[1]} 章`) && !known.includes(`"${m[1]}"`)).length
-  infos.push(`promise-info: 本章闪前指向第 ${targets.join('、')} 章${existsSync(promisesPath) ? `（${unregistered} 处未在 .course/promises.json 登记——目标章生成时清账）` : '（登记进 .course/promises.json，目标章生成时清账）'}`)
+  let knownTargets = new Set()
+  let raw = ''
+  if (existsSync(promisesPath)) {
+    raw = readFileSync(promisesPath, 'utf8')
+    try {
+      const list = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : JSON.parse(raw).promises ?? []
+      const slugToNum = new Map()
+      try {
+        const ol = JSON.parse(readFileSync(outlinePath, 'utf8'))
+        let n = 0
+        for (const part of ol.parts ?? []) for (const ch of part.chapters ?? []) { n += 1; slugToNum.set(ch.slug, n) }
+      } catch { /* 无 outline 时 slug 映射缺省，走字符串兜底 */ }
+      for (const p of list) {
+        const t = p?.target_ch ?? p?.to_ch ?? p?.target
+        const num = typeof t === 'number' ? t : typeof t === 'string' ? (slugToNum.get(t) ?? /^\s*(\d+)/.exec(t)?.[1]) : null
+        if (num != null) knownTargets.add(String(num))
+      }
+    } catch { /* 账本不可解析时退回字符串包含 */ }
+  }
+  const unregistered = fwdMatches.filter((m) => !knownTargets.has(m[1]) && !raw.includes(`第 ${m[1]} 章`) && !raw.includes(`"${m[1]}"`)).length
+  const regNote = existsSync(promisesPath)
+    ? (unregistered ? `（${unregistered} 处未在 .course/promises.json 登记——目标章生成时清账）` : '（均已登记）')
+    : '（登记进 .course/promises.json，目标章生成时清账）'
+  infos.push(`promise-info: 本章闪前指向第 ${targets.join('、')} 章${regNote}`)
 }
 
 for (const w of ['集中营']) if (text.includes(w)) issues.push(`metaphor: 禁用比喻词「${w}」`)
@@ -232,6 +261,47 @@ const vague = checklist.filter((l) => /感受一下|体验一下|自行体会|�
 if (vague.length) issues.push(`observation: ${vague.length} 条任务缺少可判定现象（应写明「看到/输出/返回什么」，不写「感受一下」）`)
 if (verification === 'observation' && !checklist.length)
   issues.push('observation: 本章无勾选式任务清单（- [ ] 每条 = 读者操作 + 应看到的具体现象）')
+
+// ---- 书级反疲劳（info 级：单章全对、全书疲惫是最常见的退化，机械检查只是下限）----
+const proseNoDetails = text.replace(/<details>[\s\S]*?<\/details>/g, '')
+if (zh) {
+  const openerOf = (raw) => {
+    const body = raw.replace(/^---\r?\n[\s\S]*?\r?\n---/, '')
+    const line = body.split(/\r?\n/).find((l) => l.trim() && !/^#{1,6}\s/.test(l) && !/^</.test(l.trim()))
+    return ((line ?? '').split(/[。！？]/)[0] ?? '').replace(/[\d\s\p{P}]/gu, '')
+  }
+  const opener = openerOf(md)
+  if (opener.length >= 8) {
+    const bigrams = (s) => { const g = new Set(); for (let i = 0; i < s.length - 1; i++) g.add(s.slice(i, i + 2)); return g }
+    const jaccard = (a, b) => { const A = bigrams(a), B = bigrams(b); let n = 0; for (const x of A) if (B.has(x)) n++; return n / (A.size + B.size - n) }
+    const docsDir = join(courseDir, 'docs')
+    const self = basename(mdResolved)
+    const twins = []
+    for (const f of existsSync(docsDir) ? readdirSync(docsDir) : []) {
+      if (!/^\d{2}-.*\.md$/.test(f) || f === self) continue
+      let sibling = ''
+      try { sibling = openerOf(readFileSync(join(docsDir, f), 'utf8')) } catch { continue }
+      if (sibling.length < 5) continue
+      let p = 0
+      while (p < opener.length && p < sibling.length && opener[p] === sibling[p]) p++
+      const sim = jaccard(opener, sibling)
+      if (p >= 5 || sim >= 0.3) twins.push(`${f.replace(/\.md$/, '')}（${p >= 5 ? `同款开头 ${p} 字` : `相似 ${sim.toFixed(2)}`}）`)
+    }
+    if (twins.length) infos.push(`rhythm-info: 开篇首句与 ${twins.join('、')} 同构——同款开场全书 ≤3 次、连续两章不得同款，轮换衔接姿态`)
+  }
+  const hotSections = text.split(/^##\s.*$/m).filter((s) => (s.match(/\*\*[^*\n]+\*\*/g) ?? []).length > 3).length
+  if (hotSections) infos.push(`rhythm-info: ${hotSections} 个二级节的加粗超过 3 处——重音预算一节 ≤2 处，留安静段`)
+  const aphorisms = (text.match(/\*\*[^*\n]+\*\*(?=\s*(?:——|。|！|；))/g) ?? []).length
+  if (aphorisms > 4) infos.push(`rhythm-info: 句尾加粗立论 ${aphorisms} 处（参考 ≤4/章）——立论连发会疲劳`)
+  for (const w of ['锚点：', '锚点:', 'phenomena', 'pain_point', 'new_concepts']) {
+    const n = proseNoDetails.split(w).length - 1
+    if (n) infos.push(`leak-info: 流水线词汇「${w}」进入正文 ${n} 处——bible/outline 字段名不作读者可见词汇（<details> 内回查指针除外）`)
+  }
+  for (const w of ['就在你读', '就在你看', '的这周', '的这一周', '撰稿时']) {
+    const n = proseNoDetails.split(w).length - 1
+    if (n) infos.push(`timeliness-info: 即时性措辞「${w}」${n} 处——会自我过期，改相对表述或登记 timeliness 义务`)
+  }
+}
 
 if (issues.length) {
   console.log(`[${mdRel}]`)

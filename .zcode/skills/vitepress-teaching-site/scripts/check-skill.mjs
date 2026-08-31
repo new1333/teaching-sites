@@ -51,6 +51,14 @@ for (const file of markdownFiles) {
     issues.push(`${relativePath(file)} enables ignoreDeadLinks`)
   if (text.includes('五个关键 JSON') || text.includes('五个 JSON'))
     issues.push(`${relativePath(file)} contains the stale five-state contract`)
+  // skill 与产物解耦：不得引用已生成课程的具体文件；参数化/聚合站契约形态放行
+  for (const m of text.matchAll(/courses\/([^\s`，。；）)]*)/g)) {
+    const tail = m[1]
+    if (tail.startsWith('{') || tail.startsWith('*') || tail === 'index.md' || tail.startsWith('.vitepress')) continue
+    issues.push(`${relativePath(file)} references generated course artifact "courses/${tail}" — skill must stay decoupled from course outputs (courses/{course} 等参数化形态可用)`)
+  }
+  for (const m of text.matchAll(/docs\/\d{1,2}-[A-Za-z0-9-]+\.md/g))
+    issues.push(`${relativePath(file)} references concrete chapter file "${m[0]}" — 用 docs/{NN}-{slug}.md 参数化形态`)
 }
 
 const reachable = new Set()
