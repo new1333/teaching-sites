@@ -1,0 +1,48 @@
+{
+  "kind": "topic",
+  "label": "x-video-downloader",
+  "description": "怎么写一个浏览器插件，下载 X(Twitter) 视频——从 MV3 插件骨架、网络监听、m3u8 解析、分片下载管线，到把下载按钮放上推文、打包发布",
+  "features": [
+    {
+      "name": "mv3-anatomy",
+      "summary": "MV3 插件解剖：manifest.json、content script（页面世界）、service worker（后台）、权限声明——浏览器凭什么让你的代码跑在别人的页面里"
+    },
+    {
+      "name": "network-watch",
+      "summary": "看见视频：X 的视频在 DOM 里是 blob: 地址，真相在网络请求里——DevTools 过滤 m3u8 + chrome.webRequest 被动监听 video.twimg.com"
+    },
+    {
+      "name": "m3u8-parse",
+      "summary": "m3u8 解析：master/media 两级播放列表、EXT-X-STREAM-INF、BANDWIDTH/RESOLUTION——纯函数解析出清晰度清单并选最高画质"
+    },
+    {
+      "name": "download-pipeline",
+      "summary": "下载管线：直接 mp4 一行落盘（chrome.downloads）；HLS 则分片并发抓取、字节拼接（含 EXT-X-MAP），跨环境协作绕开 service worker 没有 DOM API 的限制"
+    },
+    {
+      "name": "inject-ui",
+      "summary": "推文上的按钮：X 是 SPA（路由切换不重载），MutationObserver + data-testid 锚点注入按钮，状态机（探测→已找到→下载中→完成）与 SW 消息协议"
+    },
+    {
+      "name": "permissions-publish",
+      "summary": "权限的代价与发布：host_permissions 与 CORS 豁免、CSP、MV3 砍掉 blocking webRequest 的来龙去脉、打包 zip 与上架要点、法律边界"
+    },
+    {
+      "name": "full-chain-review",
+      "summary": "review 章：全链路对账——从「点按钮」倒推每一步用了哪个机制，收口主线问题"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "mv3-anatomy", "to": "network-watch" },
+      { "from": "network-watch", "to": "m3u8-parse" },
+      { "from": "m3u8-parse", "to": "download-pipeline" },
+      { "from": "mv3-anatomy", "to": "inject-ui" },
+      { "from": "download-pipeline", "to": "inject-ui" },
+      { "from": "download-pipeline", "to": "permissions-publish" },
+      { "from": "inject-ui", "to": "permissions-publish" },
+      { "from": "permissions-publish", "to": "full-chain-review" }
+    ]
+  },
+  "profile_hint": "principle-reimpl（做出可装载的最小实现）+ mixed 验证（code-lab:library 于纯逻辑模块 + observation 于浏览器装载任务清单）；zero-trace（topic 输入）；code_density full；obligations 建议 legal（版权/服务条款）+ timeliness（X 前端与接口随时间变化，教锚点方法而非快照）；scale standard（7 章）"
+}

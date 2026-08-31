@@ -1,0 +1,34 @@
+{
+  "kind": "topic",
+  "label": "Nginx 配置 · 前端场景",
+  "description": "面向前端工程师的 Nginx 配置实战：从静态文件服务到反向代理、缓存、压缩、跨域与上线排障，覆盖前端开发会真实遇到的全部场景。",
+  "features": [
+    { "name": "请求处理心智模型", "summary": "master/worker 进程模型、事件驱动、一个请求进来后 Nginx 按什么顺序决定谁来处理它" },
+    { "name": "静态文件服务", "summary": "root/index 指令、扩展名到 MIME 的映射、404/403，前端构建产物 dist 的正确打开方式" },
+    { "name": "location 匹配与优先级", "summary": "精确 =、前缀最长、^~、正则 ~/~* 的匹配顺序，一个 URI 命中哪条规则" },
+    { "name": "SPA History 路由回退", "summary": "try_files 与 $uri 回退 index.html，解决前端路由刷新 404" },
+    { "name": "反向代理", "summary": "proxy_pass 把 /api 转发给后端，带尾斜杠与不带尾斜杠的路径改写语义差异" },
+    { "name": "代理请求头与 WebSocket", "summary": "proxy_set_header 传递 Host/X-Forwarded-For/X-Real-IP，Upgrade/Connection 头让 WebSocket 长连接穿透代理" },
+    { "name": "负载均衡", "summary": "upstream 定义后端组、轮询/权重、故障实例摘除，发版不再 502" },
+    { "name": "gzip 压缩", "summary": "gzip on、哪些类型值得压缩、Accept-Encoding 协商，把 2MB 的 vendor.js 降到 600KB" },
+    { "name": "缓存控制", "summary": "强缓存与协商缓存：带 hash 资源 immutable、index.html no-cache、ETag/304" },
+    { "name": "CORS 与响应头", "summary": "add_header 注入跨域头、OPTIONS 预检处理、静态资源跨域读取" },
+    { "name": "HTTPS 与安全头", "summary": "证书链、http→https 301、HSTS、混合内容，前端工程师要懂的 TLS 上线常识" },
+    { "name": "日志与 502/504 排障", "summary": "access_log/error_log 怎么读，502/504 是谁的锅，排障决策树" }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "静态文件服务", "to": "请求处理心智模型" },
+      { "from": "location 匹配与优先级", "to": "静态文件服务" },
+      { "from": "SPA History 路由回退", "to": "location 匹配与优先级" },
+      { "from": "反向代理", "to": "location 匹配与优先级" },
+      { "from": "代理请求头与 WebSocket", "to": "反向代理" },
+      { "from": "负载均衡", "to": "反向代理" },
+      { "from": "gzip 压缩", "to": "静态文件服务" },
+      { "from": "缓存控制", "to": "静态文件服务" },
+      { "from": "CORS 与响应头", "to": "location 匹配与优先级" },
+      { "from": "HTTPS 与安全头", "to": "请求处理心智模型" },
+      { "from": "日志与 502/504 排障", "to": "负载均衡" }
+    ]
+  }
+}

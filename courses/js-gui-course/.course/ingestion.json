@@ -1,0 +1,31 @@
+{
+  "kind": "topic",
+  "label": "JS 接入原生 GUI 的原理（Electron 式桌面端）",
+  "description": "Electron 之类桌面端的本质：把 JS 运行时（V8）嵌入原生程序，由宿主注入 GUI 能力（窗口、消息循环），JS 与原生 GUI 工具包之间靠 binding/IPC 桥接。课程从消息循环、运行时嵌入、binding 层、进程模型、IPC 一路推导，最终手写一个可测试的 mini-Electron 内核。",
+  "features": [
+    { "name": "桌面 GUI 程序解剖", "summary": "窗口、控件树、操作系统消息循环（event/message loop）：所有 GUI 框架的共同骨架" },
+    { "name": "JS 运行时嵌入", "summary": "JS 语言本身没有 GUI；V8 是可嵌入引擎，宿主程序创建 isolate/context 并注入全局对象（浏览器 window、Node process 都是这样来的）" },
+    { "name": "binding 层", "summary": "JS 调用原生函数的机制：函数注册表、参数跨边界序列化/转换、返回值回传（N-API/FFI 的原理前身）" },
+    { "name": "窗口与 UI 描述", "summary": "宿主暴露 createWindow / UI 描述 API，native 层负责真正创建与绘制；测试中用结构快照代替像素" },
+    { "name": "两个世界的线程模型", "summary": "JS 单线程 vs 原生多线程：native 调用如何异步化、任务队列如何汇流回 JS 线程" },
+    { "name": "进程模型", "summary": "为什么 Electron 分主进程/渲染进程：Chromium 多进程、崩溃隔离、安全边界、能力分配" },
+    { "name": "IPC 通道", "summary": "跨进程双向通信：序列化、请求-响应（invoke/handle）与事件推送（send/on）两种语义" },
+    { "name": "native 事件到 JS 回调", "summary": "OS 消息 → 宿主转换为 JS 事件 → 分发给 JS 回调，事件订阅与解绑" },
+    { "name": "完整闭环组装", "summary": "把窗口、桥、IPC、事件拼成一个 mini-Electron：JS 代码跑在嵌入运行时里，点按钮改状态刷新 UI 全程走桥" },
+    { "name": "技术选型对比", "summary": "Electron（Chromium 整装）vs Tauri（系统 WebView）vs Qt 绑定 vs 原生 FFI：同一个原理的不同权衡" }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "JS 运行时嵌入", "to": "桌面 GUI 程序解剖" },
+      { "from": "binding 层", "to": "JS 运行时嵌入" },
+      { "from": "窗口与 UI 描述", "to": "binding 层" },
+      { "from": "两个世界的线程模型", "to": "binding 层" },
+      { "from": "进程模型", "to": "桌面 GUI 程序解剖" },
+      { "from": "IPC 通道", "to": "进程模型" },
+      { "from": "native 事件到 JS 回调", "to": "两个世界的线程模型" },
+      { "from": "完整闭环组装", "to": "IPC 通道" },
+      { "from": "完整闭环组装", "to": "native 事件到 JS 回调" },
+      { "from": "技术选型对比", "to": "完整闭环组装" }
+    ]
+  }
+}

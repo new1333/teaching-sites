@@ -1,0 +1,47 @@
+{
+  "kind": "topic",
+  "label": "WebGL 图形学入门",
+  "description": "从 WebGL 的第一个三角形讲起，逐层讲清图形学核心概念（着色器、变换、投影、相机、深度、纹理、光照、场景图），终点是亲手组装一个可漫游的 3D 小世界。每章正文内嵌可实时运行的 WebGL 演示组件，着色器类章节支持在线编辑 GLSL 即时重编译。",
+  "features": [
+    { "name": "gpu-pipeline", "summary": "GPU 与渲染管线：为什么 Canvas 2D 会被十万粒子拖垮、GPU 如何用上千个小核并行算像素、顶点→光栅化→片元三段流水线" },
+    { "name": "first-triangle", "summary": "着色器与缓冲区：GLSL 语法、编译链接成程序、VBO 喂顶点、attribute 取数、varying 插值画出渐变三角形" },
+    { "name": "uniforms-and-animation", "summary": "uniform 与渲染循环：不重建缓冲的逐帧动画、requestAnimationFrame、增量时间、线性插值与缓动" },
+    { "name": "vectors", "summary": "向量运算：加减数乘、点积（光照的方向感）、叉积（求平面法线）、归一化——图形学的语言层" },
+    { "name": "transform-matrices", "summary": "矩阵变换：mat4 列主序、平移/旋转/缩放、变换顺序为什么不可交换、MVP 中的 M" },
+    { "name": "projection", "summary": "投影：视锥体、透视除法（除以 w）、正交与透视两套投影矩阵、NDC 到屏幕的映射" },
+    { "name": "camera-lookat", "summary": "相机与视图矩阵：眼/目标/上三向量构造 lookAt、view 变换=把世界搬到相机眼前、MVP 中的 V" },
+    { "name": "depth-and-cube", "summary": "深度缓冲与索引绘制：depth test 让遮挡关系正确、gl.drawElements 复用顶点、画出第一个会旋转的真 3D 立方体" },
+    { "name": "textures", "summary": "纹理：UV 坐标、纹理与缓冲的对应、采样与过滤（NEAREST/LINEAR）、程序化生成纹理数据" },
+    { "name": "lighting", "summary": "光照与法线：法线是什么、法线矩阵（逆转置）、Phong 三件套（环境光+漫反射+高光）" },
+    { "name": "scene-graph", "summary": "场景树：局部矩阵与世界矩阵、父子层级组合（月亮绕地球、地球绕太阳）、遍历绘制" },
+    { "name": "camera-controls", "summary": "可操控相机：轨道相机（球坐标+拖拽+滚轮）与漫游相机（yaw/pitch+前后左右移动向量）" },
+    { "name": "build-3d-world", "summary": "组装 3D 世界：场景树+纹理+光照+漫游相机整合，程序化生成全部资源，得到可漫游的小世界" },
+    { "name": "beyond-webgl", "summary": "生态定位：手写到这一步后 Three.js 帮你省的是什么、WebGL2 与 WebGPU 的去向" }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "first-triangle", "to": "gpu-pipeline" },
+      { "from": "uniforms-and-animation", "to": "first-triangle" },
+      { "from": "vectors", "to": "gpu-pipeline" },
+      { "from": "transform-matrices", "to": "vectors" },
+      { "from": "projection", "to": "transform-matrices" },
+      { "from": "camera-lookat", "to": "vectors" },
+      { "from": "camera-lookat", "to": "transform-matrices" },
+      { "from": "depth-and-cube", "to": "camera-lookat" },
+      { "from": "depth-and-cube", "to": "transform-matrices" },
+      { "from": "textures", "to": "first-triangle" },
+      { "from": "lighting", "to": "vectors" },
+      { "from": "lighting", "to": "depth-and-cube" },
+      { "from": "lighting", "to": "uniforms-and-animation" },
+      { "from": "scene-graph", "to": "transform-matrices" },
+      { "from": "scene-graph", "to": "depth-and-cube" },
+      { "from": "camera-controls", "to": "camera-lookat" },
+      { "from": "camera-controls", "to": "vectors" },
+      { "from": "build-3d-world", "to": "scene-graph" },
+      { "from": "build-3d-world", "to": "camera-controls" },
+      { "from": "build-3d-world", "to": "lighting" },
+      { "from": "build-3d-world", "to": "textures" },
+      { "from": "beyond-webgl", "to": "build-3d-world" }
+    ]
+  }
+}

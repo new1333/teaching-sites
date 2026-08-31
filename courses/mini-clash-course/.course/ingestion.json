@@ -1,0 +1,65 @@
+{
+  "kind": "topic",
+  "label": "clash 等代理软件的原理与手写实现",
+  "description": "以 Clash 为参照系的代理软件原理课：一次请求从本地入口（HTTP/SOCKS5）→ 分流决策 → 加密隧道 → 远端中继的完整路径，进阶覆盖 DNS Fake-IP 与 TUN 全局接管。终点是亲手写出一个可端到端运行的 mini 代理。",
+  "features": [
+    {
+      "name": "代理全景：三个角色与一次请求的路径",
+      "summary": "Clash 类软件 = 本地入口（替应用收发流量）+ 分流决策（哪些流量走哪条线）+ 出站隧道（把流量送到远端服务器再转达目标）。全课程的地基图。"
+    },
+    {
+      "name": "HTTP 正向代理：absolute-form 与 CONNECT 隧道",
+      "summary": "浏览器怎么知道该把请求发给代理：普通请求改写请求行为绝对地址；HTTPS 靠 CONNECT 建隧道。手写一个 HTTP 正向代理。"
+    },
+    {
+      "name": "SOCKS5：一个字节级的代理入口协议",
+      "summary": "握手（方法 协商）→ 认证 → CONNECT 命令（目标地址三种形态：IPv4/域名/IPv6）→ 中继。手写 SOCKS5 服务端，这是 mini-clash 的正式入口。"
+    },
+    {
+      "name": "两跳中继：本地代理 ↔ 远端服务器",
+      "summary": "两跳代理的数据面骨架：本地代理收到浏览器流量后，不直接连目标，而是发给远端服务器，由它代为转达；本地与远端各做一个 socket 对接。"
+    },
+    {
+      "name": "加密隧道：Shadowsocks 风格 AEAD 分块",
+      "summary": "本地↔远端这一跳为什么必须加密、加密什么（不是全部流量结构，而是这一跳的载荷）；HKDF 派生子密钥 + 长度前缀 + AEAD 分块的加密帧格式。"
+    },
+    {
+      "name": "规则引擎：流量分流的决策核心",
+      "summary": "DOMAIN / DOMAIN-SUFFIX / DOMAIN-KEYWORD / IP-CIDR / MATCH 规则集与匹配次序；域名走域名规则、解析成 IP 后走 IP 规则的决策树。手写规则引擎。"
+    },
+    {
+      "name": "DNS 与 Fake-IP：为什么先要接管 DNS",
+      "summary": "DNS 污染与泄露是怎么回事；fake-ip 模式：回一个假 IP 换取真实域名信息在本地保留，连接时再还原。手写 fake-ip 池与还原。"
+    },
+    {
+      "name": "TUN 模式：虚拟网卡接管全系统流量",
+      "summary": "系统代理为什么罩不住所有应用；TUN 虚拟网卡把整机流量变成 IP 包交给代理进程，代理进程扮演协议栈把包还原成连接。字节级解析实验。"
+    },
+    {
+      "name": "配置与代理组：select / url-test / fallback",
+      "summary": "声明式配置（节点、规则、组）；代理组把多个节点包装成一个可切换/可自动选优的出口；延迟探测怎么做。手写配置加载与组调度。"
+    },
+    {
+      "name": "组装 mini-clash：端到端串联与真实差异对账",
+      "summary": "把入口、规则、组、隧道、远端串成端到端可跑的 mini-clash；与真实 Clash 的差异清单（多协议、连接复用、真实 TUN 栈等）。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "代理全景", "to": "HTTP 正向代理" },
+      { "from": "代理全景", "to": "SOCKS5" },
+      { "from": "SOCKS5", "to": "两跳中继" },
+      { "from": "两跳中继", "to": "加密隧道" },
+      { "from": "SOCKS5", "to": "规则引擎" },
+      { "from": "加密隧道", "to": "规则引擎" },
+      { "from": "规则引擎", "to": "DNS 与 Fake-IP" },
+      { "from": "DNS 与 Fake-IP", "to": "TUN 模式" },
+      { "from": "规则引擎", "to": "配置与代理组" },
+      { "from": "加密隧道", "to": "配置与代理组" },
+      { "from": "配置与代理组", "to": "组装 mini-clash" },
+      { "from": "DNS 与 Fake-IP", "to": "组装 mini-clash" },
+      { "from": "TUN 模式", "to": "组装 mini-clash" }
+    ]
+  },
+  "profile_hint": "principle-reimpl + code-lab:library（TypeScript + vitest，Node net/crypto 内建模块即可承载，零第三方依赖）+ zero-trace（Clash 为 GPL-3.0，且本课教原理不教源码）+ code_density: full + scale: standard（10 章）。轻量 legal 义务：代理工具在部分司法辖区受监管，需边界声明（about + 首页 + 首章首现处）。"
+}

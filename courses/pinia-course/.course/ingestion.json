@@ -1,0 +1,72 @@
+{
+  "kind": "repo",
+  "ref": "vuejs/pinia@v4 (master, depth-1 clone)",
+  "label": "pinia",
+  "description": "Vue 官方状态管理库：直观、类型安全、可扩展。核心包 packages/pinia 约 2900 行 TS，构建在 Vue 响应式系统之上。",
+  "features": [
+    {
+      "name": "Pinia 容器（createPinia）",
+      "summary": "一个挂在 app 上的容器：state 根 ref、store 注册表 _s、effectScope、install/provide 与 use() 插件登记",
+      "evidence": ["packages/pinia/src/createPinia.ts", "packages/pinia/src/rootStore.ts"]
+    },
+    {
+      "name": "defineStore 与单例身份",
+      "summary": "返回 useStore 函数，惰性创建，按 id 注册进 pinia._s，同一 pinia 下取到同一实例",
+      "evidence": ["packages/pinia/src/store.ts"]
+    },
+    {
+      "name": "Option Store 三件套",
+      "summary": "state() 工厂 + toRefs 摊平进 store、getters 编译为 computed（this=store）、actions 原样挂载",
+      "evidence": ["packages/pinia/src/store.ts"]
+    },
+    {
+      "name": "Setup Store 与运行时分类",
+      "summary": "setup 函数返回 ref/reactive/computed/function，由 createSetupStore 运行时分类归一：一切 store 都是 setup store",
+      "evidence": ["packages/pinia/src/store.ts"]
+    },
+    {
+      "name": "$patch 深合并与 $reset",
+      "summary": "mergeReactiveObjects 递归合并（含 Map/Set），对象/函数两种 patch 形态，$reset 借 $patch 回到初始 state",
+      "evidence": ["packages/pinia/src/store.ts", "packages/pinia/__tests__/store.patch.spec.ts"]
+    },
+    {
+      "name": "订阅系统（$subscribe / $onAction）",
+      "summary": "addSubscription/triggerSubscriptions 双通道：watch deep 监听 state、action 包装器捕获 before/after/onError，作用域自动清理",
+      "evidence": ["packages/pinia/src/subscriptions.ts", "packages/pinia/__tests__/subscriptions.spec.ts", "packages/pinia/__tests__/onAction.spec.ts"]
+    },
+    {
+      "name": "storeToRefs",
+      "summary": "toRef 活引用 + computed 包装 getter + 跳过函数：解构不丢响应性的秘密",
+      "evidence": ["packages/pinia/src/storeToRefs.ts"]
+    },
+    {
+      "name": "插件系统",
+      "summary": "pinia.use(plugin)：context={store,app,pinia,options}，返回值 assign 进 store，install 前注册的插件先缓冲",
+      "evidence": ["packages/pinia/src/createPinia.ts", "packages/pinia/__tests__/storePlugins.spec.ts"]
+    },
+    {
+      "name": "activePinia 与 SSR 隔离",
+      "summary": "模块级 activePinia + setActivePinia + app.runWithContext：一个应用一个 pinia，跨请求不串号",
+      "evidence": ["packages/pinia/src/rootStore.ts", "packages/pinia/__tests__/ssr.spec.ts"]
+    },
+    {
+      "name": "HMR / devtools / mapHelpers（外围）",
+      "summary": "开发期体验层：热更新 store 定义、devtools 集成、Vuex 兼容的 mapState/mapActions——教学上作为差异地图素材",
+      "evidence": ["packages/pinia/src/hmr.ts", "packages/pinia/src/mapHelpers.ts", "packages/pinia/src/devtools/index.ts"]
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "defineStore 单例身份", "to": "Pinia 容器" },
+      { "from": "Option Store 三件套", "to": "defineStore 单例身份" },
+      { "from": "Setup Store 运行时分类", "to": "Option Store 三件套" },
+      { "from": "$patch 深合并与 $reset", "to": "Setup Store 运行时分类" },
+      { "from": "订阅系统", "to": "Setup Store 运行时分类" },
+      { "from": "storeToRefs", "to": "Setup Store 运行时分类" },
+      { "from": "插件系统", "to": "Pinia 容器" },
+      { "from": "插件系统", "to": "Setup Store 运行时分类" },
+      { "from": "activePinia 与 SSR 隔离", "to": "Pinia 容器" },
+      { "from": "HMR/devtools/mapHelpers", "to": "订阅系统" }
+    ]
+  }
+}

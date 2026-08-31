@@ -1,0 +1,51 @@
+{
+  "kind": "topic",
+  "label": "从零基础小白到A股投资入门",
+  "description": "面向零基础投资小白的A股入门课，技术流主线：深入讲解K线构成、K线形态及其背后的多空博弈与投资含义，配可视化图表组件；从市场机制到指标、风控、回测，最终组装出自己的交易系统。",
+  "features": [
+    { "name": "market-basics", "summary": "股票是什么、价格为什么会动：所有权凭证、交易所与指数、买卖供需与预期定价；为什么『消息传到你耳朵里时价格已经涨完了』" },
+    { "name": "order-mechanics", "summary": "一笔订单的旅程：集合竞价与连续竞价、盘口五档、价格优先时间优先、T+1、涨跌停、手与交易费用" },
+    { "name": "candle-anatomy", "summary": "K线的诞生：逐笔成交如何聚合成一根K线的开高低收、实体与影线的含义、分钟/日/周K线的周期聚合关系" },
+    { "name": "candle-rendering", "summary": "把OHLC画成图：价格坐标系、对数坐标、主图与成交量副图、归一化——为什么书上的形态图和实盘长得不一样" },
+    { "name": "single-patterns", "summary": "单根K线形态：锤子线、上吊线、十字星、光头光脚、长上影/长下影；每根形态背后当天的多空剧本" },
+    { "name": "multi-patterns", "summary": "组合K线形态：看涨/看跌吞没、乌云盖顶、刺透形态、早晨之星、黄昏之星、红三兵、黑三鸦；多日心理剧的连播" },
+    { "name": "pattern-stats", "summary": "形态有效性的统计检验：胜率要有基准对照、样本量、随机对照实验——形态是玄学还是统计优势" },
+    { "name": "moving-averages", "summary": "均线与趋势：MA/EMA的计算、金叉死叉、滞后性从哪来、均线作为动态支撑；动量与均值回归两种市场观" },
+    { "name": "volume-analysis", "summary": "成交量与量价关系：量在价先、放量突破与缩量回调、量价背离、换手率、地量与天量" },
+    { "name": "support-resistance", "summary": "支撑与阻力：枢轴高点低点、为什么价格会在某些位置反复停下（挂单聚集与锚定效应）、趋势线、突破与假突破" },
+    { "name": "reversal-structures", "summary": "大型反转结构：头肩顶/头肩底、双顶双底、颈线、量度目标、缺口（普通/突破/衰竭）" },
+    { "name": "macd", "summary": "MACD深入：EMA差值的差值、快慢线与柱、金叉死叉的滞后、顶背离底背离的数学来源" },
+    { "name": "rsi-bollinger", "summary": "RSI与布林带：涨幅占全部波动的比例、超买超卖与强势钝化；布林带=均线±标准差、正态假设的坑" },
+    { "name": "fundamentals-peek", "summary": "基本面速览：PE/PB/ROE十分钟后作为过滤器使用——技术分析选时，基本面排雷" },
+    { "name": "expectancy-risk", "summary": "期望值与仓位管理：胜率×盈亏比才是期望、凯利公式、止损的数学正当性、破产概率与蒙特卡洛" },
+    { "name": "backtest-engine", "summary": "最小回测引擎：信号→交易模拟（T+1、手续费、滑点）→绩效报告（收益、最大回撤、胜率）；未来函数、过拟合、幸存者偏差三大陷阱" },
+    { "name": "trading-system", "summary": "组装交易系统与交易心理：入场/止损/仓位/离场清单化、处置效应与损失厌恶、荐股骗局识别、复盘迭代" }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "order-mechanics", "to": "market-basics" },
+      { "from": "candle-anatomy", "to": "order-mechanics" },
+      { "from": "candle-rendering", "to": "candle-anatomy" },
+      { "from": "single-patterns", "to": "candle-anatomy" },
+      { "from": "single-patterns", "to": "candle-rendering" },
+      { "from": "multi-patterns", "to": "single-patterns" },
+      { "from": "pattern-stats", "to": "multi-patterns" },
+      { "from": "moving-averages", "to": "candle-rendering" },
+      { "from": "volume-analysis", "to": "moving-averages" },
+      { "from": "support-resistance", "to": "single-patterns" },
+      { "from": "support-resistance", "to": "moving-averages" },
+      { "from": "reversal-structures", "to": "support-resistance" },
+      { "from": "reversal-structures", "to": "multi-patterns" },
+      { "from": "macd", "to": "moving-averages" },
+      { "from": "rsi-bollinger", "to": "moving-averages" },
+      { "from": "rsi-bollinger", "to": "pattern-stats" },
+      { "from": "fundamentals-peek", "to": "market-basics" },
+      { "from": "expectancy-risk", "to": "pattern-stats" },
+      { "from": "backtest-engine", "to": "expectancy-risk" },
+      { "from": "backtest-engine", "to": "macd" },
+      { "from": "backtest-engine", "to": "rsi-bollinger" },
+      { "from": "trading-system", "to": "backtest-engine" },
+      { "from": "trading-system", "to": "fundamentals-peek" }
+    ]
+  }
+}

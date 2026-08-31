@@ -1,0 +1,36 @@
+{
+  "kind": "topic",
+  "label": "ts-nes-emulator",
+  "description": "使用 TypeScript 从零实现 NES 模拟器;要求能实际解析并运行 ROM,产出代码完整可运行。",
+  "features": [
+    { "name": "iNES 卡带解析", "summary": "把 .nes 文件按 16 字节头拆成 PRG-ROM / CHR-ROM / trainer / mapper / 镜像模式,识别 NES 2.0 扩展头" },
+    { "name": "6502 最小核心", "summary": "寄存器组、取指-译码-执行循环、复位向量,先让手写机器码在平坦内存上跑起来" },
+    { "name": "寻址模式体系", "summary": "13 种官方寻址统一建模;页内绕回与 JMP 间接寻址的 6502 硬件 bug" },
+    { "name": "官方指令集与标志位", "summary": "全部官方指令、N/V/Z/C 完整语义(有符号溢出)、栈与 BRK/RTI、指令周期计数" },
+    { "name": "总线与地址镜像", "summary": "RAM 2KB 镜像到 $0000-$1FFF、PPU 寄存器每 8 字节镜像、卡带窗口 $4020-$FFFF" },
+    { "name": "PPU 寄存器与显存", "summary": "六个 CPU 侧寄存器的读写副作用(Loopy v/t/x、$2007 增量与读缓冲)、命名表四种镜像、调色板 RAM" },
+    { "name": "背景渲染流水线", "summary": "每 8 dot 取瓦片的 fetch 序列、双位平面解码、16-bit 移位寄存器逐像素输出、fine-X/coarse-X 滚动" },
+    { "name": "精灵渲染与 OAM DMA", "summary": "OAM 结构、每扫描线 8 精灵限制、翻转与优先级、sprite 0 hit、$4014 DMA" },
+    { "name": "帧时序与 NMI", "summary": "262 扫描线 × 341 dot 帧模型、VBlank 段、NMI 中断序列、读 $2002 清标志竞态、odd frame 跳点、3:1 catch-up 主循环" },
+    { "name": "手柄串行输入", "summary": "$4016/$4017 strobe 语义与移位寄存器读取,读满后吐 1 的硬件行为" },
+    { "name": "NROM 映射与整机集成", "summary": "NROM 地址窗口(PRG 16K 镜像/32K、CHR-ROM/CHR-RAM)、Bus 接线、Nes.loadRom→runFrame 全链路、浏览器 demo" },
+    { "name": "精度分层与扩展路线", "summary": "指令级/scanline 级/dot 级/cycle 级精度能解释什么、不能解释什么;APU、mapper 1/2/4、open bus 的自学地图" }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "寻址模式体系", "to": "6502 最小核心" },
+      { "from": "官方指令集与标志位", "to": "寻址模式体系" },
+      { "from": "总线与地址镜像", "to": "6502 最小核心" },
+      { "from": "PPU 寄存器与显存", "to": "总线与地址镜像" },
+      { "from": "背景渲染流水线", "to": "PPU 寄存器与显存" },
+      { "from": "精灵渲染与 OAM DMA", "to": "背景渲染流水线" },
+      { "from": "帧时序与 NMI", "to": "精灵渲染与 OAM DMA" },
+      { "from": "帧时序与 NMI", "to": "官方指令集与标志位" },
+      { "from": "手柄串行输入", "to": "总线与地址镜像" },
+      { "from": "NROM 映射与整机集成", "to": "帧时序与 NMI" },
+      { "from": "NROM 映射与整机集成", "to": "手柄串行输入" },
+      { "from": "NROM 映射与整机集成", "to": "iNES 卡带解析" },
+      { "from": "精度分层与扩展路线", "to": "NROM 映射与整机集成" }
+    ]
+  }
+}

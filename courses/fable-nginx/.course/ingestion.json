@@ -1,0 +1,54 @@
+{
+  "kind": "topic",
+  "label": "nginx 原理与复刻",
+  "description": "nginx 等 Web 服务器/反向代理软件的原理、为什么要存在，以及如何亲手复刻一个。主线沿「先写出朴素服务器 → 亲手撞上它的极限 → 用事件驱动重构 → 长成 nginx 的形状 → 对账真实 nginx」推进。",
+  "features": [
+    {
+      "name": "HTTP 服务器最小闭环",
+      "summary": "Web 服务器的本质工作：socket 监听、接收连接、解析最小 HTTP 请求（请求行+头部+空行）、构造响应。从零写出第一个能被 curl 访问的阻塞版服务器。"
+    },
+    {
+      "name": "一连接一线程的代价与 C10K",
+      "summary": "朴素并发模型（每连接一个线程/进程）的资源代价：每线程栈内存、上下文切换调度成本；1999 年 C10K 问题的历史与 nginx 诞生的动因（2002-2004，Igor Sysoev / Rambler）。"
+    },
+    {
+      "name": "非阻塞 IO 与事件循环",
+      "summary": "nginx 的心脏：非阻塞 socket（read 没数据立即返回而非卡住）+ IO 多路复用（select→epoll 的演进、epoll 为什么赢）；单线程 Reactor 事件循环同时服务大量连接。"
+    },
+    {
+      "name": "事件驱动的连接状态机",
+      "summary": "非阻塞世界里 read/write 都可能「没读全/没写完」：慢客户端把请求掰成几段发、内核发送缓冲区满导致部分写。把 HTTP 解析改成增量状态机，配接收/发送缓冲区；水平触发与边缘触发。"
+    },
+    {
+      "name": "master-worker 多进程架构",
+      "summary": "nginx 的骨架：为什么是多进程×单线程事件循环，而不是多线程（隔离、无锁、热升级不丢连接）；worker 数配 CPU 核数；accept 惊群与监听分担。"
+    },
+    {
+      "name": "反向代理与负载均衡",
+      "summary": "nginx 当代的主职：它既是 server 又是 client——接收下游请求、转发给上游应用、再把响应转回来；轮询/最少连接策略；为什么应用服务器前要挡一层。"
+    },
+    {
+      "name": "对账真实 nginx",
+      "summary": "review：mini 实现与真实 nginx 的差距地图——sendfile/零拷贝、内存池、TLS 终止、SO_REUSEPORT、配置系统；哪些是工程优化、哪些是架构差异；压测对账。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "HTTP 服务器最小闭环", "to": "一连接一线程的代价与 C10K" },
+      { "from": "一连接一线程的代价与 C10K", "to": "非阻塞 IO 与事件循环" },
+      { "from": "非阻塞 IO 与事件循环", "to": "事件驱动的连接状态机" },
+      { "from": "事件驱动的连接状态机", "to": "master-worker 多进程架构" },
+      { "from": "事件驱动的连接状态机", "to": "反向代理与负载均衡" },
+      { "from": "master-worker 多进程架构", "to": "反向代理与负载均衡" },
+      { "from": "反向代理与负载均衡", "to": "对账真实 nginx" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "full",
+    "scale": "standard",
+    "note": "主题句明确要求『复刻一个』→ 原理重实现课；nginx 源码一行不进正文（zero-trace），我们重实现的是原理而非源码。实现语言建议 Python 3.10+ 纯标准库：selectors 模块在 Windows 上用 select、Linux 上自动用 epoll，读者能亲手管理事件循环（Node/Go 的事件循环被运行时封装，教不透；C 在 Windows 上无 epoll 可教）。本机已探测到 Python 3.12。Windows select 的 512 描述符上限本身就是「select 为什么被淘汰」的活教材，需在差异声明中如实处理；跨平台门槛建议 python -m compileall + unittest（零第三方依赖）。"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "kind": "repo",
+  "ref": "vuejs/devtools@main (depth-1 clone)",
+  "label": "vue-devtools",
+  "description": "Vue DevTools v7：一个框架级调试器的完整原理——应用代码与工具代码如何握手、组件树与状态如何被快照与回写、UI 客户端如何跨 iframe/扩展/Vite 多种宿主与页面内的 kit 双向通信。",
+  "features": [
+    {
+      "name": "全局钩子（Global Hook）",
+      "summary": "应用与工具是两份独立 bundle，靠 window 上一个约定名（__VUE_DEVTOOLS_GLOBAL_HOOK__）会合；先到者排队（REPLAY 队列），后到者接管，解决加载时序竞态",
+      "evidence": ["packages/devtools-kit/src/hook/index.ts", "packages/devtools-kit/src/core/index.ts"]
+    },
+    {
+      "name": "语义事件系统（Hookable）",
+      "summary": "原始 hook 事件经 subscribeDevToolsHook 转发为 kit 内部 hookable 钩子，转发时做守门过滤（devtools.hide、高性能模式），监听返回解绑函数",
+      "evidence": ["packages/devtools-kit/src/hook/index.ts", "packages/devtools-kit/src/ctx/hook.ts"]
+    },
+    {
+      "name": "应用记录与实例登记",
+      "summary": "每个 app 一条 AppRecord（id/name/instanceMap），activeAppRecord 支持多应用切换；组件实例 uid 不可靠，用自维护唯一 id 兜底",
+      "evidence": ["packages/devtools-kit/src/core/app/index.ts", "packages/devtools-kit/src/core/component/tree/walker.ts"]
+    },
+    {
+      "name": "组件树遍历（Walker）",
+      "summary": "按需拉取而非事件推送：遍历 vnode subTree 而不是 DOM，处理 fragment/suspense/keep-alive 缓存实例，maxDepth 控制深度、过滤命中才展开",
+      "evidence": ["packages/devtools-kit/src/core/component/tree/walker.ts", "packages/devtools-kit/src/core/component/tree/filter.ts"]
+    },
+    {
+      "name": "状态快照与序列化",
+      "summary": "把活实例的 props/setup/data 分类成 InspectorState；函数无法过 postMessage 的结构化克隆，靠 JSON 舞步清洗；循环引用用「对象表+索引」编码，超限截断",
+      "evidence": ["packages/devtools-kit/src/core/component/state/process.ts", "packages/devtools-kit/src/shared/transfer.ts"]
+    },
+    {
+      "name": "状态编辑回写",
+      "summary": "编辑器收到树节点 id + 属性路径，逐段写回活实例（reactive 对象上直接赋值），路径上全是对象时逐层下行",
+      "evidence": ["packages/devtools-kit/src/core/component/state/editor.ts"]
+    },
+    {
+      "name": "插件 API 与缓冲重放",
+      "summary": "setupDevToolsPlugin 让第三方库（router/pinia）注册自定义 tab/inspector；app 未就绪时进 plugin buffer，app init 后重放——又是时序竞态的解法",
+      "evidence": ["packages/devtools-kit/src/core/plugin/index.ts", "packages/devtools-kit/src/ctx/plugin.ts"]
+    },
+    {
+      "name": "自定义检查器（Inspector）",
+      "summary": "addCustomInspector 注册树形状态面板：getInspectorTree 拉树、sendInspectorState 推快照，路由/pinia 的面板即由此构成",
+      "evidence": ["packages/devtools-kit/src/ctx/inspector.ts", "packages/devtools-kit/src/types/inspector.ts"]
+    },
+    {
+      "name": "双向 RPC（birpc）",
+      "summary": "UI 客户端与页面内 kit 互为客户端：客户端调 kit 的 getComponentTree，kit 回调客户端的函数；消息带 id 配对请求与响应，超时设 -1（永不超时）",
+      "evidence": ["packages/devtools-kit/src/messaging/index.ts"]
+    },
+    {
+      "name": "通道预设（Channel Presets）",
+      "summary": "同一套 RPC 协议跑在多种传输上：iframe 用 window.postMessage，Vite 用 dev server 的 ws，扩展用 content script 中继 background port——post/on 两个函数就是全部抽象",
+      "evidence": ["packages/devtools-kit/src/messaging/presets/iframe/client.ts", "packages/devtools-kit/src/messaging/presets/extension/proxy.ts", "packages/devtools-kit/src/messaging/presets/vite/server.ts"]
+    },
+    {
+      "name": "Vite 宿主注入",
+      "summary": "vite-plugin-vue-devtools 在 dev server 上挂 /__devtools__/ 中间件 serve 客户端、向入口注入 script 标签、virtual module 传配置，ws 双向通到页面",
+      "evidence": ["packages/vite/src/vite.ts"]
+    },
+    {
+      "name": "浏览器扩展宿主中继",
+      "summary": "devtools panel 与页面不同上下文：panel → background port → content script → window.postMessage 三跳中继，隔离的扩展世界与页面世界由此连通",
+      "evidence": ["packages/devtools-kit/src/messaging/presets/extension/proxy.ts"]
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "语义事件系统", "to": "全局钩子" },
+      { "from": "应用记录", "to": "语义事件系统" },
+      { "from": "组件树遍历", "to": "应用记录" },
+      { "from": "状态快照", "to": "组件树遍历" },
+      { "from": "状态编辑回写", "to": "状态快照" },
+      { "from": "插件 API", "to": "语义事件系统" },
+      { "from": "自定义检查器", "to": "插件 API" },
+      { "from": "通道预设", "to": "双向 RPC" },
+      { "from": "Vite 宿主注入", "to": "通道预设" },
+      { "from": "扩展宿主中继", "to": "通道预设" }
+    ]
+  }
+}

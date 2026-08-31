@@ -1,0 +1,45 @@
+{
+  "kind": "repo",
+  "ref": "antfu/vscode-iconify@main",
+  "label": "Iconify IntelliSense",
+  "description": "VSCode 扩展:在代码中识别 Iconify 图标名(mdi:home / i-carbon-home 等形态),内联预览图标、提供补全与悬停文档;图标数据按需从 CDN 加载并多级缓存。",
+  "features": [
+    { "name": "可配置正则组装", "summary": "prefixes/delimiters/suffixes 三组配置拼装出识别图标名的正则(集合前缀段、分隔符段、后缀段),配置即识别规则", "evidence": ["src/config.ts"] },
+    { "name": "文本扫描与行列换算", "summary": "用全局正则扫全文,把匹配 offset 换算成 (行, 列) Range,供装饰定位", "evidence": ["src/annotation.ts"] },
+    { "name": "图标名解析与别名", "summary": "parseIcon 把字符串拆成 {collection, icon};集合 id 按长度降序消歧(mdi-light 优先于 mdi);别名表把短名映射到真实键", "evidence": ["src/config.ts", "src/loader.ts"] },
+    { "name": "三级缓存与在途去重", "summary": "LoadIconSet 依次回源:内存 map → 磁盘缓存(globalStorage 下 JSON 文件)→ CDN 下载;UniqPromise 保证同一集合的并发请求只发一次", "evidence": ["src/loader.ts"] },
+    { "name": "SVG 渲染管线", "summary": "图标 body 包进 <svg> 壳(viewBox 按图标宽高、宽度按 ratio 撑开),currentColor 替换为主题感知色,base64 编码成 data URL", "evidence": ["src/utils/svgs.ts", "src/utils/base64.ts", "src/loader.ts"] },
+    { "name": "装饰与 in-place 模式", "summary": "收集全文匹配生成装饰(图标画在名字旁,in-place 用 CSS display:none 藏文字只留图标);光标所在行豁免隐藏,保证可编辑", "evidence": ["src/annotation.ts"] },
+    { "name": "补全与悬停提供方", "summary": "行前缀两段式补全:光标前是「集合+分隔符」时补图标名,否则补集合 id;resolveCompletionItem 延迟取 markdown 文档;悬停用 markdown 表格内嵌 data URL 图", "evidence": ["src/completions.ts", "src/markdown.ts"] },
+    { "name": "构建期与运行期数据分界", "summary": "构建脚本从 @iconify/json 抽元数据(仅 id+图标名清单)打进包,完整图标数据运行时按需下载——200+ 集合零启动负担", "evidence": ["scripts/prepare.ts", "src/collections.ts"] },
+    { "name": "响应式配置", "summary": "reactive-vscode 的 computed/watchEffect:正则、启用集合、装饰全部由配置派生,改配置即重算,无需重启", "evidence": ["src/config.ts", "src/index.ts"] },
+    { "name": "自定义集合与热重载", "summary": "本地 file:// 集合用 fs watcher 热重载,远程 URL 集合增删自动加载/卸载;本地与远程统一进一个以 URL href 为键的 Map", "evidence": ["src/config.ts"] },
+    { "name": "自定义别名", "summary": "别名 JSON 文件把自定义短名映射到真实图标键,支持 customAliasesOnly 纯别名模式", "evidence": ["src/config.ts"] },
+    { "name": "扩展生命周期与命令", "summary": "activationEvents 按语言/工作区内容惰性激活;toggle/clearCache 三命令;package.json contributes 声明配置、命令、片段", "evidence": ["src/index.ts", "src/commands.ts", "package.json"] }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "文本扫描与行列换算", "to": "可配置正则组装" },
+      { "from": "图标名解析与别名", "to": "可配置正则组装" },
+      { "from": "三级缓存与在途去重", "to": "图标名解析与别名" },
+      { "from": "SVG 渲染管线", "to": "三级缓存与在途去重" },
+      { "from": "装饰与 in-place 模式", "to": "文本扫描与行列换算" },
+      { "from": "装饰与 in-place 模式", "to": "SVG 渲染管线" },
+      { "from": "补全与悬停提供方", "to": "图标名解析与别名" },
+      { "from": "补全与悬停提供方", "to": "SVG 渲染管线" },
+      { "from": "构建期与运行期数据分界", "to": "三级缓存与在途去重" },
+      { "from": "响应式配置", "to": "可配置正则组装" },
+      { "from": "自定义集合与热重载", "to": "三级缓存与在途去重" },
+      { "from": "自定义集合与热重载", "to": "响应式配置" },
+      { "from": "自定义别名", "to": "图标名解析与别名" },
+      { "from": "扩展生命周期与命令", "to": "装饰与 in-place 模式" },
+      { "from": "扩展生命周期与命令", "to": "补全与悬停提供方" }
+    ]
+  },
+  "l1_files": [
+    "src/index.ts", "src/config.ts", "src/annotation.ts", "src/completions.ts",
+    "src/loader.ts", "src/markdown.ts", "src/collections.ts", "src/commands.ts",
+    "src/utils/svgs.ts", "src/utils/base64.ts", "src/utils/network.ts",
+    "src/utils/read-file.ts", "scripts/prepare.ts", "package.json"
+  ]
+}

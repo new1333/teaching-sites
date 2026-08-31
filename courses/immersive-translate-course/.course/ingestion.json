@@ -1,0 +1,57 @@
+{
+  "kind": "topic",
+  "label": "沉浸式翻译原理复刻",
+  "description": "把「沉浸式翻译」类双语对照翻译工具的核心原理拆开教：DOM 感知的段落抽取、双语渲染、内联格式保留、主内容识别、批量与缓存、动态内容适配、装进浏览器。产物是一个可跑在 jsdom 与真实浏览器里的最小双语引擎。",
+  "features": [
+    {
+      "name": "段落级双语对照范式",
+      "summary": "为什么不是「整页替换」而是「原文纹丝不动、译文逐段插入」：对齐可核对、代码块不毁、上下文不丢。全书的世界观章。"
+    },
+    {
+      "name": "可译块抽取",
+      "summary": "DOM 树遍历、块级/内联元素之分、「直接持有文本的块」判定、跳过规则（code/pre/script/纯符号/太短文本）。"
+    },
+    {
+      "name": "双语渲染",
+      "summary": "在原文段落后插入对照节点而非改写原文 innerText：为什么（事件、选区、重排）、怎么做（兄弟节点 + 标记类名）。"
+    },
+    {
+      "name": "翻译服务抽象与最小管线",
+      "summary": "Translator 接口 + 确定性 FakeTranslator + 管线组装（抽取→翻译→渲染）。依赖注入让全链路离线可测，也为接真实 API 留缝。"
+    },
+    {
+      "name": "内联格式保留",
+      "summary": "译文里的 <strong>/<a>/<code> 怎么活下来：按内联边界切分翻译再拼回 vs 占位标记替换，两方案的取舍与实现。"
+    },
+    {
+      "name": "主内容区识别",
+      "summary": "文字密度/链接密度启发式：从全文块里筛出正文，跳过导航、页脚、侧栏——「智能识别主内容区」的最小原理。"
+    },
+    {
+      "name": "批量、去重与缓存",
+      "summary": "按字符预算分块打包、并发上限队列、内容寻址缓存（同段落不重复翻译、不重复请求）。"
+    },
+    {
+      "name": "动态内容适配",
+      "summary": "MutationObserver 监听懒加载内容增量翻译；经典陷阱：自己插入的译文节点再触发 observer 的无限循环与防制（标记 + 忽略）。"
+    },
+    {
+      "name": "装进浏览器",
+      "summary": "content script + manifest 最小壳，引擎在真实页面跑起来；离线 FakeTranslator 演示零密钥双语效果。终章。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "paradigm", "to": "extract" },
+      { "from": "extract", "to": "render" },
+      { "from": "extract", "to": "service" },
+      { "from": "render", "to": "inline" },
+      { "from": "extract", "to": "content" },
+      { "from": "service", "to": "batch" },
+      { "from": "render", "to": "observe" },
+      { "from": "service", "to": "observe" },
+      { "from": "observe", "to": "shell" }
+    ]
+  },
+  "profile_hint": "principle-reimpl / code-lab:dom-test（TypeScript + vitest + jsdom）/ zero-trace（沉浸式翻译为闭源产品，只复刻公开可见的行为与概念，无源码可引）/ code_density: full / 无领域义务（教学用假翻译器离线运行，不涉真实 API 密钥与费用）/ standard（约 9-10 章）"
+}
