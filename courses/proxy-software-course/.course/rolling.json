@@ -1,0 +1,240 @@
+{
+  "schema_version": 2,
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "proxy-mental-model",
+      "file": "docs/01-proxy-mental-model.md",
+      "status": "complete",
+      "summary": "建立入口、路由、出站三段数据面模型，区分系统代理、TUN、反向代理与 VPN；读者能判断不同应用流量是否进入代理。",
+      "artifacts": [
+        "docs/01-proxy-mental-model.md"
+      ],
+      "gates": [
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/01-proxy-mental-model.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "http-forward-proxy",
+      "file": "docs/02-http-forward-proxy.md",
+      "status": "complete",
+      "summary": "实现 HTTP absolute-form 改写、Host 同步与 CONNECT 隧道，明确普通隧道只搬运 TLS 密文，并登记消息体边界简化。",
+      "artifacts": [
+        "companion/src/authority.ts",
+        "companion/src/http-server.ts",
+        "companion/tests/02-http-forward-proxy.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/02-http-forward-proxy.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/02-http-forward-proxy.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "socks5-protocol",
+      "file": "docs/03-socks5-protocol.md",
+      "status": "complete",
+      "summary": "实现 SOCKS5 NO AUTH、CONNECT 与 IPv4/域名/IPv6 地址帧；逐字节分片仍可解析，不支持命令返回明确响应码。",
+      "artifacts": [
+        "companion/src/socket-reader.ts",
+        "companion/src/socks5-wire.ts",
+        "companion/src/socks5-server.ts",
+        "companion/tests/03-socks5-server.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/03-socks5-server.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/03-socks5-protocol.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "relay-lifecycle",
+      "file": "docs/04-relay-lifecycle.md",
+      "status": "complete",
+      "summary": "用双向 pipe 建立背压感知 relay，传播半关闭并统一清理；区分 end、finish、close 与 destroy 的生命周期语义。",
+      "artifacts": [
+        "companion/src/relay.ts",
+        "companion/tests/04-bidirectional-relay.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/04-bidirectional-relay.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/04-relay-lifecycle.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 5,
+      "slug": "rule-engine",
+      "file": "docs/05-rule-engine.md",
+      "status": "complete",
+      "summary": "实现按首条命中的 DOMAIN、DOMAIN-SUFFIX、IPv4 CIDR、PORT、MATCH 规则，使用标签边界反例避免相似域名误匹配。",
+      "artifacts": [
+        "companion/src/types.ts",
+        "companion/src/rules.ts",
+        "companion/tests/05-rule-engine.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/05-rule-engine.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/05-rule-engine.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 6,
+      "slug": "dns-strategy",
+      "file": "docs/06-dns-strategy.md",
+      "status": "complete",
+      "summary": "实现 preserve-domain 与 resolve-first，读者能预测解析器调用、规则可见元数据和最终 dialTarget，并区分标准 DNS 概念与课程策略命名。",
+      "artifacts": [
+        "companion/src/dns.ts",
+        "companion/tests/06-dns-strategy.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/06-dns-strategy.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/06-dns-strategy.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 7,
+      "slug": "outbound-adapters",
+      "file": "docs/07-outbound-adapters.md",
+      "status": "complete",
+      "summary": "以统一 Dialer 契约实现 DIRECT、REJECT 与 SOCKS5 上游，复用地址帧并让 preserve-domain 的域名原样进入代理链。",
+      "artifacts": [
+        "companion/src/dialers.ts",
+        "companion/src/socks5-wire.ts",
+        "companion/tests/07-outbound-adapters.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/07-outbound-adapters.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/07-outbound-adapters.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 8,
+      "slug": "runtime-config",
+      "file": "docs/08-runtime-config.md",
+      "status": "complete",
+      "summary": "从 unknown JSON 严格收窄 ProxyConfig，在监听前一次报告非法端口、未知动作、缺失 MATCH 与悬空出站引用。",
+      "artifacts": [
+        "companion/src/config.ts",
+        "companion/src/types.ts",
+        "companion/examples/mini-proxy.json",
+        "companion/tests/08-runtime-config.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/08-runtime-config.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/08-runtime-config.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 9,
+      "slug": "runtime-assembly",
+      "file": "docs/09-runtime-assembly.md",
+      "status": "complete",
+      "summary": "HTTP 与 SOCKS5 入口共享 route-DNS-dial-relay 管线；运行时支持注入 resolver/sink、结构化事件、连接追踪和可等待的优雅关闭。",
+      "artifacts": [
+        "companion/src/runtime.ts",
+        "companion/src/cli.ts",
+        "companion/tests/09-assembly.test.ts"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/09-assembly.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/09-runtime-assembly.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 10,
+      "slug": "end-to-end-boundary",
+      "file": "docs/10-end-to-end-boundary.md",
+      "status": "complete",
+      "summary": "以纯本机拓扑核销 HTTP、CONNECT、SOCKS5、拒绝与上游链；建立开放代理威胁模型，并列清认证、UDP、TUN、加密和资源治理差异。",
+      "artifacts": [
+        "companion/tests/10-end-to-end.test.ts",
+        "docs/divergence.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm vitest run tests/10-end-to-end.test.ts",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm build",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/proxy-software-course docs/10-end-to-end-boundary.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    }
+  ]
+}

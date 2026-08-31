@@ -1,0 +1,86 @@
+{
+  "schema_version": 2,
+  "promises": [
+    {
+      "id": "p01-route-stage",
+      "from": "proxy-mental-model",
+      "from_n": 1,
+      "target": "rule-engine",
+      "what": "把三段模型中的路由阶段落实为首条命中的规则函数",
+      "status": "fulfilled",
+      "resolution": "第 5 章交付纯函数 route，并用规则顺序与域名标签边界反例兑现。"
+    },
+    {
+      "id": "p02-http-pipeline",
+      "from": "http-forward-proxy",
+      "from_n": 2,
+      "target": "runtime-assembly",
+      "what": "把 HTTP 入口接入共享 route-DNS-dial 管线",
+      "status": "fulfilled",
+      "resolution": "第 9 章把 createHttpForwardServer 与 createSocks5Server 接到同一个 connect 闭包。"
+    },
+    {
+      "id": "p03-socks-client",
+      "from": "socks5-protocol",
+      "from_n": 3,
+      "target": "outbound-adapters",
+      "what": "复用同一套 SOCKS5 地址帧，反向实现上游代理客户端",
+      "status": "fulfilled",
+      "resolution": "第 7 章的 SOCKS5 Dialer 复用 encodeAddress 与 readAddressFrame 完成上游握手。"
+    },
+    {
+      "id": "p04-shared-relay",
+      "from": "relay-lifecycle",
+      "from_n": 4,
+      "target": "runtime-assembly",
+      "what": "让两个入口都复用同一个 relay 生命周期实现",
+      "status": "fulfilled",
+      "resolution": "第 9 章组装 HTTP 与 SOCKS5 入口，两者最终都调用 companion/src/relay.ts。"
+    },
+    {
+      "id": "p05-ip-visibility",
+      "from": "rule-engine",
+      "from_n": 5,
+      "target": "dns-strategy",
+      "what": "解释为什么同一条 IP-CIDR 在不同 DNS 时机下可能有或没有可匹配的 IP",
+      "status": "fulfilled",
+      "resolution": "第 6 章对照 preserve-domain 与 resolve-first 的 RouteContext，说明 IP 字段何时存在。"
+    },
+    {
+      "id": "p06-domain-upstream",
+      "from": "dns-strategy",
+      "from_n": 6,
+      "target": "outbound-adapters",
+      "what": "把 preserve-domain 产生的域名目标原样交给 SOCKS5 上游",
+      "status": "fulfilled",
+      "resolution": "第 7 章以 ATYP 0x03 编码域名，并由本地假上游记录原始目标验证。"
+    },
+    {
+      "id": "p07-runtime-dialer",
+      "from": "outbound-adapters",
+      "from_n": 7,
+      "target": "runtime-assembly",
+      "what": "运行时按 RouteDecision 选择适配器，入口无需知道出站细节",
+      "status": "fulfilled",
+      "resolution": "第 9 章的 pickDialer 按 RouteDecision 选择 DIRECT、REJECT 或命名 SOCKS5 出站。"
+    },
+    {
+      "id": "p08-validated-config",
+      "from": "runtime-config",
+      "from_n": 8,
+      "target": "runtime-assembly",
+      "what": "把已验证配置交给双入口运行时，而不是在各模块重复做默认值猜测",
+      "status": "fulfilled",
+      "resolution": "第 9 章明确 createProxyRuntime 只接收已通过 parseProxyConfig 的 ProxyConfig。"
+    },
+    {
+      "id": "p09-full-topology",
+      "from": "runtime-assembly",
+      "from_n": 9,
+      "target": "end-to-end-boundary",
+      "what": "用完整本地拓扑核销入口、路由、出站与关闭的全链路能力",
+      "status": "fulfilled",
+      "resolution": "第 10 章以五条 127.0.0.1 场景核销 HTTP、CONNECT、SOCKS5、REJECT 与上游链。"
+    }
+  ]
+}

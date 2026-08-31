@@ -1,0 +1,184 @@
+{
+  "schema_version": 2,
+  "reader_model": {
+    "known": [
+      "TypeScript 基础、Promise 和判别联合",
+      "URL、HTTP 请求头、状态码",
+      "使用过系统代理或规则型代理工具"
+    ],
+    "unfamiliar": [
+      {
+        "concept": "裸 TCP socket",
+        "why": "业务层通常只接触 fetch 或框架封装",
+        "anchor": "socket 是程序握住的一端电话线，TCP 只保证有序字节，不替应用切消息"
+      },
+      {
+        "concept": "HTTP 正向代理协议",
+        "why": "浏览器和代理客户端自动生成代理专用请求形态",
+        "anchor": "普通 HTTP 把完整收件地址交给中转站，HTTPS 则先申请一条隧道"
+      },
+      {
+        "concept": "SOCKS5",
+        "why": "配置里常见 socks-port，但二进制握手不可见",
+        "anchor": "先谈认证方式，再交目标地址，成功后才进入透明搬运"
+      },
+      {
+        "concept": "背压与半关闭",
+        "why": "短请求代码隐藏了长连接两端速度不一致和单向结束",
+        "anchor": "下游货架满了就暂停上游进货；一方说完不等于另一方也说完"
+      },
+      {
+        "concept": "DNS 与路由顺序",
+        "why": "规则配置把域名与 IP 混在一起，却很少展示解析发生在哪",
+        "anchor": "先按名字分拣还是先查成门牌号，会让不同规则获得不同证据"
+      }
+    ]
+  },
+  "glossary": [
+    { "term": "正向代理", "en": "forward proxy", "definition": "代表客户端连接目标服务器的中间程序，目标服务器直接看到的是代理的连接。" },
+    { "term": "反向代理", "en": "reverse proxy", "definition": "代表服务端接收客户端连接的中间程序，客户端通常把它当成目标站点。" },
+    { "term": "系统代理", "en": "system proxy", "definition": "操作系统提供给愿意遵守该设置的应用的代理地址，不会自动截获所有流量。" },
+    { "term": "TUN", "definition": "向用户态程序交付 IP 包的虚拟网络接口，可承接不懂 HTTP 或 SOCKS 的应用流量。" },
+    { "term": "数据面", "en": "data plane", "definition": "逐条处理连接和字节的路径：接入、判断、拨号、转发。" },
+    { "term": "控制面", "en": "control plane", "definition": "管理配置、规则、节点、健康状态和界面的路径。" },
+    { "term": "absolute-form", "definition": "HTTP 代理请求行携带完整 URL 的目标形式，例如 GET http://host/path HTTP/1.1。" },
+    { "term": "origin-form", "definition": "发给源站的 HTTP 请求目标形式，只携带路径与查询字符串。" },
+    { "term": "CONNECT 隧道", "definition": "HTTP 客户端请求代理连接指定 host:port，成功后双方把该 TCP 连接当成不解释内容的字节隧道。" },
+    { "term": "TLS 端到端", "definition": "TLS 会话建立在客户端与目标服务之间，普通隧道代理只搬运密文，不持有解密密钥。" },
+    { "term": "SOCKS5", "definition": "RFC 1928 定义的通用代理协议，在 TCP 连接上协商方法并提交目标地址与命令。" },
+    { "term": "方法协商", "en": "method negotiation", "definition": "SOCKS5 客户端先列出认证方法，服务端选择一种双方都支持的方法。" },
+    { "term": "地址类型", "en": "ATYP", "definition": "SOCKS5 地址帧用来区分 IPv4、域名和 IPv6 的一个字节。" },
+    { "term": "字节流", "en": "byte stream", "definition": "TCP 交付有序字节，但不保留发送端每次 write 的消息边界。" },
+    { "term": "TCP 分片", "definition": "一段应用协议数据可能分多次到达；接收端必须按长度或分隔符累计到完整字段。" },
+    { "term": "背压", "en": "backpressure", "definition": "写入方跟不上时暂停读取，避免待发送数据在内存里无界增长。" },
+    { "term": "半关闭", "en": "half-close", "definition": "TCP 的一个方向已经发送 FIN，另一个方向仍可继续传输。" },
+    { "term": "连接元数据", "en": "connection metadata", "definition": "路由决策可使用的目标域名、解析后 IP、端口和入口等信息。" },
+    { "term": "首条命中", "en": "first match", "definition": "规则从上到下判断，第一条满足条件的规则立即成为最终决策。" },
+    { "term": "域名标签边界", "definition": "域名中点号分隔的层级边界；example.com 可匹配 a.example.com，但不应匹配 evil-example.com。" },
+    { "term": "CIDR", "definition": "用网络地址和前缀长度表示一段连续 IP 空间的记法，例如 10.0.0.0/8。" },
+    { "term": "DNS 解析位置", "definition": "域名究竟在本地代理、上游代理还是目标侧被换成 IP；它决定谁能看到查询以及哪些 IP 规则可用。" },
+    { "term": "preserve-domain", "definition": "先保留域名做规则判断；直连时本地解析，经上游代理时把域名交给上游。" },
+    { "term": "resolve-first", "definition": "先把域名解析成 IP，再让域名和 IP 规则共同参与判断。" },
+    { "term": "出站适配器", "en": "outbound adapter", "definition": "把统一的目标地址转换为某种拨号行为，例如直连、拒绝或连接 SOCKS5 上游。" },
+    { "term": "代理链", "en": "proxy chain", "definition": "本地代理不直接连接目标，而是把连接请求交给另一台上游代理。" },
+    { "term": "严格配置校验", "definition": "监听前验证配置的形状、取值和交叉引用，错误时明确失败而不静默猜测。" },
+    { "term": "MATCH 兜底", "definition": "规则列表末尾无条件命中的最后一条，保证每个连接都有明确决策。" },
+    { "term": "依赖注入", "en": "dependency injection", "definition": "把 DNS 解析器、拨号器和事件接收器作为参数传入，使网络副作用可替换、可测试。" },
+    { "term": "结构化事件", "en": "structured event", "definition": "带类型、消息和字段的运行记录，便于测试与排障，而不是拼接无法查询的日志句子。" },
+    { "term": "优雅关闭", "en": "graceful shutdown", "definition": "停止接受新连接、清理现有资源，再退出进程。" },
+    { "term": "威胁模型", "en": "threat model", "definition": "明确要保护的资产、可能的攻击者、入口和可接受风险。" },
+    { "term": "开放代理", "en": "open proxy", "definition": "没有可信访问边界、任何人都能借其连接任意目标的代理服务。" },
+    { "term": "最小权限", "en": "least privilege", "definition": "只开放完成任务所需的监听范围、目标范围、命令和权限。" }
+  ],
+  "verification_conventions": {
+    "package_manager": "pnpm",
+    "network": "所有自动测试只监听和连接 127.0.0.1，不访问公网",
+    "chapter_gate": "pnpm vitest run tests/{NN}-{slug}.test.ts",
+    "full_gate": [
+      "pnpm test",
+      "pnpm typecheck",
+      "pnpm build"
+    ],
+    "reader_loop": "先写下预期的请求字节、规则决策或关闭事件，再运行对应测试并解释差异",
+    "source_policy": "课程是 topic 输入；不引用任何代理项目源码，协议行为以标准文档和 companion 实测共同核对"
+  },
+  "api_contract": [
+    {
+      "name": "rewriteAbsoluteForm / createHttpForwardServer",
+      "introduced_in": "http-forward-proxy",
+      "contract": "把 http absolute-form 改写为 origin-form；CONNECT 成功后返回 200 并把 socket 交给 relay。"
+    },
+    {
+      "name": "createSocks5Server / encodeAddress / readAddressFrame",
+      "introduced_in": "socks5-protocol",
+      "contract": "实现 NO AUTH + CONNECT，支持 IPv4、域名与 IPv6，并对不支持命令返回规范响应码。"
+    },
+    {
+      "name": "relay",
+      "introduced_in": "relay-lifecycle",
+      "contract": "建立两个 socket 的双向 pipe，传播半关闭，任一错误时销毁双方并发出 relay-close 事件。"
+    },
+    {
+      "name": "route",
+      "introduced_in": "rule-engine",
+      "contract": "按数组顺序返回第一条命中的 DOMAIN、DOMAIN-SUFFIX、IP-CIDR、PORT 或 MATCH 决策。"
+    },
+    {
+      "name": "planRoute",
+      "introduced_in": "dns-strategy",
+      "contract": "根据 DNS 策略产出 RouteDecision 与最终 dialTarget；解析器由调用方注入。"
+    },
+    {
+      "name": "createDirectDialer / createRejectDialer / createSocks5Dialer",
+      "introduced_in": "outbound-adapters",
+      "contract": "共享 Dialer 签名并返回显式 DialOutcome；SOCKS5 出站必须读完并校验上游响应。"
+    },
+    {
+      "name": "parseProxyConfig",
+      "introduced_in": "runtime-config",
+      "contract": "从 unknown 返回有效 ProxyConfig 或完整错误数组，监听前校验末尾 MATCH 与出站交叉引用。"
+    },
+    {
+      "name": "createProxyRuntime",
+      "introduced_in": "runtime-assembly",
+      "contract": "同时启动 HTTP/SOCKS5 监听，共享 route-DNS-dial 管线，返回实际端口和异步 close。"
+    }
+  ],
+  "factual_claims": true,
+  "authority_docs": [
+    {
+      "title": "RFC 1928: SOCKS Protocol Version 5",
+      "url": "https://www.rfc-editor.org/rfc/rfc1928.html",
+      "why": "SOCKS5 方法协商、命令、地址类型与响应码的协议事实源。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "RFC 9110: HTTP Semantics, CONNECT",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110.html#section-9.3.6",
+      "why": "CONNECT 的隧道语义与安全限制。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "RFC 9112: HTTP/1.1",
+      "url": "https://www.rfc-editor.org/rfc/rfc9112.html",
+      "why": "HTTP/1.1 请求目标、消息边界与转发约束。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "RFC 9293: Transmission Control Protocol",
+      "url": "https://www.rfc-editor.org/rfc/rfc9293.html",
+      "why": "TCP 连接、字节流与关闭语义的标准依据。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "RFC 1034: Domain Names - Concepts and Facilities",
+      "url": "https://www.rfc-editor.org/rfc/rfc1034.html",
+      "why": "DNS 分层名字与解析概念的事实源。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "RFC 4632: Classless Inter-domain Routing",
+      "url": "https://www.rfc-editor.org/rfc/rfc4632.html",
+      "why": "IPv4 CIDR 前缀表示与匹配依据。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "RFC 8446: The Transport Layer Security (TLS) Protocol Version 1.3",
+      "url": "https://www.rfc-editor.org/rfc/rfc8446.html",
+      "why": "解释 CONNECT 隧道内 TLS 仍由客户端与目标端点建立。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "Node.js net and stream documentation",
+      "url": "https://nodejs.org/api/net.html",
+      "why": "companion 使用的异步 TCP、allowHalfOpen 与 stream 行为依据。",
+      "as_of": "2026-08-28"
+    },
+    {
+      "title": "Linux kernel TUN/TAP documentation",
+      "url": "https://docs.kernel.org/networking/tuntap.html",
+      "why": "TUN 交付 IP 包、TAP 交付以太网帧的边界说明。",
+      "as_of": "2026-08-28"
+    }
+  ]
+}

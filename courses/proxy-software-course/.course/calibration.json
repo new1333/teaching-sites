@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "status": "defaulted",
+  "audience": "会 TypeScript、用过代理工具，但没有写过裸 TCP 协议的开发者",
+  "known": [
+    "能阅读 TypeScript 函数、联合类型与 Promise",
+    "知道 URL、HTTP 请求头和常见状态码",
+    "使用过 Clash 类工具的系统代理或规则配置"
+  ],
+  "unfamiliar": [
+    "TCP 是无消息边界的字节流",
+    "HTTP 代理的 absolute-form 与 CONNECT",
+    "SOCKS5 二进制握手和地址帧",
+    "背压、半关闭与连接清理",
+    "DNS 解析时机如何影响路由规则",
+    "入口协议、规则引擎与出站适配器如何组装"
+  ],
+  "anchors": [
+    {
+      "concept": "代理数据路径",
+      "known_anchor": "把 Clash 配置中的入站、规则和节点还原成三段可运行函数"
+    },
+    {
+      "concept": "TCP 字节流",
+      "known_anchor": "像没有信封边界的水管，接收端必须按协议字段自己切帧"
+    },
+    {
+      "concept": "规则路由",
+      "known_anchor": "像从上到下执行的 if/else if，第一条命中就停止"
+    }
+  ],
+  "decisions": [
+    "正文从应用层开发者视角起步，不假设系统编程经验",
+    "使用 TypeScript 与 node:net，避免把课程变成 C 语言和内核 API 课",
+    "代码密度采用 collapsed，承重切片展开，完整实现留在 companion",
+    "明确双用途边界，不教授流量伪装、证书劫持或绕过访问控制"
+  ],
+  "default_reason": "用户要求直接创建课程；为避免打断生成流程，采用与主题匹配的保守读者画像，并在课程介绍中公开这些前置假设。"
+}

@@ -1,0 +1,98 @@
+{
+  "schema_version": 2,
+  "kind": "topic",
+  "label": "Clash 等代理软件的原理，以及如何自己写一个代理软件",
+  "description": "从应用如何把目标地址交给代理开始，拆解入口协议、双向转发、规则匹配、DNS 时机、出站拨号、配置与运行时组装，最终实现一个仅供授权环境学习的本地 mini-proxy。",
+  "features": [
+    {
+      "id": "architecture-boundary",
+      "name": "代理的数据路径与边界",
+      "summary": "区分正向代理、反向代理、系统代理、TUN 与 VPN，建立入口、路由、出站三段模型。",
+      "reader_can": "面对一个连接画出从应用到目标服务器的完整路径，并判断代理能看见什么、不能看见什么。"
+    },
+    {
+      "id": "http-forward",
+      "name": "HTTP 正向代理与 CONNECT",
+      "summary": "解析 absolute-form 请求，改写为 origin-form；用 CONNECT 建立不解密内容的 TCP 隧道。",
+      "reader_can": "实现一个能转发普通 HTTP 并为 HTTPS 建隧道的 HTTP 代理入口。"
+    },
+    {
+      "id": "socks5-entry",
+      "name": "SOCKS5 入口协议",
+      "summary": "实现方法协商、CONNECT 请求和三种地址帧，并正确处理 TCP 分片与不支持命令。",
+      "reader_can": "按 RFC 1928 编解码并实现最小 SOCKS5 服务端。"
+    },
+    {
+      "id": "relay-lifecycle",
+      "name": "双向 relay 生命周期",
+      "summary": "让两个 socket 双向转发，同时处理背压、半关闭、错误与清理。",
+      "reader_can": "解释并验证慢接收方不会导致无界缓存，单向 FIN 不会误杀反向剩余数据。"
+    },
+    {
+      "id": "rule-engine",
+      "name": "首条命中的规则引擎",
+      "summary": "从连接元数据匹配域名、域名后缀、IPv4 CIDR、端口和兜底规则。",
+      "reader_can": "实现可预测的 DIRECT、REJECT、PROXY 决策，并避开域名后缀边界错误。"
+    },
+    {
+      "id": "dns-strategy",
+      "name": "DNS 解析时机",
+      "summary": "比较 preserve-domain 与 resolve-first，说明解析位置如何改变可匹配元数据和拨号目标。",
+      "reader_can": "根据规则需求选择解析时机，并用注入解析器验证没有隐式外网依赖。"
+    },
+    {
+      "id": "outbound-chain",
+      "name": "出站适配器与代理链",
+      "summary": "统一 DIRECT、REJECT 与 SOCKS5 上游的拨号接口，把域名按策略交给本地或上游解析。",
+      "reader_can": "实现可替换出站，并让一次连接经由另一台 SOCKS5 代理到达目标。"
+    },
+    {
+      "id": "runtime-config",
+      "name": "严格配置契约",
+      "summary": "从 unknown JSON 收窄出配置，拒绝无兜底、非法端口和悬空出站引用。",
+      "reader_can": "让错误配置在监听端口之前失败，而不是运行中静默走错线路。"
+    },
+    {
+      "id": "runtime-assembly",
+      "name": "双入口运行时",
+      "summary": "让 HTTP 与 SOCKS5 监听共享 route、DNS 和 dial 管线，并提供结构化事件与优雅关闭。",
+      "reader_can": "启动、观察和关闭一个完整的本地代理进程。"
+    },
+    {
+      "id": "end-to-end-boundary",
+      "name": "端到端验证与生产边界",
+      "summary": "用本地 origin、echo 与上游 SOCKS5 构成闭环矩阵，同时识别开放代理、SSRF、认证、UDP、TUN 和加密协议等缺口。",
+      "reader_can": "证明 mini-proxy 的已实现能力，并列出走向生产前必须补齐的安全与可靠性工作。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "architecture-boundary", "to": "http-forward" },
+      { "from": "architecture-boundary", "to": "socks5-entry" },
+      { "from": "architecture-boundary", "to": "rule-engine" },
+      { "from": "http-forward", "to": "relay-lifecycle" },
+      { "from": "socks5-entry", "to": "relay-lifecycle" },
+      { "from": "rule-engine", "to": "dns-strategy" },
+      { "from": "socks5-entry", "to": "outbound-chain" },
+      { "from": "dns-strategy", "to": "outbound-chain" },
+      { "from": "rule-engine", "to": "runtime-config" },
+      { "from": "dns-strategy", "to": "runtime-config" },
+      { "from": "outbound-chain", "to": "runtime-config" },
+      { "from": "http-forward", "to": "runtime-assembly" },
+      { "from": "socks5-entry", "to": "runtime-assembly" },
+      { "from": "relay-lifecycle", "to": "runtime-assembly" },
+      { "from": "runtime-config", "to": "runtime-assembly" },
+      { "from": "runtime-assembly", "to": "end-to-end-boundary" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "reason": "用户要求既理解原理又自己实现；本地 socket 集成测试能为协议和数据路径提供可判定证据。"
+  },
+  "issues": [
+    "课程只实现教学用 TCP 子集，不把 mini-proxy 描述成 Clash、Mihomo、sing-box 或 VPN 的替代品。",
+    "所有验证仅连接 127.0.0.1；公开网络、未授权网络和规避访问控制不属于课程目标。"
+  ]
+}

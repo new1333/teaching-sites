@@ -1,0 +1,13 @@
+// src/index.ts —— 对外统一导出：类型 + 各模块的公开 API
+export * from './types.js'
+export * from './authority.js'
+export * from './socket-reader.js'
+export * from './relay.js'
+export * from './rules.js'
+export * from './dns.js'
+export * from './socks5-wire.js'
+export * from './dialers.js'
+export * from './http-server.js'
+export * from './socks5-server.js'
+export * from './config.js'
+export * from './runtime.js'

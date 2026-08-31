@@ -1,0 +1,614 @@
+{
+  "schema_version": 2,
+  "title": "代理软件实现原理：从一条 TCP 隧道到 mini-proxy",
+  "audience": "会 TypeScript、用过代理工具的开发者",
+  "driving_question": "当应用把一个目标地址交给 Clash 类软件后，连接究竟经过哪些判断与搬运？",
+  "input": {
+    "kind": "topic",
+    "ref": "clash等代理软件的原理是什么，怎么自己写一个代理软件"
+  },
+  "profile": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "collapsed",
+    "obligations": [
+      {
+        "kind": "ethics",
+        "note": "代理技术具有双用途；课程仅面向自有或明确授权环境，不教授流量伪装、证书劫持或绕过访问控制。",
+        "surfaces": [
+          "docs/index.md",
+          "docs/about.md",
+          "docs/01-proxy-mental-model.md",
+          "docs/10-end-to-end-boundary.md"
+        ]
+      }
+    ],
+    "presentation": {
+      "visual": "none"
+    },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "library + CLI",
+    "language": "TypeScript + Node.js node:net + Vitest",
+    "scope": "教学用 mini-proxy：HTTP/CONNECT 与 SOCKS5 双入口、背压感知 relay、域名/IP/端口规则、两种 DNS 策略、DIRECT/REJECT/SOCKS5 出站、严格 JSON 配置和优雅关闭；自动测试只使用 127.0.0.1",
+    "commands": {
+      "install": "pnpm install",
+      "test": "pnpm test",
+      "typecheck": "pnpm typecheck",
+      "build": "pnpm build"
+    }
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 流量如何进入代理",
+      "chapters": [
+        {
+          "slug": "proxy-mental-model",
+          "title": "代理不是魔法：先画清一条连接",
+          "goal": "用入口、路由、出站三段模型解释正向代理，并区分系统代理、TUN、反向代理与 VPN",
+          "type": "principle",
+          "feature_id": "architecture-boundary",
+          "verification": "none",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "浏览器能打开网页，终端命令却超时；打开 TUN 后终端又突然能走同一套规则",
+            "phenomena": [
+              "浏览器能打开",
+              "终端命令却超时",
+              "TUN"
+            ]
+          },
+          "new_concepts": [
+            "正向代理",
+            "反向代理",
+            "系统代理",
+            "TUN",
+            "数据面",
+            "控制面"
+          ],
+          "misconceptions": [
+            "打开系统代理就会自动接管设备上的全部流量",
+            "代理与 VPN 只是不同名字",
+            "代理节点决定规则，规则引擎只是界面功能"
+          ],
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "rule-engine",
+              "what": "把三段模型中的路由阶段落实为首条命中的规则函数"
+            }
+          ],
+          "depends_on": [],
+          "acceptance": [
+            {
+              "kind": "experience",
+              "criterion": "给出浏览器、curl 和不支持代理设置的程序三个场景，读者能画出哪个入口接到流量"
+            },
+            {
+              "kind": "prose",
+              "criterion": "解释系统代理是应用选择遵守的设置，而 TUN 从虚拟接口接收 IP 包；不把二者等同"
+            },
+            {
+              "kind": "source",
+              "criterion": "TUN/TAP 边界核对 Linux kernel 文档；正文不引用任何代理项目源码"
+            }
+          ]
+        },
+        {
+          "slug": "http-forward-proxy",
+          "title": "HTTP 正向代理：改写请求与打通 CONNECT",
+          "goal": "实现普通 HTTP 的 absolute-form 改写，并用 CONNECT 为 HTTPS 建立不解密内容的 TCP 隧道",
+          "type": "build",
+          "feature_id": "http-forward",
+          "hook": {
+            "kind": "wire-diff",
+            "point": "同一个 GET，请求交给代理时首行带完整 URL，发给源站时却只剩路径；HTTPS 更只发一个 CONNECT",
+            "phenomena": [
+              "完整 URL",
+              "只剩路径",
+              "CONNECT"
+            ]
+          },
+          "new_concepts": [
+            "absolute-form",
+            "origin-form",
+            "CONNECT 隧道",
+            "TLS 端到端"
+          ],
+          "misconceptions": [
+            "HTTP 代理把所有请求原样复制给目标",
+            "CONNECT 的 200 表示目标网站返回了成功页面",
+            "普通 CONNECT 代理能看见隧道内的 HTTPS 明文"
+          ],
+          "milestone": "HTTP 入口能改写 absolute-form 并为 CONNECT 返回 200 后双向转发",
+          "milestone_verify": "运行 tests/02-http-forward-proxy.test.ts，先预测源站收到的请求行和 CONNECT 后的第一段字节",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "runtime-assembly",
+              "what": "把 HTTP 入口接入共享 route-DNS-dial 管线"
+            }
+          ],
+          "depends_on": [
+            "proxy-mental-model"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/02-http-forward-proxy.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能逐字段解释 absolute-form、Host 改写、CONNECT 200 与 TLS 明文边界"
+            },
+            {
+              "kind": "source",
+              "criterion": "HTTP 与 CONNECT 行为核对 RFC 9110/9112；代码切片来自 companion 终态"
+            }
+          ]
+        },
+        {
+          "slug": "socks5-protocol",
+          "title": "SOCKS5：把目标地址装进二进制握手",
+          "goal": "实现 NO AUTH 方法协商与 CONNECT 请求，正确编解码 IPv4、域名、IPv6 地址帧并处理分片",
+          "type": "build",
+          "feature_id": "socks5-entry",
+          "hook": {
+            "kind": "packet",
+            "point": "客户端只写了 10 个字节，服务端却要先回答认证方法，再等第二段目标地址；一次 data 事件常常拿不全",
+            "phenomena": [
+              "10 个字节",
+              "认证方法",
+              "拿不全"
+            ]
+          },
+          "new_concepts": [
+            "SOCKS5",
+            "方法协商",
+            "地址类型"
+          ],
+          "misconceptions": [
+            "SOCKS5 是加密协议",
+            "一次 socket data 事件恰好等于一条 SOCKS5 消息",
+            "服务端不支持 UDP ASSOCIATE 时直接断开就算正确"
+          ],
+          "milestone": "SOCKS5 入口支持 NO AUTH + CONNECT 和三种地址类型，并显式拒绝不支持的命令",
+          "milestone_verify": "运行 tests/03-socks5-server.test.ts，把握手逐字节发送仍得到相同目标地址与规范回复",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "outbound-adapters",
+              "what": "复用同一套 SOCKS5 地址帧，反向实现上游代理客户端"
+            }
+          ],
+          "depends_on": [
+            "proxy-mental-model"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/03-socks5-server.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "正文用字节表完整推导 greeting、method selection、CONNECT request 与 reply"
+            },
+            {
+              "kind": "source",
+              "criterion": "字段值与响应码逐项核对 RFC 1928；实现切片来自 companion 终态"
+            }
+          ]
+        },
+        {
+          "slug": "relay-lifecycle",
+          "title": "双向搬运：背压、半关闭与清理",
+          "goal": "实现不会无界缓存、不会把单向 FIN 当成整条连接结束的双向 relay",
+          "type": "build",
+          "feature_id": "relay-lifecycle",
+          "hook": {
+            "kind": "failure",
+            "point": "上传结束后客户端已经发送 FIN，服务器仍要回一段结果；代理若立即 destroy，最后的响应会被截断",
+            "phenomena": [
+              "发送 FIN",
+              "仍要回一段结果",
+              "响应会被截断"
+            ]
+          },
+          "new_concepts": [
+            "字节流",
+            "TCP 分片",
+            "背压",
+            "半关闭"
+          ],
+          "misconceptions": [
+            "TCP 保留每次 write 的边界",
+            "收到 end 就应 destroy 两端",
+            "手写 data 监听再 write 与 stream.pipe 完全等价"
+          ],
+          "milestone": "relay 用双向 pipe 传播背压，用 end 传播半关闭，并在错误或关闭时只清理一次",
+          "milestone_verify": "运行 tests/04-bidirectional-relay.test.ts，先预测 half-close 后反向数据和 relay-close 事件",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "runtime-assembly",
+              "what": "让两个入口都复用同一个 relay 生命周期实现"
+            }
+          ],
+          "depends_on": [
+            "http-forward-proxy",
+            "socks5-protocol"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/04-bidirectional-relay.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "能用两个独立方向解释 end、finish、close 与 destroy 的区别，并说明 pipe 如何传递背压"
+            },
+            {
+              "kind": "source",
+              "criterion": "TCP 关闭语义核对 RFC 9293，Node 行为核对 net/stream 文档"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 代理如何做决定",
+      "chapters": [
+        {
+          "slug": "rule-engine",
+          "title": "规则引擎：第一条命中为什么决定一切",
+          "goal": "从连接元数据实现 DOMAIN、DOMAIN-SUFFIX、IPv4 CIDR、PORT 与 MATCH 的确定性决策",
+          "type": "build",
+          "feature_id": "rule-engine",
+          "hook": {
+            "kind": "rule-bug",
+            "point": "把 example.com 设为直连后，evil-example.com 也意外直连；另一条更精确的拒绝规则放在后面却永远不生效",
+            "phenomena": [
+              "evil-example.com",
+              "意外直连",
+              "永远不生效"
+            ]
+          },
+          "new_concepts": [
+            "连接元数据",
+            "首条命中",
+            "域名标签边界",
+            "CIDR"
+          ],
+          "misconceptions": [
+            "规则越具体就会自动覆盖更早的宽规则",
+            "字符串 endsWith 足以实现安全的域名后缀匹配",
+            "域名目标在解析前也能命中 IP-CIDR"
+          ],
+          "milestone": "纯函数 route 按顺序返回 DIRECT、REJECT 或 PROXY，并正确处理域名标签与 IPv4 CIDR",
+          "milestone_verify": "运行 tests/05-rule-engine.test.ts，先手算一组规则顺序，再与返回的命中规则对照",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "dns-strategy",
+              "what": "解释为什么同一条 IP-CIDR 在不同 DNS 时机下可能有或没有可匹配的 IP"
+            }
+          ],
+          "depends_on": [
+            "proxy-mental-model"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/05-rule-engine.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用反例证明首条命中与标签边界，不把规则引擎描述成自动按精确度排序"
+            },
+            {
+              "kind": "source",
+              "criterion": "CIDR 表示核对 RFC 4632；规则语义声明为本课程实现选择"
+            }
+          ]
+        },
+        {
+          "slug": "dns-strategy",
+          "title": "DNS 在哪里发生：域名规则与 IP 规则的拉扯",
+          "goal": "实现 preserve-domain 与 resolve-first 两种策略，能预测解析者、规则可见信息和最终拨号目标",
+          "type": "build",
+          "feature_id": "dns-strategy",
+          "hook": {
+            "kind": "routing-surprise",
+            "point": "明明写了 10.0.0.0/8 拒绝规则，域名目标却绕过去；改成先解析后，域名后缀规则又像失去意义",
+            "phenomena": [
+              "10.0.0.0/8",
+              "域名目标却绕过去",
+              "先解析"
+            ]
+          },
+          "new_concepts": [
+            "DNS 解析位置",
+            "preserve-domain",
+            "resolve-first"
+          ],
+          "misconceptions": [
+            "DNS 只负责性能，与隐私和规则无关",
+            "PROXY 出站前一定要在本地解析域名",
+            "解析成 IP 后仍能从 socket 自动恢复原始域名"
+          ],
+          "milestone": "planRoute 根据策略决定解析时机，返回决策与 dialTarget，所有 DNS 副作用可注入",
+          "milestone_verify": "运行 tests/06-dns-strategy.test.ts，对同一域名分别预测 resolver 调用次数、命中规则和 dialTarget",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "outbound-adapters",
+              "what": "把 preserve-domain 产生的域名目标原样交给 SOCKS5 上游"
+            }
+          ],
+          "depends_on": [
+            "rule-engine"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/06-dns-strategy.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "对 DIRECT、REJECT、PROXY 分别交代 preserve-domain 是否解析以及由谁解析"
+            },
+            {
+              "kind": "source",
+              "criterion": "DNS 层级概念核对 RFC 1034；两种策略名称与顺序声明为课程实现选择"
+            }
+          ]
+        },
+        {
+          "slug": "outbound-adapters",
+          "title": "出站适配器：直连、拒绝与再套一层 SOCKS5",
+          "goal": "用统一 Dialer 接口实现 DIRECT、REJECT 和 SOCKS5 上游，把路由决策变成真实连接",
+          "type": "build",
+          "feature_id": "outbound-chain",
+          "hook": {
+            "kind": "architecture-pressure",
+            "point": "每加一种节点都在入口里堆 if/else，HTTP 与 SOCKS5 两套代码越改越不一致，错误响应也开始漂移",
+            "phenomena": [
+              "堆 if/else",
+              "两套代码",
+              "错误响应也开始漂移"
+            ]
+          },
+          "new_concepts": [
+            "出站适配器",
+            "代理链"
+          ],
+          "misconceptions": [
+            "入口协议决定出站协议",
+            "REJECT 是一次失败的 DIRECT 拨号",
+            "SOCKS5 上游只要发送 CONNECT，不必读完响应地址帧"
+          ],
+          "milestone": "三种出站共享 Dialer 契约，SOCKS5 客户端完成协商、CONNECT 与响应校验",
+          "milestone_verify": "运行 tests/07-outbound-adapters.test.ts，让本地假上游记录收到的域名帧并完成代理链回声",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "runtime-assembly",
+              "what": "运行时按 RouteDecision 选择适配器，入口无需知道出站细节"
+            }
+          ],
+          "depends_on": [
+            "socks5-protocol",
+            "dns-strategy"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/07-outbound-adapters.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "解释入口与出站正交、REJECT 的立即失败语义，以及上游域名解析责任"
+            },
+            {
+              "kind": "source",
+              "criterion": "SOCKS5 客户端字段核对 RFC 1928；适配器接口是课程自有设计"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 把积木组装成程序",
+      "chapters": [
+        {
+          "slug": "runtime-config",
+          "title": "配置先失败：不要让错误规则静默上线",
+          "goal": "从 unknown JSON 严格收窄 ProxyConfig，并在监听前发现无兜底、非法端口和悬空出站",
+          "type": "build",
+          "feature_id": "runtime-config",
+          "hook": {
+            "kind": "config-incident",
+            "point": "PROXY 规则拼错一个节点名，程序仍显示启动成功，直到第一位用户访问才得到 502",
+            "phenomena": [
+              "拼错一个节点名",
+              "仍显示启动成功",
+              "第一位用户"
+            ]
+          },
+          "new_concepts": [
+            "严格配置校验",
+            "MATCH 兜底"
+          ],
+          "misconceptions": [
+            "TypeScript 类型能自动验证 JSON 文件",
+            "找不到规则时默认 DIRECT 最友好",
+            "逐个遇错返回比一次收集全部配置错误更易排障"
+          ],
+          "milestone": "parseProxyConfig 返回有效配置或完整错误数组，并校验规则与出站的交叉引用",
+          "milestone_verify": "运行 tests/08-runtime-config.test.ts，一次提交多个错误并确认监听逻辑尚未运行",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "runtime-assembly",
+              "what": "把已验证配置交给双入口运行时，而不是在各模块重复做默认值猜测"
+            }
+          ],
+          "depends_on": [
+            "rule-engine",
+            "dns-strategy",
+            "outbound-adapters"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/08-runtime-config.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "区分静态类型与运行时校验，并说明 MATCH 兜底为何必须显式"
+            },
+            {
+              "kind": "source",
+              "criterion": "配置规则均声明为课程 API 契约；示例字段与 companion types/config 终态一致"
+            }
+          ]
+        },
+        {
+          "slug": "runtime-assembly",
+          "title": "组装运行时：两个入口，共用一条决策管线",
+          "goal": "让 HTTP 与 SOCKS5 入口共享 route-DNS-dial-relay，并加入依赖注入、结构化事件和优雅关闭",
+          "type": "build",
+          "feature_id": "runtime-assembly",
+          "hook": {
+            "kind": "consistency-bug",
+            "point": "同一目标从 HTTP 入口被拒绝，从 SOCKS5 入口却直连成功；退出测试时还有 socket 悬挂，进程一直不结束",
+            "phenomena": [
+              "HTTP 入口被拒绝",
+              "SOCKS5 入口却直连",
+              "进程一直不结束"
+            ]
+          },
+          "new_concepts": [
+            "依赖注入",
+            "结构化事件",
+            "优雅关闭"
+          ],
+          "misconceptions": [
+            "两个入口各自实现一套路由更简单",
+            "测试里使用真实 DNS 更接近生产所以更可靠",
+            "server.close 会自动销毁所有已建立连接"
+          ],
+          "milestone": "createProxyRuntime 启动双入口并共享连接函数，返回实际端口、事件和可等待的 close",
+          "milestone_verify": "运行 tests/09-assembly.test.ts，以 port 0 启动，核对两入口同规则、事件字段和关闭后零悬挂",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "end-to-end-boundary",
+              "what": "用完整本地拓扑核销入口、路由、出站与关闭的全链路能力"
+            }
+          ],
+          "depends_on": [
+            "http-forward-proxy",
+            "socks5-protocol",
+            "relay-lifecycle",
+            "runtime-config"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/09-assembly.test.ts 退出码为 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "画出共享 connect 函数的调用链，并解释 resolver/sink 注入与连接追踪的价值"
+            },
+            {
+              "kind": "source",
+              "criterion": "监听与关闭行为核对 Node net 文档；代码切片来自 companion 终态"
+            }
+          ]
+        },
+        {
+          "slug": "end-to-end-boundary",
+          "title": "收官：验证整条链，也看清离 Clash 还有多远",
+          "goal": "用本地端到端矩阵证明已实现能力，并建立开放代理、最小权限与生产差异清单",
+          "type": "build",
+          "feature_id": "end-to-end-boundary",
+          "hook": {
+            "kind": "false-finish",
+            "point": "curl 能通过代理返回一次 200，不代表规则、上游链、半关闭和错误路径正确，更不代表可以把端口暴露公网",
+            "phenomena": [
+              "返回一次 200",
+              "不代表",
+              "暴露公网"
+            ]
+          },
+          "new_concepts": [
+            "威胁模型",
+            "开放代理",
+            "最小权限"
+          ],
+          "misconceptions": [
+            "能代理一次 HTTP 就等于实现了 Clash",
+            "只监听一个端口就天然安全",
+            "测试全绿可以替代认证、权限、资源上限和安全审计"
+          ],
+          "milestone": "HTTP、CONNECT、SOCKS5、REJECT 与 SOCKS5 上游链在纯本机拓扑中全部通过，并形成生产差异表",
+          "milestone_verify": "运行 tests/10-end-to-end.test.ts 与全量门槛，逐项对照 127.0.0.1 拓扑和未实现能力",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": [
+            "runtime-assembly"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm vitest run tests/10-end-to-end.test.ts、pnpm test、pnpm typecheck、pnpm build 均退出 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "终章把已实现能力与未实现的认证、UDP、TUN、加密出站、资源治理和平台集成逐项分开"
+            },
+            {
+              "kind": "source",
+              "criterion": "安全边界核对 RFC 9110 CONNECT 安全说明与 RFC 1928 范围；不引用代理项目源码"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "protocol-reference",
+      "title": "协议字节与响应码速查",
+      "kind": "reference-table"
+    },
+    {
+      "slug": "implementation-map",
+      "title": "从配置词到代码模块",
+      "kind": "reference-table"
+    },
+    {
+      "slug": "divergence",
+      "title": "mini-proxy 与生产代理的差异",
+      "kind": "divergence"
+    },
+    {
+      "slug": "exercises",
+      "title": "练习路线：从红到绿重写一遍",
+      "kind": "exercises"
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个双入口、三出站、84 项测试全绿的本地代理",
+    "verify": "9 个章节测试文件全绿，含 HTTP、CONNECT、SOCKS5、拒绝规则与上游 SOCKS5 链的 127.0.0.1 端到端验证"
+  }
+}
