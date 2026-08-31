@@ -152,6 +152,25 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/08-merge-base.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward --new 可达性 最近公共祖先 fast-forward --pain Fast-forward Already up to date 新提交", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 9,
+      "slug": "three-way-merge",
+      "file": "docs/09-three-way-merge.md",
+      "status": "complete",
+      "summary": "读者能折行对齐账、背出判定表(严格在前才自动、相触即冲突、双改同稿采纳一份),说出冲突标记七字符与标签口径、merge 提交与普通提交只差一行 parent;ff 短路挪引用不造提交、冲突现场落工作区与 index、收尾单父口径。验证物:+src/merge.ts(mergeBlobs/mergeTrees/mergeCommits)、+tests/merge.test.ts(21 例)、cli 接 merge 并抽 restoreToTree;金样 4 定点与真 git 逐字节一致、118 组随机对拍(干净 78 全一致、冲突 38/40 一致、判定零分歧,口径已限定),169/169 全绿;第 6 章正文回写终态。评审 2 阻断 4 建议已修清。",
+      "artifacts": [
+        "companion/src/merge.ts",
+        "companion/tests/merge.test.ts",
+        "companion/src/cli.ts",
+        "docs/06-refs-branches.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/09-three-way-merge.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 --new 三方合并 冲突标记 merge 提交 --pain 自动完成 <<<<<<< 怪符号", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

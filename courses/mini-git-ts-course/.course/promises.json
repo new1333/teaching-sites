@@ -76,7 +76,8 @@
       "from_n": 7,
       "target": "three-way-merge",
       "what": "diffLines 的编辑脚本=行对齐账;三方合并以它为底座——base 对 ours/theirs 各算一张账定夺自动合入或冲突,diff 不止用来给人看",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "第 9 章开章逐字回收第 7 章「行对齐账/diffLines 就是那章合并算法的心脏」原话;changeRegions 把编辑脚本折算成改动区,mergeBlobs 主循环即「两张账对一对」;第 8 章「互不包含格」叙事债同时清偿(mergeCommits 头两行复用 isAncestor,第三格产双父提交);评审复核兑现。"
     }
   ]
 }

@@ -198,15 +198,22 @@ function cmdCommit(cwd: string, args: string[]): string {
 参数检查之后就是四步。loadIndex 收暂存区清单；writeTreeFromIndex 把清单拼成 tree 对象；commitTree 打包出提交对象,父提交由 resolveHead 给出,unborn 时为空；最后按 HEAD 的形状落引用。附着状态,updateRef 推进当前分支,别的分支一个字节不动；detached 状态,引用这步换成 detachHead 让 HEAD 自己前移——上一节「警告在怕什么」的全部机制,浓缩在这两个分支里。第 5 章末尾手写 `echo $C > .git/refs/heads/main` 的那个别扭,从此消失。
 
 <details>
-<summary>点开看:checkout 的恢复逻辑 restoreWorktree(src/cli.ts,含从简口径)。</summary>
+<summary>点开看:checkout 的恢复逻辑(src/cli.ts 终态,含后文合并章拆出的 restoreToTree;从简口径见下方文字)。</summary>
+
+本章动手时,恢复逻辑是一整只函数;后面写合并时,合并结果落盘要走同一段「删旧、检出、重建清单」,主体因此被拆成 restoreToTree。下面的代码块是拆分后的终态,函数头部的职责没变:restoreWorktree 验明目标提交并取出 tree,restoreToTree 收尾三步。
 
 ```ts
-// src/cli.ts · restoreWorktree
+// src/cli.ts · restoreWorktree 与它的主体 restoreToTree(合并章拆出,落盘复用)
 function restoreWorktree(gitDir: string, workDir: string, commitHash: string): number {
   const { type, body } = readObject(gitDir, commitHash)
   if (type !== 'commit') {
     throw new Error(`checkout:'${commitHash}' 是 ${type} 不是 commit,检不出工作区`)
   }
+  return restoreToTree(gitDir, workDir, parseCommit(body).tree)
+}
+
+/** restoreWorktree 的主体:给定 tree,删旧清单文件、检出、重建 index——merge 产出树后也走这条路落盘。 */
+function restoreToTree(gitDir: string, workDir: string, tree: string): number {
   const dirs = new Set<string>()
   for (const e of loadIndex(gitDir)) {
     rmSync(join(workDir, e.path), { force: true })
@@ -220,7 +227,6 @@ function restoreWorktree(gitDir: string, workDir: string, commitHash: string): n
       rmSync(abs, { recursive: true })
     }
   }
-  const tree = parseCommit(body).tree
   checkoutTree(gitDir, tree, workDir)
   const entries = [...flattenTree(gitDir, tree)].map(([path, sig]) =>
     makeIndexEntry(path, sig.hash, statSync(join(workDir, path))),

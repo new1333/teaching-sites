@@ -16,6 +16,7 @@ import {
 import { attachHead, detachHead, listBranches, readHead, readRef, resolveHead, updateRef } from './refs.ts'
 import { diffLines, renderUnified, splitLines } from './diff.ts'
 import { isAncestor, mergeBase } from './graph.ts'
+import { mergeCommits } from './merge.ts'
 
 /** 40 位十六进制;checkout 用它分辨「给的是提交名还是分支名」。 */
 const HASH_RE = /^[0-9a-f]{40}$/
@@ -45,7 +46,8 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
                                   --cached 比「暂存区 对 HEAD」(HEAD 不存在时全部算新增)
   mini-git merge-base <A> <B>     两笔提交(分支名或 40 位哈希)的最近公共祖先,输出它的哈希
   mini-git merge-base --is-ancestor <A> <B>
-                                  换一个问题:A 是 B 的祖先吗?答「是」或「否」`
+                                  换一个问题:A 是 B 的祖先吗?答「是」或「否」
+  mini-git merge <分支|提交名>     三方合并:能自动合入就产双父提交,改到同处则把冲突标记写进工作区`
 
 /** 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。 */
 export function runCli(argv: string[], cwd: string = process.cwd()): string {
@@ -80,6 +82,8 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdDiff(cwd, args)
     case 'merge-base':
       return cmdMergeBase(cwd, args)
+    case 'merge':
+      return cmdMerge(cwd, args)
     default:
       return `mini-git: 未知命令 '${cmd}'(收到参数:${args.join(' ')})。运行 mini-git --help 查看可用命令。`
   }
@@ -305,6 +309,11 @@ function restoreWorktree(gitDir: string, workDir: string, commitHash: string): n
   if (type !== 'commit') {
     throw new Error(`checkout:'${commitHash}' 是 ${type} 不是 commit,检不出工作区`)
   }
+  return restoreToTree(gitDir, workDir, parseCommit(body).tree)
+}
+
+/** restoreWorktree 的主体:给定 tree,删旧清单文件、检出、重建 index——merge 产出树后也走这条路落盘。 */
+function restoreToTree(gitDir: string, workDir: string, tree: string): number {
   const dirs = new Set<string>()
   for (const e of loadIndex(gitDir)) {
     rmSync(join(workDir, e.path), { force: true })
@@ -318,7 +327,6 @@ function restoreWorktree(gitDir: string, workDir: string, commitHash: string): n
       rmSync(abs, { recursive: true })
     }
   }
-  const tree = parseCommit(body).tree
   checkoutTree(gitDir, tree, workDir)
   const entries = [...flattenTree(gitDir, tree)].map(([path, sig]) =>
     makeIndexEntry(path, sig.hash, statSync(join(workDir, path))),
@@ -522,6 +530,65 @@ function cmdMergeBase(cwd: string, args: string[]): string {
     throw new Error(`merge-base:'${a.slice(0, 7)}' 与 '${b.slice(0, 7)}' 没有公共祖先——两段不相连的历史,给不出 base`)
   }
   return base
+}
+
+/**
+ * 三方合并:第 8 章判定表的三个格子在此落地。up-to-date 原样照抄 git 的原文;
+ * fast-forward 只挪引用不造提交;真合并成功产双父提交并检出结果树;
+ * 冲突则把带标记的内容写进工作区与暂存区,分支引用不动。
+ * 从简口径(登记差异附录):不写 MERGE_HEAD,冲突后的收尾提交是普通单父提交;
+ * index 里只登记带标记内容这一份(真 git 是 1/2/3 三阶段);不检查未提交改动,无条件合并。
+ */
+function cmdMerge(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git merge <分支名 | 40 位提交名>;恰好一个目标,不收开关'
+  if (args.length !== 1 || args[0].startsWith('-')) {
+    throw new Error(usage)
+  }
+  const gitDir = requireGitDir(cwd)
+  const head = readHead(gitDir)
+  if (head.kind !== 'ref' || !head.ref.startsWith('refs/heads/')) {
+    throw new Error(`merge:HEAD 不在分支上(detached)——mini-git 只在分支上合并,合并结果要有引用可推进`)
+  }
+  const branch = head.ref.slice('refs/heads/'.length)
+  const ours = resolveHead(gitDir)
+  if (ours === null) {
+    throw new Error(`merge:当前分支 '${branch}' 还没生过提交,没有可合的底`)
+  }
+  const [target] = args
+  let theirs: string
+  if (HASH_RE.test(target)) {
+    theirs = target
+  } else {
+    const found = readRef(gitDir, `refs/heads/${target}`)
+    if (found === null) {
+      throw new Error(`merge:分支 '${target}' 不存在;现有分支:${listBranches(gitDir).join('、') || '无'}`)
+    }
+    theirs = found
+  }
+  const outcome = mergeCommits(gitDir, ours, theirs, {
+    labels: { ours: 'HEAD', theirs: target }, // git 的标签口径:ours 恒 HEAD,theirs 写 merge 参数原文
+    message: `Merge ${HASH_RE.test(target) ? `commit '${target}'` : `branch '${target}'`}\n`,
+    author: identityFromEnv(),
+  })
+  switch (outcome.kind) {
+    case 'up-to-date':
+      return 'Already up to date.'
+    case 'fast-forward':
+      updateRef(gitDir, head.ref, outcome.to)
+      restoreWorktree(gitDir, cwd, outcome.to)
+      return `Fast-forward:${branch} ${ours.slice(0, 7)}..${outcome.to.slice(0, 7)}(只挪引用,无新提交)`
+    case 'merged':
+      updateRef(gitDir, head.ref, outcome.commit)
+      restoreToTree(gitDir, cwd, outcome.tree)
+      return `合并完成:${branch} ${outcome.commit.slice(0, 7)}(双父 ${ours.slice(0, 7)} + ${theirs.slice(0, 7)})`
+    case 'conflicted': {
+      restoreToTree(gitDir, cwd, outcome.tree)
+      const lines = [`自动合并失败:${outcome.conflicts.length} 个文件带着冲突标记写进了工作区与暂存区:`]
+      lines.push(...outcome.conflicts.map((p) => `  ${p}`))
+      lines.push('手工编辑解决后 mini-git add + mini-git commit 收尾;mini-git 不记 MERGE_HEAD,收尾提交是单父提交(HEAD 未动)')
+      return lines.join('\n')
+    }
+  }
 }
 
 // 直接用 `tsx src/cli.ts` 运行时才执行;被测试 import 时不执行。
