@@ -2,6 +2,7 @@
 import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { readObject, writeObject } from './objects.ts'
+import type { IndexEntry } from './index.ts'
 
 /** tree 条目的模式取值:普通文件、可执行文件、符号链接、目录(存储时目录是五位的 40000)。 */
 export type TreeMode = '100644' | '100755' | '120000' | '40000'
@@ -67,6 +68,36 @@ function sortKey(entry: TreeEntry): Buffer {
 
 function compareEntries(a: TreeEntry, b: TreeEntry): number {
   return Buffer.compare(sortKey(a), sortKey(b))
+}
+
+/** index 的 32 位模式映射回 tree 条目的六位文本模式。 */
+function indexModeToTreeMode(mode: number): TreeMode {
+  if (mode === 0o100644) return '100644'
+  if (mode === 0o100755) return '100755'
+  if (mode === 0o120000) return '120000'
+  throw new Error(`write-tree:暂存区条目的模式 ${mode.toString(8)} 不是 mini-git 认识的取值`)
+}
+
+/** 把暂存区清单(平面 路径 → 条目)按目录分组递归,拼出根 tree 并落库;吃的是 index,不碰工作区。 */
+export function writeTreeFromIndex(gitDir: string, entries: readonly IndexEntry[]): string {
+  const files: TreeEntry[] = []
+  const dirs = new Map<string, IndexEntry[]>()
+  for (const e of entries) {
+    const slash = e.path.indexOf('/')
+    if (slash < 0) {
+      files.push({ mode: indexModeToTreeMode(e.mode), name: e.path, hash: e.hash })
+    } else {
+      const top = e.path.slice(0, slash)
+      const rest = dirs.get(top) ?? []
+      rest.push({ ...e, path: e.path.slice(slash + 1) }) // 剥掉第一段,剩下的交给子目录的 tree
+      dirs.set(top, rest)
+    }
+  }
+  const subtrees: TreeEntry[] = []
+  for (const [name, rest] of dirs) {
+    subtrees.push({ mode: '40000', name, hash: writeTreeFromIndex(gitDir, rest) })
+  }
+  return writeObject(gitDir, 'tree', encodeTree([...files, ...subtrees].sort(compareEntries)))
 }
 
 /** 递归序列化 dir 下的全部文件与子目录(跳过 .git),blobs 与 trees 全部落库,返回根 tree 哈希。 */

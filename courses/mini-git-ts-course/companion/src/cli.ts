@@ -1,10 +1,19 @@
 // src/cli.ts · runCli
-import { existsSync, readFileSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { existsSync, readFileSync, statSync, type Stats } from 'node:fs'
+import { join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { hashObject, initRepo, readObject, writeObject } from './objects.ts'
-import { parseTree, writeTree } from './trees.ts'
-import { commitTree, logWalk, type CommitIdentity, type LogEntry } from './commits.ts'
+import { parseTree, writeTree, writeTreeFromIndex } from './trees.ts'
+import { commitTree, logWalk, parseCommit, type CommitIdentity, type LogEntry } from './commits.ts'
+import {
+  classifyStatus,
+  flattenTree,
+  loadIndex,
+  makeIndexEntry,
+  readHeadHash,
+  saveIndex,
+  scanWorktree,
+} from './index.ts'
 
 export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实现
 
@@ -14,7 +23,10 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
   mini-git hash-object [-w] 文件  算出文件内容的对象名;-w 顺手写入对象库
   mini-git cat-file -p 对象名     把对象内容原文读回;tree 按条目逐行列出
   mini-git cat-file -t 对象名     只看对象的类型
-  mini-git write-tree             把当前目录整棵序列化成 tree 对象,输出根哈希
+  mini-git add <文件>...          把文件当前内容登记进暂存区清单(.git/index)
+  mini-git status                 三态对比:工作区、暂存区、HEAD 两两比较,分四类报告
+  mini-git write-tree             把暂存区清单序列化成 tree 对象,输出根哈希;
+                                  .git/index 还不存在时,沿用旧口径序列化当前目录
   mini-git commit-tree <tree> [-p <父>]... -m <消息>
                                   把 tree、父提交、作者与消息打包成提交对象;
                                   名字/邮箱/时间用环境变量声明,不偷看机器状态
@@ -33,6 +45,10 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdHashObject(cwd, args)
     case 'cat-file':
       return cmdCatFile(cwd, args)
+    case 'add':
+      return cmdAdd(cwd, args)
+    case 'status':
+      return cmdStatus(cwd, args)
     case 'write-tree':
       return cmdWriteTree(cwd, args)
     case 'commit-tree':
@@ -95,11 +111,94 @@ function renderTree(body: Buffer): string {
     .join('\n')
 }
 
+function cmdAdd(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git add <文件>...;只收文件路径,不收开关,也不展开目录'
+  if (args.length === 0 || args.some((a) => a.startsWith('-'))) {
+    throw new Error(usage)
+  }
+  const gitDir = requireGitDir(cwd)
+  const byPath = new Map(loadIndex(gitDir).map((e) => [e.path, e]))
+  for (const arg of args) {
+    const abs = resolve(cwd, arg)
+    const rel = relative(cwd, abs).split(sep).join('/')
+    if (rel.startsWith('..')) {
+      throw new Error(`add:'${arg}' 在仓库目录之外,mini-git 暂存不了`)
+    }
+    if (rel === '.git' || rel.startsWith('.git/')) {
+      throw new Error(`add:'${arg}' 在 .git 里面,对象库自己不进快照`)
+    }
+    let st: Stats
+    try {
+      st = statSync(abs)
+    } catch {
+      throw new Error(`add:文件 '${arg}' 不存在或读不了`)
+    }
+    if (!st.isFile()) {
+      throw new Error(`${usage}(目录 '${arg}' 请逐个文件点名)`)
+    }
+    byPath.set(rel, makeIndexEntry(rel, writeObject(gitDir, 'blob', readFileSync(abs)), st))
+  }
+  saveIndex(gitDir, [...byPath.values()])
+  return `已暂存 ${args.length} 个文件,清单共 ${byPath.size} 条`
+}
+
+function cmdStatus(cwd: string, args: string[]): string {
+  if (args.length !== 0) {
+    throw new Error('用法:mini-git status;不带参数')
+  }
+  const gitDir = requireGitDir(cwd)
+  const index = new Map(loadIndex(gitDir).map((e) => [e.path, { mode: e.mode, hash: e.hash }]))
+  const worktree = scanWorktree(cwd)
+  const head = new Map<string, { mode: number; hash: string }>()
+  const headHash = readHeadHash(gitDir)
+  if (headHash !== null) {
+    const { type, body } = readObject(gitDir, headHash)
+    if (type !== 'commit') {
+      throw new Error(`HEAD 指向的 '${headHash}' 不是 commit(它是 ${type}),没法当作当前提交`)
+    }
+    for (const [path, sig] of flattenTree(gitDir, parseCommit(body).tree)) {
+      head.set(path, sig)
+    }
+  }
+  return renderStatus(classifyStatus(index, worktree, head))
+}
+
+/** status 的三段渲染:段头写明「哪两块在比」,文件行带 新文件/修改/删除 标签。 */
+function renderStatus(report: ReturnType<typeof classifyStatus>): string {
+  const lines: string[] = []
+  const label: Record<string, string> = { new: '新文件', modified: '修改', deleted: '删除' }
+  if (report.staged.length > 0) {
+    lines.push('已暂存的变更(暂存区 相对 HEAD):')
+    lines.push(...report.staged.map((s) => `  ${label[s.kind]}:${s.path}`))
+  }
+  if (report.unstaged.length > 0) {
+    lines.push('未暂存的变更(工作区 相对 暂存区):')
+    lines.push(...report.unstaged.map((s) => `  ${label[s.kind]}:${s.path}`))
+  }
+  if (report.untracked.length > 0) {
+    lines.push('未跟踪的文件(不在暂存区):')
+    lines.push(...report.untracked.map((p) => `  ${p}`))
+  }
+  if (lines.length === 0) {
+    return `干净:工作区、暂存区与 HEAD 三方一致(${report.unchanged.length} 个文件)`
+  }
+  if (report.unchanged.length > 0) {
+    lines.push(`未变:${report.unchanged.length} 个文件`)
+  }
+  return lines.join('\n')
+}
+
 function cmdWriteTree(cwd: string, args: string[]): string {
   if (args.length !== 0) {
-    throw new Error('用法:mini-git write-tree;不带参数,序列化的是当前目录')
+    throw new Error('用法:mini-git write-tree;不带参数')
   }
-  return writeTree(requireGitDir(cwd), cwd)
+  const gitDir = requireGitDir(cwd)
+  if (!existsSync(join(gitDir, 'index'))) {
+    // mini-git 特有口径:index 还没生过(一次 add 都没做)时,沿用第 3 章的整目录扫描;
+    // 真 git 此时写的是空树,这条分岔登记在差异附录
+    return writeTree(gitDir, cwd)
+  }
+  return writeTreeFromIndex(gitDir, loadIndex(gitDir))
 }
 
 /** 身份与环境:mini-git 不偷看任何机器状态,名字/邮箱/时间全部由环境变量声明。 */
