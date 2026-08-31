@@ -1,0 +1,422 @@
+{
+  "schema_version": 2,
+  "title": "Git 原理重实现:用 TypeScript 写一个 mini-git",
+  "audience": "会写日常 TypeScript、想把 git 用明白的开发者",
+  "driving_question": "git add 之后、push 之前,.git 里到底发生了什么?一条命令如何变成一堆对象和引用?",
+  "input": {
+    "kind": "topic",
+    "ref": "git原理:使用 TypeScript 实现一个 git(本地完整版 + 远端同步,packfile 导读)"
+  },
+  "profile": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "collapsed",
+    "obligations": [],
+    "presentation": { "visual": "none" },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "library + CLI(mini-git)",
+    "language": "TypeScript + Node.js(node:fs/crypto/zlib/net)+ Vitest + tsx",
+    "scope": "教学用 mini-git:松散对象库、tree/commit 对象、index v2、引用与分支、行级 diff、merge-base、三方合并、pkt-line TCP 传输、fetch/push/clone/serve;不做 packfile、rebase、子模块;与真 git 的互读仅作对拍验证",
+    "commands": {
+      "install": "pnpm install",
+      "typecheck": "pnpm typecheck",
+      "test": "pnpm test"
+    }
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 对象库:内容即名字",
+      "chapters": [
+        {
+          "slug": "git-mental-model",
+          "title": "把 .git 打开:三个区域和一堆文件",
+          "goal": "会解剖任意仓库的 .git 目录,把 git add/commit 分解为工作区、暂存区、对象库之间的搬运",
+          "type": "principle",
+          "feature_id": "mental-model",
+          "verification": "none",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "复制粘贴整个文件夹做备份,很快就有「项目-最终版-真最终版」;git 记住每次改动却不复制文件夹——历史到底存在哪,凭什么能恢复任何一天的样子?",
+            "phenomena": ["复制粘贴", "备份", ".git"]
+          },
+          "new_concepts": ["快照模型", "工作区", "暂存区", "对象库", "底层命令"],
+          "misconceptions": [
+            "git 存的是每次改动的差异,不是完整版本",
+            ".git 里有一个数据库程序在后台运行",
+            "add 就是保存,commit 就是再备份一次"
+          ],
+          "structure": "解剖 .git → 三区域地图 → add/commit 的搬运视角 → mini-git 工程脚手架建立",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "end-to-end", "what": "本章的三区域地图在终章扩成「日常命令 → 内部机制」对照表收口" }
+          ],
+          "depends_on": [],
+          "acceptance": [
+            { "kind": "prose", "criterion": "读者能把 git status 输出的三类文件归位到三个区域,并说出 add/commit 各搬动哪一跳" },
+            { "kind": "experience", "criterion": "正文含一次对真实 .git 目录的逐条目解说,objects/refs/HEAD/index 各有一句可核对的职责描述" },
+            { "kind": "source", "criterion": ".git 布局描述与 gitrepository-layout 官方文档口径一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "content-addressed-store",
+          "title": "内容的名字:SHA-1 与第一个对象",
+          "goal": "实现 mini-git init/hash-object/cat-file,任意文件的哈希与真 git 完全一致",
+          "type": "build",
+          "feature_id": "object-store",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "两个同事改了同一个文件,git 合并时从不问「该信谁」;GitHub 上每个 commit 都挂着同一格式的一串 40 位天书——它不是编号,是内容自带的指纹",
+            "phenomena": ["40 位", "指纹", "hash-object"]
+          },
+          "new_concepts": ["内容寻址", "SHA-1", "对象头", "松散对象"],
+          "misconceptions": [
+            "对象哈希是 git 生成后登记的随机编号",
+            "哈希算的是文件内容本身",
+            "同一文件改一个字,git 要存两份完整内容很浪费"
+          ],
+          "milestone": "companion 新增 src/objects.ts 与 mini-git init/hash-object/cat-file 三命令;测试用金样哈希断言(空文件、hello world 等固定内容)",
+          "milestone_verify": "mini-git hash-object 对任意文件输出与 git hash-object 逐字符一致;空文件得到 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391;cat-file 能把写入的对象原文读回",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["git-mental-model"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿;全量 pnpm typecheck/test 通过,金样哈希断言在测试中可见" },
+            { "kind": "prose", "criterion": "能解释「对象头参与哈希」带来的同内容不同类型不同名现象,并推导出内容寻址的去重效果" },
+            { "kind": "source", "criterion": "对象字节格式描述与 gitformat-object 官方文档一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "tree-snapshots",
+          "title": "目录也是对象:Buffer 与二进制格式初遇",
+          "goal": "从零掌握 Buffer 字节操作,编码并解析 tree 二进制格式,实现 write-tree 与整树检出",
+          "type": "build",
+          "feature_id": "tree-objects",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "git checkout 一个旧提交,几十个嵌套文件夹瞬间恢复原样;但 objects 里的文件没有名字也没有文件夹结构——目录结构本身被存成了什么?",
+            "phenomena": ["checkout", "恢复", "嵌套"]
+          },
+          "new_concepts": ["tree 对象", "文件模式", "十六进制转储", "Buffer"],
+          "misconceptions": [
+            "git 按文件夹路径组织对象文件",
+            "tree 里存了文件名和路径全名",
+            "二进制格式解析需要特殊工具,文本代码做不了"
+          ],
+          "structure": "十六进制转储观察真 tree → Buffer 逐字节拆格式 → 编码/解码实现 → write-tree 与检出",
+          "milestone": "companion 新增 src/trees.ts(parseTree/writeTree)与 mini-git write-tree、cat-file -p 识别 tree;对固定 fixture 目录断言根 tree 哈希金样,并断言解析-再编码字节恒等",
+          "milestone_verify": "对固定三层目录跑 mini-git write-tree,输出哈希与 git write-tree 一致;cat-file -p 能列出 tree 条目;自实现检出能把 tree 还原成目录",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["content-addressed-store"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,含金样 tree 哈希与字节级 round-trip 断言;全量门槛通过" },
+            { "kind": "prose", "criterion": "读者能对一个给定的 tree 十六进制转储手工划出每条 entry 的模式、名字与哈希边界" },
+            { "kind": "source", "criterion": "tree 模式取值(100644/100755/40000)与 gitformat-object 文档一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "commit-dag",
+          "title": "历史是一张图:提交对象与 log",
+          "goal": "实现 commit 对象读写与 log 遍历,解释提交哈希为何改一行历史就全变",
+          "type": "build",
+          "feature_id": "commit-dag",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "git log 那串「天书 + 作者 + 日期 + 消息」每次都稳定出现;而一旦改写历史(比如压缩提交),自己和之后所有提交的哈希全部变化——log 是从哪读出来的?",
+            "phenomena": ["git log", "天书", "哈希全变"]
+          },
+          "new_concepts": ["commit 对象", "父提交", "提交图"],
+          "misconceptions": [
+            "log 的顺序存在某个列表文件里",
+            "提交记录了当时谁在线等环境信息",
+            "merge 和普通提交是两种不同的存储"
+          ],
+          "milestone": "companion 新增 src/commits.ts(commitTree/parseCommit)与 mini-git commit-tree、log 命令;测试构造含分叉与双父的提交图,断言 log 遍历序与消息恢复",
+          "milestone_verify": "手工提交链上 mini-git log 按时间倒序列出全部提交;双父提交在 log 中出现两次入口;改动任一提交内容后其后代哈希全变",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["tree-snapshots"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,覆盖链式、分叉、双父三种图形;全量门槛通过" },
+            { "kind": "prose", "criterion": "能从父指针推出「哈希全变」的原因,并说出提交图是有向无环图而非链表" },
+            { "kind": "source", "criterion": "commit 对象文本格式与 gitformat-object 文档一致,首现处给出处" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 三棵树与引用:分支的真相",
+      "chapters": [
+        {
+          "slug": "index-file",
+          "title": "暂存区不是观念,是一个文件",
+          "goal": "解析并生成 index v2 二进制格式,实现 mini-git add/status,三态判定与 git status 同口径",
+          "type": "build",
+          "feature_id": "index",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "改完文件忘了 add,commit 出来的还是旧版;有时明明 add 了,status 又冒出「Changes to be committed」和「Changes not staged」两段——同一个文件为什么能同时出现在两段里?",
+            "phenomena": ["忘了 add", "Changes not staged", "两段"]
+          },
+          "new_concepts": ["index 文件", "三态对比"],
+          "misconceptions": [
+            "add 就是保存文件到 git",
+            "commit 提交的是工作区当前样子",
+            "status 是拿工作区和远端比"
+          ],
+          "milestone": "companion 新增 src/index.ts(parseIndex/writeIndex)与 mini-git add、status;测试断言能解析真实 index 字节金样,add 后 status 三态判定覆盖未跟踪/已暂存/未暂存/未变四类",
+          "milestone_verify": "对同一目录状态,mini-git status 的分类与手工推导的三态对比一致;写入的 index 能被再次解析还原;真 git 生成的 index 字节金样可解析",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "refs-branches", "what": "本章用临时 readHeadHash 读 HEAD 指向,承诺下一章把它正式化为符号引用解析 resolveHead" }
+          ],
+          "depends_on": ["tree-snapshots", "commit-dag"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,含真实 index 字节金样解析与四类状态判定;全量门槛通过" },
+            { "kind": "prose", "criterion": "用「工作区/暂存区/HEAD 两两比对」解释同一文件同时出现在两段 status 里的现象" },
+            { "kind": "source", "criterion": "index v2 头部与条目字段布局描述与 gitformat-index 文档一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "refs-branches",
+          "title": "分支是一个文件,HEAD 是个指针的指针",
+          "goal": "用文件操作实现引用读写、分支创建切换与第一个 porcelain 级 mini-git commit",
+          "type": "build",
+          "feature_id": "refs-branches",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "建分支眨眼完成,不像复制文件夹要等进度条;切错分支想回去,却看到「You are in 'detached HEAD' state」的英文警告——分支到底是什么,警告在怕什么?",
+            "phenomena": ["建分支", "detached HEAD", "警告"]
+          },
+          "new_concepts": ["引用", "符号引用", "detached HEAD"],
+          "misconceptions": [
+            "分支是整份历史的副本",
+            "HEAD 就是当前分支本身",
+            "detached HEAD 是一种错误状态"
+          ],
+          "milestone": "companion 新增 src/refs.ts(readRef/updateRef/resolveHead/detach)与 mini-git branch/checkout/commit;测试断言建分支只写一个文件、commit 推进当前分支引用、detached 提交不被任何分支引用",
+          "milestone_verify": "mini-git branch 列表与 refs/heads 目录一致;同一工作区连做两次 commit,当前分支引用前移而其他分支不动;checkout 哈希后 commit,新提交只能靠哈希找回",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["commit-dag", "index-file"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,覆盖建/切分支、commit 推进引用、detached 三类行为;全量门槛通过" },
+            { "kind": "prose", "criterion": "兑现上一章承诺:resolveHead 正式化符号引用递归,并解释 detached 提交为何可能丢" },
+            { "kind": "source", "criterion": "符号引用 `ref:` 语法与 refs 目录布局描述与官方文档一致,首现处给出处" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 差异与合并:会算才会合",
+      "chapters": [
+        {
+          "slug": "line-diff",
+          "title": "每一行增删的来历:diff 算法",
+          "goal": "实现行级 LCS diff 与 unified diff 输出,mini-git diff 能对任意两次改动给出 hunk",
+          "type": "build",
+          "feature_id": "text-diff",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "git diff 里红绿行的取舍常常反直觉:挪动一段代码显示成「删三行加三行」,相邻两处小改有时合并成一个大块——这些行是按什么规则算出来的?",
+            "phenomena": ["红绿行", "删三行加三行", "合并成一个大块"]
+          },
+          "new_concepts": ["编辑脚本", "最长公共子序列", "unified diff", "hunk"],
+          "misconceptions": [
+            "diff 是逐字符比较的",
+            "diff 会理解代码语义所以知道该挪哪块",
+            "上下文行是随机选的装饰"
+          ],
+          "milestone": "companion 新增 src/diff.ts(diffLines/renderUnified)与 mini-git diff(工作区对暂存区);测试对固定文本对断言编辑脚本与 unified 输出金样,含间隔改动分 hunk 的用例",
+          "milestone_verify": "对修改前后两个固定文件,mini-git diff 输出带 @@ 位置头的 hunk,与手工推导的最小编辑一致;挪动代码显示为等量增删行",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "three-way-merge", "what": "本章的行对齐结果将在合并章作为三方对齐的底座,先承诺「diff 不止用来给人看」" }
+          ],
+          "depends_on": ["index-file"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,unified 输出含 hunk 头、上下文与增删行三类断言;全量门槛通过" },
+            { "kind": "prose", "criterion": "能解释 LCS 与编辑脚本互为补集的关系,并用它推出 hunk 合并现象的原因" },
+            { "kind": "source", "criterion": "unified diff 格式描述与 diff-generate-patch 文档一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "merge-base",
+          "title": "在提交图上找路:祖先与 merge-base",
+          "goal": "实现可达性与最近公共祖先,会判定 fast-forward,为合并找到 base",
+          "type": "build",
+          "feature_id": "merge-base",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "git merge 有时秒完成并打印「Fast-forward」,有时却生成一个新提交;pull 时又常见「Already up to date」——git 是靠什么判断这两种情况的?",
+            "phenomena": ["Fast-forward", "Already up to date", "新提交"]
+          },
+          "new_concepts": ["可达性", "最近公共祖先", "fast-forward"],
+          "misconceptions": [
+            "merge 总会生成合并提交",
+            "base 是两个分支里更早创建的那个",
+            "fast-forward 是 git 的性能优化选项而非图论结论"
+          ],
+          "milestone": "companion 新增 src/graph.ts(isAncestor/mergeBase)与 mini-git merge-base;测试在链、分叉、菱形三种图上断言祖先判定与 merge-base 结果,及 ff 可行性判定",
+          "milestone_verify": "在构造的提交图上,mini-git merge-base 输出与图上目测的最近公共祖先一致;祖先关系直接给出 ff/已最新两类判定",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "sync-operations", "what": "isAncestor 的 ff 判定将在 push 章成为远端拒绝非快进推送的同一把尺子" }
+          ],
+          "depends_on": ["refs-branches"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,覆盖三种图形的 merge-base 与 ff 判定;全量门槛通过" },
+            { "kind": "prose", "criterion": "能用可达集语言解释「一方是另一方祖先 ⇔ 可 fast-forward」的等价性" },
+            { "kind": "source", "criterion": "merge-base 语义描述与官方文档一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "three-way-merge",
+          "title": "合并:以 base 为裁判的三方对齐",
+          "goal": "实现三方文件合并与冲突标记,mini-git merge 产出双父提交或冲突现场",
+          "type": "build",
+          "feature_id": "three-way-merge",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "合并常常什么都没问就自动完成;偏偏你和同事改了同一个函数时,文件里突然长出 <<<<<<<、=======、>>>>>>> 三行怪符号——git 平时到底在按什么规则替你做决定?",
+            "phenomena": ["自动完成", "<<<<<<<", "怪符号"]
+          },
+          "new_concepts": ["三方合并", "冲突标记", "merge 提交"],
+          "misconceptions": [
+            "冲突是 git 算错了",
+            "git 会自动采纳较新一方的修改",
+            "merge 提交和普通提交存储方式不同"
+          ],
+          "milestone": "companion 新增 src/merge.ts(mergeBlobs/mergeCommits)与 mini-git merge;测试断言两侧改不同区域自动合入、同区域双改产出与 git 同格式冲突标记、成功合并生成双父提交、ff 场景短路",
+          "milestone_verify": "构造双侧各改一处的文件,mini-git merge 后工作区含两处修改且无标记;改同一处则输出 <<<<<<< HEAD 块;成功合并的 log 里该提交带两个父",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["line-diff", "merge-base"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,覆盖自动合入、冲突标记、双父、ff 短路四类行为;全量门槛通过" },
+            { "kind": "prose", "criterion": "能说出「base 未动、单方改动 → 采纳;双方同区域改动 → 冲突」的判定表,并解释冲突标记两侧标签的来源" },
+            { "kind": "source", "criterion": "冲突标记七字符格式与 git 官方 merge 文档一致,首现处给出处" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第四部分 · 上网络:两个仓库的对话",
+      "chapters": [
+        {
+          "slug": "wire-protocol",
+          "title": "一根管道上的对话:pkt-line 与引用发现",
+          "goal": "实现 pkt-line 帧编解码与最小引用发现服务,mini-git ls-remote 能列出对端引用",
+          "type": "build",
+          "feature_id": "wire-protocol",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "git ls-remote 不下载任何文件,却立刻列出远端每条分支与哈希;clone 第一步显示的「remote: Enumerating…」之前,两端其实先对了一次暗号",
+            "phenomena": ["ls-remote", "不下载", "对暗号"]
+          },
+          "new_concepts": ["pkt-line", "引用发现"],
+          "misconceptions": [
+            "远端操作必须下载完整仓库才能知道有什么",
+            "协议消息是 JSON 这类自描述格式",
+            "哈希长度前缀是多此一举"
+          ],
+          "milestone": "companion 新增 src/pkt.ts(encode/decode/flush)与 mini-git serve、ls-remote;测试断言金样字节编码、flush 帧、进程内起服务后客户端列出的引用与磁盘 refs 一致",
+          "milestone_verify": "起 mini-git serve 后,另一目录跑 mini-git ls-remote 列出的分支名与哈希和服务端仓库 refs 完全一致;hexdump 能读出 pkt-line 的 4 位长度前缀",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "sync-operations", "what": "本章引用发现返回的清单将在下一章直接成为 fetch/push 协商「缺什么、推什么」的输入" }
+          ],
+          "depends_on": ["refs-branches"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,含金样字节断言与进程内服务往返;全量门槛通过" },
+            { "kind": "prose", "criterion": "能手工给一条短消息标出 pkt-line 的长度前缀与载荷边界,并说出 flush 帧的用途" },
+            { "kind": "source", "criterion": "pkt-line 帧格式与 pack-protocol 文档一致,首现处给出处" }
+          ]
+        },
+        {
+          "slug": "sync-operations",
+          "title": "fetch、push、clone:把图搬到另一边",
+          "goal": "实现对象枚举与传输,mini-git fetch/push/clone 打通,说清远端引用与本地分支的分野",
+          "type": "build",
+          "feature_id": "sync-operations",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "phenomenon",
+            "point": "push 偶尔被拒绝:「non-fast-forward」;fetch 明明拉了东西,工作区却一个文件都没变——远端同步到底动了哪些东西、没动哪些?",
+            "phenomena": ["non-fast-forward", "被拒绝", "工作区没变"]
+          },
+          "new_concepts": ["remote-tracking 引用", "bare 仓库"],
+          "misconceptions": [
+            "push 失败是网络或权限问题",
+            "fetch 会更新当前工作区",
+            "远端分支和本地分支是同一个引用"
+          ],
+          "milestone": "companion 新增 src/remote.ts(fetchObjects/pushObjects/cloneRepo)与 mini-git fetch/push/clone;测试断言 fetch 更新 refs/remotes 而不动工作区、push 非快进被拒、clone 重建完整工作区与历史",
+          "milestone_verify": "双仓库对拍:fetch 后 remote-tracking 引用前移且文件未动;push 领先成功、落后被拒并提示 non-fast-forward;clone 出的目录 log 与源一致且工作区完整",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["wire-protocol", "merge-base"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "本章测试先红后绿,覆盖 fetch/push 接受与拒绝/clone 三类行为;全量门槛通过" },
+            { "kind": "prose", "criterion": "能解释 fetch 只动 refs/remotes、push 用 merge-base 章的 ff 判定把关,以及 bare 仓库为何没有工作区" },
+            { "kind": "source", "criterion": "remote-tracking 与 bare 仓库描述与官方文档一致,首现处给出处" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "尾声 · 对拍与地图",
+      "chapters": [
+        {
+          "slug": "end-to-end",
+          "title": "和真 git 对拍:你已经写了一个 git",
+          "goal": "用真 git 读取 mini-git 仓库完成互操作对拍,把全书机制收口成日常命令地图",
+          "type": "review",
+          "reviews": ["object-store", "tree-objects", "commit-dag", "index", "refs-branches", "text-diff", "merge-base", "three-way-merge", "wire-protocol", "sync-operations"],
+          "verification": "none",
+          "length_exempt": true,
+          "hook": {
+            "kind": "phenomenon",
+            "point": "听说「把 .git 文件夹拷走就等于备份了整个仓库」;现在你写的对象就躺在 objects 里——真 git 读得出它们吗?",
+            "phenomena": ["拷走", "备份", "真 git 读得出"]
+          },
+          "new_concepts": [],
+          "misconceptions": [
+            "自己写的玩具实现和真 git 必然不兼容",
+            "日常命令还有一层未揭穿的魔法"
+          ],
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["three-way-merge", "sync-operations"],
+          "acceptance": [
+            { "kind": "experience", "criterion": "有 git 可用时守卫测试通过:git cat-file 读 mini-git 对象、git log 走 mini-git 历史;无 git 时显式跳过而非失败" },
+            { "kind": "prose", "criterion": "日常命令(add/commit/branch/merge/pull 大致等价 fetch+merge/push)逐一映射到全书机制,兑现第 1 章地图承诺" },
+            { "kind": "source", "criterion": "mini-git 未实现能力(packfile、rebase 等)在正文明确列出并指向 divergence 附录" }
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "command-map", "title": "日常命令 → 内部机制对照表", "kind": "reference-table" },
+    { "slug": "divergence", "title": "mini-git 与真 git 的差异", "kind": "divergence" },
+    { "slug": "exercises", "title": "练习梯子", "kind": "exercises" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "从 add 到 clone 的 mini-git,产物能被真 git 直接读取",
+    "verify": "12 章测试先红后绿全数通过;终章用真 git cat-file 与 git log 读取 mini-git 仓库对拍成功"
+  }
+}

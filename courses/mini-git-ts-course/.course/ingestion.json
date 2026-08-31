@@ -1,0 +1,100 @@
+{
+  "schema_version": 2,
+  "kind": "topic",
+  "label": "git原理:使用 TypeScript 实现一个 git",
+  "description": "以亲手实现 mini-git 为主线讲 Git 原理:内容寻址对象库、目录快照、提交 DAG、暂存区、引用与分支、行级 diff、公共祖先、三方合并、pkt-line 传输协议与 fetch/clone/push。终点是读者能推理任意日常 git 命令在 .git 目录里的真实行为。",
+  "features": [
+    {
+      "id": "mental-model",
+      "name": "Git 心智模型与 .git 解剖",
+      "summary": ".git 目录逐文件解剖;快照模型而非差异模型;工作区/暂存区/仓库三区域地图; Plumbing 与 Porcelain 的分层。",
+      "reader_can": "打开任意真实仓库的 .git 目录,说出 objects/、refs/、HEAD、index 各自存什么,并把一条 git add/commit 分解为对这三个区域的写入。"
+    },
+    {
+      "id": "object-store",
+      "name": "内容寻址对象存储",
+      "summary": "blob 对象的 header+body 拼装、SHA-1 内容寻址、zlib 压缩、objects/xx/yyyy 两级松散布局。",
+      "reader_can": "对任意文件内容算出与真 git 完全一致的哈希,把对象按松散格式写入 objects 并读回,解释为什么同名内容在 git 里只存一份。"
+    },
+    {
+      "id": "tree-objects",
+      "name": "目录快照与二进制 tree 格式",
+      "summary": "tree 对象的 `<mode> <name>\\0<20字节哈希>` 二进制编码;递归把整棵目录树序列化为对象图;反向检出到工作区。附带 Buffer/字节偏移/十六进制转储的从零教学。",
+      "reader_can": "用 Buffer 手工编码/解析 tree 对象字节流,把多层目录写成 tree 对象图,并从中恢复出完整目录结构,与真 git write-tree 的产物哈希一致。"
+    },
+    {
+      "id": "commit-dag",
+      "name": "提交对象与历史 DAG",
+      "summary": "commit 对象文本格式(tree/parent/author/committer);父指针构成有向无环图而非线性链;沿 parent 遍历实现 log。",
+      "reader_can": "创建多父提交,实现 mini-git log 遍历整张提交图,解释 rebase 改历史与 merge 加父边的本质区别。"
+    },
+    {
+      "id": "index",
+      "name": "暂存区与三态对比",
+      "summary": "index v2 二进制格式(12 字节头 + 变长条目);工作区/暂存区/HEAD 三棵树对比;add 与 status 的真实机制。",
+      "reader_can": "解析真 git 生成的 index 文件,实现 mini-git add/status,对同一目录给出与 git status 一致的三态判定。"
+    },
+    {
+      "id": "refs-branches",
+      "name": "引用、分支与 HEAD",
+      "summary": "refs/heads/ 下一个文件就是一个分支;HEAD 是符号引用;分支创建/删除/切换的文件系统真相;detached HEAD。",
+      "reader_can": "用文件操作实现 branch/checkout/commit 的引用更新,解释为什么建分支是 O(1),以及 detached HEAD 下 commit 去了哪里。"
+    },
+    {
+      "id": "text-diff",
+      "name": "行级 diff",
+      "summary": "两文本求最长公共子序列衍生最小编辑脚本;unified diff 输出格式;hunk 与上下文行。",
+      "reader_can": "实现行级 diff 算法,对修改前后文件产出带 hunk 的 unified diff,并用它解释 git diff 显示的每一行来历。"
+    },
+    {
+      "id": "merge-base",
+      "name": "提交图上的公共祖先",
+      "summary": "祖先集与可达性;在 DAG 上求两提交的最近公共祖先;多候选时 git 的选择规则。",
+      "reader_can": "在任意形状的提交图上求 merge-base,用可达性判断一个提交是否是另一个的祖先,解释 fast-forward 成立的图论条件。"
+    },
+    {
+      "id": "three-way-merge",
+      "name": "三方合并与冲突",
+      "summary": "以 base/ours/theirs 三方逐行合并;非重叠改动自动合入,同区域改动产生冲突标记;merge 提交的两个父边。",
+      "reader_can": "实现三方文件合并,自动合入两侧不冲突修改,对同区域修改产出与真 git 格式一致的冲突标记,并创建双父 merge 提交。"
+    },
+    {
+      "id": "wire-protocol",
+      "name": "pkt-line 与引用发现",
+      "summary": "git 传输的原子帧 pkt-line(4 位十六进制长度前缀);引用发现握手;能力协商的简化版。",
+      "reader_can": "实现 pkt-line 编解码,搭一个能被 fetch 探测的最小引用发现服务,读出对端全部引用与哈希。"
+    },
+    {
+      "id": "sync-operations",
+      "name": "fetch/clone/push",
+      "summary": "按引用枚举缺失对象并打包传输;remote-tracking 引用与本地分支的分野;clone = 引用发现 + 全量对象 + 检出。",
+      "reader_can": "在两个 mini-git 仓库间完成 fetch 与 push,说清 FETCH_HEAD、refs/remotes 与本地的边界,以及 push 被拒的图论原因。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "mental-model", "to": "object-store" },
+      { "from": "object-store", "to": "tree-objects" },
+      { "from": "tree-objects", "to": "commit-dag" },
+      { "from": "object-store", "to": "index" },
+      { "from": "tree-objects", "to": "index" },
+      { "from": "commit-dag", "to": "refs-branches" },
+      { "from": "object-store", "to": "text-diff" },
+      { "from": "tree-objects", "to": "text-diff" },
+      { "from": "refs-branches", "to": "merge-base" },
+      { "from": "commit-dag", "to": "merge-base" },
+      { "from": "text-diff", "to": "three-way-merge" },
+      { "from": "merge-base", "to": "three-way-merge" },
+      { "from": "refs-branches", "to": "wire-protocol" },
+      { "from": "commit-dag", "to": "wire-protocol" },
+      { "from": "wire-protocol", "to": "sync-operations" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "reason": "主题是算法与二进制格式的最小重实现,没有目标仓库,正文与验证物自建 mini-git,公开概念以 git 官方文档为事实源。"
+  },
+  "issues": []
+}

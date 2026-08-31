@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "promises": [
+    {
+      "id": "p1-map-to-commands",
+      "from": "git-mental-model",
+      "from_n": 1,
+      "target": "end-to-end",
+      "what": "三区域地图在终章扩成「日常命令 → 内部机制」对照表,读者拿写完的 mini-git 逐条钉回地图收口;「拷走 .git 等于带走整个仓库」终章用 mini-git 再验一次",
+      "status": "open"
+    },
+    {
+      "id": "p2-name-from-content",
+      "from": "git-mental-model",
+      "from_n": 1,
+      "target": "content-addressed-store",
+      "what": "内容凭什么担保名字:5 个对象跨机器逐字符相同的原因,第 2 章亲手算出对象名",
+      "status": "fulfilled",
+      "resolution": "第 2 章开章逐字回收第 1 章原话;正文「先亲手算出一个对象名」用 sha1sum 算出金样、「五个对象凭什么跨机器相同」解释成因(SHA-1 纯函数,输入无机器/时间/人)、演练金样测试钉死;评审复核三处兑现。"
+    },
+    {
+      "id": "p3-writetree-vs-index",
+      "from": "tree-snapshots",
+      "from_n": 3,
+      "target": "index-file",
+      "what": "mini-git write-tree 扫工作区、真 git 吃暂存区——这个差异在 index 章补全,write-tree 将改为从暂存区清单生成树",
+      "status": "open"
+    },
+    {
+      "id": "p3-commit-record-left",
+      "from": "tree-snapshots",
+      "from_n": 3,
+      "target": "commit-dag",
+      "what": "第 1 章 6 对象账清至「还欠 1 份提交记录」,commit-dag 章拆解提交对象兑现",
+      "status": "fulfilled",
+      "resolution": "第 4 章开章逐字回收第 3 章原话;「先挖出一笔真的提交」逐行拆解、演练金样与真 git 逐字符一致、收束宣布 6 对象账结清第一部分收官;评审复核兑现。"
+    }
+  ]
+}

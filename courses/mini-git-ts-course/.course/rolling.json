@@ -1,0 +1,80 @@
+{
+  "schema_version": 2,
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "git-mental-model",
+      "file": "docs/01-git-mental-model.md",
+      "status": "complete",
+      "summary": "读者能解剖任意 .git 目录(HEAD/index/objects/refs 职责),把 status 三段归位为三区域两两比较,说出 add/commit 各搬一跳,识别底层命令与 porcelain,理解快照模型与同名对象不重存。验证物:companion 脚手架建立(package.json/tsconfig/vitest.config/cli.ts/runCli/冒烟测试 3 例),三门槛全绿;评审 1 阻断 3 建议已修清。",
+      "artifacts": [
+        "companion/package.json",
+        "companion/tsconfig.json",
+        "companion/vitest.config.ts",
+        "companion/src/cli.ts",
+        "companion/tests/smoke.test.ts"
+      ],
+      "gates": [
+        { "command": "pnpm install", "result": "passed" },
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/01-git-mental-model.md 快照模型 工作区 暂存区 对象库 底层命令 --new 快照模型 工作区 暂存区 对象库 底层命令 --pain 复制粘贴 备份 .git", "result": "passed" }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "content-addressed-store",
+      "file": "docs/02-content-addressed-store.md",
+      "status": "complete",
+      "summary": "读者能亲手算出对象名(对象头+内容取 SHA-1),解释 5 个对象跨机器相同、提交对象不同名的原因,说出去重=同名即同内容、压缩不影响名字。验证物:+src/objects.ts(hashObject/writeObject/readObject/initRepo)、+tests/objects.test.ts(18 例)、cli.ts 接 init/hash-object/cat-file;金样与真 git 对拍逐字符一致,含 zlib level 1 落盘字节一致。评审 0 阻断 4 建议已修清。",
+      "artifacts": [
+        "companion/src/objects.ts",
+        "companion/tests/objects.test.ts",
+        "companion/src/cli.ts"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/02-content-addressed-store.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 --new 内容寻址 SHA-1 对象头 松散对象 --pain 40位 指纹 hash-object", "result": "passed" }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "tree-snapshots",
+      "file": "docs/03-tree-snapshots.md",
+      "status": "complete",
+      "summary": "读者能用十六进制转储手工划出 tree 条目边界(模式/名字/20 字节哈希),解释目录变对象、路径靠递归、顺序参与哈希、40000 存储 vs 040000 显示两口径,完成 Buffer 从零入门(六手+readUInt32BE 预教)。验证物:+src/trees.ts(parseTree/encodeTree/writeTree/checkoutTree)、+tests/trees.test.ts(19 例:根/lib/deep 金样、字节 round-trip、mktree 100755)、cli 接 write-tree 与 cat-file -p 识 tree;与真 git 逐字符/逐字节对拍一致。评审 0 阻断 5 建议已修清。",
+      "artifacts": [
+        "companion/src/trees.ts",
+        "companion/tests/trees.test.ts",
+        "companion/src/cli.ts"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/03-tree-snapshots.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer --new tree 对象 文件模式 十六进制转储 Buffer --pain checkout 恢复 嵌套", "result": "passed" }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "commit-dag",
+      "file": "docs/04-commit-dag.md",
+      "status": "complete",
+      "summary": "读者能拆解提交对象文本(tree/parent/author/committer/空行/消息),说出提交图是有向无环图、merge 与普通提交同存储只差 parent 行数,从「后代字节里抄着祖先名字」推出改一笔后代哈希全变、旧链仍在库里,知道 log 是沿 parent 边现算遍历。验证物:+src/commits.ts(commitTree/parseCommit/encodeCommit/logWalk)、+tests/commits.test.ts(22 例:链/分叉/双父金样)、cli 接 commit-tree/log;七金样与真 git 逐字符对拍,62/62 全绿。第 1 章 6 对象账结清,第一部分收官。评审 1 阻断 4 建议已修清。",
+      "artifacts": [
+        "companion/src/commits.ts",
+        "companion/tests/commits.test.ts",
+        "companion/src/cli.ts"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/04-commit-dag.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 --new commit 对象 父提交 提交图 --pain git log 天书 哈希全变", "result": "passed" }
+      ],
+      "review_blockers": 0
+    }
+  ]
+}

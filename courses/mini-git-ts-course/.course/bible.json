@@ -1,0 +1,83 @@
+{
+  "schema_version": 2,
+  "reader_model": {
+    "known": [
+      "日常 TypeScript:类型、模块、async/await、npm/pnpm 脚本",
+      "Node 内置库调用:crypto.createHash 算哈希、zlib 压缩解压",
+      "git add/commit/push 的操作记忆"
+    ],
+    "unfamiliar": [
+      { "concept": "二进制字节流解析", "why": "tree 与 index 是二进制格式,读者从未处理过字节偏移与定长字段", "anchor": "判别题「处理过二进制 Buffer」未选" },
+      { "concept": "从零搭带测试的 TS 工程", "why": "companion 工程的脚手架需要在第 1 章逐步给出并解释", "anchor": "判别题「从零写过千行级 TS 项目」未选" },
+      { "concept": "git 内部结构与底层命令", "why": ".git 目录、暂存区、分支引用全部按零基础教", "anchor": "熟练度题选「基础三板斧」" },
+      { "concept": "远端同步机制", "why": "fetch/push 从未接触过,协议需从帧格式讲起", "anchor": "校准无任何协议经验" }
+    ]
+  },
+  "glossary": [
+    { "term": "快照模型", "en": "snapshot model", "definition": "Git 的每次提交记录的是当时整棵目录树的完整快照,不是相对上一版的差异清单。" },
+    { "term": "工作区", "en": "working tree", "definition": "你正在编辑、看得见的目录;与仓库之间隔着暂存区。" },
+    { "term": "暂存区", "en": "staging area / index", "definition": "工作区与仓库之间的缓冲层,本质是 .git/index 文件,记录「下一次提交将包含哪些文件的哪个版本」。" },
+    { "term": "对象库", "en": "object database", "definition": ".git/objects 下按内容寻址存放的全部不可变对象,是 Git 唯一的持久层。" },
+    { "term": "底层命令", "en": "plumbing", "definition": "操作单个机制的细粒度命令(hash-object、cat-file、write-tree 等);与之相对的 porcelain(瓷器)高层命令(add、commit、branch)只是它们的便捷组合。" },
+    { "term": "内容寻址", "en": "content-addressed", "definition": "对象的名字由其内容决定:对「类型+长度+内容」整体取 SHA-1,同内容必然同名。" },
+    { "term": "SHA-1", "en": "SHA-1", "definition": "Git 传统对象命名使用的 160 位哈希;40 个十六进制字符,前 2 位做目录、后 38 位做文件名。" },
+    { "term": "对象头", "en": "object header", "definition": "对象字节流开头的 `<类型> <字节数>\\0` 文本前缀,参与哈希计算,读回时用它区分对象种类。" },
+    { "term": "松散对象", "en": "loose object", "definition": "zlib 压缩后直接落在 objects/xx/yyyy… 的单个文件形态,与打包进 packfile 相对。" },
+    { "term": "tree 对象", "en": "tree object", "definition": "目录快照的二进制对象:一串 `<模式> <名字>\\0<20 字节哈希>` 条目,子目录递归指向另一棵 tree。" },
+    { "term": "文件模式", "en": "file mode", "definition": "tree 条目里的 6 位八进制权限串,普通文件 100644、可执行文件 100755、目录 40000、符号链接 120000。" },
+    { "term": "十六进制转储", "en": "hex dump", "definition": "把字节流按偏移量逐字节打印成十六进制的观察手段,调试二进制格式的第一工具。" },
+    { "term": "Buffer", "en": "Buffer", "definition": "Node 表示定长字节序列的类型,本课程用它做全部二进制编码与解析。" },
+    { "term": "commit 对象", "en": "commit object", "definition": "文本对象:指向一棵 tree、零到多个 parent、作者与提交者信息及时间戳。" },
+    { "term": "父提交", "en": "parent commit", "definition": "commit 对象里的 parent 字段;普通提交一个父,merge 提交两个,根提交零个。" },
+    { "term": "提交图", "en": "commit graph", "definition": "以提交为节点、父指针为边的有向无环图;分支、合并、变基都只是在这张图上的操作。" },
+    { "term": "index 文件", "en": "index file", "definition": ".git/index 的二进制格式:12 字节文件头 + 变长条目 + 路径名,暂存区的物理实体。" },
+    { "term": "三态对比", "en": "three-way comparison", "definition": "把工作区、暂存区、HEAD 三方两两比对得出 status;add 与 commit 各只搬动一跳。" },
+    { "term": "引用", "en": "ref", "definition": "指向某个对象的命名指针,通常是「含 40 位哈希的一行小文件」,存于 .git/refs 下。" },
+    { "term": "符号引用", "en": "symbolic ref", "definition": "内容为 `ref: <另一个引用>` 的间接引用,HEAD 就是指向当前分支的符号引用。" },
+    { "term": "detached HEAD", "en": "detached HEAD", "definition": "HEAD 直接指向某提交而非分支名;此时新提交不属于任何分支,切走后只能靠哈希找回。" },
+    { "term": "编辑脚本", "en": "edit script", "definition": "把文本 A 变成文本 B 的最少增删行操作序列,diff 的算法产物。" },
+    { "term": "最长公共子序列", "en": "longest common subsequence", "definition": "两序列按顺序共有的最长子序列;其补集即编辑脚本,是行级 diff 的算法基础。" },
+    { "term": "unified diff", "en": "unified diff", "definition": "Git 默认的 diff 输出格式:`@@ -a,b +c,d @@` 的 hunk 头加上下文行与 +/- 行。" },
+    { "term": "hunk", "en": "hunk", "definition": "unified diff 中一段连续改动的块:位置头、若干上下文行与增删行。" },
+    { "term": "可达性", "en": "reachability", "definition": "沿父指针能走到的提交集合;分支、tag、HEAD 是让对象「活下来」的根。" },
+    { "term": "最近公共祖先", "en": "lowest common ancestor", "definition": "两提交在图上公共祖先中离二者最近者,即 merge-base,三方合并的 base。" },
+    { "term": "fast-forward", "en": "fast-forward", "definition": "一方是另一方祖先时,合并只是把分支指针前移,不产生新提交。" },
+    { "term": "三方合并", "en": "three-way merge", "definition": "以 base 为基准分别对 ours/theirs 打改动:改不同处自动合入,改同一处才冲突。" },
+    { "term": "冲突标记", "en": "conflict marker", "definition": "合并器写入工作区的 `<<<<<<<`/`=======`/`>>>>>>>` 分隔块,标出两侧各自的版本。" },
+    { "term": "merge 提交", "en": "merge commit", "definition": "带两个父提交的提交,第一条边指向 ours、第二条指向 theirs。" },
+    { "term": "pkt-line", "en": "pkt-line", "definition": "Git 传输协议的帧格式:4 位十六进制长度前缀 + 载荷,0000 为分隔_flush 帧。" },
+    { "term": "引用发现", "en": "ref discovery", "definition": "传输握手第一步:客户端 GET/连接后收到对端 pkt-line 流出的全部引用与哈希。" },
+    { "term": "remote-tracking 引用", "en": "remote-tracking ref", "definition": "refs/remotes/<名>/ 下记录「远端分支上次同步时在哪」的本地引用,push/fetch 更新它而非远端。" },
+    { "term": "bare 仓库", "en": "bare repository", "definition": "没有工作区、只有 .git 内容的仓库,充当 push/fetch 的服务端落点。" }
+  ],
+  "verification_conventions": {
+    "mode": "code-lab",
+    "framework": "Vitest + tsx",
+    "red_green": "每章先写断言外部行为的测试并观察到因能力缺失而红,再实现转绿;旧章测试文件保持只读",
+    "golden_constants": "使用确定性金样(如空 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391、\"hello world\\n\" blob 3b18e512dba79e4c8300dd08aeb37f8e728b8dad)避免依赖本机 git 配置",
+    "isolation": "测试用临时目录与固定时间戳/固定 author,不依赖网络与本机 git 配置;与真 git 的互操作仅在第 12 章以「有 git 才跑」的守卫测试出现",
+    "commands": { "typecheck": "pnpm typecheck", "test": "pnpm test" }
+  },
+  "api_contract": [
+    { "name": "hashObject / writeObject / readObject", "introduced_in": "object-store", "contract": "hashObject(type, body) 返回 40 位十六进制;writeObject 落盘松散对象;readObject(hash) 返回 { type, body }" },
+    { "name": "writeTree / parseTree", "introduced_in": "tree-objects", "contract": "writeTree(gitDir, dir) 递归序列化目录返回根 tree 哈希;parseTree(buf) 返回 [{mode, name, hash}] 条目数组" },
+    { "name": "commitTree / parseCommit / logWalk", "introduced_in": "commit-dag", "contract": "commitTree({tree, parents, message}) 返回提交哈希;logWalk(head) 按时间戳降序产出提交序列" },
+    { "name": "parseIndex / writeIndex / statusTree", "introduced_in": "index", "contract": "index 条目含 {path, hash, mode};statusTree(工作区, index, head) 产出三态判定" },
+    { "name": "readRef / updateRef / resolveHead / detachHead", "introduced_in": "refs-branches", "contract": "引用按 .git/refs 相对路径读写;resolveHead 递归解符号引用到提交哈希" },
+    { "name": "diffLines / renderUnified", "introduced_in": "text-diff", "contract": "diffLines(a, b) 返回带类型的行编辑脚本;renderUnified 产出 unified diff 文本" },
+    { "name": "isAncestor / mergeBase", "introduced_in": "merge-base", "contract": "沿父指针计算可达集;mergeBase(a, b) 返回最近公共祖先哈希或 null" },
+    { "name": "mergeBlobs / mergeCommits", "introduced_in": "three-way-merge", "contract": "mergeBlobs(base, ours, theirs) 返回 {merged, conflicts};mergeCommits 产出双父提交" },
+    { "name": "pktEncode / pktDecode / discoverRefs", "introduced_in": "wire-protocol", "contract": "pkt-line 编解码以 4 位十六进制长度为准;discoverRefs(url) 返回 [{name, hash}]" },
+    { "name": "fetchObjects / pushObjects / cloneRepo", "introduced_in": "sync-operations", "contract": "fetch 把缺失对象与 remote-tracking 引用写入本地;push 按远端引用做 fast-forward 检查;clone = 发现 + 拉全量 + 检出" }
+  ],
+  "factual_claims": true,
+  "authority_docs": [
+    { "title": "Pro Git(第 2 版)第 10 章 Git 内部原理", "url": "https://git-scm.com/book/zh/v2/Git-内部原理", "why": "对象模型、index、引用与包文件的行为正本", "as_of": "2026-08" },
+    { "title": "gitdatamodel(7)文档", "url": "https://git-scm.com/docs/gitdatamodel", "why": "blob/tree/commit 对象的模型定义与 tree 模式取值(原 gitformat-object 的内容现分家于 gitformat-loose(5) 与本页)", "as_of": "2026-08" },
+    { "title": "gitformat-loose(5)文档", "url": "https://git-scm.com/docs/gitformat-loose", "why": "松散对象的压缩与分桶布局", "as_of": "2026-08" },
+    { "title": "gitformat-index 文档", "url": "https://git-scm.com/docs/gitformat-index", "why": "index v2 文件头与条目字段布局", "as_of": "2026-08" },
+    { "title": "pack-protocol 文档", "url": "https://git-scm.com/docs/pack-protocol", "why": "pkt-line 帧格式与引用发现握手", "as_of": "2026-08" },
+    { "title": "gitrepository-layout 文档", "url": "https://git-scm.com/docs/gitrepository-layout", "why": ".git 目录各文件的职责清单", "as_of": "2026-08" },
+    { "title": "diff-generate-patch 文档", "url": "https://git-scm.com/docs/diff-generate-patch", "why": "unified diff 输出格式细节", "as_of": "2026-08" }
+  ]
+}
