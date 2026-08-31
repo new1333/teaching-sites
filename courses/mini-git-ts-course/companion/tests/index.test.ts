@@ -11,12 +11,12 @@ import {
   loadIndex,
   makeIndexEntry,
   parseIndex,
-  readHeadHash,
   scanWorktree,
   writeIndex,
   type FileSig,
   type IndexEntry,
 } from '../src/index.ts'
+import { resolveHead } from '../src/refs.ts'
 import { runCli } from '../src/cli.ts'
 
 // 真 git 2.53 对三层 fixture `git add -A` 后写出的 .git/index 全量 426 字节(od 逐字节核对后固化)。
@@ -323,12 +323,12 @@ describe('三态对比:status', () => {
     )
   })
 
-  it('没 add 过的新仓库:一切未跟踪;HEAD 是 ref: 形状且分支没生过提交,readHeadHash 返回 null', () => {
+  it('没 add 过的新仓库:一切未跟踪;HEAD 是 ref: 形状且分支没生过提交,resolveHead 返回 null', () => {
     makeFixture(work)
     expect(runCli(['status'], work)).toBe(
       ['未跟踪的文件(不在暂存区):', ...FIXTURE_PATHS.map((p) => `  ${p}`)].join('\n'),
     )
-    expect(readHeadHash(gitDir)).toBe(null)
+    expect(resolveHead(gitDir)).toBe(null)
   })
 
   it('删掉 .git/index:与 HEAD 比出全部已暂存删除,与工作区比出全部未跟踪——第 1 章的预测', () => {
@@ -353,12 +353,12 @@ describe('三态对比:status', () => {
 })
 
 describe('HEAD 读取与摊平', () => {
-  it('readHeadHash:ref: 形状解析到分支小文件;裸哈希形状直接返回', () => {
-    expect(readHeadHash(gitDir)).toBe(null) // 分支还没生过提交
+  it('resolveHead(自 refs.ts 平移):ref: 形状解析到分支小文件;裸哈希形状直接返回', () => {
+    expect(resolveHead(gitDir)).toBe(null) // 分支还没生过提交
     writeFileSync(join(gitDir, 'refs', 'heads', 'main'), `${C1}\n`)
-    expect(readHeadHash(gitDir)).toBe(C1)
+    expect(resolveHead(gitDir)).toBe(C1)
     writeFileSync(join(gitDir, 'HEAD'), `${C1}\n`) // detached:HEAD 直接写哈希
-    expect(readHeadHash(gitDir)).toBe(C1)
+    expect(resolveHead(gitDir)).toBe(C1)
   })
 
   it('flattenTree:把 HEAD 的 tree 摊平成 路径 → 指纹,含子目录', () => {

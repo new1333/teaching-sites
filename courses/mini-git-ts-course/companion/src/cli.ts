@@ -1,19 +1,22 @@
 // src/cli.ts · runCli
-import { existsSync, readFileSync, statSync, type Stats } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, type Stats } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { hashObject, initRepo, readObject, writeObject } from './objects.ts'
-import { parseTree, writeTree, writeTreeFromIndex } from './trees.ts'
+import { checkoutTree, parseTree, writeTree, writeTreeFromIndex } from './trees.ts'
 import { commitTree, logWalk, parseCommit, type CommitIdentity, type LogEntry } from './commits.ts'
 import {
   classifyStatus,
   flattenTree,
   loadIndex,
   makeIndexEntry,
-  readHeadHash,
   saveIndex,
   scanWorktree,
 } from './index.ts'
+import { attachHead, detachHead, listBranches, readHead, readRef, resolveHead, updateRef } from './refs.ts'
+
+/** 40 位十六进制;checkout 用它分辨「给的是提交名还是分支名」。 */
+const HASH_RE = /^[0-9a-f]{40}$/
 
 export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实现
 
@@ -30,7 +33,12 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
   mini-git commit-tree <tree> [-p <父>]... -m <消息>
                                   把 tree、父提交、作者与消息打包成提交对象;
                                   名字/邮箱/时间用环境变量声明,不偷看机器状态
-  mini-git log <起点提交>         从某个提交出发,按时间倒序列出可达的全部提交`
+  mini-git log <起点提交>         从某个提交出发,按时间倒序列出可达的全部提交
+  mini-git branch                 列出本地分支,当前分支标 *
+  mini-git branch <名字>          在当前提交处建分支——写一个 41 字节的小文件
+  mini-git checkout <分支|提交名>  切换分支或检出提交;给 40 位提交名进入 detached HEAD
+  mini-git commit -m <消息>       一条龙:暂存区清单 → tree → commit → 推进当前分支引用;
+                                  名字/邮箱/时间的口径与 commit-tree 相同`
 
 /** 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。 */
 export function runCli(argv: string[], cwd: string = process.cwd()): string {
@@ -55,6 +63,12 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdCommitTree(cwd, args)
     case 'log':
       return cmdLog(cwd, args)
+    case 'branch':
+      return cmdBranch(cwd, args)
+    case 'checkout':
+      return cmdCheckout(cwd, args)
+    case 'commit':
+      return cmdCommit(cwd, args)
     default:
       return `mini-git: 未知命令 '${cmd}'(收到参数:${args.join(' ')})。运行 mini-git --help 查看可用命令。`
   }
@@ -150,7 +164,7 @@ function cmdStatus(cwd: string, args: string[]): string {
   const index = new Map(loadIndex(gitDir).map((e) => [e.path, { mode: e.mode, hash: e.hash }]))
   const worktree = scanWorktree(cwd)
   const head = new Map<string, { mode: number; hash: string }>()
-  const headHash = readHeadHash(gitDir)
+  const headHash = resolveHead(gitDir)
   if (headHash !== null) {
     const { type, body } = readObject(gitDir, headHash)
     if (type !== 'commit') {
@@ -199,6 +213,143 @@ function cmdWriteTree(cwd: string, args: string[]): string {
     return writeTree(gitDir, cwd)
   }
   return writeTreeFromIndex(gitDir, loadIndex(gitDir))
+}
+
+/** 分支名的底线规则:字母数字开头,可用 . _ - 与 / 分层;不收 .. 与 .lock 结尾(参照 git check-ref-format 的底线子集)。 */
+function assertBranchName(name: string): void {
+  const shape = /^[A-Za-z0-9][A-Za-z0-9._-]*(?:\/[A-Za-z0-9][A-Za-z0-9._-]*)*$/.test(name)
+  if (!shape || name.includes('..') || name.endsWith('.lock')) {
+    throw new Error(`branch:'${name}' 不是 mini-git 收的分支名(字母数字开头,可用 . _ - 与 / 分层;不收 .. 和 .lock 结尾)`)
+  }
+}
+
+function cmdBranch(cwd: string, args: string[]): string {
+  const gitDir = requireGitDir(cwd)
+  if (args.length === 0) {
+    const head = readHead(gitDir)
+    const lines: string[] = []
+    if (head.kind === 'hash') {
+      lines.push(`* (HEAD detached at ${head.hash.slice(0, 7)})`)
+    }
+    for (const b of listBranches(gitDir)) {
+      lines.push(head.kind === 'ref' && head.ref === `refs/heads/${b}` ? `* ${b}` : `  ${b}`)
+    }
+    return lines.join('\n')
+  }
+  if (args.length === 1) {
+    assertBranchName(args[0])
+    const ref = `refs/heads/${args[0]}`
+    if (readRef(gitDir, ref) !== null) {
+      throw new Error(`branch:分支 '${args[0]}' 已存在`)
+    }
+    const head = resolveHead(gitDir)
+    if (head === null) {
+      throw new Error(`branch:当前分支还没生过提交,HEAD 指向空处——mini-git 建不了没有起点的分支,先 commit 一笔`)
+    }
+    updateRef(gitDir, ref, head)
+    return `已建分支 '${args[0]}' → ${ref} = ${head}`
+  }
+  throw new Error('用法:mini-git branch [名字];不带参数列分支,带名字在当前提交处建分支')
+}
+
+function cmdCheckout(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git checkout <分支名 | 40 位提交名>'
+  if (args.length !== 1) {
+    throw new Error(`${usage};恰好一个目标`)
+  }
+  const [target] = args
+  const gitDir = requireGitDir(cwd)
+  let hash: string
+  let branch: string | null = null // null = detached:HEAD 将直接记提交名
+  if (HASH_RE.test(target)) {
+    const kind = readObject(gitDir, target).type
+    if (kind !== 'commit') {
+      throw new Error(`checkout:'${target}' 是 ${kind} 不是 commit,检不出工作区`)
+    }
+    hash = target
+  } else {
+    branch = target
+    const found = readRef(gitDir, `refs/heads/${branch}`)
+    if (found === null) {
+      const existing = listBranches(gitDir).join('、')
+      throw new Error(`checkout:分支 '${branch}' 不存在;现有分支:${existing === '' ? '无' : existing}`)
+    }
+    hash = found
+  }
+  const count = restoreWorktree(gitDir, cwd, hash)
+  if (branch === null) {
+    detachHead(gitDir, hash)
+    return `已检出到 ${hash.slice(0, 7)}(detached HEAD:不在任何分支上,新提交只能靠哈希找回)`
+  }
+  attachHead(gitDir, `refs/heads/${branch}`)
+  return `已切换到分支 '${branch}',检出 ${count} 个文件`
+}
+
+/**
+ * 把工作区与暂存区恢复成某笔提交的样子:删旧清单里的文件、检出 tree、按检出结果重建清单。
+ * 从简口径:真 git 会先检查未提交改动、可能拒绝切换;mini-git 无条件覆盖被跟踪的文件,未跟踪的不动。
+ */
+function restoreWorktree(gitDir: string, workDir: string, commitHash: string): number {
+  const { type, body } = readObject(gitDir, commitHash)
+  if (type !== 'commit') {
+    throw new Error(`checkout:'${commitHash}' 是 ${type} 不是 commit,检不出工作区`)
+  }
+  const dirs = new Set<string>()
+  for (const e of loadIndex(gitDir)) {
+    rmSync(join(workDir, e.path), { force: true })
+    for (let i = e.path.indexOf('/'); i > 0; i = e.path.indexOf('/', i + 1)) {
+      dirs.add(e.path.slice(0, i)) // 收集祖先目录,等文件删完再顺手清空壳
+    }
+  }
+  for (const d of [...dirs].sort((a, b) => b.length - a.length)) {
+    const abs = join(workDir, d)
+    if (existsSync(abs) && readdirSync(abs).length === 0) {
+      rmSync(abs, { recursive: true })
+    }
+  }
+  const tree = parseCommit(body).tree
+  checkoutTree(gitDir, tree, workDir)
+  const entries = [...flattenTree(gitDir, tree)].map(([path, sig]) =>
+    makeIndexEntry(path, sig.hash, statSync(join(workDir, path))),
+  )
+  saveIndex(gitDir, entries)
+  return entries.length
+}
+
+function cmdCommit(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git commit -m <消息>;收暂存区清单,生成提交并推进当前分支'
+  let message: string | undefined
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] !== '-m') {
+      throw new Error(`${usage};不认识参数 '${args[i]}'`)
+    }
+    const msg = args[++i]
+    if (msg === undefined || message !== undefined) {
+      throw new Error(`${usage};恰好一个 -m,后面跟消息文本`)
+    }
+    message = msg
+  }
+  if (message === undefined) {
+    throw new Error(`${usage};-m 不能省`)
+  }
+  const gitDir = requireGitDir(cwd)
+  const tree = writeTreeFromIndex(gitDir, loadIndex(gitDir))
+  const parent = resolveHead(gitDir)
+  const hash = commitTree(gitDir, {
+    tree,
+    parents: parent === null ? [] : [parent], // unborn 分支上的第一笔:没有父提交
+    author: identityFromEnv(),
+    message: message.endsWith('\n') ? message : `${message}\n`,
+  })
+  const head = readHead(gitDir)
+  const firstLine = message.split('\n')[0]
+  if (head.kind === 'ref') {
+    updateRef(gitDir, head.ref, hash) // 推进当前分支;其他分支的引用文件一个都没碰
+    const name = head.ref.startsWith('refs/heads/') ? head.ref.slice('refs/heads/'.length) : head.ref
+    return `[${name}${parent === null ? '(根提交)' : ''} ${hash.slice(0, 7)}] ${firstLine}`
+  }
+  detachHead(gitDir, hash) // detached:HEAD 自己前移,任何分支都不动
+  return `[HEAD detached ${hash.slice(0, 7)}] ${firstLine}`
 }
 
 /** 身份与环境:mini-git 不偷看任何机器状态,名字/邮箱/时间全部由环境变量声明。 */

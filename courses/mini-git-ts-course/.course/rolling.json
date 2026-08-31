@@ -95,6 +95,27 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/05-index-file.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 --new index 文件 三态对比 --pain 忘了add Changes not staged 两段", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 6,
+      "slug": "refs-branches",
+      "file": "docs/06-refs-branches.md",
+      "status": "complete",
+      "summary": "读者能说出分支=refs/heads 下 41 字节小文件、建分支 O(1) 有实物证据;HEAD 是符号引用、三形状(ref:/裸哈希/unborn)由 resolveHead 递归解析,detached 提交不被任何分支引用、只能靠哈希找回;三条误解先公道后证伪。验证物:+src/refs.ts(9 函数,resolveHead 正式化并迁走 readHeadHash)、+tests/refs.test.ts(19 例)、cli 接 branch/checkout/commit(第一条端到端 porcelain)与 restoreWorktree;真 git rev-parse/log 读 mini-git 分支对拍一致,106/106 全绿;第 5 章正文 4 处回写终态。评审 1 阻断 5 建议已修清。",
+      "artifacts": [
+        "companion/src/refs.ts",
+        "companion/tests/refs.test.ts",
+        "companion/src/cli.ts",
+        "companion/src/index.ts",
+        "companion/tests/index.test.ts",
+        "docs/05-index-file.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/06-refs-branches.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD --new 引用 符号引用 detached HEAD --pain 建分支 detached HEAD 警告", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

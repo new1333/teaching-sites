@@ -35,6 +35,31 @@
       "what": "第 1 章 6 对象账清至「还欠 1 份提交记录」,commit-dag 章拆解提交对象兑现",
       "status": "fulfilled",
       "resolution": "第 4 章开章逐字回收第 3 章原话;「先挖出一笔真的提交」逐行拆解、演练金样与真 git 逐字符一致、收束宣布 6 对象账结清第一部分收官;评审复核兑现。"
+    },
+    {
+      "id": "p5-resolvehead",
+      "from": "index-file",
+      "from_n": 5,
+      "target": "refs-branches",
+      "what": "readHeadHash 是第 5 章的临时讲法,只服务 status;「ref: 指向另一个引用」的符号引用解析规则在 refs 章正式化为 resolveHead,分支建立/切换/detached 全踩在它上面",
+      "status": "fulfilled",
+      "resolution": "第 6 章开章逐字回收第 5 章原话;readHeadHash 迁入 refs.ts 正式化为 resolveHead(三形状语义原样平移,测试断言一字未改),branch/checkout/commit/detached 全踩其上;真 git rev-parse 读 mini-git 分支对拍一致;评审复核兑现。"
+    },
+    {
+      "id": "p6-reachability",
+      "from": "refs-branches",
+      "from_n": 6,
+      "target": "merge-base",
+      "what": "detached 丢弃的提交只能靠哈希找回——没有引用兜底的提交最终命运(被谁清理、凭什么判死),merge-base 章用可达性收口",
+      "status": "open"
+    },
+    {
+      "id": "p6-refdiscovery",
+      "from": "refs-branches",
+      "from_n": 6,
+      "target": "wire-protocol",
+      "what": "refs 目录里这份分支清单,在 wire-protocol 章握手时原样变成引用发现的输出",
+      "status": "open"
     }
   ]
 }

@@ -100,11 +100,11 @@ node -e "const b=require('fs').readFileSync('.git/index'); console.log(b.subarra
 
 顺手清算三个流传很广的直觉。其一,「add 就是保存文件到 git」。替它说句公道话:add 确实把内容存进了对象库,说「保存」不算全错。但 add 真正的动作是登记:往 index 里写一条「这个路径,此刻对应这个对象名」。文件之后随便改,条目不动——保存的是那一刻,不是这个文件。其二,「commit 提交的是工作区当前样子」。反事实一戳就破:改完不 add 就 commit,收走的是暂存区里那份旧登记,你屏幕上的新版一个字节都不进历史。这正是本章开篇那桩事故,也是快照模型的另一半:第 2 章说对象存的是完整版本,这里补上「冻结哪一刻」——add 那一刻,不是敲 commit 那一刻。其三,「status 是拿工作区和远端比」。status 全程没碰网络:远端、上游分支,一个都没出场。它比的三个东西全在你本地磁盘上。
 
-要把 HEAD 那张表摊出来,得先知道 HEAD 指着谁。第 1 章解剖过:`.git/HEAD` 是个一行的小文件,内容 `ref: refs/heads/main`。所以读法是两跳。先读 HEAD 文本,见到 `ref: ` 开头,就去读它指的那个小文件,里面才是 40 位提交名。分支还没生过提交时,那个小文件不存在,当作「没有 HEAD」。mini-git 把这两跳写成一个小工具 readHeadHash。这里显式登记一笔账。readHeadHash 是本章的临时讲法,只服务 status;「ref: 指向另一个引用」这套符号引用的解析规则,下一章会正式化成 refs.ts 的 resolveHead。分支的建立、切换、detached,全踩在它上面。
+要把 HEAD 那张表摊出来,得先知道 HEAD 指着谁。第 1 章解剖过:`.git/HEAD` 是个一行的小文件,内容 `ref: refs/heads/main`。所以读法是两跳。先读 HEAD 文本,见到 `ref: ` 开头,就去读它指的那个小文件,里面才是 40 位提交名。分支还没生过提交时,那个小文件不存在,当作「没有 HEAD」。mini-git 把这两跳写成一个小工具——本章动手时它叫 readHeadHash,寄居在 index.ts。这里显式登记一笔账:readHeadHash 是本章的临时讲法,只服务 status。下一章会把「ref: 指向另一个引用」这套符号引用的解析规则,正式化成 refs.ts 的 resolveHead。函数搬家、旧名退场,分支的建立、切换、detached,全踩在它上面。
 
 ## 演练:从红到绿
 
-手术清单先交代。src/index.ts 一个文件装九个函数,编解码与三态对比都在里面:parseIndex、writeIndex 负责字节来回。loadIndex、saveIndex、makeIndexEntry 管清单的读写与造条目。scanWorktree、flattenTree、readHeadHash 负责备三张表,classifyStatus 出四类判定。新增 tests/index.test.ts,25 条。src/trees.ts 动一处:新增 writeTreeFromIndex——平面清单拼回嵌套树,就住在 compareEntries 旁边,直接用那把仍私着的排序尺。不导出它的动机只有一个:tree 的排序必须与第 3 章同一把尺子,谁要拼树都得到 trees.ts 里来拼,各写一份迟早走岔。src/cli.ts 接 add 与 status 两个子命令,write-tree 改成两路分流。四份旧测试一字未动。
+手术清单先交代。src/index.ts 一个文件装九个函数,编解码与三态对比都在里面:parseIndex、writeIndex 负责字节来回。loadIndex、saveIndex、makeIndexEntry 管清单的读写与造条目。scanWorktree、flattenTree 负责备工作区与 HEAD 的两张表。外加读 HEAD 的临时小工具 readHeadHash——第 6 章迁进 refs.ts 改名 resolveHead,index.ts 终态剩八个函数。classifyStatus 出四类判定。新增 tests/index.test.ts,25 条。src/trees.ts 动一处:新增 writeTreeFromIndex——平面清单拼回嵌套树,就住在 compareEntries 旁边,直接用那把仍私着的排序尺。不导出它的动机只有一个:tree 的排序必须与第 3 章同一把尺子,谁要拼树都得到 trees.ts 里来拼,各写一份迟早走岔。src/cli.ts 接 add 与 status 两个子命令,write-tree 改成两路分流。四份旧测试一字未动。
 
 测试的牙齿还是金样,这次的骨头最硬:真 git 2.53 对同一套 fixture `git add -A` 写出的 .git/index,426 字节逐字节固化成常量。
 
@@ -331,7 +331,7 @@ function cmdAdd(cwd: string, args: string[]): string {
 
 add 的核心就一句:把「路径 → 此刻的对象名」写进清单。blob 照第 2 章 writeObject 落库,同内容只落一次;条目由 makeIndexEntry 用 stat 数据填满;saveIndex 整体重写。守卫三道:仓库外、.git 内、不是普通文件,各报各的错。真 git 的 add 会展开目录、会暂存删除,这两样 mini-git 都不做,差异附录再记两笔。
 
-status 的发动机 classifyStatus 是纯函数:三张「路径 → 指纹」表进去,四类判定出来。cmdStatus 只负责备料。loadIndex 摊暂存区的表,scanWorktree 摊工作区的表——跳过 .git,逐文件算指纹但不落库。readHeadHash 找头,flattenTree 摊 HEAD 的表。最后 renderStatus 按三段渲染,段头写明「哪两块在比」。classifyStatus 的骨架是一层循环里两次独立的字典查找,与「三态对比」小节的四条判词一一对应,不再贴。
+status 的发动机 classifyStatus 是纯函数:三张「路径 → 指纹」表进去,四类判定出来。cmdStatus 只负责备料。loadIndex 摊暂存区的表,scanWorktree 摊工作区的表——跳过 .git,逐文件算指纹但不落库。读 HEAD 的小工具找头(本章动手时叫 readHeadHash,后来住进 refs.ts 叫 resolveHead),flattenTree 摊 HEAD 的表。最后 renderStatus 按三段渲染,段头写明「哪两块在比」。classifyStatus 的骨架是一层循环里两次独立的字典查找,与「三态对比」小节的四条判词一一对应,不再贴。
 
 </details>
 
@@ -412,7 +412,7 @@ rm .git/index
 $MG $CLI status
 ```
 
-删 index 前最后一行报告「干净」,readHeadHash 两跳读到了你手写的 refs/heads/main。删掉后再跑 status,先猜输出有几行、每行什么标签。对答案:八条文件行,外加两行段头,共 10 行。已暂存段四条「删除」——清单空了,对 HEAD 比出全删。未跟踪段四条——工作区的文件对空清单全是陌生面孔。第 1 章用真 git 预测过的局面,mini-git 用同一套三态对比复现出来。log 不受影响:历史在对象库和引用里,与清单无关。
+删 index 前最后一行报告「干净」,读 HEAD 的小工具两跳读到了你手写的 refs/heads/main。删掉后再跑 status,先猜输出有几行、每行什么标签。对答案:八条文件行,外加两行段头,共 10 行。已暂存段四条「删除」——清单空了,对 HEAD 比出全删。未跟踪段四条——工作区的文件对空清单全是陌生面孔。第 1 章用真 git 预测过的局面,mini-git 用同一套三态对比复现出来。log 不受影响:历史在对象库和引用里,与清单无关。
 
 第四猜,定向破坏。指认一处:src/index.ts 的 parseIndex 末尾,`const body = bytes.subarray(...)` 起的三行——计算并比对末尾校验和的那段——整段删掉,让函数直接 return entries。收集照旧、四类判定照旧、写树照旧,一处都不动。先写预测:pnpm test 红几条?红的是哪一类测试?跑。
 
@@ -422,7 +422,7 @@ $MG $CLI status
 
 开篇的事故收口。忘了 add,commit 出来的是旧版——因为 commit 从暂存区清单出发,而清单里的条目停在 add 那一刻。status 的两段同现,因为暂存区与工作区各输了一次自己的比较。同一文件两个版本,一个文件两段输出;git 没有含糊,是暂存区把「此刻」冻结成了字节。这章把那个观念中的中转站落成了实物:12 字节头、62 字节定长条目、路径垫齐到 8 的倍数、末尾 SHA-1 保险丝。真 git 写的,mini-git 逐字节读得懂;mini-git 写的,真 git 全文认账。第 3 章那笔「write-tree 扫工作区」的欠账,连同第 1 章「index 内部长什么样」的记账,两笔一起结清。
 
-零件柜这章进的东西。两个词:index 文件、三态对比。九个函数装进 src/index.ts,外加 trees.ts 的 writeTreeFromIndex 与一把导出的排序尺。两条命令:add 与 status,第一批日用级;write-tree 从此吃清单,无清单时退回老路,与真 git 的空树口径是一条登记过的分岔。新欠一笔,正文里埋过两次:readHeadHash 是临时讲法,「ref: 指向另一个引用」的解析规则下一章正式化成 resolveHead。实验里你还得手写 refs/heads/main 才能 commit,这个别扭正是下一章要拆的机关——分支、切换、detached,全都长在它上面。
+零件柜这章进的东西。两个词:index 文件、三态对比。本章动手时 index.ts 装九个函数,外加 trees.ts 的 writeTreeFromIndex 与一把导出的排序尺。两条命令:add 与 status,第一批日用级;write-tree 从此吃清单,无清单时退回老路,与真 git 的空树口径是一条登记过的分岔。新欠一笔,正文里埋过两次:读 HEAD 的小工具是临时讲法,「ref: 指向另一个引用」的解析规则下一章正式化成 resolveHead。实验里你还得手写 refs/heads/main 才能 commit,这个别扭正是下一章要拆的机关——分支、切换、detached,全都长在它上面。
 
 三道迁移题,先押答案再展开,卡住按提示回查。
 

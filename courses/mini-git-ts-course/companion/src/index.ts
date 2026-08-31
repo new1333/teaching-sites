@@ -250,33 +250,6 @@ export function flattenTree(gitDir: string, hash: string): Map<string, FileSig> 
   return out
 }
 
-/**
- * 读 HEAD 指向的提交名;HEAD 是 ref: 形状就读它指的小文件,分支还没生过提交返回 null。
- * 临时讲法:下一章把这套「符号引用解析」正式化成 refs.ts 的 resolveHead。
- */
-export function readHeadHash(gitDir: string): string | null {
-  const headPath = join(gitDir, 'HEAD')
-  if (!existsSync(headPath)) {
-    throw new Error(`HEAD 文件不存在:'${headPath}'——mini-git init 会写它,丢了就找不回当前分支`)
-  }
-  const text = readFileSync(headPath, 'utf8').trim()
-  if (HASH_RE.test(text)) {
-    return text // detached:HEAD 里直接写着提交名,没有中间层
-  }
-  if (!text.startsWith('ref: ')) {
-    throw new Error(`HEAD 已损坏:内容 '${text}' 既不是 ref: 形状也不是 40 位提交名`)
-  }
-  const refFile = join(gitDir, text.slice(5).trim())
-  if (!existsSync(refFile)) {
-    return null // 分支存在但从没生过提交: unborn,HEAD 指向空处
-  }
-  const hash = readFileSync(refFile, 'utf8').trim()
-  if (!HASH_RE.test(hash)) {
-    throw new Error(`HEAD 指向的 '${text.slice(5)}' 里不是 40 位提交名,而是 '${hash}'`)
-  }
-  return hash
-}
-
 /** 三态对比:暂存区、工作区、HEAD 两两比对,每条路径归进四类之一。 */
 export function classifyStatus(
   index: ReadonlyMap<string, FileSig>,
