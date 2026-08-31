@@ -7,7 +7,8 @@
       "from_n": 1,
       "target": "end-to-end",
       "what": "三区域地图在终章扩成「日常命令 → 内部机制」对照表,读者拿写完的 mini-git 逐条钉回地图收口;「拷走 .git 等于带走整个仓库」终章用 mini-git 再验一次",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "第 12 章开章逐字回收第 1 章两句原话;「日常命令→内部机制」十行对照表逐条钉回函数与章节(评审逐行核实章号与 companion 终态一致);「拷走 .git」以 interop 测试与读者实验双钉(只拷 .git 后 git log 完整、status 仅报工作区删除);driving question 收口成一段答案;评审复核兑现。"
     },
     {
       "id": "p2-name-from-content",

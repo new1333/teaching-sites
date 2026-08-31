@@ -2,10 +2,10 @@
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
   "status": "generating",
-  "phase": "chapters",
+  "phase": "book-review",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 12,
+  "next_chapter": null,
   "completed_chapters": [
     "git-mental-model",
     "content-addressed-store",
@@ -17,7 +17,8 @@
     "merge-base",
     "three-way-merge",
     "wire-protocol",
-    "sync-operations"
+    "sync-operations",
+    "end-to-end"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -26,6 +27,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "sync-operations"
+    "id": "end-to-end"
   }
 }

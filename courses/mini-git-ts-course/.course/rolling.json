@@ -214,6 +214,22 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/11-sync-operations.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 pkt-line 引用发现 remote-tracking 引用 bare 仓库 --new remote-tracking 引用 bare 仓库 --pain non-fast-forward 被拒绝 工作区没变", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 12,
+      "slug": "end-to-end",
+      "file": "docs/12-end-to-end.md",
+      "status": "complete",
+      "summary": "读者能让真 git 验 mini-git 的货(cat-file 逐对象、log 走双父历史、rev-parse/merge-base 同答、fsck --strict 零输出),反读真 git 对象与 index;分清拷走 .git 带历史不带文件;「日常命令→内部机制」十行表逐条钉回函数;未实现能力(packfile/rebase/reflog/submodule/协商)指向 divergence 附录;pull 措辞按现行文档校准(默认 --ff-only);driving question 收口成一段答案,重答第 1 章三问。验证物:+tests/interop.test.ts(11 例守卫式,有 git 才跑、无 git 显式 skip,金样独立复算命中;含 POSIX 路径修正)。评审 4 阻断 4 建议已修清。",
+      "artifacts": [
+        "companion/tests/interop.test.ts"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/12-end-to-end.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 pkt-line 引用发现 remote-tracking 引用 bare 仓库 --pain 拷走 备份 真 git 读得出", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }
