@@ -1,0 +1,116 @@
+[
+  {
+    "from": "why-in-memory",
+    "target": "resp-protocol",
+    "what": "收束段承诺：下一章亲手写 RESP 解析器，让自己的服务器第一次听懂 redis-cli 说话",
+    "status": "fulfilled"
+  },
+  {
+    "from": "resp-protocol",
+    "target": "single-thread-event-loop",
+    "what": "雏形埋的雷（并发模型：一个一言不发的客户端会不会卡死别人）第 3 章拆；管道下一章做正经实验",
+    "status": "fulfilled"
+  },
+  {
+    "from": "resp-protocol",
+    "target": "hash-table-rehash",
+    "what": "Map 是 JS 送的暂住房——第 4 章换上自己手写的哈希表",
+    "status": "fulfilled"
+  },
+  {
+    "from": "single-thread-event-loop",
+    "target": "ttl-expire",
+    "what": "主线程上的慢活会冻结全场——定期删除为什么必须掐时间上限分小批做，这个动机在「过期删除」章兑现",
+    "status": "fulfilled"
+  },
+  {
+    "from": "single-thread-event-loop",
+    "target": "hash-table-rehash",
+    "what": "「扩容能不能不停机」的问题第 4 章亲手解（渐进搬迁＝本章摊薄手法的亲戚）",
+    "status": "fulfilled"
+  },
+  {
+    "from": "single-thread-event-loop",
+    "target": "aof",
+    "what": "fsync 在第 8 章（AOF）正式登场：把数据真正钉进磁盘的系统调用",
+    "status": "fulfilled"
+  },
+  {
+    "from": "hash-table-rehash",
+    "target": "ttl-expire",
+    "what": "「摊薄」药方第 6 章再用一次：定期删除每轮只删一小批、掐着时间上限",
+    "status": "fulfilled"
+  },
+  {
+    "from": "skiplist-zset",
+    "target": "ttl-expire",
+    "what": "「键的家有了，键的寿命下一章管」——排行榜成员与验证码的过期由过期字典接管",
+    "status": "fulfilled"
+  },
+  {
+    "from": "ttl-expire",
+    "target": "eviction-lru",
+    "what": "收束段承诺：内存满了删谁——淘汰牺牲活键，「内存淘汰」章接管（抽 5 踢最久未用；Evictor 删键走与过期同一套删键路径）",
+    "status": "fulfilled"
+  },
+  {
+    "from": "ttl-expire",
+    "target": "aof",
+    "what": "键过期时真 Redis 在 AOF 里补记一条 DEL 让重放一致——「AOF」章兑现",
+    "status": "fulfilled"
+  },
+  {
+    "from": "eviction-lru",
+    "target": "aof",
+    "what": "淘汰删的是活键、命令日志里没有它的死讯——真 Redis 会向 AOF 与从库补记一条 DEL，重放才与内存一致，「AOF」章兑现",
+    "status": "fulfilled"
+  },
+  {
+    "from": "aof",
+    "target": "rdb-snapshot",
+    "what": "「逐条重放太慢的问题，下一章用快照解决」；fork 与写时复制讲清（拍照不停写），重写的后台版（fork 子进程）一并交代",
+    "status": "fulfilled"
+  },
+  {
+    "from": "rdb-snapshot",
+    "target": "replication-ha",
+    "what": "「fork 那台『拍照不停写』的机器下一章再开一次：主从第一次全量同步发的就是一张 RDB」",
+    "status": "fulfilled"
+  },
+  {
+    "from": "replication-ha",
+    "target": "review-and-beyond",
+    "what": "「终章对账会回到这一条：mini 缺的不是单机内核，是多机的那一层」——终章四问之「一台挂了怎么办」回收",
+    "status": "fulfilled"
+  },
+  {
+    "from": "why-in-memory",
+    "target": "resp-protocol",
+    "what": "行内闪前：开篇「下一章从第一行代码开始」",
+    "status": "fulfilled"
+  },
+  {
+    "from": "resp-protocol",
+    "target": "skiplist-zset",
+    "what": "行内闪前（回写后）：单键空间的跳表键伏笔",
+    "status": "fulfilled"
+  },
+  {
+    "from": "hash-table-rehash",
+    "target": "skiplist-zset",
+    "what": "行内闪前：结尾钩子「能二分查找的链表——下一章接手」",
+    "status": "fulfilled"
+  },
+  {
+    "from": "ttl-expire",
+    "target": "eviction-lru",
+    "what": "行内闪前：到下一章回调升级成 dropKey 统一路径",
+    "status": "fulfilled"
+  },
+  {
+    "from": "rdb-snapshot",
+    "target": "replication-ha",
+    "what": "行内闪前：fork 那台拍照不停写的机器下一章再开一次",
+    "status": "fulfilled"
+  }
+]

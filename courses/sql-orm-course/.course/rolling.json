@@ -1,0 +1,88 @@
+{
+  "chapters": [
+    {
+      "slug": "tables-and-rows",
+      "file": "docs/01-tables-and-rows.md",
+      "degraded": false,
+      "rolling_summary": "已建立 src/db.ts：createDb()（内存库+外键开）与 Db 四方法 exec/run/all/get、类型 SqlValue/RunResult，? 按序传参。概念：关系模型、数据库是独立进程、CREATE TABLE/INSERT/SELECT、三种类型。读者能建表、插入、SELECT 锁行取列。变更：新增 src/db.ts 与 5 断言。"
+    },
+    {
+      "slug": "where-order-limit",
+      "file": "docs/02-where-order-limit.md",
+      "degraded": false,
+      "rolling_summary": "只增 7 断言，src 未动。概念：声明式（CSS 锚点）、WHERE 全家（比较/AND/OR/IN/LIKE/BETWEEN）、ORDER BY 多列+主键兜底、LIMIT/OFFSET 公式、NULL 三值逻辑（IS NULL、NOT 救不回、混合逐行判）。方言：LIMIT m,n、LIKE 大小写、NULL 排序。读者能手算筛/排/切。"
+    },
+    {
+      "slug": "update-delete-constraints",
+      "file": "docs/03-update-delete-constraints.md",
+      "degraded": false,
+      "rolling_summary": "只增 12 断言，src 未动。概念：UPDATE/DELETE 带 WHERE 与省略=全表、changes 计数、主键=rowid 别名与发号复用、AUTOINCREMENT 通常不需要、外键 REFERENCES+PRAGMA 两态、NOT NULL/UNIQUE/DEFAULT。方言：AUTO_INCREMENT/SERIAL。读者能安全改删数据、配齐五条家规。"
+    },
+    {
+      "slug": "aggregate-group-by",
+      "file": "docs/04-aggregate-group-by.md",
+      "degraded": false,
+      "rolling_summary": "只增 8 断言，src 未动。概念：聚合五件套、COUNT(*) 对 COUNT(列) 的 NULL 记账（SUM/AVG 跳过、全空出 NULL）、GROUP BY 分桶与裸列规矩、HAVING 筛组在 WHERE 筛行之后、AS 别名与 ORDER BY。方言：HAVING 用别名 MySQL 认 PG 不认；GROUP BY 不保证顺序。读者能手推并断言分组报表查询。"
+    },
+    {
+      "slug": "join-tables",
+      "file": "docs/05-join-tables.md",
+      "degraded": false,
+      "rolling_summary": "只增 9 断言，src 未动。概念：JOIN=按连接条件配对（呼应外键）、一对多左行重复；INNER 丢配不上的行，LEFT 保左表全量、差额=无订单用户数；表别名与 u./o. 前缀消歧+AS；三表链式；ON 管配对、WHERE 筛拼好后的行（LEFT 下筛右表=打回 INNER）。方言：逗号写法等价内连接、忘条件即叉积。读者能用一句 JOIN 替掉双重循环并手推行集。"
+    },
+    {
+      "slug": "index-query-plan",
+      "file": "docs/06-index-query-plan.md",
+      "degraded": false,
+      "rolling_summary": "原理章，未动 src 与测试。概念：全表扫描=行数即工作量（线性）；索引=为一列另维护的有序目录，B-tree 对数定位（50 万行 19 步封顶），账单是写入变慢加占空间；EXPLAIN QUERY PLAN 读法（SCAN/SEARCH）；主键与 UNIQUE 自带目录；联合索引最左前缀、范围后列失效、LIKE 前缀需 NOCASE 目录。读者能对慢查询跑计划判索引。"
+    },
+    {
+      "slug": "what-is-orm",
+      "file": "docs/07-what-is-orm.md",
+      "degraded": false,
+      "rolling_summary": "原理章，未动 src 与测试。概念：ORM=对象与关系模型间的翻译层（两笔旧账：结构两处维护、SQL 是字符串）；分层地图：上 ORM 水合/脏跟踪/关联、中查询构建器、下驱动；AR vs Data Mapper（save 在谁身上）；生态对照（knex 只有中层、Prisma schema 文件生成 client）；ORM 生成的 SQL 仍要看得懂（日志+EXPLAIN，N+1 第 12 章拆）。读者能把任一 ORM 调用放回地图、翻回 SQL。"
+    },
+    {
+      "slug": "sql-injection",
+      "file": "docs/08-sql-injection.md",
+      "degraded": false,
+      "rolling_summary": "只增 6 断言，src 未动。概念：SQL 注入=拼接让数据变代码（admin 逐字符演算、OR 恒真倒全表、UNION 拖库）；参数化=模板与数据分通道、输入不参加解析；预编译语句=prepare 先定型、参数后绑定（run/all/get 底层）；转义只是创可贴；prepare 只编一句、exec 才多语句。读者能复现注入与防御、讲清机理。"
+    },
+    {
+      "slug": "schema-to-ddl",
+      "file": "docs/09-schema-to-ddl.md",
+      "degraded": false,
+      "rolling_summary": "已建立 src/schema.ts：ColumnType/ColumnDef/Table，generateCreateTableSql（纯函数）与 defineTable（建表返回表句柄）。约束固定顺序拼装，不生成 AUTOINCREMENT，未知类型抛中文错。概念：DDL、schema（数据库语境）、类型映射——只认 integer/text/real，布尔与日期不映射、驼峰映射不做（登记差异清单）。读者能用对象定义带约束与外键的表并逐字核对 DDL。"
+    },
+    {
+      "slug": "query-builder",
+      "file": "docs/10-query-builder.md",
+      "degraded": false,
+      "rolling_summary": "已建立 src/builder.ts：QueryBuilder——where/orderBy/limit/offset 只记账，toSQL() 编译 { sql, params }（值全走 ?，LIMIT/OFFSET 成对编译、缺省补 -1/0），all()/get() 直查；Table 只增不破长出 query()。概念：两阶段攒条件与编译、绑定参数数组、操作符与列名白名单（标识符不能走 ?）。OR/IN/BETWEEN 从简。读者能链式攒动态条件并逐字核对生成的 SQL。"
+    },
+    {
+      "slug": "hydration-dirty-tracking",
+      "file": "docs/11-hydration-dirty-tracking.md",
+      "degraded": false,
+      "rolling_summary": "已建立 src/table.ts：Row（私藏快照）、hydrate、insertAndHydrate（白名单收列、INSERT 回查水合）、findByPrimaryKey；save 只写脏列、无脏列不发 SQL、重拍快照；remove 作废；Table 长出 create/find。概念：水合（与 SSR 消歧）、脏跟踪（快照 diff）、丢更新（只缓解）、AR 味。15 断言，82 全绿。"
+    },
+    {
+      "slug": "relations-n-plus-1",
+      "file": "docs/12-relations-n-plus-1.md",
+      "degraded": false,
+      "rolling_summary": "已建 src/relations.ts：declareRelation 四道校验 + loadRelations 两跳加载；Table 长出 relations 与 hasMany/belongsTo，builder 长出 with()。第二跳手拼参数化 IN（占位符按值个数）、水合分桶挂载；带 with 恒 1+关联数条 SQL。概念：N+1、JOIN 与两跳取舍。12 断言，94 全绿。"
+    },
+    {
+      "slug": "transactions",
+      "file": "docs/13-transactions.md",
+      "degraded": false,
+      "rolling_summary": "已建 src/tx.ts：attachTx 与 DbWithTx——db.tx(fn) 回调式事务，BEGIN 后跑 fn（同连接、互相可见未提交改动），正常返回 COMMIT 并透传返回值，抛错 ROLLBACK 再原样上抛；嵌套不支持（SAVEPOINT 登差异清单）；createDb 返回 DbWithTx。概念：事务、原子性、回滚、隔离、性能。11 断言，105 全绿。"
+    },
+    {
+      "slug": "finale-gaps",
+      "file": "docs/14-finale-gaps.md",
+      "degraded": false,
+      "rolling_summary": "原理章收官，未动 src 与测试，全书门槛 tsc 零输出、105 测试全绿。差距清单逐项对账：迁移（编号文件+历史表）、连接池（网络连接贵、借还纪律、事务占满一条连接）、类型推导（生成/推断/手写三路线）、多对多透视表、方言分叉；小件销号：乐观锁、SAVEPOINT、条件树、驼峰映射。读者能答「差在哪、为什么、怎么做」。"
+    }
+  ]
+}

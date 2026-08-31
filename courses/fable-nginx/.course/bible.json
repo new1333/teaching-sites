@@ -1,0 +1,446 @@
+{
+  "reader_model": {
+    "known": [
+      "能熟练写代码，Python 为主；会命令行（cd / 运行命令 / curl 或等价工具）",
+      "用过 HTTP：发过请求、见过 200/404，理解「客户端请求-服务器响应」的关系（但没读过报文逐行结构）",
+      "听过进程/线程、阻塞/非阻塞这些词，但说不清机制与代价",
+      "Windows 原生环境（Python 3.12 已装），全部实验在本机 127.0.0.1 上做",
+      "知道 nginx 这个名字的存在，不假设会任何 nginx 配置语法"
+    ],
+    "unknown": [
+      {
+        "concept": "套接字与监听/接受连接",
+        "why": "只用过高层库发请求，没碰过传输层 API",
+        "anchor": "总机接电话：listen 是守着总机，accept 是把呼入接进来",
+        "first_chapter": 1
+      },
+      {
+        "concept": "HTTP 报文结构",
+        "why": "浏览器和框架把报文藏起来了，从没逐行看过",
+        "anchor": "一封信：第一行写要什么，下面几行备注，空一行，之后是正文",
+        "first_chapter": 1
+      },
+      {
+        "concept": "线程与栈内存",
+        "why": "「听过概念」档，说不清开销在哪",
+        "anchor": "每个工人一间工具间，闲着也占地方",
+        "first_chapter": 2
+      },
+      {
+        "concept": "上下文切换",
+        "why": "同上",
+        "anchor": "干活的人被频繁叫去填表，填表本身不产出",
+        "first_chapter": 2
+      },
+      {
+        "concept": "C10K 问题",
+        "why": "历史名词，没听过",
+        "anchor": "1999 年服务器圈的公开难题：一台机器同时伺候一万个连接",
+        "first_chapter": 2
+      },
+      {
+        "concept": "非阻塞 IO 与 WOULDBLOCK",
+        "why": "没碰过",
+        "anchor": "问一句「到了吗？」，没到就走，不站在原地等",
+        "first_chapter": 3
+      },
+      {
+        "concept": "文件描述符 fd",
+        "why": "没碰过",
+        "anchor": "内核给每个打开的东西（socket、文件）发的整数编号牌",
+        "first_chapter": 3
+      },
+      {
+        "concept": "select / epoll 与 IO 多路复用",
+        "why": "没碰过",
+        "anchor": "前台呼叫铃：一个总台同时盯着所有房间，谁按铃报谁",
+        "first_chapter": 3
+      },
+      {
+        "concept": "事件循环 / Reactor",
+        "why": "词面可能从 JS 听过，但服务端 IO 的事件循环机制没碰过",
+        "anchor": "while True：查就绪名单 → 逐个处理 → 再查",
+        "first_chapter": 3
+      },
+      {
+        "concept": "增量解析状态机",
+        "why": "没碰过",
+        "anchor": "逐字听抄电报，听到句号才算一句完整的话；每来一段就推进一步",
+        "first_chapter": 4
+      },
+      {
+        "concept": "缓冲区与部分写",
+        "why": "没碰过",
+        "anchor": "邮筒塞满了要等邮差清空才能接着塞",
+        "first_chapter": 4
+      },
+      {
+        "concept": "水平触发 / 边缘触发",
+        "why": "没碰过",
+        "anchor": "水位灯（有水就一直亮）vs 涨水警铃（涨的那刻响一次）",
+        "first_chapter": 4
+      },
+      {
+        "concept": "master-worker 与 accept 惊群",
+        "why": "没碰过",
+        "anchor": "一个店长带几个店员共用一台叫号机：来一个号全员抬头",
+        "first_chapter": 5
+      },
+      {
+        "concept": "优雅重载 / 热升级",
+        "why": "没碰过",
+        "anchor": "换发动机不熄火：老员工干完手头的活再下班",
+        "first_chapter": 5
+      },
+      {
+        "concept": "反向代理与负载均衡",
+        "why": "听过词，说不清方向和机制",
+        "anchor": "公司总机：对外一个号码，内部分机轮流接",
+        "first_chapter": 6
+      },
+      {
+        "concept": "sendfile / 零拷贝 / 内存池",
+        "why": "没碰过",
+        "anchor": "快递不改路线直接转运；工厂耗材统一领用还箱",
+        "first_chapter": 7
+      }
+    ]
+  },
+  "glossary": [
+    {
+      "term": "Web 服务器",
+      "en": "web server",
+      "definition": "接收 HTTP 请求、返回 HTTP 响应的常驻程序；你打开的每个网页背后都有一个它在应答。"
+    },
+    {
+      "term": "套接字",
+      "en": "socket",
+      "definition": "操作系统给「一条网络对话」发的门牌号，程序通过它收发字节。"
+    },
+    {
+      "term": "监听",
+      "en": "listen",
+      "definition": "在一个端口上守着等人来连——像总机守着电话线。"
+    },
+    {
+      "term": "接受连接",
+      "en": "accept",
+      "definition": "把等在门口的连接接进来，拿到一个可以开始说话的套接字。"
+    },
+    {
+      "term": "端口",
+      "en": "port",
+      "definition": "同一台机器上的分机号，Web 服务常驻 80/443 这类号码。"
+    },
+    {
+      "term": "HTTP 报文",
+      "en": "HTTP message",
+      "definition": "HTTP 说的话，纯文本：一行请求行（要什么）、若干行头部（备注）、一个空行、可选正文。"
+    },
+    {
+      "term": "请求行",
+      "en": "request line",
+      "definition": "报文第一行：方法 + 路径 + 版本，如 GET /index.html HTTP/1.1。"
+    },
+    {
+      "term": "状态码",
+      "en": "status code",
+      "definition": "响应第一行里的三位数结果代号：200 成功、404 没找到、500 服务器自己出错了。"
+    },
+    {
+      "term": "Content-Length",
+      "en": "Content-Length",
+      "definition": "头部里标明正文有几个字节的字段，收发双方靠它知道这条消息何时算完。"
+    },
+    {
+      "term": "进程",
+      "en": "process",
+      "definition": "操作系统里一个独立运行的程序实例，有自己的内存空间。"
+    },
+    {
+      "term": "线程",
+      "en": "thread",
+      "definition": "进程里干活的执行工人，同进程的线程共享内存，每个线程还自带一块栈。"
+    },
+    {
+      "term": "栈内存",
+      "en": "thread stack",
+      "definition": "每个线程预留的工作台内存（可按 MB 计），线程闲着也占。"
+    },
+    {
+      "term": "上下文切换",
+      "en": "context switch",
+      "definition": "CPU 从一个线程换到另一个线程要做的存档/读档动作，纯开销不产出。"
+    },
+    {
+      "term": "C10K 问题",
+      "en": "C10K problem",
+      "definition": "1999 年提出的难题：一台服务器如何同时伺候一万个并发连接——「一连接一线程」的朴素模型在这里倒下。"
+    },
+    {
+      "term": "非阻塞 IO",
+      "en": "non-blocking IO",
+      "definition": "读不到数据就立即返回「暂时没有」，而不是卡住干等。"
+    },
+    {
+      "term": "文件描述符",
+      "en": "file descriptor (fd)",
+      "definition": "内核给每个打开的东西（socket、文件）发的整数编号牌。"
+    },
+    {
+      "term": "IO 多路复用",
+      "en": "IO multiplexing",
+      "definition": "一个线程同时盯一堆描述符、谁就绪了只报告谁——select 和 epoll 是它的两代实现。"
+    },
+    {
+      "term": "select",
+      "en": "select",
+      "definition": "老一代多路复用：每次调用都要把全部描述符重新报给内核，数量还有硬上限（Windows 上 512 个）。"
+    },
+    {
+      "term": "epoll",
+      "en": "epoll",
+      "definition": "Linux 的多路复用：描述符常驻内核登记表，就绪了内核记名单，调用只取名单——万级连接的底座。"
+    },
+    {
+      "term": "事件循环",
+      "en": "event loop",
+      "definition": "一个 while 循环：问多路复用「谁就绪了」，逐个处理，再问——单线程扛大量连接的骨架。"
+    },
+    {
+      "term": "Reactor 模式",
+      "en": "Reactor pattern",
+      "definition": "「事件循环 + 就绪分发」这套结构的学名：事件来了交给对应的处理逻辑。"
+    },
+    {
+      "term": "状态机",
+      "en": "state machine",
+      "definition": "把「进行到哪一步了」写成显式状态（读到请求行/头部/完成），每来一段数据推进一步。"
+    },
+    {
+      "term": "缓冲区",
+      "en": "buffer",
+      "definition": "一段攒字节的内存：接收缓冲区攒没到齐的请求，发送缓冲区攒没发完的响应。"
+    },
+    {
+      "term": "部分读",
+      "en": "partial read",
+      "definition": "一次 read 只读到半条消息——字节流没有消息边界，这是常态不是异常。"
+    },
+    {
+      "term": "部分写",
+      "en": "partial write",
+      "definition": "一次 write 只写出去一半，返回值告诉你实发字节数，剩下的要自己记账。"
+    },
+    {
+      "term": "水平触发",
+      "en": "level-triggered (LT)",
+      "definition": "「还有数据没处理完就每次都提醒」的通知方式，select/epoll 的默认行为。"
+    },
+    {
+      "term": "边缘触发",
+      "en": "edge-triggered (ET)",
+      "definition": "「状态变化那一瞬间提醒一次」的通知方式，nginx 的选择，配合非阻塞必须读到空为止。"
+    },
+    {
+      "term": "accept 惊群",
+      "en": "thundering herd",
+      "definition": "多个进程同时等同一个监听套接字，一个连接到来全员被惊醒抢一个活的现象。"
+    },
+    {
+      "term": "master-worker 架构",
+      "en": "master-worker",
+      "definition": "nginx 的骨架：一个 master 管大局（配置、派工人），N 个 worker 各带一条事件循环干连接的活。"
+    },
+    {
+      "term": "优雅重载",
+      "en": "graceful reload",
+      "definition": "换配置不断服务：master 拉新 worker 接新连接，老 worker 把手头连接伺候完再退场。"
+    },
+    {
+      "term": "正向代理",
+      "en": "forward proxy",
+      "definition": "替客户端出头的中间人——服务器看不到真正的客户端是谁。"
+    },
+    {
+      "term": "反向代理",
+      "en": "reverse proxy",
+      "definition": "替服务器出头的「总机」——对外一个门面，对内把请求转给真实应用、响应再转回来，客户端看不到真服务器。"
+    },
+    {
+      "term": "上游",
+      "en": "upstream",
+      "definition": "反向代理眼里的真实干活者——请求最终要去的那台服务器。"
+    },
+    {
+      "term": "负载均衡",
+      "en": "load balancing",
+      "definition": "把请求分摊到多台上游的策略，分摊的是请求数不是流量字节数。"
+    },
+    {
+      "term": "轮询",
+      "en": "round-robin",
+      "definition": "按固定顺序一圈圈发牌：第 1 个请求给 A，第 2 个给 B，第 3 个又回到 A。"
+    },
+    {
+      "term": "sendfile",
+      "en": "sendfile",
+      "definition": "让内核直接把文件送进网卡、不经用户程序搬字节的系统调用——静态文件加速的核心。"
+    },
+    {
+      "term": "零拷贝",
+      "en": "zero-copy",
+      "definition": "消灭「内核与用户程序之间重复搬运字节」的技术统称，sendfile 是代表。"
+    },
+    {
+      "term": "内存池",
+      "en": "memory pool",
+      "definition": "整块领、统一还的内存管理方式：按请求批量分配、结束一次归还，少跑成千上万次系统级内存调用。"
+    }
+  ],
+  "conventions": {
+    "language": "Python 3.10+（本机 3.12.10），纯标准库（socket / selectors / threading / multiprocessing / unittest），零第三方依赖；命名服务于教学，不与真实 nginx 模块名对齐",
+    "layout": "companion/src/fable/ 包，模块按演进阶段命名：blocking_server / threaded_server / bench / event_loop / event_server / http_parser / buffers / worker_pool / proxy_server / slow_client / upstream_demo / send_raw",
+    "evolution": "append-only：新章只新增模块或演进既有模块，不删旧章模块——v0 到 v5 全程可见、随时可跑",
+    "entrypoints": "每个服务器模块带 __main__ 入口（python -m fable.xxx 亲手开机）；host/port 可参数化，测试用 127.0.0.1 + 随机端口",
+    "error_handling": "连接级隔离：单条连接的异常或断开只关闭该连接，绝不拖死服务循环",
+    "testing": "companion/tests/test_{slug}.py，unittest；服务器跑在守护线程 + loopback 随机端口；不依赖外网；等待用轮询小超时或事件同步，不用裸 sleep 赌竞速",
+    "gates": "cwd=companion/：python -m compileall -q src 与 python -m unittest discover -s tests（2>&1 重定向）；package.json 提供同名 npm scripts 壳供 final-check 实跑",
+    "snippet_annotation": "正文代码块出处标注用 Python 注释：# src/fable/xxx.py · 函数名（lint 与 final-check 均已支持 # 标注）",
+    "cli_notes": "git-bash 会把 /big 等斜杠开头参数改写为 Windows 路径：CLI 工具一律支持 --path=big 等值形式兜底（自第 4 章起）"
+  },
+  "api_contract": {
+    "policy": "单一事实源、append-only：每章只增不改已立条目的语义；由主智能体在每章生成后按验证物实际导出面更新本清单",
+    "ch1_blocking_server": [
+      "fable.blocking_server.serve(host: str, port: int, handler: Callable[[Request], bytes]) -> None —— v0 阻塞服务循环",
+      "fable.blocking_server.Request —— dataclass：method / path / version / headers",
+      "fable.blocking_server.parse_request(data: bytes) -> Request —— 解析最小 HTTP 请求（请求行+头部+空行）",
+      "fable.blocking_server.build_response(status: int, reason: str, body: bytes, extra_headers: list[tuple[str, str]] = []) -> bytes"
+    ],
+    "ch2_threaded_server_and_bench": [
+      "fable.threaded_server.serve(host: str, port: int, handler: Callable[[Request], bytes]) -> None —— v1 一连接一线程服务循环",
+      "fable.bench.run_probe(levels, burst, handoff_rounds, relay_sizes, relay_duration_s, out) -> dict —— 压测探针：哑连接分级量线程/RSS/提交、事件乒乓、接力环，结构化输出",
+      "fable.bench.rss_bytes() / committed_bytes() —— 本进程实占/提交内存（Windows psapi，Linux /proc 回退）",
+      "fable.bench.ping_pong_handoff_us() / relay_tokens_per_sec() —— 上下文交接单价与接力环吞吐"
+    ],
+    "later_chapters": "第 2-6 章里程碑模块（threaded_server / bench / event_loop / event_server / http_parser / buffers / worker_pool / proxy_server / upstream_demo）的公共导出面随各章验证物演进，由主智能体逐章追加到本契约",
+    "ch3_event_loop_and_bench": [
+      "fable.event_loop.EventLoop —— selectors 封装：register / unregister / step / run / stop / close / close_all",
+      "fable.event_server.serve(host, port, handler, poll_interval=1.0, stop_flag=None) -> None —— v2 单线程事件驱动服务",
+      "fable.bench.probe_event_server(levels, burst, handler) -> dict —— v2 对照探针（线程/RSS 分级 + burst 正确性）",
+      "fable.bench.probe_select_fd_limit(max_fds=700) -> dict —— select 描述符上限探针",
+      "fable.bench CLI 新增 event [N] [out] / fdlimit [max] 模式（旧 [N] [out] 语义原样）"
+    ],
+    "ch4_parser_buffers": [
+      "fable.http_parser.HttpParser.feed(chunk: bytes) -> ParseResult —— 增量状态机：需要更多/完成（带 Request）/坏信（ValueError）",
+      "fable.buffers.RecvBuffer —— 攒行（until CRLF）/攒定长；SendBuffer —— 记账重冲（冲多少记多少，冲完为空）",
+      "fable.event_server.serve 签名不变（v3 内部演进：连接对象化 _Connection，收/发缓冲+解析器实例，冲完才关）",
+      "fable.slow_client —— 碎片/微缩窗/愣住三慢法工具，--path=big 形式兜底 git-bash 斜杠改写"
+    ],
+    "ch5_worker_pool": [
+      "fable.worker_pool.run_master(host, port, handler=None, workers=2, stats_dir=None, stop_event=None, reload_file=None, poll_interval=0.5) —— master：建监听 socket、spawn 派 worker 共享、监控补位、优雅轮换与收摊",
+      "CLI：python -m fable.worker_pool [host] [port] [workers] [reload-file]（reload 默认 reload.txt）",
+      "fable.event_loop.EventLoop.idle() —— append-only 新增；event_server 公共面未动"
+    ],
+    "ch6_proxy": [
+      "fable.proxy_server.serve(host, port, upstreams: list[tuple[str,int]], poll_interval=1.0, stop_flag=None) —— v5：下游监听+上游连接同挂一个事件循环，轮询分单、失败摘除重试",
+      "CLI：python -m fable.proxy_server [host] [port] [upstream...]（--upstream=host:port 可重复）",
+      "fable.upstream_demo.serve(host, port, name, ...) / make_handler(name)；CLI：python -m fable.upstream_demo [host] [port] [name]（--name= 兜底）"
+    ]
+  },
+  "authority_docs": [
+    {
+      "label": "RFC 9112 — HTTP/1.1 报文语法（请求行/头部/空行/Content-Length 的定义）",
+      "url": "https://www.rfc-editor.org/rfc/rfc9112"
+    },
+    {
+      "label": "RFC 9110 — HTTP 语义（方法与状态码含义）",
+      "url": "https://www.rfc-editor.org/rfc/rfc9110"
+    },
+    {
+      "label": "epoll(7) man page — epoll 语义、水平/边缘触发",
+      "url": "https://man7.org/linux/man-pages/man7/epoll.7.html"
+    },
+    {
+      "label": "select(2) man page — fd_set 与 FD_SETSIZE 上限",
+      "url": "https://man7.org/linux/man-pages/man2/select.2.html"
+    },
+    {
+      "label": "The C10K Problem（Dan Kegel，1999）——C10K 问题的原始出处",
+      "url": "https://kegel.com/c10k.html"
+    },
+    {
+      "label": "nginx 官方文档 — 核心指令（worker_processes 等）",
+      "url": "https://nginx.org/en/docs/ngx_core_module.html"
+    },
+    {
+      "label": "nginx.org CHANGES — 0.1.0 于 2004-10-04 首发（The first public version）的时间线出处",
+      "url": "https://nginx.org/en/CHANGES"
+    },
+    {
+      "label": "Sysoev 本人在 nginx 邮件列表的时间线帖（Spring 2002 first drafts、Rambler 两年 Apache）",
+      "url": "https://mailman.nginx.org/pipermail/nginx/2008-May/004816.html"
+    },
+    {
+      "label": "nginx 官方文档 — ngx_http_proxy_module（proxy_pass 反向代理）",
+      "url": "https://nginx.org/en/docs/http/ngx_http_proxy_module.html"
+    },
+    {
+      "label": "nginx 官方文档 — ngx_http_upstream_module（负载均衡）",
+      "url": "https://nginx.org/en/docs/http/ngx_http_upstream_module.html"
+    },
+    {
+      "label": "nginx 官方介绍页 — 作者与开发时间线（Igor Sysoev，2002 年起开发、2004 年首发）的出处核对",
+      "url": "https://nginx.org/en/"
+    },
+    {
+      "label": "Python 官方文档 — socket（setblocking/settimeout 与错误语义）",
+      "url": "https://docs.python.org/3/library/socket.html"
+    },
+    {
+      "label": "Python 官方文档 — selectors（DefaultSelector 的平台选择）",
+      "url": "https://docs.python.org/3/library/selectors.html"
+    },
+    {
+      "label": "Python 官方文档 — multiprocessing（Windows spawn 与 socket 传递）",
+      "url": "https://docs.python.org/3/library/multiprocessing.html"
+    },
+    {
+      "label": "MDN HTTP 指南（读者延伸阅读）",
+      "url": "https://developer.mozilla.org/zh-CN/docs/Web/HTTP"
+    },
+    {
+      "label": "nginx 开发者指南 — 内存池与 filter 链的机制描述",
+      "url": "https://nginx.org/en/docs/dev/development_guide.html"
+    },
+    {
+      "label": "sendfile(2) man page — sendfile 语义",
+      "url": "https://man7.org/linux/man-pages/man2/sendfile.2.html"
+    },
+    {
+      "label": "epoll_ctl(2) man page — EPOLLEXCLUSIVE",
+      "url": "https://man7.org/linux/man-pages/man2/epoll_ctl.2.html"
+    },
+    {
+      "label": "NGINX 官方博客 · Socket Sharding（reuseport 实测与取舍；现行位置在 F5）",
+      "url": "https://www.f5.com/company/blog/nginx/socket-sharding-nginx-release-1-9-1"
+    },
+    {
+      "label": "NGINX 官方博客 · Inside NGINX（worker 循环与阻塞操作）",
+      "url": "https://www.f5.com/company/blog/nginx/inside-nginx-how-we-designed-for-performance-scale"
+    },
+    {
+      "label": "nginx 官方文档 — Windows 版说明（select/poll 与 beta 自评）",
+      "url": "https://nginx.org/en/docs/windows.html"
+    },
+    {
+      "label": "nginx 官方文档 — control（reload/SIGHUP 流程）",
+      "url": "https://nginx.org/en/docs/control.html"
+    },
+    {
+      "label": "NGINX 官方博客 · Thread Pools in NGINX（读盘为典型阻塞操作、aio threads 解法）",
+      "url": "https://www.f5.com/company/blog/nginx/thread-pools-boost-performance-9x"
+    }
+  ],
+  "obligations": []
+}

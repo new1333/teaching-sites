@@ -1,0 +1,26 @@
+{
+  "asked_at": "2026-08-29",
+  "answers": [
+    {
+      "question": "复刻的 mini nginx 用什么语言写？（决定验证物工程的技术栈）",
+      "answer": "Python（推荐）",
+      "teaching_decision": "companion 用 Python 3.10+ 纯标准库；selectors 模块让读者亲手管理事件循环"
+    },
+    {
+      "question": "对 TCP/socket/HTTP 这层的熟悉程度",
+      "answer": "用过",
+      "teaching_decision": "第 1 章补 socket 三步（listen/accept/read-write）的语义，不从「什么是网络」讲起，也不跳过"
+    },
+    {
+      "question": "进程/线程、阻塞/非阻塞 IO 概念的熟悉程度",
+      "answer": "听过概念",
+      "teaching_decision": "第 2 章补进程/线程/上下文切换的成本模型（『同时』到底是谁在同时），再进入资源账测算"
+    },
+    {
+      "question": "课程代码主要在什么环境跑",
+      "answer": "Windows 原生（当前机器）",
+      "teaching_decision": "实验跑本机 Windows：select 的 512 fd 上限作为活教材真实触到；万级连接实验改为讲解+账本推算，附 WSL 选做路径"
+    }
+  ],
+  "audience_profile": "会写代码（Python 为主）、用过命令行与 HTTP，但没碰过 socket 编程与事件驱动；并发概念停留在『听过』；Windows 原生环境"
+}

@@ -1,0 +1,28 @@
+{
+  "collected_at": "2026-08-29",
+  "asked": true,
+  "answers": [
+    {
+      "question": "TCP 连接、HTTP 报文结构（请求行/头部/正文）、socket 这三样，你目前处于哪一档？",
+      "answer": "基本没接触",
+      "decision": "第 1 章内嵌 socket/TCP 连接的最小人话铺垫（打电话类比 + REPL 可跑片段）；第 2 章从字节层面教 HTTP 报文结构后再进代理语义，不默认读者认识报文"
+    },
+    {
+      "question": "companion 验证工程（全书跟着长的 mini 代理代码）用什么语言手写？",
+      "answer": "TypeScript + Node.js（推荐）",
+      "decision": "companion 用 TS + Node 内建 net/dgram/crypto，零第三方运行时依赖，vitest 做测试"
+    },
+    {
+      "question": "对称加密、AEAD（认证加密）、哈希这三样，你的掌握程度？",
+      "answer": "基本没接触",
+      "decision": "加密原理独立成章（第 5 章 principle）：从「加密到底在防谁」讲机密性/完整性/认证，REPL 篡改实验打底；AEAD 帧格式实现放第 6 章"
+    },
+    {
+      "question": "TUN 模式（虚拟网卡接管全系统流量）想学到哪一层？",
+      "answer": "原理 + 字节级实验（推荐）",
+      "decision": "TUN 章为 build：用固定 IP/TCP 报文样本做字节解析实验（包→连接还原），不动真实网卡"
+    }
+  ],
+  "defaults_used": [],
+  "reader_portrait": "会写 TypeScript（含 async/await 与事件回调）、能跑命令行；但 TCP/socket/HTTP 报文与对称加密/AEAD/哈希均为零基础；未问 Clash 使用经验，按『可能装过但不懂原理』的保守画像处理，不依赖任何 Clash 配置经验。"
+}

@@ -1,0 +1,106 @@
+{
+  "promises": [
+    {
+      "from": "01-panorama",
+      "target": "02-extract-blocks",
+      "what": "块级/内联的真身（浏览器默认样式表）与「几千个节点里怎么挑出该翻的那几百个」是第 2 章正题",
+      "status": "fulfilled"
+    },
+    {
+      "from": "01-panorama",
+      "target": "09-browser-shell",
+      "what": "第 9 章把引擎装进 Chrome 扩展，读者回到真实英文页面亲眼看到双语对照",
+      "status": "fulfilled"
+    },
+    {
+      "from": "09-browser-shell",
+      "target": "divergence",
+      "what": "壳的边界四条：①无开关无 popup，上页即跑且每个 http/https 页面都注入（真实产品有快捷键与按站点开关）②mainContentOnly 的闸装了没拉，壳走全页翻，侧栏标签也进账 ③译文是裸 p，无浅色/字号等样式注入 ④产物更新不热替换，需 chrome://extensions 重载＋刷新页面",
+      "status": "fulfilled"
+    },
+    {
+      "from": "02-extract-blocks",
+      "target": "03-render-bilingual",
+      "what": "这批可译块交出去做什么——第 3 章渲染接棒：插译文节点、打标记属性、重复调用幂等",
+      "status": "fulfilled"
+    },
+    {
+      "from": "03-render-bilingual",
+      "target": "04-pipeline-service",
+      "what": "本章译文仍是手填字符串——第 4 章依赖注入装翻译服务、假翻译器替换手填",
+      "status": "fulfilled"
+    },
+    {
+      "from": "03-render-bilingual",
+      "target": "08-dynamic-observer",
+      "what": "渲染后再抽取把译文当新原文（demo 实证 14→28）——MutationObserver 增量抽取靠标记属性过滤自己人，防译文生译文",
+      "status": "fulfilled"
+    },
+    {
+      "from": "08-dynamic-observer",
+      "target": "divergence",
+      "what": "动态适配边界五条：已翻译子树被移动会重发一单（幂等渲染兜底，缓存档白送）；只监听 childList——原地改文本/改属性不触发增量；往已有段落新塞内联内容不重翻（增量以块上树为记账单位）；环境无 MutationObserver 时静默退化为静态引擎；mainContentOnly 只约束开机整页路径，动态追加进非正文区的块照样翻译",
+      "status": "fulfilled"
+    },
+    {
+      "from": "03-render-bilingual",
+      "target": "divergence",
+      "what": "译文统一用 p 插在原文正后方，li 的译文落在列表项外（ul 内容模型已知名偏差，浏览器照常渲染）",
+      "status": "fulfilled"
+    },
+    {
+      "from": "02-extract-blocks",
+      "target": "05-inline-format",
+      "what": "行内 code 从段落直接文本剪掉的空隙，第 5 章用占位标记法把代码原样放回译文",
+      "status": "fulfilled"
+    },
+    {
+      "from": "05-inline-format",
+      "target": "divergence",
+      "what": "占位标记登记两条：嵌套内联（a 套 strong、隔层包裹）按纯文本摊平不保结构；真实服务对 ⟦⟧ 记号存活无承诺，被吞走降级（格式丢、译文留）",
+      "status": "fulfilled"
+    },
+    {
+      "from": "02-extract-blocks",
+      "target": "06-main-content",
+      "what": "14 块里混着的站点名、作者行、侧栏标签（合法但值得翻），第 6 章用链接密度启发式认正文区收拾",
+      "status": "fulfilled"
+    },
+    {
+      "from": "06-main-content",
+      "target": "divergence",
+      "what": "主内容启发式边界三条：正文整个住在链接里的版面（目录/摘要/书签站）会认反（demo 实证）；多文章列表页只挑分量最大的一篇；地标缺席时份额线可能收得偏紧、漏掉引言",
+      "status": "fulfilled"
+    },
+    {
+      "from": "02-extract-blocks",
+      "target": "divergence",
+      "what": "差异清单登记两条近似偏差：display 被作者改过的元素误判；清单未收录标签按内联处理",
+      "status": "fulfilled"
+    },
+    {
+      "from": "04-pipeline-service",
+      "target": "07-batch-cache",
+      "what": "真实管线里请求怎么打包、怎么省钱，第 7 章细算",
+      "status": "fulfilled"
+    },
+    {
+      "from": "07-batch-cache",
+      "target": "divergence",
+      "what": "批量缓存档边界五条：缓存无过期无容量上限；429 只防不治（无重试退避）；批量档降级粒度是整单（一块失败同单连坐）；CHAR_BUDGET=200 教学手感值，真实服务单请求配额以文档为准；缓存认句不认翻译器，换翻译器需清缓存",
+      "status": "fulfilled"
+    },
+    {
+      "from": "04-pipeline-service",
+      "target": "divergence",
+      "what": "接真实翻译 API 的差异（密钥、计费、流式）登记进差异清单附录",
+      "status": "fulfilled"
+    },
+    {
+      "from": "07-batch-cache",
+      "target": "08-dynamic-observer",
+      "what": "块级入口 runBlocks 等管线结构演进在第 8 章落地",
+      "status": "fulfilled"
+    }
+  ]
+}

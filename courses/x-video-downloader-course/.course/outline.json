@@ -1,0 +1,362 @@
+{
+ "title": "X 视频下载插件：从零写一个真能用的浏览器扩展",
+ "audience": "会写 JS、装过插件没写过的开发者，做一个真能用的下载器",
+ "driving_question": "X 的视频，页面上是一串打不开的假地址、网络里是一把几秒的小分片——一个插件怎么把它变回你硬盘上的一个文件？",
+ "input": {
+  "kind": "topic",
+  "ref": "怎么写一个浏览器插件，下载 X(Twitter) 视频"
+ },
+ "profile": {
+  "archetype": "principle-reimpl",
+  "verification": "mixed",
+  "source_policy": "zero-trace",
+  "code_density": "full",
+  "obligations": [
+   {
+    "kind": "legal",
+    "note": "本课程仅用于学习浏览器扩展开发：请只下载你拥有版权或已获明确授权的内容，遵守 X 服务条款与当地著作权法",
+    "surfaces": [
+     "docs/index.md",
+     "docs/about.md",
+     "docs/06-permissions-publish.md"
+    ]
+   },
+   {
+    "kind": "timeliness",
+    "note": "X 的前端 DOM、内部接口与视频投递方式随版本变化（截至 2026-08）。课程教的是标准协议与可迁移方法；易变细节（选择器、URL 形态）正文随讲给出现场核对步骤，不为任何快照背书",
+    "surfaces": [
+     "docs/about.md",
+     "docs/05-inject-ui.md"
+    ]
+   }
+  ],
+  "presentation": {
+   "visual": "none"
+  },
+  "scale": "standard"
+ },
+ "companion": {
+  "form": "mixed: code-lab:library（纯逻辑模块 + 注入式网络）+ observation（每章浏览器装载任务清单）",
+  "language": "现代 JavaScript（ES Modules，零构建零运行时依赖——companion 目录本身可直接装载为未打包扩展）+ vitest + tsc --noEmit(checkJs)；zip 打包用 devDependency fflate",
+  "scope": "一个可直接装载的真实 MV3 插件：manifest + service worker + content script + 共享逻辑模块，约 650 行；25-35 个测试 + 每章可判定装载任务清单"
+ },
+ "parts": [
+  {
+   "title": "一、住进页面",
+   "chapters": [
+    {
+     "slug": "mv3-anatomy",
+     "title": "让代码跑在 x.com 上：MV3 插件的最小骨架",
+     "goal": "搭起可装载的插件骨架，分清 content script 与 service worker 两个世界各自能做什么",
+     "type": "build",
+     "hook": {
+      "kind": "ability-gap",
+      "point": "别人的网页你一行都改不了；但装上一个十几行的小插件、刷新 x.com，推文列表上多出了不属于 X 的小角标——你的代码正在别人的地盘上运行",
+      "phenomena": [
+       "别人的页面",
+       "角标",
+       "十几行代码"
+      ]
+     },
+     "new_concepts": [
+      "浏览器插件（扩展）",
+      "Manifest V3",
+      "manifest.json",
+      "未打包扩展",
+      "content script",
+      "service worker（插件后台）",
+      "权限声明"
+     ],
+     "misconceptions": [
+      "你可能以为插件能改浏览器任何页面是「黑魔法」——它只是按 manifest 报备过的范围、由浏览器放进来的正式通道"
+     ],
+     "milestone": "最小可装载插件：manifest.json + 在推文上贴角标的 content script + 空 service worker",
+     "milestone_verify": "chrome://extensions 装载 companion 目录，刷新 x.com 首页，前几条推文左下角出现角标，悬停可见该推文链接（可感知）",
+     "relevant_files": [],
+     "promises_out": [
+      {
+       "target": "inject-ui",
+       "what": "角标只出现在首次加载的推文上、往下滚新推文没有——X 是 SPA、页面从不重载，这个问题第 5 章解决"
+      }
+     ],
+     "depends_on": [],
+     "acceptance": [
+      "本章验证信号通过：companion 内 npm run typecheck 与 npm test 全绿 + 装载任务清单逐条可勾（硬信号一票否决）",
+      "manifest 的核心字段（manifest_version/name/version/content_scripts/background）每个都有一句大白话解释【文验收】",
+      "含 content script 与 service worker「能做什么/不能做什么」的对照【文验收】",
+      "零外部源码引用：代码全部出自 companion 或自包含示例【仓验收】"
+     ]
+    },
+    {
+     "slug": "network-watch",
+     "title": "视频不在 video 标签里：让它在网络面板现形",
+     "goal": "理解 blob:/MSE 为什么让 DOM 里的地址是假的，用 webRequest 被动监听抓到真实的 m3u8/mp4 请求",
+     "type": "build",
+     "hook": {
+      "kind": "observation",
+      "point": "在含视频的推文上右键『检查』<video> 标签，src 是一串 blob:https://x.com/…——把它复制到新标签页打开，什么也没有；打开 Network 面板输入 m3u8，真凶现形：video.twimg.com 的播放列表请求正一条条滚过",
+      "phenomena": [
+       "blob: 打不开",
+       "m3u8 过滤",
+       "video.twimg.com"
+      ]
+     },
+     "new_concepts": [
+      "blob: URL",
+      "MSE（媒体源扩展）",
+      "被动监听",
+      "host_permissions",
+      "HLS",
+      "m3u8 播放列表"
+     ],
+     "misconceptions": [
+      "你可能以为 <video> 的 src 属性就是视频文件的真实地址——在 X 上它是 blob:，指向浏览器内存里的一块数据，真实地址只出现在网络请求里",
+      "你可能以为下载视频要『破解』什么——地址本来就在你自己浏览器的流量里，插件只是替你盯着"
+     ],
+     "milestone": "isLikelyVideoUrl + webRequest 被动监听：service worker 控制台实时滚出 video.twimg.com 的播放列表/视频地址",
+     "milestone_verify": "打开任意含视频推文，扩展的 service worker 控制台滚出至少 2 条 https://video.twimg.com/… 地址（可感知）",
+     "relevant_files": [],
+     "promises_out": [
+      {
+       "target": "download-pipeline",
+       "what": "抓到的播放列表地址怎么变成一个文件——第 4 章给出完整下载管线"
+      }
+     ],
+     "depends_on": [
+      "mv3-anatomy"
+     ],
+     "acceptance": [
+      "本章验证信号通过：npm run typecheck 与 npm test 全绿（含 isLikelyVideoUrl 测试）+ 监听任务清单逐条可勾【仓验收】",
+      "blob: 与真实地址的辨析段：读者在 DevTools 里亲手同时看到两者【文验收】",
+      "误区『src 就是真地址』被现场观察证伪，不是一笔带过【文验收】",
+      "零外部源码引用【仓验收】"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "二、拿到文件",
+   "chapters": [
+    {
+     "slug": "m3u8-parse",
+     "title": "拆开播放列表：从 m3u8 到清晰度清单",
+     "goal": "写纯函数解析 master/media 两级播放列表，按带宽选出最高画质",
+     "type": "build",
+     "hook": {
+      "kind": "observation",
+      "point": "把上一章抓到的 m3u8 地址直接粘进浏览器打开：里面没有一帧画面，只有几十行 # 开头的英文和一串地址——像一张点歌菜单而不是歌本身；再打开其中一行指向的清单，又是一层菜单",
+      "phenomena": [
+       "纯文本",
+       "两层清单",
+       "没有画面"
+      ]
+     },
+     "new_concepts": [
+      "master playlist",
+      "media playlist",
+      "EXTINF",
+      "分片",
+      "EXT-X-STREAM-INF",
+      "BANDWIDTH",
+      "清晰度变体",
+      "EXT-X-MAP"
+     ],
+     "misconceptions": [
+      "你可能以为 m3u8 是一种视频格式——它是纯文本清单，写着『去哪下哪几段』",
+      "你可能以为一个视频只有一份文件——X 给同一视频备了多档清晰度，每档一套分片"
+     ],
+     "milestone": "m3u8 解析器 + 选档函数（含 .ts 与 fMP4/EXT-X-MAP 两种 fixture）测试全绿；控制台报告「检测到 N 档画质，已选 X×Y」",
+     "milestone_verify": "vitest 新增测试全绿（数字来自真实解析结果而非写死）；service worker 控制台对真实视频打出档位报告（可感知）",
+     "relevant_files": [],
+     "promises_out": [],
+     "depends_on": [
+      "network-watch"
+     ],
+     "acceptance": [
+      "本章验证信号通过：npm run typecheck 与 npm test 全绿（master/media 解析与选档测试）【仓验收】",
+      "m3u8 首现按成因→载体→演算→锚点教，演算用 fixture 全文逐行走一遍【文验收】",
+      "正文里的档数/分辨率数字与测试输出一致，不手写漂移【文验收】",
+      "零外部源码引用【仓验收】"
+     ]
+    },
+    {
+     "slug": "download-pipeline",
+     "title": "把播放列表变回一个文件：分片下载管线",
+     "goal": "打通下载管线：直接 mp4 一行落盘；HLS 走分片并发抓取、字节拼接，跨环境协作绕开 service worker 没有 DOM 的限制",
+     "type": "build",
+     "hook": {
+      "kind": "bug-story",
+      "point": "分片都抓下来了，拼是拼出来了，存盘却卡死：在 service worker 里一调 URL.createObjectURL 就抛错——后台环境根本没有 DOM API；抓网络的手和管存盘的手，天生不在一起",
+      "phenomena": [
+       "createObjectURL 抛错",
+       "拼好了存不了",
+       "后台没有 DOM"
+      ]
+     },
+     "new_concepts": [
+      "chrome.downloads",
+      "a[download]",
+      "Blob",
+      "URL.createObjectURL",
+      "字节拼接",
+      "并发抓取",
+      "CORS 豁免"
+     ],
+     "misconceptions": [
+      "你可能以为下载就是把一个 URL 存下来——HLS 视频在服务器上从来不是『一个文件』，是你自己把它拼回去的",
+      "你可能以为后台脚本无所不能——service worker 没有 DOM，连生成一个下载链接都做不到"
+     ],
+     "milestone": "点工具栏图标：最新看到的 mp4 直链一行 chrome.downloads 落盘；HLS 走完整管线（选档→并发抓分片→拼→存），磁盘出现可播放的视频文件",
+     "milestone_verify": "浏览器下载栏出现文件，双击可用系统播放器/VLC 播放（可感知）；伴生仓下载管线测试全绿",
+     "relevant_files": [],
+     "promises_out": [
+      {
+       "target": "permissions-publish",
+       "what": "host_permissions 与 CORS 豁免的完整规则、MV3 为何砍掉 blocking webRequest——第 6 章算清"
+      }
+     ],
+     "depends_on": [
+      "m3u8-parse"
+     ],
+     "acceptance": [
+      "本章验证信号通过：npm run typecheck 与 npm test 全绿（resolve/downloadSegments/concatBuffers 测试）+ 两条路径的下载任务清单逐条可勾【仓验收】",
+      "『service worker 没有 DOM』的撞墙过程与跨环境解法真实呈现，不是直接给答案【文验收】",
+      "两条路径（mp4 直链 / HLS 管线）都有正文走查与验证【文验收】",
+      "零外部源码引用【仓验收】"
+     ]
+    }
+   ]
+  },
+  {
+   "title": "三、做成产品",
+   "chapters": [
+    {
+     "slug": "inject-ui",
+     "title": "把按钮放上推文：SPA 世界的 DOM 注入",
+     "goal": "用 MutationObserver + data-testid 锚点在动态出现的推文上注入下载按钮，状态机 + 消息协议接通全流程",
+     "type": "build",
+     "hook": {
+      "kind": "bug-story",
+      "point": "第 1 章的角标在首页首屏推文上好好的；往下滚两屏、点进一条推文详情再返回——新出现的推文一个角标都没有：X 是单页应用，页面从头到尾没有重新加载过，你的 content script 只跑了一次",
+      "phenomena": [
+       "角标消失",
+       "不刷新",
+       "只跑一次"
+      ]
+     },
+     "new_concepts": [
+      "SPA",
+      "MutationObserver",
+      "data-testid 锚点",
+      "状态机",
+      "消息传递"
+     ],
+     "misconceptions": [
+      "你可能以为页面切换就是重新加载——X 全程只加载一次，切的是 DOM 不是页面",
+      "你可能以为 class 选择器最稳——X 的 class 是构建产物，改版就变；data-testid 才是给测试留的工牌"
+     ],
+     "milestone": "任意含视频推文（含滚动/路由后新出现的）自动出现下载按钮；点击走完 idle→ready→downloading→done 状态机，文件落盘",
+     "milestone_verify": "滚动时间线、点进详情再返回，新推文上按钮都在；点按钮看它按状态变色走完全程，下载栏出现文件（可感知）；状态机与消息守卫测试全绿",
+     "relevant_files": [],
+     "promises_out": [],
+     "depends_on": [
+      "mv3-anatomy",
+      "download-pipeline"
+     ],
+     "acceptance": [
+      "本章验证信号通过：npm run typecheck 与 npm test 全绿（状态机/URL 提取/推文锚点测试）+ 滚动路由任务清单逐条可勾【仓验收】",
+      "状态机五态转换表与消息协议在正文成表【文验收】",
+      "MutationObserver 首现有可亲手跑的最小示例【文验收】",
+      "易变选择器给出现场核对步骤（呼应 timeliness 义务）【文验收】",
+      "零外部源码引用【仓验收】"
+     ]
+    },
+    {
+     "slug": "permissions-publish",
+     "title": "权限的代价：CSP、CORS 与上架清单",
+     "goal": "算清权限模型（host_permissions/CORS 豁免/CSP/MV3 砍 blocking webRequest 的来龙去脉），打包出可上架的 zip 并过自查清单",
+     "type": "build",
+     "hook": {
+      "kind": "real-incident",
+      "point": "商店里一批视频下载插件隔三差五消失；当年 MV3 一刀砍掉 blocking webRequest，整个广告拦截插件社区震动——你的 manifest 每多要一项权限，用户和商店都会多问一句：凭什么",
+      "phenomena": [
+       "插件下架",
+       "blocking webRequest 被砍",
+       "凭什么"
+      ]
+     },
+     "new_concepts": [
+      "CSP（内容安全策略）",
+      "权限最小化",
+      "MV3 砍掉 blocking webRequest 的来龙去脉",
+      "打包 zip",
+      "Chrome Web Store"
+     ],
+     "misconceptions": [
+      "你可能以为权限弹窗只是走过场——manifest 要的每一项都会公示在商店页面，过度索权是被拒审乃至下架的常见原因"
+     ],
+     "milestone": "npm run package 产出 dist/x-video-downloader.zip；manifest 权限核对脚本全绿（每项权限有用途、无多余项）",
+     "milestone_verify": "命令跑完出现 zip 与全绿的核对输出；zip 解压后在 chrome://extensions 装载成功（Chrome 拒收拖放 zip，实测口径）",
+     "relevant_files": [],
+     "promises_out": [],
+     "depends_on": [
+      "download-pipeline",
+      "inject-ui"
+     ],
+     "acceptance": [
+      "本章验证信号通过：npm run typecheck 与 npm test 全绿 + npm run package 产出 zip 且核对脚本全绿【仓验收】",
+      "manifest 里每项权限都有『凭什么要它』的一段【文验收】",
+      "blocking webRequest 被砍的背景与对本插件的影响讲清【文验收】",
+      "法律边界声明落地（只下载有权保存的内容）【文验收】",
+      "零外部源码引用【仓验收】"
+     ]
+    },
+    {
+     "slug": "full-chain-review",
+     "title": "从点击到落盘：全链路对账",
+     "goal": "从按下按钮的那一秒倒推每一跳发生在哪个环境、用了哪个 API、为什么非它不可；收口主线问题",
+     "type": "review",
+     "length_exempt": true,
+     "hook": {
+      "kind": "ability-gap",
+      "point": "插件是你亲手写的，但闭上眼：点击发生后的第一毫秒里，代码先跑在哪个世界？m3u8 在哪被拆开、分片在哪被抓、文件又在哪被拼成一个？每一跳都能报出环境与 API 吗",
+      "phenomena": [
+       "闭眼复盘",
+       "每一跳",
+       "报不出"
+      ]
+     },
+     "new_concepts": [],
+     "misconceptions": [],
+     "structure": "前情回顾 + 点击→落盘全链路时序推演（逐跳环境/API 对账表）+ 概念对账清单 + 自查",
+     "relevant_files": [],
+     "promises_out": [],
+     "depends_on": [
+      "permissions-publish"
+     ],
+     "acceptance": [
+      "全链路时序推演覆盖点击→落盘每一跳，每跳标明环境与 API【文验收】",
+      "显式收口 driving_question【文验收】",
+      "概念对账清单与 glossary 条目一致【文验收】"
+     ]
+    }
+   ]
+  }
+ ],
+ "appendices": [
+  {
+   "slug": "glossary",
+   "title": "术语表",
+   "kind": "glossary"
+  },
+  {
+   "slug": "divergence-list",
+   "title": "本课程简化了什么",
+   "kind": "divergence"
+  }
+ ],
+ "final_milestone": {
+  "what_reader_built": "一个装进 Chrome 就能用的 X 视频下载插件（零构建，929 行）",
+  "verify": "装载后点推文上的下载按钮，磁盘出现可播放视频文件；companion 内 typecheck+test 全绿"
+ }
+}

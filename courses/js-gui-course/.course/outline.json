@@ -1,0 +1,265 @@
+{
+  "title": "JS 接入原生 GUI 的原理——从零理解 Electron 式桌面端",
+  "audience": "会用 Electron/Tauri 调 API，但说不清「JS 一行代码怎么变成屏幕上的一个窗口」、想从原理层理解桌面端架构的开发者。",
+  "input": {
+    "kind": "topic",
+    "ref": "JS 接入 GUI 的原理（Electron 式桌面端），要原理不要调包"
+  },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript + vitest",
+    "scope": "一个可测试的 mini-Electron 内核：模拟原生层（事件队列 + runLoop + 窗口管理器）之上，从零构建嵌入运行时、binding 桥、异步任务队列、IPC 通道（invoke/handle 与 send/on）、事件分发与最终 App 组装，合计约 500-600 行。"
+  },
+  "parts": [
+    {
+      "title": "原生世界：GUI 程序怎么活",
+      "chapters": [
+        {
+          "slug": "gui-skeleton",
+          "title": "桌面 GUI 程序的骨架：窗口与消息循环",
+          "goal": "理解一切桌面 GUI 程序（无论用什么语言/框架）共享的骨架：窗口是 OS 管理的资源，程序靠消息循环活着",
+          "type": "principle",
+          "pain_point": "新人把 win.show() 写在后台线程里，窗口闪了一下就没了；或者跑个死循环去「等用户」，结果界面整个白屏冻结——不知道 GUI 程序的生命线是一条「取消息—分发」的循环",
+          "depends_on": [],
+          "acceptance": [
+            "讲清窗口归属 OS、程序只持有引用、消息循环三件事",
+            "含「没有消息循环会怎样」的事故推演段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "message-loop",
+          "title": "手写最小消息循环",
+          "goal": "在模拟原生层实现事件队列与 runLoop，机械验证「循环取消息-分发」模型",
+          "type": "build",
+          "pain_point": "上一章只是听说循环；这一章亲手写：队列先入先出、按 type 分发、quit 消息让循环退出——写完你才知道 GUI 主线程每一毫秒在干什么",
+          "milestone": "src/native/eventQueue.ts + src/native/runLoop.ts：事件队列 FIFO、runLoop 按 type 分发、收到 quit 退出",
+          "milestone_verify": "tests/message-loop.test.ts：push 三条事件断言处理顺序、断言 quit 后剩余事件不再分发",
+          "depends_on": [
+            "gui-skeleton"
+          ],
+          "acceptance": [
+            "实验场门槛通过（tsc --noEmit + vitest run，本章测试先红后绿）",
+            "含「没有队列/分发会怎样」的痛点段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "嵌入与桥：JS 世界怎么接上来",
+      "chapters": [
+        {
+          "slug": "embedded-runtime",
+          "title": "JS 没有 GUI：运行时是被嵌入的",
+          "goal": "理解 V8 只是可嵌入引擎，全局对象由宿主注入——浏览器 window、Node process、Electron 的两套 API 都是这个原理",
+          "type": "principle",
+          "pain_point": "同一段 JS，浏览器里有 window、Node 里报 window is not defined、Electron 主进程里又换了一套——像换了个世界，其实换的是宿主",
+          "depends_on": [
+            "gui-skeleton"
+          ],
+          "acceptance": [
+            "讲清「引擎—宿主—全局对象」三层关系",
+            "能回答「JS 语言的 GUI 能力在哪」这一章内问题",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "binding-layer",
+          "title": "binding 层：JS 怎么调用「另一个语言」",
+          "goal": "实现宿主函数注册表与跨边界调用：注册、参数序列化校验、执行、返回值回传",
+          "type": "build",
+          "pain_point": "JS 里写 createWindow()，执行时进了 C++/Rust——这层边界没有魔法，是注册表加转发；不知道原理的人调试 IPC 报错只能瞎猜",
+          "milestone": "src/runtime/host.ts（createRuntime：宿主注入全局）+ src/runtime/bridge.ts（register/invoke：函数注册表 + 序列化校验）",
+          "milestone_verify": "tests/binding-layer.test.ts：invoke 走到注册的原生函数并拿到返回值；传函数/含函数对象被拒并报 [binding] 前缀错误",
+          "depends_on": [
+            "embedded-runtime"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「为什么参数只能过纯数据」的原理段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "window-handle",
+          "title": "窗口对象：宿主给你的遥控器",
+          "goal": "实现原生窗口管理器（结构快照代替像素）与 JS 侧 WindowHandle：本体在原生世界，JS 持有的是句柄",
+          "type": "build",
+          "pain_point": "JS 里 const win = createWindow() 拿到的 win 是什么？当成「窗口本体」存进全局 Map 再传给别的模块，断线重连后发现句柄失效——因为本体从来不在 JS 这边",
+          "milestone": "src/native/windowManager.ts（原生窗口表 + 结构快照）+ src/windows.ts（createWindow 返回 WindowHandle：setTitle/show/hide 全走桥）",
+          "milestone_verify": "tests/window-handle.test.ts：JS 侧改 title/可见性后，原生侧快照同步变化；两个句柄互不串扰",
+          "depends_on": [
+            "binding-layer"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「句柄 vs 本体」的原理段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "async-bridge",
+          "title": "单线程遇多线程：异步桥",
+          "goal": "原生耗时操作不能阻塞 JS 线程：任务队列 + Promise 化调用 + 完成结果回投 JS 队列再 flush",
+          "type": "build",
+          "pain_point": "同步调用原生截屏 300ms，期间整个界面（连动画带输入）全部冻结——JS 单线程，被原生调用占住就是全场停摆",
+          "milestone": "src/runtime/asyncBridge.ts：runAsync(name, args) 返回 Promise，原生结果进完成队列，pumpJs() 回投 resolve，不阻塞",
+          "milestone_verify": "tests/async-bridge.test.ts：同步代码先跑完、后 flush 才 resolve；两次 runAsync 按完成顺序 resolve；未 flush 前 Promise 挂起",
+          "depends_on": [
+            "binding-layer",
+            "message-loop"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「为什么不能同步等」的原理段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "进程与组装：mini-Electron 闭环与真机",
+      "chapters": [
+        {
+          "slug": "process-model",
+          "title": "为什么是两个进程",
+          "goal": "理解单进程桌面端的根本缺陷与多进程模型的取舍：崩溃隔离、安全边界、能力分配",
+          "type": "principle",
+          "pain_point": "2006 年前的浏览器是单进程：一个页面写的死循环让整个浏览器连同其他九个标签页一起冻结；一个插件崩溃带走全部未保存表单——没有进程隔离的时代都经历过这些",
+          "depends_on": [
+            "embedded-runtime",
+            "async-bridge"
+          ],
+          "acceptance": [
+            "讲清「崩溃隔离—权限收缴—能力外借」三步逻辑",
+            "含单进程事故时序推演段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "ipc-channel",
+          "title": "IPC：invoke/handle 与 send/on",
+          "goal": "实现双 runtime 之间的消息通道：序列化边界、请求-响应（带 id 配对）与事件推送两种语义",
+          "type": "build",
+          "pain_point": "渲染进程里没有 fs：能力在主进程，两边是两个互不可见的世界——没有一条带 id 配对的通道，跨进程函数调用只能是空想",
+          "milestone": "src/ipc/channel.ts：createIpcChannel() 返回 main/renderer 两端，端上有 send/on 与 invoke/handle；payload 序列化校验",
+          "milestone_verify": "tests/ipc-channel.test.ts：invoke 得到 handle 注册函数的返回值（跨端配对）；send 触发对端 on；传函数被拒",
+          "depends_on": [
+            "process-model",
+            "async-bridge"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「为什么 IPC 只能过纯数据」段落（函数是闭包，闭包绑定 runtime）",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "native-events-to-js",
+          "title": "反方向：native 事件进 JS",
+          "goal": "用户点击如何变成 JS 回调：OS 消息 → 队列 → 桥 → 订阅表分发，含解绑",
+          "type": "build",
+          "pain_point": "窗口上的按钮点了没反应：JS 写了回调，但没人把 native 世界的点击消息翻译给它——两个世界的事件系统互不相识，桥要双向才完整",
+          "milestone": "src/events/dispatch.ts：onWindowEvent(id, type, cb) 返回解绑函数；dispatchNativeEvent 把队列消息转投 JS 订阅表",
+          "milestone_verify": "tests/native-events-to-js.test.ts：模拟 click 消息进入队列、pump 后 JS 回调收到 payload；解绑后不再触发",
+          "depends_on": [
+            "message-loop",
+            "window-handle"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「反向桥 = 事件系统的接法」原理段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "assemble-mini-electron",
+          "title": "组装 mini-Electron",
+          "goal": "把窗口、桥、异步、事件分发拼成 createApp：JS 侧声明 UI + 事件，native 侧持有窗口，输入→状态→UI 全程走桥",
+          "type": "build",
+          "pain_point": "零件都会了但拼不起来：会开窗口、会桥调用、会收事件，却还写不出「点按钮计数 +1」——缺一个把生命周期和两个世界缝合的 App 壳",
+          "milestone": "src/app/miniElectron.ts：createApp({ main }) 启动宿主、注入 API、跑 main；renderUI(window, ui) 走桥更新原生 UI 树；计数器 App 全程跑通",
+          "milestone_verify": "tests/assemble-mini-electron.test.ts：模拟点击按钮 → 计数状态 +1 → 原生 UI 快照文本变为 '3'；点击两次事件顺序正确",
+          "depends_on": [
+            "window-handle",
+            "ipc-channel",
+            "native-events-to-js"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「一个桌面端的完整输入-输出回路」总结段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "wasm-binding",
+          "title": "真机篇（上）：WebAssembly——第一次真的跨语言",
+          "goal": "手工组装真 wasm 模块并在 JS↔wasm 边界实测值语义，把真原生函数挂上自制 binding 桥",
+          "type": "build",
+          "pain_point": "全书到第 10 章的「原生世界」都是 TS 演的——说好的 JS 调用另一个语言，从头到尾没离开过 JS 世界",
+          "milestone": "src/wasm/realBinding.ts：手工组装 41 字节 wasm 模块（导出 add(i32,i32)），loadNativeMath 实例化",
+          "milestone_verify": "tests/wasm-binding.test.ts：add(21,21)=42；浮点跨 i32 边界被截断；挂上第 4 章的桥 invoke 成功",
+          "depends_on": [
+            "assemble-mini-electron"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "含「值按对方类型过境」的实测段落（i32 截断）",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "terminal-app",
+          "title": "真机篇（下）：跑起来——终端 App 与真窗口",
+          "goal": "把内核接到真实 stdin/stdout 跑可交互 App；用 Bun FFI 直调 user32.dll 真的弹出系统窗口",
+          "type": "build",
+          "pain_point": "内核只在测试里活着——没有一个能运行的应用：进程启动、等按键、把状态画到真实输出设备",
+          "milestone": "src/app/terminalApp.ts（renderWindow 字符窗口 + step 按键驱动）+ src/app/demo.ts（npm run demo 可交互）+ src/app/native-window.mjs（Bun FFI 真弹窗）",
+          "milestone_verify": "tests/terminal-app.test.ts 五条断言 + npm run demo 放映/交互跑通 + bun FFI 脚本真 C 调用返回",
+          "depends_on": [
+            "wasm-binding",
+            "assemble-mini-electron"
+          ],
+          "acceptance": [
+            "实验场门槛通过（先红后绿）",
+            "npm run demo 可运行（交互或自动放映）",
+            "含 FFI 签名表=注册表、编码缓冲=序列化的对照讲解",
+            "零外部源码引用；正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "ecosystem-tradeoffs",
+          "title": "回望：Electron、Tauri 与原生绑定的同一原理",
+          "goal": "用自研内核解释各家方案：整装 Chromium、系统 WebView、直绑原生 GUI 工具包，全是「嵌入运行时 + 桥接 GUI」的不同权衡",
+          "type": "principle",
+          "pain_point": "面试问「Electron 为什么 100MB、Tauri 为什么几 MB、为什么 Electron 应用普遍更吃内存」只能背营销话术——没理解原理的人无法评估选型",
+          "depends_on": [
+            "assemble-mini-electron"
+          ],
+          "acceptance": [
+            "用第 10 章的零件解释三种方案的取舍",
+            "不贬损任何方案，讲权衡不讲站队",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个约六百行、55 条断言背书的 mini-Electron 内核（模拟原生层 + 嵌入运行时 + binding 桥 + 异步队列 + IPC 通道 + 事件回路 + createApp），外加真机两章：手工 wasm 模块跨语言实测、可交互终端 App 与 Bun FFI 真系统弹窗",
+    "verify": "cd companion && npm test（55 条全绿）+ tsc --noEmit；npm run demo 可运行；bun src/app/native-window.mjs --msgbox 真弹窗"
+  }
+}

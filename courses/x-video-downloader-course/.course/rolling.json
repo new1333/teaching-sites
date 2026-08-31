@@ -1,0 +1,46 @@
+{
+ "chapters": [
+  {
+   "n": 1,
+   "file": "01-mv3-anatomy.md",
+   "degraded": false,
+   "summary": "第 1 章搭好最小可装载 MV3 插件：manifest（V3、matches 报备 x.com、content_scripts→src/content/loader.js、background→src/background/sw.js）。读者已分清两个世界：content script 摸 DOM 但 API 受限；SW 有浏览器 API、无 DOM、空闲约 30 秒休眠。新增 src/shared/badge.js 纯函数（BADGE_ATTR/isStatusHref/findTweetArticles/tweetLinkFrom），立下全书约定：值得测的逻辑住 shared、装配层不测。测试 8 例全绿。悬念已埋：角标不随滚动出现，第 5 章解决。"
+  },
+  {
+   "n": 2,
+   "file": "02-network-watch.md",
+   "degraded": false,
+   "summary": "第 2 章让视频现形：blob:/MSE 解释了 video src 为何是内存门牌，真实地址只出现在网络请求里。新增 src/shared/video-url.js 的 isLikelyVideoUrl（认 video.twimg.com 的 .m3u8/.mp4/.ts，坏 URL 安静返回 false）；manifest 加 permissions:[webRequest]、host_permissions（x.com 与 *.twimg.com，Chrome 72 起需同时握请求方与发起方两站权限）、background.type:module；sw.js 顶层同步注册 onBeforeRequest 被动监听打 [xvd] 日志（chrome 全局带 Node 守卫）。测试 14 例全绿。悬念：m3u8 是纯文本清单，下一章拆解。"
+  },
+  {
+   "n": 3,
+   "file": "03-m3u8-parse.md",
+   "degraded": false,
+   "summary": "第 3 章拆开 m3u8：新增 src/shared/m3u8.js（parseMasterPlaylist/parseMediaPlaylist/pickVariant 与 PlaylistParseError、NoVariantError），video-url.js 增 playlistKindOf（按 /pl/ 层级猜 master/media/mp4/unknown）。fixtures 三份自造样本（master 5 档含纯音频、.ts 6 片、fMP4/EXT-X-MAP 4 片），测试经 ?raw 读文件。sw.js 进化为看见清单即 fetch 拆解并报「检测到 N 档已选 WxH」。相对 URI 补全与 EXT-X-MAP 拼装留给第 4 章。测试 27 例全绿。"
+  },
+  {
+   "n": 4,
+   "file": "04-download-pipeline.md",
+   "degraded": false,
+   "summary": "第 4 章打通下载管线：新增 src/shared/download.js（resolveMediaPlaylistUrl/downloadSegments/concatBuffers/guessFilename 与 SegmentFetchError，网络经注入 fetchLike，并发池 cursor 发号+slot 归位）。manifest 增 downloads 权限与 action；sw.js 记 lastVideo（仅 master/mp4），点图标：mp4 一行 chrome.downloads，HLS 抓拼后经 tabs.sendMessage 递整段字节；loader.js 收消息组 Blob、a[download] 落盘（SW 无 createObjectURL）。第 2、3 章承诺兑现。消息类型仍是裸字符串、正式协议第 5 章抽。测试 39 例全绿。"
+  },
+  {
+   "n": 5,
+   "file": "05-inject-ui.md",
+   "degraded": false,
+   "summary": "第 5 章把按钮放上推文：SPA+content script 只跑一次解释了角标只认首屏；MutationObserver 补票、data-testid 锚点找含视频推文（findVideoTweetRoots）。新增 shared/messages.js（MSG 四型常量表+守卫+encodeBytes/decodeBytes——通道默认 JSON 序列化，ArrayBuffer 直递变 {}，二进制须 base64 编码过通道）与 content/button-state.js（五态机 nextButtonState、statusIdFromUrl、BUTTON_ATTR）。loader.js 改动态 import main.js，manifest 增 storage 权限与 web_accessible_resources。sw.js 对号账本按 tabId 记 storage.session，进度/DONE（bytesB64）按 statusId 回推，文件名真 statusId，工具栏退役。测试 58 例全绿。"
+  },
+  {
+   "n": 6,
+   "file": "06-permissions-publish.md",
+   "degraded": false,
+   "summary": "第 6 章算清权限总账并打包：新增 companion/scripts/——audit-rules.mjs 纯规则（permissions/host/action/WAR 四路双向对账、patternCovers 通配、importClosure 装配闭包、selectZipFiles 取舍）、audit-manifest.mjs CLI（十项全对上号）、package.mjs 用 fflate 固定 mtime 压出 dist/x-video-downloader.zip（两次逐字节一致）。manifest 与 src 终态封板（正文含 manifest 全文块，前章拼版指针的落点）。MV3 砍 blocking webRequest 始末、CORS 豁免两侧规则与两站规则、CSP 下限、上架清单与法律边界已清账。zip 拖放装载实测被 Chrome 拒收，验证走解压后 Load unpacked 等价路径。测试 76 例全绿。"
+  },
+  {
+   "n": 7,
+   "file": "07-full-chain-review.md",
+   "degraded": false,
+   "summary": "第 7 章收官复盘，按声明替代结构成文：前情回顾（六问）+ 点击→落盘全链路时序推演（前提 0a 按钮注入/0b 账本记账 + 主链 9 跳 + mp4 岔路，逐跳环境/API/凭什么对账表）+ 概念对账清单（glossary 38 条按章归位）+ 自查三问。显式收口 driving_question。验证物未动：companion 终态 929 行（wc -l 口径）、76 测试全绿。遗留教学点：DONE 消息缺 bytesB64 时按钮静默显已存盘（自查第 3 题靶）；heightFromUrl 竖屏 mp4 文件名高度段取第一数字（登记差异清单）。全书 7 章完成，无未清承诺。"
+  }
+ ]
+}

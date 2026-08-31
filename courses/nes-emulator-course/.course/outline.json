@@ -1,0 +1,228 @@
+{
+  "title": "用 TypeScript 从零写一台 NES:NES 模拟器原理与实现",
+  "audience": "会写 TypeScript、玩过红白机、想搞懂「一个 .nes 文件怎么变成屏幕上 60fps 的游戏画面」的开发者;不需要汇编或硬件基础,6502 汇编在课程内从零教起。",
+  "input": {
+    "kind": "topic",
+    "ref": "使用 TypeScript 从零实现 NES 模拟器;要求能实际解析并运行 ROM,产出的代码完整可运行"
+  },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript + vitest",
+    "scope": "一个完整可运行的最小 NES 内核(headless 库 + 浏览器 demo 页):iNES 解析、全官方指令的 6502 CPU(带周期计数)、总线与镜像、dot 级 PPU(背景 fetch 流水线/精灵/帧时序/NMI)、手柄移位寄存器、NROM 映射;Nes.loadRom(bytes).runFrame() 输出 256×240 RGB 帧缓冲,demo 页可加载本地 .nes 文件用键盘游玩。预计 2500-3500 行,比一般课程的实验场大——这是一台整机,规模由主题决定。"
+  },
+  "parts": [
+    {
+      "title": "起步:卡带与 CPU 的最小闭环",
+      "chapters": [
+        {
+          "slug": "nes-overview",
+          "title": "三块芯片的合奏:NES 硬件全景与时钟同步",
+          "goal": "建立 CPU / PPU / 卡带三块芯片如何挂在总线上协作、以及「CPU 走 1 周期 PPU 走 3 个 dot」时钟关系的心智模型,定下模拟器的模块边界与推进策略",
+          "type": "principle",
+          "pain_point": "动手写模拟器的第一晚,你抄了半张 6502 指令表,兴致勃勃让 CPU 全速跑——每秒几百万条指令执行得飞快,屏幕却永远是黑的:没有「按周期推进、PPU 三倍速跟随」的时钟同步模型,指令执行和画面渲染是两个互不知晓的世界",
+          "depends_on": [],
+          "acceptance": [
+            "讲清三块芯片的分工、总线连接、3:1 时钟关系四件事",
+            "含「没有时钟同步模型会怎样」的事故推演段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "ines-cartridge",
+          "title": "iNES 格式:拆开一张卡带",
+          "goal": "实现 parseINES,把 .nes 字节流拆成 Cartridge(程序、图案、映射器、镜像模式),认识 NES 2.0 扩展头",
+          "type": "build",
+          "pain_point": "拿到 .nes 文件当纯二进制猜偏移:PRG 长度按字节算、没看 trainer 标志位,整个数据区错位 512 字节,反汇编出来第一条就是非法 opcode——文件头里明明每个字段都写着,只是你没逐位读",
+          "milestone": "src/ines.ts:parseINES(data) 返回 Cartridge{prgRom, chrRom, mapper, mirroring};正确处理 trainer 跳过、16K 单位长度、mapper 高低 nibble 拼接、NES 2.0 标志识别;chrRom 为 null 时表示 CHR-RAM 卡带",
+          "milestone_verify": "tests/ines-cartridge.test.ts:自构 .nes 字节串,断言 PRG/CHR 偏移与长度、镜像标志位、mapper 号拼接、含 trainer 时整体平移、非法魔数抛错",
+          "depends_on": ["nes-overview"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「猜偏移读出乱码」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "cpu-core",
+          "title": "6502 最小核心:寄存器、复位与取指循环",
+          "goal": "实现 A/X/Y/SP/PC/P 七个寄存器、fetch-decode-execute 的 step() 与从 $FFFC 复位向量启动的 reset(),用第一批指令让手写机器码真正跑起来",
+          "type": "build",
+          "pain_point": "CPU 一上电 PC 从 0 开始执行——但真实硬件要先读 $FFFC/$FFFD 里的复位向量;漏了这一步,你的程序明明烧在 $8000,CPU 却在零地址的空内存里跑飞,SP 随 BRK 一路下坠,寄存器值随机游走,连「程序没启动」这个结论都很难观察到",
+          "milestone": "src/cpu.ts:Cpu 类,寄存器公有字段、reset() 读复位向量、step() 取指译码执行并返回周期数;首批指令(立即/绝对寻址的 LDA/LDX/LDY/STA/JMP/BRK 及 N/Z 标志)在平坦 64KB 内存上跑通;未知 opcode 抛错",
+          "milestone_verify": "tests/cpu-core.test.ts:手写机器码程序断言寄存器与内存副作用、reset 后 PC 等于复位向量内容、未知 opcode 抛带地址的错误",
+          "depends_on": ["nes-overview"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「上电跑飞」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "CPU:把指令跑对",
+      "chapters": [
+        {
+          "slug": "addressing-modes",
+          "title": "寻址模式:操作数从哪里来",
+          "goal": "把 13 种官方寻址统一为「算出有效地址」的一层,并原样实现零页绕回与 JMP 间接寻址页绕回这类硬件 bug",
+          "type": "build",
+          "pain_point": "LDA $10FF,X 在 X=1 时你算出 $1100,硬件却绕回 $1000——零页寻址的高字节不进位;JMP ($10FF) 更离谱,应读 $10FF 和 $1100 组成地址,真机却读 $10FF 和 $1000,程序凭空跳到错误地址,而且这种 bug 在你自己的汇编直觉里根本不存在",
+          "milestone": "src/cpu.ts 内寻址层:resolveAddress(mode) 覆盖全部官方寻址;补齐依赖它们的加载/存储/比较指令;页内绕回与间接跳转 bug 按硬件行为实现(不是按直觉修正)",
+          "milestone_verify": "tests/addressing-modes.test.ts:每种寻址断言有效地址;重点断言 zp,X 的 $FF+$1 绕回、(zp),Y 的进位、JMP ($xxFF) 页绕回落在正确(错误)地址",
+          "depends_on": ["cpu-core"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「绕回让程序跳飞」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "instruction-set",
+          "title": "指令集与标志位:补全官方 151 条",
+          "goal": "实现全部官方指令与完整的 N/V/Z/C 语义(ADC/SBC 的有符号溢出、CMP 家族)、分支、栈操作与 BRK/RTI 的 B 标志细节,并为每条指令挂上周期数",
+          "type": "build",
+          "pain_point": "移植一段别人的初始化代码,ADC 算完坐标 BCC 却总不跳——你按无符号进位实现 C,但 V(有符号溢出)漏了或者错了,而分支指令混用两种语义;$7F + $01 应该 N=1、V=1、C=0,标志错一个,整棵分支树全错,程序走进从未设计过的路径",
+          "milestone": "src/opcodes.ts + src/cpu.ts:官方 opcode 全表(含非官方 opcode 明确抛错)、运算指令的完整标志语义、分支与栈指令、BRK/RTI 压栈序(B 标志位细节)、按官方周期表计数(跨页加成)",
+          "milestone_verify": "tests/instruction-set.test.ts:按指令族断言运算标志真值表抽样(含 V 的正负溢出各一例)、BRK/RTI 往返后现场恢复、跨页/不跨页周期数差 1",
+          "depends_on": ["addressing-modes"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「标志位错一个分支树全错」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "PPU:画面从哪里来",
+      "chapters": [
+        {
+          "slug": "ppu-bus-registers",
+          "title": "PPU 寄存器与地址镜像",
+          "goal": "实现 CPU 侧总线(RAM 镜像、$2000-$3FFF 每 8 字节镜像、卡带窗口)与 PPU 六个寄存器的读写副作用:Loopy v/t/x、$2007 增量与读缓冲、命名表镜像、调色板 RAM",
+          "type": "build",
+          "pain_point": "例程明明写 PPUCTRL 用 $2000,另一段代码却写 $2008——你的模拟器只认前 8 个地址,写操作凭空消失,背景永远打不开;而真机上 $2008 就是 $2000(每 8 字节镜像)。没有镜像,任何真实 ROM 的寄存器访问都会随机丢一半",
+          "milestone": "src/bus.ts + src/ppu.ts:总线路由(含 RAM 2K 镜像)、PPUCTRL/MASK/STATUS/SCROLL/ADDR/DATA 六个寄存器副作用、PPU 侧显存读写(命名表水平/垂直/四屏镜像、调色板 RAM 及其镜像)、$2007 读缓冲一拍延迟",
+          "milestone_verify": "tests/ppu-bus-registers.test.ts:断言 $2008 写落到 CTRL、RAM 镜像地址内容一致、$2006 两次写 + $2007 写在水平/垂直镜像下落到正确命名表格、调色板 $3F10 镜像 $3F00",
+          "depends_on": ["cpu-core", "ines-cartridge"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「写 $2008 寄存器消失」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "background-rendering",
+          "title": "背景渲染:8 个点画一块瓦片",
+          "goal": "实现 dot 级背景渲染:每 8 dot 的图块/属性/位平面 fetch 序列、移位寄存器逐像素输出、fine-X 与 coarse-X 的 v 寄存器滚动语义",
+          "type": "build",
+          "pain_point": "先写了个「按命名表整帧画位图」的渲染器,画面居然是对的——直到游戏在扫描线中途改 $2005 滚动(状态栏不滚、下面滚),整帧错位撕裂;粗粒度渲染解释不了 mid-frame 改写,真机是 8 dot 一取、移位寄存器一个像素一个像素吐的",
+          "milestone": "src/ppu.ts 背景 fetch 流水线:NT/AT/低平面/高平面四拍取数、16-bit 双移位寄存器、每像素位选择器输出到帧缓冲、incHorz/incVert 与 y 折返、fine-X 选择;渲染关闭时输出背景色",
+          "milestone_verify": "tests/background-rendering.test.ts:构造 VRAM(瓦片位平面+属性+调色板)推进一帧,断言指定行像素颜色等于手工解码结果、fine-X=3 时整行平移 3 像素、两命名表水平排布时 512 宽画面滚动正确",
+          "depends_on": ["ppu-bus-registers"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「mid-frame 改滚动整帧撕裂」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "sprite-rendering",
+          "title": "精灵、OAM DMA 与 sprite 0 hit",
+          "goal": "实现 OAM 与 $4014 整块 DMA、每扫描线取前 8 个精灵、翻转与优先级合成、sprite 0 hit 的精确置位条件",
+          "type": "build",
+          "pain_point": "精灵画出来了,游戏却卡死在标题画面按什么都不动——菜单用 sprite 0 hit 判断状态栏扫描线位置,你的实现里精灵 0 与背景不透明重叠时 $2002 bit6 没置位,poll 循环永远等不到那一刻;另一个坑:不限制每线 8 个,精灵闪烁的复现条件你也永远对不上",
+          "milestone": "src/ppu.ts 精灵路径:二级 OAM(每线前 8 个,溢出丢弃)、翻转解码、与背景按优先级位合成(背后精灵透出背景)、sprite 0 hit 置位(双方不透明且 x≥8 当左侧裁剪开);src/bus.ts 接 $4014 DMA(CPU 侧 513/514 周期语义)",
+          "milestone_verify": "tests/sprite-rendering.test.ts:构造 OAM 断言水平/垂直翻转像素、优先级位让精灵藏到背景后、推进到重叠 dot 后 STATUS bit6 置位且此前为 0、同一线第 9 个精灵不出现在本线",
+          "depends_on": ["background-rendering"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「sprite 0 hit 不置位卡死标题」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "frame-timing",
+          "title": "帧时序:NMI 与主循环",
+          "goal": "实现 262 线 × 341 dot 完整帧模型与 NMI 中断序列,把 CPU 与 PPU 用 3:1 catch-up 主循环焊在一起,得到 runFrame()",
+          "type": "build",
+          "pain_point": "CPU 和 PPU 各自全速跑:游戏在 VBlank 里轮询 $2002,你的置位时机差了半条扫描线,轮询窗口永远错过;更常见的是 NMI 从不触发——VBlank 里上传显存的例程一次都没执行,画面永远停在第一帧,而你盯着 CPU 侧看不到任何报错",
+          "milestone": "src/ppu.ts 帧模型(pre-render/可见/VBlank 段、$2002 读清 vblank 与写 $2002 竞态、odd frame 跳点);src/cpu.ts 的 nmi() 中断序列;src/nes.ts:Nes.runFrame() 以 catch-up 推进整机出一帧",
+          "milestone_verify": "tests/frame-timing.test.ts:断言一帧 89342 PPU 周期、VBlank 期间 NMI 触发且手写机器码处理例程执行(内存计数器自增)、读 $2002 清除标志、odd frame 比 even 少 1 个 dot",
+          "depends_on": ["instruction-set", "sprite-rendering"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「NMI 不触发画面停在第一帧」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "整机:跑起来",
+      "chapters": [
+        {
+          "slug": "controller-input",
+          "title": "手柄:一次移一位的串行输入",
+          "goal": "实现 $4016/$4017 的 strobe 语义与移位寄存器读取,把任意按键事件源(键盘)接到模拟器手柄上",
+          "type": "build",
+          "pain_point": "按 Start 开始游戏,画面毫无反应:你把按键状态直接塞进一个字节,游戏却按硬件节奏连读 8 次 $4016——strobe 没实现时每次都读到同一个位(比如恒 1=一直按着 A,菜单自己疯狂翻页),或者读满 8 位后你返回 0 而硬件返回 1,poll 循环的位数错位,按键永远对不上",
+          "milestone": "src/controller.ts:写 $4016 strobe(上升沿锁存快照、重开重置位序)、读时按 A/B/Select/Start/Up/Down/Left/Right 顺序右移、读满后返回 1;$4017 第二手柄;Nes.setButton() 输入入口",
+          "milestone_verify": "tests/controller-input.test.ts:断言锁存后 8 次读取的按键顺序与按下组合一致、读取中途重新 strobe 后位序重置、第 9 次读返回 1、双手柄互不串扰",
+          "depends_on": ["ppu-bus-registers"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「按 Start 没反应」的痛点开章段落",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "assemble-machine",
+          "title": "整机组装:从 .nes 字节到第一帧画面",
+          "goal": "实现 NROM 映射并接通全部零件,用 Nes.loadRom(bytes).runFrame() 跑通端到端:自制 .nes 测试卡带全链路断言,浏览器 demo 页加载真 ROM 游玩",
+          "type": "build",
+          "pain_point": "零件全对,整机黑屏:CPU 从 $8000 取不到指令(bus 没接卡带窗口)、$4014 DMA 写进虚空、CHR-RAM 游戏写图案没生效——集成层每一条断线都是画面全黑,而且没有任何报错告诉你断在哪",
+          "milestone": "src/nes.ts 整机:NROM(16K PRG 镜像到 $8000/$C000、32K 直通;CHR-ROM 直通 / CHR-RAM 可写)、Bus 全量接线、loadRom/runFrame/setButton;端到端测试用自制 .nes 字节串(iNES 头 + 手写 6502 程序:VBlank 轮询上传 CHR-RAM 图案/命名表/调色板、开渲染、按键改写命名表);demo/index.html 选本地 .nes 文件、canvas 渲染、键盘映射、requestAnimationFrame 60fps",
+          "milestone_verify": "tests/assemble-machine.test.ts:自制 .nes 从 parseINES 到 runFrame 全链路,断言帧缓冲指定坐标 RGB 与预期调色板颜色一致、按 A 键后下一帧画面变化;demo 页人工加载 NROM ROM 可玩",
+          "depends_on": ["frame-timing", "controller-input"],
+          "acceptance": [
+            "实验场门槛通过(tsc --noEmit + vitest run,本章测试先红后绿)",
+            "含「零件全对整机黑屏」的痛点开章段落",
+            "端到端测试覆盖「解析真 .nes 字节→渲染出可断言像素」全链路",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        },
+        {
+          "slug": "accuracy-ladder",
+          "title": "精度阶梯:从「能跑」到「像素级正确」",
+          "goal": "建立模拟器精度的分层地图(指令级/scanline 级/dot 级/cycle 级各自能解释与不能解释什么),给出 APU、mapper 1/2/4、open bus、DMC 的扩展路线与自学入口",
+          "type": "principle",
+          "pain_point": "你的模拟器跑 NROM 游戏大体正常,直到遇见:某游戏画面顶部撕裂(精灵溢出时序)、某游戏卡在读 $4015 等音频就绪(APU 未实现)、换一张 MMC1 卡带直接花屏(bank 切换没实现)——「能跑」和「正确」之间隔着一条精度阶梯,每一级台阶对应一类只在那一级才暴露的现象",
+          "depends_on": ["assemble-machine"],
+          "acceptance": [
+            "讲清精度分层与各级能/不能解释的现象",
+            "APU 与常见 mapper 的扩展路线有可执行的下一步",
+            "零外部源码引用",
+            "正文 ≥1200 字"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一台完整可运行的最小 NES:TypeScript 写的 iNES 解析器 + 全官方指令 6502 CPU + dot 级 PPU(背景/精灵/NMI 帧时序)+ 手柄 + NROM,约 2500-3500 行;headless 的 Nes.loadRom(bytes).runFrame() 输出 256×240 帧缓冲,浏览器 demo 页能加载本地 .nes 用键盘实际游玩",
+    "verify": "companion 双硬门槛(tsc --noEmit + vitest run)全绿,含「自制 .nes 测试卡带从解析到渲染出可断言像素」的端到端测试;demo 页人工验证可玩"
+  }
+}

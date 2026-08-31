@@ -53,3 +53,6 @@ Desktop.ini
 
 # 浏览器自动化工具的会话快照（playwright MCP 产物，可再生）
 .playwright-mcp/
+
+# boot 演示的运行时 AOF 账本（node src/boot.ts 产物，可删可再生）
+courses/*/companion/appendonly.aof

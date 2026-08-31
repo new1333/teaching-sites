@@ -1,0 +1,273 @@
+{
+  "title": "SQL 与 ORM：给前端的数据库课",
+  "audience": "会写 Node 脚本的前端：SQL 与 ORM 从零开始",
+  "input": { "kind": "topic", "ref": "sql 常用操作；面向前端开发；常用 ORM；ORM 原理与亲手实现" },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript + vitest + Node 内置 node:sqlite（零外部依赖，内存库）",
+    "scope": "先用薄封装（src/db.ts）练真 SQL，再逐章长出一个 mini-ORM：schema 建表 → 链式查询构建器 → 水合与脏跟踪 → 关联加载 → 事务；src 六文件合计约 550 行，14 章渐进测试"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · SQL：把查询的活还给数据库",
+      "chapters": [
+        {
+          "slug": "tables-and-rows",
+          "title": "把数据放进有形状的家：表、行与类型",
+          "goal": "建立关系模型的世界观，亲手跑通建表、插入、查询的最小闭环",
+          "type": "build",
+          "pain_point": "同事说「把上周 status 是 paid 的订单导我一份」，你打开 localStorage 里的 JSON 数组在控制台 reduce 了半小时还漏了补单；换个问题又 reduce 一遍——数据没有形状、没有专门的查询工具，每次都是手工作坊",
+          "new_concepts": ["关系模型", "数据库是独立进程", "SQL", "类型（TEXT/INTEGER/REAL）"],
+          "milestone": "实验场新增 src/db.ts（内存 SQLite 薄封装）与建表/插入/查询测试",
+          "milestone_verify": "tests 里建 users 表、插 3 行、SELECT 查回的行与值逐列一致",
+          "depends_on": [],
+          "acceptance": [
+            "实验场门槛通过：cd companion && npx tsc --noEmit + npx vitest run 全绿【仓验收】",
+            "正文含「localStorage reduce 半小时」痛点开章段落【文验收】",
+            "关系模型（表/行/列/类型）按成因→载体→演算→锚点四步教【文验收】",
+            "零外部源码引用：示例代码出自实验场或自包含用法示例【文验收】"
+          ]
+        },
+        {
+          "slug": "where-order-limit",
+          "title": "查询的艺术：WHERE、排序与分页",
+          "goal": "掌握 SELECT 的过滤、排序、分页与 NULL 三值逻辑，体会声明式查询",
+          "type": "build",
+          "pain_point": "列表页把 3 万行订单全量拉到浏览器再 filter + slice 做分页，翻到第 8 页内存爆掉白屏；后端同学看了接口说「你们为什么不用 WHERE 和 LIMIT」——你甚至不知道这两样东西能替你把活全干了",
+          "new_concepts": ["声明式", "NULL 三值逻辑", "分页（LIMIT/OFFSET）"],
+          "milestone": "一组过滤/排序/分页 SQL 断言：比较运算、IN、LIKE、BETWEEN、ORDER BY、LIMIT/OFFSET、IS NULL",
+          "milestone_verify": "测试断言：分页翻页结果正确；= NULL 查不出 NULL 行而 IS NULL 能查出",
+          "depends_on": ["tables-and-rows"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「3 万行拉到前端翻页白屏」痛点开章段落【文验收】",
+            "NULL 三值逻辑按四步教（成因落到 SQL 标准的真值表）【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "update-delete-constraints",
+          "title": "改数据不翻车：UPDATE、DELETE 与约束",
+          "goal": "掌握带 WHERE 的写操作，理解主键/外键/UNIQUE/NOT NULL 是数据库层的守门员",
+          "type": "build",
+          "pain_point": "周五下班前执行 UPDATE orders SET status = 'refunded' 忘写 WHERE，全表 12 万行被改，DBA 从备份里抢救到半夜；同月有人删了用户没删订单，报表里一堆 user_id 指向已不存在的用户",
+          "new_concepts": ["主键", "外键", "约束", "自动递增（AUTOINCREMENT/rowid）"],
+          "milestone": "约束守门测试：主键去重拦截、外键拦下孤儿订单、UNIQUE 拦重复邮箱、UPDATE/DELETE 带 WHERE 生效且返回 changes 数",
+          "milestone_verify": "测试断言：插入重复主键抛错；外键开关（PRAGMA foreign_keys）关闭时能插孤儿、开启时被拦",
+          "depends_on": ["tables-and-rows"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「UPDATE 忘写 WHERE 全表被改」痛点开章段落【文验收】",
+            "主键/外键各自按成因→载体→演算→锚点教【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "aggregate-group-by",
+          "title": "让数据库替你算报表：聚合与分组",
+          "goal": "掌握 COUNT/SUM/AVG/MIN/MAX 与 GROUP BY/HAVING，把 reduce 分桶的活还给数据库",
+          "type": "build",
+          "pain_point": "运营要每日成交报表，你在 Node 里对五万行订单 reduce 分桶求和，接口从 200ms 涨到 9 秒超时；你写了个 groupBy 工具函数，上线当天就因为 NaN 和时区被提了两个 bug",
+          "new_concepts": ["聚合函数", "分组（GROUP BY）", "HAVING 与 WHERE 的分工"],
+          "milestone": "聚合断言：分组计数、按组求和、HAVING 过滤掉小分组、WHERE 与 HAVING 同现时各司其职",
+          "milestone_verify": "测试断言：GROUP BY user_id 后每组行数与手写 reduce 分桶结果一致",
+          "depends_on": ["where-order-limit"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「五万行 reduce 超时」痛点开章段落【文验收】",
+            "HAVING 与 WHERE 的分工用一次同查询演算讲清【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "join-tables",
+          "title": "两张表缝成一张：JOIN",
+          "goal": "掌握 INNER/LEFT JOIN 与表别名，理解连接条件，把前端的双重循环匹配搬进数据库",
+          "type": "build",
+          "pain_point": "订单接口和用户接口各返回一个数组，你写双重循环按 userId 匹配拼展示结构，1 万订单 × 8000 用户页面卡死 4 秒；换成 Map 索引后快了，但下个人接手又写成双重循环",
+          "new_concepts": ["JOIN（连接）", "INNER 与 LEFT 的语义差", "表别名"],
+          "milestone": "JOIN 断言：INNER JOIN 只留两边都有的行、LEFT JOIN 保左表全量、三表链式 JOIN、别名消歧",
+          "milestone_verify": "测试断言：同一数据集下 LEFT JOIN 行数 ≥ INNER JOIN 行数，且差额正是无订单的用户数",
+          "depends_on": ["tables-and-rows", "update-delete-constraints"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「双重循环按 userId 匹配卡死」痛点开章段落【文验收】",
+            "INNER 与 LEFT 的语义差用具体行集演算讲清（哪行留、哪行丢、NULL 从哪来）【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "index-query-plan",
+          "title": "越用越慢的查询：索引与查询计划",
+          "goal": "理解全表扫描为何随行数线性变慢、索引（B-tree）为何快、EXPLAIN 怎么自证",
+          "type": "principle",
+          "pain_point": "上线三个月，按 email 查用户从 2ms 涨到 800ms，数据涨到 50 万行；你重启了服务一点没用——慢的不是代码，是那条没有索引可走的 SELECT 在全表扫描",
+          "new_concepts": ["索引", "B-tree", "查询计划（EXPLAIN）", "全表扫描", "联合索引最左前缀"],
+          "depends_on": ["where-order-limit"],
+          "acceptance": [
+            "正文含「2ms 涨到 800ms」痛点开章段落【文验收】",
+            "索引按成因→载体→演算→锚点四步教（演算含纸笔二分定位步数对比）【文验收】",
+            "正文演示 EXPLAIN QUERY PLAN 的读法（真实输出贴文）【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 从 SQL 到 ORM",
+      "chapters": [
+        {
+          "slug": "what-is-orm",
+          "title": "ORM 是什么：一张分层地图与两大门派",
+          "goal": "建立 ORM 的概念地图：它翻译什么、分层（驱动→查询构建器→ORM）、两大门派与主流生态取舍",
+          "type": "principle",
+          "pain_point": "接手一个后端仓库，满屏 prisma.user.findMany({ where: { role: 'admin' }, include: { posts: true } }) 和 TypeORM 的 Repository，你不知道每行对应哪条 SQL、include 背后发了几条语句——改一个条件心里完全没底，只能复制粘贴试",
+          "new_concepts": ["ORM", "Active Record", "Data Mapper", "查询构建器（概念层）", "驱动（driver）"],
+          "depends_on": ["join-tables", "aggregate-group-by"],
+          "acceptance": [
+            "正文含「接手后端仓库看不懂 ORM 查询」痛点开章段落【文验收】",
+            "ORM 按「为什么存在→翻译什么→分层地图→门派」展开，分层图以 ASCII 呈现【文验收】",
+            "Sequelize/TypeORM/Prisma/Drizzle/knex 的取舍用一张对照表讲清，只讲公开概念与行为、零源码引用【文验收】",
+            "预告本课程 Part 3 的实现路线图（对应后续章的里程碑）【文验收】"
+          ]
+        },
+        {
+          "slug": "sql-injection",
+          "title": "一个引号引发的越权：SQL 注入与参数化",
+          "goal": "亲手复现注入攻击，理解占位符 + 参数绑定为什么在机制上（而非运气上）防住它",
+          "type": "build",
+          "pain_point": "登录框输入 admin' -- ，密码随便填，你进了管理员账号——后端把用户名直接拼进 SELECT ... WHERE name = '输入'，你的输入闭合了引号、注释掉了密码检查；同一年，某公司因为一个搜索框丢了几千万条用户数据",
+          "new_concepts": ["SQL 注入", "参数化查询", "预编译语句", "占位符"],
+          "milestone": "注入复现 + 防御测试：拼接版被 payload 攻破（查出全表），参数版把 payload 当普通字符串处理",
+          "milestone_verify": "测试断言：同一 payload 下拼接版返回全部用户、参数化版返回 0 行",
+          "depends_on": ["where-order-limit"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「admin' -- 登进管理员账号」痛点开章段落【文验收】",
+            "注入按四步教：成因（字符串拼接让数据变成代码）、XSS 锚点、逐字符演算 payload 如何改变 SQL 结构【文验收】",
+            "参数化的防御机理讲到「模板与数据分通道」而非「转义了特殊字符」【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 亲手造一个 mini-ORM",
+      "chapters": [
+        {
+          "slug": "schema-to-ddl",
+          "title": "用对象描述表：schema 与 CREATE TABLE 生成",
+          "goal": "实现 defineTable：TypeScript 对象描述列，编译成 CREATE TABLE 并建表——mini-ORM 的地基",
+          "type": "build",
+          "pain_point": "TS 里定义了 User 接口，建表 SQL 里又手写一遍字段；两处手工维护漂移三周后，代码新增的 nickname 字段在数据库里不存在，上线即 500。你想要「一份定义，两边生效」",
+          "new_concepts": ["DDL", "schema（数据库语境）", "类型映射（TS 类型 ↔ 列类型）"],
+          "milestone": "src/schema.ts：defineTable(db, 'users', { id: { type: 'integer', primaryKey: true }, ... }) 生成正确的 CREATE TABLE（含约束、外键子句）并建表",
+          "milestone_verify": "测试断言：生成 SQL 文本与预期一致；外键表建表后 PRAGMA 外键约束生效",
+          "depends_on": ["tables-and-rows", "what-is-orm"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「两处手写漂移、上线 500」痛点开章段落【文验收】",
+            "类型映射的取舍讲清（无 boolean/Date 列时怎么存，简化点登记差异清单）【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "query-builder",
+          "title": "链式调用变 SQL：查询构建器",
+          "goal": "实现链式 where/orderBy/limit/offset，两阶段模式（攒条件 → 编译成参数化 SELECT）",
+          "type": "build",
+          "pain_point": "同事手拼动态 SQL：筛选条件一多就拼出 WHERE a = 1 AND OR b = 2 的语法错误，AND/OR 优先级、引号、空格处处是坑；另一个仓库用 Sequelize，where: { $and: [...] } 的写法没人说得清它到底生成什么 SQL",
+          "new_concepts": ["两阶段：攒条件与编译", "绑定参数数组", "操作符白名单"],
+          "milestone": "src/builder.ts：table.query().where('age', '>', 18).where('name', 'LIKE', '%a%').orderBy('age', 'desc').limit(10).offset(20)，toSQL() 输出参数化 SELECT，all()/get() 直查",
+          "milestone_verify": "测试断言：toSQL() 的 SQL 文本与参数数组正确；未知操作符抛错；结果与等价手写 SQL 完全一致",
+          "depends_on": ["sql-injection", "schema-to-ddl"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「拼出 AND OR 语法错误」痛点开章段落【文验收】",
+            "两阶段模式讲透：为什么链式调用只是攒数据、编译才是生成 SQL【文验收】",
+            "生成的 SQL 全部走参数绑定，与第 8 章呼应【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "hydration-dirty-tracking",
+          "title": "行变对象，对象写回行：水合与脏跟踪",
+          "goal": "实现 create/find/save/remove：行水合成带方法的实例，实例只把改过的字段写回数据库",
+          "type": "build",
+          "pain_point": "同事三秒前刚在管理后台改了备注，你的全字段 UPDATE 一保存，把他的备注覆盖回了你页面上的旧值（丢更新）；row.user_name 蛇形列名跟 TS 的 userName 对不上，项目里到处是手工映射样板",
+          "new_concepts": ["水合（hydration，与 SSR 同名概念消歧）", "脏跟踪", "丢更新（lost update）"],
+          "milestone": "src/table.ts：create(data) 插入并水合返回实例、find(id)、instance.save() 只 UPDATE 脏列、instance.remove() 删除",
+          "milestone_verify": "测试断言：save 只改一个字段时 SQL 的 SET 只含该列（捕 SQL 计数与文本）；未改动直接 save 不发 UPDATE",
+          "depends_on": ["query-builder"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「全字段 UPDATE 覆盖同事写入」痛点开章段落【文验收】",
+            "水合与 SSR hydration 撞词消歧显式完成【文验收】",
+            "脏跟踪用「记改了哪些列」的最小实现讲透，git 暂存区锚点就位【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "relations-n-plus-1",
+          "title": "关联加载与 N+1：一次循环引发的 101 条 SQL",
+          "goal": "实现 hasMany/belongsTo 声明与 with() 两跳批量加载，理解 N+1 的病因与两种药方",
+          "type": "build",
+          "pain_point": "列表页渲染 100 个用户各自的订单，ORM 的 include 看起来只写了一行，控制台却闪过 101 条 SELECT——循环里逐条查关联，接口 3.2 秒；你不知道这是 ORM 最著名的坑，也不知道修它只要把「逐条」换成「一次 IN」",
+          "new_concepts": ["N+1 问题", "两跳查询（IN 批量加载）", "JOIN 策略 vs 两跳策略"],
+          "milestone": "src/relations.ts：声明 hasMany('orders', { from: 'id', to: 'user_id' }) 后，query().with('orders') 一次加载 100 用户各自订单，总 SQL 数恒为 2",
+          "milestone_verify": "测试断言：with 加载 100 用户订单共发出 2 条 SQL；belongs 关联也能加载；无 with 时不发关联查询",
+          "depends_on": ["query-builder", "join-tables", "hydration-dirty-tracking"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「100 用户 101 条 SELECT」痛点开章段落【文验收】",
+            "N+1 按四步教：病因（循环逐条）、数量演算（1+N 从哪来）、两种药方对比（JOIN vs 两跳 IN）、锚点（循环 await fetch vs 批量）【文验收】",
+            "两跳策略与第 5 章 JOIN 的取舍讲清【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "transactions",
+          "title": "要么全成，要么全不算：事务",
+          "goal": "实现 db.tx(fn) 回调式事务：BEGIN/COMMIT/ROLLBACK 与多步操作的原子性",
+          "type": "build",
+          "pain_point": "转账接口两步操作：A 扣款成功后、给 B 加款前进程崩了，3000 块在数据库里凭空消失，对账对了一整夜——两步本来是一个动作，数据库却把它们当成了两件独立的事",
+          "new_concepts": ["事务", "原子性", "回滚（ROLLBACK）"],
+          "milestone": "src/tx.ts：db.tx(fn) 内全部语句在事务里执行，fn 抛错自动 ROLLBACK、成功自动 COMMIT",
+          "milestone_verify": "测试断言：中途抛错后两边余额与转前一致；成功提交后两边变动生效；事务内自身可见未提交改动（同连接语义）",
+          "depends_on": ["hydration-dirty-tracking"],
+          "acceptance": [
+            "实验场门槛通过（tsc + vitest 全绿）【仓验收】",
+            "正文含「扣款成功加款前崩溃、钱消失」痛点开章段落【文验收】",
+            "事务按四步教：成因（多步操作要捆绑成败）、BEGIN/COMMIT/ROLLBACK 载体、转账演算（两条路径各走一遍）、git commit 边界锚点【文验收】",
+            "回调式 API 的错误传播语义（抛错即回滚再向上抛）讲清【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        },
+        {
+          "slug": "finale-gaps",
+          "title": "收工对账：我们的 mini-ORM 与真实 ORM 差在哪",
+          "goal": "对照 Prisma/Drizzle/TypeORM 盘点 mini-ORM 没做的每件事（迁移、连接池、类型推导、多对多、方言），形成差距地图",
+          "type": "principle",
+          "pain_point": "面试官问：「你说造过 ORM，那它和 Prisma 差在哪？」你只答得出「功能少」——追问「具体少什么、为什么难」就哑火；差在没有一张把「没做的每件事」摆在明面上的对账单",
+          "new_concepts": ["连接池", "迁移", "方言", "类型推导（schema → 类型）"],
+          "depends_on": ["relations-n-plus-1", "transactions"],
+          "acceptance": [
+            "正文含「面试答不出差在哪」痛点开章段落【文验收】",
+            "差距清单逐项讲：是什么、为什么 mini-ORM 没做、真实 ORM 怎么做、影响什么场景【文验收】",
+            "与差异清单附录互链（站内相对链接），正文声明的每处简化都在附录有着落【文验收】",
+            "零外部源码引用【文验收】"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "sql-cheatsheet", "title": "SQL 常用语法速查表", "kind": "reference-table" },
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "orm-divergence", "title": "mini-ORM 与真实 ORM 差异清单", "kind": "divergence" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个约 550 行、6 文件的 mini-ORM，105 项原理测试全绿",
+    "verify": "cd companion && npx tsc --noEmit && npx vitest run 全绿；ORM 生成的 SQL 与第一部分手写的同构等价"
+  }
+}

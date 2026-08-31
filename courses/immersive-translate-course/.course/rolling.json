@@ -1,0 +1,67 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "panorama",
+      "file": "docs/01-panorama.md",
+      "degraded": false,
+      "summary": "第 1 章建立：双语对照（原文不动、译文紧随其下）；DOM 树＝活的对象树（改属性立刻可见、监听器挂节点对象上、innerHTML 重建即全毁——演练亲手废掉一个按钮）；块级/内联人话版（真身＝浏览器默认样式表，留第 2 章辨析）；标记属性 data-duo、幂等、重排、可译块首现人话；引擎四部件（①抽取②翻译③渲染④装配）＋全书地图表。验证物变更点：无代码（principle 章），companion 脚手架就位（TS+vitest+jsdom，typecheck/test 双门槛绿）。读者已能：解释两种翻译形态的本质差异（字符串替换 vs 树上增量），在控制台演示监听器死亡与 after() 挂译文不伤原文。"
+    },
+    {
+      "n": 2,
+      "slug": "extract-blocks",
+      "file": "docs/02-extract-blocks.md",
+      "degraded": false,
+      "summary": "第 2 章建立：可译块＝直接持有文本的最小块级元素（TranslatableBlock{element,text}）；直接文本＝自己名下＋内联后代，账记最内层块（防重复账本边界）；块级/内联真身＝UA 默认样式表 display（WHATWG Rendering），引擎用 BLOCK_TAGS 清单近似（偏差登记差异清单）；walk 深度优先三分类走树＋跳过规则四族（机器吃的/代码类/表单控件/版面地标，header 不进清单）＋长度门槛 DEFAULT_MIN_CHARS=6＋不变量「空文本容器永不成块」。验证物新增：src/extract.ts（extractBlocks＋BLOCK_TAGS/DEFAULT_SKIP_TAGS/DEFAULT_MIN_CHARS 导出）、src/fixtures/news-page.ts（后续章共用，fixture 新闻页）、tests/extract-blocks.test.ts（9 测试绿）、demo:extract（14 块＋minChars=0 对照 15 块）。行内 code 文本从段落剪除（空隙第 5 章占位标记填回）。读者已能：解释块级真身、跑出并看懂「引擎眼中的页面」。"
+    },
+    {
+      "n": 3,
+      "slug": "render-bilingual",
+      "file": "docs/03-render-bilingual.md",
+      "degraded": false,
+      "summary": "第 3 章建立：渲染走「兄弟节点插入」（insertAdjacentElement afterend）不重写原文——innerText/textContent 赋值＝replace all 清空子节点重建（innerText 拆段换行转 <br>、textContent 塞单个文本节点；链接消失事故的机制）；对照的本质＝树上多出一排节点。译文节点＝块级 p＋标记属性 OWN_ATTR='data-duo'（hasAttribute 判定自己人）；出生证用 ownerDocument（不依赖全局 document）；幂等＝先认后插，紧邻 nextElementSibling 是自己人则原地刷新文本（认领只到紧邻兄弟，边界已声明）。验证物新增：src/render.ts、tests/render-bilingual.test.ts（7 测试，累计 16 绿）、demo:render（两路线对照＋幂等 14→14＋重抽 14→28）。已知引信：渲染后重抽把译文当新原文（第 8 章拆）。读者已能：解释 innerText+= 事故、整页渲染并核验原文 outerHTML 逐字不变。"
+    },
+    {
+      "n": 4,
+      "slug": "pipeline-service",
+      "file": "docs/04-pipeline-service.md",
+      "degraded": false,
+      "summary": "第 4 章建立：依赖注入——翻译服务抽出当参数传入，引擎只认 Translator 接口（一批进一批出、条数顺序对应，形状照真服务开——DeepL/Google 均按批收发）；假翻译器确定性（同输入同输出，dict 钉译文，第 5 章格式实验靠它）；createCountingTranslator 的 batches 开观察孔（数请求的事实源）；runPipeline 串行一块一单＋逐块降级（失败留原文不炸整页）＋成绩单 {blocks,requests,cached=0}；createEngine 默认内置假翻译器。验证物新增：src/translate.ts、src/pipeline.ts、src/engine.ts、tests/pipeline-service.test.ts（累计 24 绿）、demo:engine（14 块 14 单、503 降级 13/14）。EngineOptions 五字段已立全（translator 吃掉，concurrency/useCache/mainContentOnly/preserveInline 是 5/6/7 章生长点）。读者已能：零成本测全链路、createEngine().run() 一键整页双语。已知留白：串行一块一单（第 7 章拆）、行内 code/strong 译文丢失（第 5 章拆）、14→28 引信（第 8 章拆）。"
+    },
+    {
+      "n": 5,
+      "slug": "inline-format",
+      "file": "docs/05-inline-format.md",
+      "degraded": false,
+      "summary": "第 5 章建立：占位标记法保内联格式——weave 把块织成带记号的翻译单元（成对 ⟦0⟧…⟦/0⟧ 给 strong/em/b/i/a，独立 ⟦0⟧ 给 code，一块一单元、整句上下文完整送翻）；renderSegments 按索引认亲重建：闭记号浅克隆包裹（href 存活）、独立记号深克隆拼回原文（code 不送翻）；记号被吞/错配即降级剥记号纯文本（格式丢译文留）。内联切分方案讲了取舍后弃选。pipeline/engine 接 EngineOptions.preserveInline 分支（默认关，第 4 章行为逐字不变，其正文引用已回写）。验证物新增：src/inline.ts、13 测试（累计 37 绿）、demo:inline（并排对照/语序重排/降级三幕）。读者已能：解释格式为何死在出门前、让 strong/a/code 在译文中原样存活。留白：嵌套内联摊平、真实服务记号存活无承诺（差异清单）。"
+    },
+    {
+      "n": 6,
+      "slug": "main-content",
+      "file": "docs/06-main-content.md",
+      "degraded": false,
+      "summary": "第 6 章建立：主内容识别——得分＝文字分量×(1−链接密度)（weighRegion 是分量账单一事实源）；语义地标（main/article/role=main）圈候选、密度裁决，同量级（八成份额）取最深；地标缺席时密度兜底（托 ≥3 块的容器入围）；认不出→null→管线降级全页翻。fixture 认出 article（14→10 块），div 汤版面 #content（17→10）；会认错：正文全住在链接里的摘要页（差异清单）。EngineOptions.mainContentOnly 接线（默认关，第 4/5 章正文已回写）。验证物新增：src/content.ts（detectMainContent/weighRegion/RegionMass）、fixtures/legacy-page.ts、fixtures/digest-page.ts、10 测试（累计 47 绿）、demo:content 三幕。读者已能：只翻正文区、讲清两个密度与启发式的边界。"
+    },
+    {
+      "n": 7,
+      "slug": "batch-cache",
+      "file": "docs/07-batch-cache.md",
+      "degraded": false,
+      "summary": "第 7 章建立：翻译经济学四道工序——①去重（Set 键＝送翻文本，同轮重复只付一次）②内容寻址缓存（Map 键＝原文，cached 数命中句数；引擎第一份内部状态，随实例生）③chunkByBudget 字符预算贪心装袋（CHAR_BUDGET=200，超大件独占一单不切件）④createLimiter 并发上限（柜台叫号：进一个计一个，出来一个再放一个）。concurrency 或 useCache 任一设置＝批量档 runBatched；都不设＝第 4 章串行档原样（哨兵测试背书）；降级粒度从块变单（如实声明）。验证物新增：src/batch.ts、src/cache.ts、fixtures/shop-page.ts（37 块 26 句 548 字）、10 测试（累计 57 绿）、demo:batch（37 单→3 单 9+9+8、峰值 2/2、二次 0 单 cached 26）。requests 数单、cached 数句。第 4/5/6 章正文已回写（ch4 自查 Q2 口径同步修正）。读者已能：治 429 与重复付费、讲清去重/缓存两本账。留白：缓存无 TTL 无容量、429 只防不治、整单连坐（差异清单）。"
+    },
+    {
+      "n": 8,
+      "slug": "dynamic-observer",
+      "file": "docs/08-dynamic-observer.md",
+      "degraded": false,
+      "summary": "第 8 章建立：MutationObserver（Mutation Events 的替代品：攒成账、微任务时机一次交清；回调非同步非定时器）盯 root 子树 childList；observeDynamic 开机即整页＋增量——新节点在父元素重跑 extractBlocks、contains 只捡新子树（同块不重翻）；自己人摘两道（记录层＋块层 isOwnNode），14→28 引信拆除（树上 28 块、账上 14 单，专门测试＋demo 对质）；observer 出生证取树自己的 window（纯 Node 无全局 MO）；disconnect 断开静默、再 observe 可恢复。管线重构：runPipeline 抽块后交块级入口 runBlocks（串行/批量合流），Engine 增 runBlocks 方法（ch4/5/7 正文已回写）。验证物新增：src/observe.ts、9 测试（累计 66 绿）、demo:observe 三幕（开机 14 单/追加 3 段 3 单/断开静默）。边界五条（含 mainContentOnly 增量不收窄）登记差异清单。读者已能：适配无限滚动、亲手拆引信、解释雪崩因果链。"
+    },
+    {
+      "n": 9,
+      "slug": "browser-shell",
+      "file": "docs/09-browser-shell.md",
+      "degraded": false,
+      "summary": "第 9 章建立（终章）：扩展壳——manifest（MV3：13 行五字段，matches=http/https、js=dist/content.js、run_at=document_idle）＋extension/content.ts（44 行薄壳：startShell 装配 createEngine({preserveInline,useCache,concurrency:2})→observeDynamic；chrome.runtime.id 指纹限定扩展内自动开机）；build:ext 用 esbuild 打 IIFE 单文件 14.0KB（十个 src 模块约 854 行）。隔离世界：DOM 共用、变量隔离。验证物新增 extension/、8 测试（累计 74 绿）、demo:shell 三幕。收束：driving_question 三要素（原文纹丝不动/逐段长出/跟上无限滚动）逐条作答、九章能力阶梯盘点、与真实产品差距指向差异清单。读者已能：亲手加载扩展在真实英文页面看逐段【译】对照。"
+    }
+  ]
+}

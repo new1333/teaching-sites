@@ -1,0 +1,319 @@
+{
+  "title": "手写 mini-clash：代理软件的原理与实现",
+  "audience": "会写 TypeScript、网络与密码学从零起步的开发者",
+  "driving_question": "打开 Clash 之后，你的流量到底经历了什么？——亲手写一个 mini 版，让每一跳都变成自己的代码。",
+  "input": {
+    "kind": "topic",
+    "ref": "clash 等代理软件的原理是什么，怎么手写一个"
+  },
+  "profile": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "full",
+    "obligations": [
+      {
+        "kind": "legal",
+        "note": "代理与隧道技术在不同司法辖区受不同法规约束。本课程仅用于网络协议原理学习，实现为教学示例；请在遵守当地法律法规的前提下学习与使用，不提供任何真实节点或订阅信息。",
+        "surfaces": ["docs/index.md", "docs/about.md", "docs/01-panorama.md"]
+      }
+    ],
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript + Node.js ≥ 20（net/dgram/crypto 内建模块，零第三方运行时依赖）+ vitest",
+    "scope": "mini-clash：HTTP/SOCKS5 入口、两跳中继、AEAD 加密隧道、规则引擎、fake-ip DNS、TUN 报文解析、配置与代理组、端到端总装，约 600 行（不含测试，随章演进）"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 入口：把流量从应用手里接过来",
+      "chapters": [
+        {
+          "slug": "panorama",
+          "title": "打开 Clash 之后，流量经历了什么",
+          "goal": "建立「本地入口 / 分流决策 / 出站隧道」三角色全景图，并补齐 socket、TCP 连接、端口、回环地址的最小人话地基",
+          "type": "principle",
+          "hook": {
+            "kind": "observation",
+            "point": "你点开 Clash 的开关，托盘图标亮起，刷新浏览器，原本打不开的网页开了——没重装任何应用，系统里只是多了一个『系统代理』小勾。可同一台机器上，一个没重启的命令行工具照样连不上。",
+            "phenomena": ["托盘图标", "系统代理", "命令行连不上"]
+          },
+          "new_concepts": ["正向代理", "系统代理", "socket", "TCP 连接", "端口", "回环地址", "字节流"],
+          "misconceptions": ["开了代理，整机所有流量就都自动改走代理——其实只有愿意把流量交给代理的应用才走这条线，系统代理是自愿而非强制"],
+          "depends_on": [],
+          "acceptance": [
+            "全景图覆盖三角色与一次请求从浏览器到目标站的完整路径（文验收：评审回查）",
+            "socket/TCP 连接/端口/回环地址首现各配一句人话 + 一个 REPL 可跑的自包含片段（不进验证仓也能跑）",
+            "『整机所有流量都自动走代理』误区被公允复述并用系统代理的自愿语义证伪（对照命令行工具不理会它的现象）",
+            "零外部源码引用（仓验收：lint source-policy）"
+          ],
+          "promises_out": [
+            { "target": "crypto-basics", "what": "第二跳为什么不能裸奔、加密防的是谁，第 5 章展开" },
+            { "target": "tun-lab", "what": "系统代理罩不住全部应用的根治办法（TUN），第 9 章展开" }
+          ]
+        },
+        {
+          "slug": "http-proxy",
+          "title": "HTTP 正向代理：两种把流量交出来的方式",
+          "goal": "从字节层面认识 HTTP 报文；实现明文请求按 absolute-form 转发与 CONNECT 隧道",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "给浏览器挂上你写的代理：http:// 网站一切正常，一访问 https:// 网站就报证书错误——因为 HTTPS 在建立加密通道前的请求行里根本没有目标域名，你的代理不知道该替浏览器去连谁。",
+            "phenomena": ["证书错误", "请求行没有域名"]
+          },
+          "new_concepts": ["HTTP 报文", "请求行", "绝对地址形式", "CONNECT 隧道"],
+          "depends_on": ["panorama"],
+          "milestone": "startHttpProxy：明文 HTTP 请求识别 absolute-form 并改写转发；CONNECT 应答 200 后双向透传成隧道；curl -x 经代理可访问回环测试服务器",
+          "milestone_verify": "亲手开机：跑 demo 脚本同时拉起代理与回环服务器，另开终端 curl -x 127.0.0.1:{代理端口} http://127.0.0.1:{目标端口}/ 能看到响应正文（可感知）",
+          "acceptance": [
+            "本章验证信号通过：cd companion && npm run typecheck && npm test 全绿，含新增 tests/http-proxy.test.ts（仓验收）",
+            "HTTP 报文字节结构有成载体（结构表/ASCII 图 + 一段真实报文跟读），不默认读者认识报文（文验收）",
+            "absolute-form 与 CONNECT 各教成因（为什么浏览器要这么区分）且各配实验（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "socks5-server",
+          "title": "SOCKS5：一个字节级的入口协议",
+          "goal": "建立字节协议与累积缓冲/状态机解析的心智；实现 SOCKS5 服务端（greeting、无认证、CONNECT、IPv4/域名两种 ATYP——IPv6 登记差异）并中继到目标",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "按『收到一条消息处理一条』的直觉写 SOCKS5：客户端一口气把握手和 CONNECT 两步都发了过来，你的解析器处理完第一步，剩下的半截留在缓冲区里成了没人认领的乱码——TCP 给你的是字节流，不是消息队列。",
+            "phenomena": ["字节流", "半个消息", "缓冲区乱码"]
+          },
+          "new_concepts": ["SOCKS5", "字节协议", "大端序", "目标地址类型"],
+          "misconceptions": ["TCP 收到的是『一条条消息』——其实字节流没有边界，切分全靠协议自己约定"],
+          "depends_on": ["http-proxy"],
+          "milestone": "startSocks5Server：完成 greeting→无认证→CONNECT（IPv4/域名 ATYP）→成功应答→与目标双向中继",
+          "milestone_verify": "亲手开机：curl --socks5-hostname 127.0.0.1:{端口} http://127.0.0.1:{目标}/ 返回响应正文（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/socks5-server.test.ts（仓验收）",
+            "SOCKS5 字节布局有成载体（逐字段对齐的结构表），greeting/CONNECT 两步的状态机解析讲透（文验收）",
+            "『字节流无边界』误区被复述并用实验证伪（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "two-hop-relay",
+          "title": "两跳链路：本地代理与远端中继",
+          "goal": "把『入口直连目标』升级为『入口→远端服务器→目标』的两跳模型；设计一个明文帧协议承载目标地址，两端双向中继",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "上一章你的 SOCKS5 入口能用了，但每条连接都从本机直连目标——『装在本机的它』与『站在目标可达位置的它』之间还差一跳。这一章把两跳接起来；接完你会亲眼看到链路完全裸奔，那就是下一部分的事。",
+            "phenomena": ["直连目标", "裸奔"]
+          },
+          "new_concepts": ["两跳链路", "中继", "帧"],
+          "depends_on": ["socks5-server"],
+          "milestone": "startRelayServer + connectViaRelay：入口收到 CONNECT 后按自定义明文帧把目标地址发给远端，远端代连目标并回执结果，之后两端双向中继",
+          "milestone_verify": "端到端测试断言目标连接发生在远端进程侧；可跑 demo 脚本打印『浏览器→入口→远端→目标』的路径见证（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/two-hop-relay.test.ts（仓验收）",
+            "帧格式（为什么需要长度前缀恢复边界）与中继的双向 pipe 各教成因（文验收）",
+            "章末明确指出链路裸奔面（谁在哪个位置能看到/改动什么），为第 5 章铺垫（文验收）",
+            "零外部源码引用（仓验收）"
+          ],
+          "promises_out": [
+            { "target": "crypto-basics", "what": "裸奔链路的具体威胁模型在第 5 章展开" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 加密：本地到远端这一跳",
+      "chapters": [
+        {
+          "slug": "crypto-basics",
+          "title": "加密在防谁：机密性、完整性与 AEAD",
+          "goal": "零基础建立加密三目标（机密性/完整性/真实性）与 AEAD 语义；用 node:crypto 完成加密、篡改、验拒三个自包含实验",
+          "type": "principle",
+          "hook": {
+            "kind": "observation",
+            "point": "上一章末尾你自己看见了：两跳之间全是明文，同一网络里抓包的人能看到你访问的域名。你大概以为『加密』就是把字打乱——直到你亲手改掉密文里的一个字节，普通加密的解密端竟若无其事地吐出错位的内容，你才知道『看不懂』和『改不了』是两回事。",
+            "phenomena": ["抓包", "明文", "改一个字节"]
+          },
+          "new_concepts": ["机密性", "完整性", "认证加密", "AES-GCM", "随机数 nonce"],
+          "misconceptions": ["加密了就改不了内容——普通加密只保证看不懂，不保证改不了，AEAD 才两样都管"],
+          "depends_on": ["two-hop-relay"],
+          "acceptance": [
+            "三目标各有锚点 + 自包含 REPL 片段（node 一行可跑，不进验证仓也能验证）（文验收）",
+            "篡改实验含『先猜后跑』：先预言普通加密与 AEAD 各自的行为再跑对照（文验收）",
+            "『HTTPS 已加密、为什么这一跳还要加密』的边界讲清（对象不同：浏览器↔目标站 vs 入口↔远端）（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "aead-tunnel",
+          "title": "加密隧道：Shadowsocks 风格 AEAD 帧",
+          "goal": "实现盐 + HKDF 子密钥 + 长度前缀 AEAD 帧的加密链路，替换两跳中的明文载荷，并以篡改/换序用例验证",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "你给明文帧套上 AES-GCM，为省事每块都用了同一个 nonce：两段只差几个字的明文，密文也只差几个字节——把两段密文异或，差值规律直接暴露。同 nonce 复用是 AEAD 的头号灾难。",
+            "phenomena": ["同 nonce 复用", "异或", "密文规律"]
+          },
+          "new_concepts": ["盐", "密钥派生", "长度前缀分块"],
+          "depends_on": ["crypto-basics", "two-hop-relay"],
+          "milestone": "deriveSubkey/sealChunk/openChunk + 加密管道：两跳链路载荷全部换成 AEAD 帧（每连接随机盐、HKDF 子密钥、按块计数 nonce）",
+          "milestone_verify": "测试含先猜后跑的篡改用例（改一个密文字节→对端拒收并断开）；可跑 demo 打印中间人视角看到的全是密文帧（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/aead-tunnel.test.ts 与篡改/换序破坏用例（仓验收）",
+            "盐/HKDF/长度前缀三件套各教成因（反事实检验：不用会怎样）（文验收）",
+            "与 Shadowsocks 公开规范的差异（教学简化处）在正文声明并登记差异清单（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 分流与接管：谁走哪条线",
+      "chapters": [
+        {
+          "slug": "rule-engine",
+          "title": "规则引擎：流量的调度台",
+          "goal": "实现 DOMAIN/DOMAIN-SUFFIX/DOMAIN-KEYWORD/IP-CIDR/MATCH 规则解析与按序首中即停匹配；入口按判决走 DIRECT 或加密隧道",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "你把全部流量都丢给代理节点：访问就近可达的站点也要绕道远端转一大圈，视频卡成幻灯片；改回全直连，那些只有经由远端才可达的站点又全部超时。于是你抄来一张 Clash 规则表——却不小心把 MATCH 兜底行放到了最前面，分流整体失灵。",
+            "phenomena": ["绕地球一圈", "卡成幻灯片", "MATCH 放最前"]
+          },
+          "new_concepts": ["规则引擎", "域名后缀规则", "网段规则", "兜底规则", "直连", "IP 地址与 CIDR"],
+          "misconceptions": ["规则匹配是『表里找得到就命中』——其实是按顺序的第一条命中即停，顺序就是优先级"],
+          "depends_on": ["aead-tunnel"],
+          "milestone": "parseRules + matchTarget：按序匹配返回出站（DIRECT/PROXY）；入口接入规则引擎，不同目标实际走不同出站",
+          "milestone_verify": "测试断言多组目标各命中预期规则；demo 脚本对一组域名/IP 打印判决与命中的规则行（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/rule-engine.test.ts（仓验收）",
+            "域名规则优先于 IP 规则的决策树（有域名先不解析）教成因（文验收）",
+            "『第一条命中即停』误区被复述并用顺序实验证伪（文验收）",
+            "CIDR 从二进制位讲清（对照 RFC 791），不自造记法（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "fake-ip",
+          "title": "DNS 与 fake-ip：先把名字这一关接管",
+          "goal": "理解 DNS 查询、污染与泄露；实现最小 UDP DNS 应答器与 fake-ip 池（分配/还原/回收），入口按映射还原域名交给规则引擎",
+          "type": "build",
+          "hook": {
+            "kind": "observation",
+            "point": "直连一个被污染的域名：DNS 答给你一个假 IP，浏览器拿着假门牌永远连不上。Clash 在这里做了件出人意料的事——它干脆不真查：先发你一个假 IP 应付浏览器，把真域名记在小本本上，等浏览器拿这个假 IP 来连接时，再换成真域名送去规则引擎。",
+            "phenomena": ["假 IP", "DNS 污染", "假门牌连不上"]
+          },
+          "new_concepts": ["DNS", "A 记录", "DNS 污染", "DNS 泄露", "fake-ip"],
+          "misconceptions": ["DNS 只是把名字换成号码的查表——查谁、走哪条线查、答案可不可信，每一步都能被动手脚"],
+          "depends_on": ["rule-engine"],
+          "milestone": "startFakeDns + FakeIpPool：A 查询返回 fake-ip 并登记映射；入口收到发往 fake-ip 网段的连接时还原域名走规则引擎",
+          "milestone_verify": "测试：同域名复用同 fake-ip、映射可还原、池满回收；亲手开机：nslookup 把 DNS 指向 mini-clash 可看到假 IP 应答（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/fake-ip.test.ts（仓验收）",
+            "DNS 查询过程与污染机制教成因（在哪一环被截胡）（文验收）",
+            "fake-ip 的收益（域名信息留在本地）与代价（映射生命周期）双向讲清（文验收）",
+            "fake-ip 选用保留网段（如 198.18.0.0/15）的出处对照权威文档（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "tun-lab",
+          "title": "TUN 模式：虚拟网卡与全系统流量",
+          "goal": "理解系统代理罩不住全部应用的原因与 TUN 的解法；用固定报文样本做 IP/TCP 字节解析实验，体会『包→连接』的五元组还原",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "第 1 章你亲眼见过：命令行工具不理会系统代理，照样直连。Clash 的根治办法是在系统里立一根『虚拟网线』，让全机流量先流进代理进程——代价是它拿到的不再是文明的 socket，而是一包包原始 IP 报文，得自己当协议栈把它们拼回连接。",
+            "phenomena": ["命令行直连", "虚拟网线", "原始报文"]
+          },
+          "new_concepts": ["TUN 虚拟网卡", "五元组", "IP 头部", "报文段"],
+          "depends_on": ["panorama", "fake-ip"],
+          "milestone": "parseIpv4Packet + parseTcpSegment：从固定样本字节解析版本/头长/总长/协议/五元组/TCP 标志位，并按五元组把样本流归组为连接",
+          "milestone_verify": "测试断言样本字段值与归组连接数；读者可在 REPL 喂样本十六进制看解析出的字段（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/tun-lab.test.ts（仓验收）",
+            "系统代理 vs TUN 的覆盖面差异教成因（自愿 vs 路由层收口）（文验收）",
+            "IP/TCP 头部字段有成载体（逐字段结构表，对照 RFC 791/9293），『包→连接』的还原过程有跟读演算（文验收）",
+            "真实 TUN 环节的简化（用户态栈、不处理握手重传）在正文声明并登记差异清单（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第四部分 · 成品：mini-clash",
+      "chapters": [
+        {
+          "slug": "config-groups",
+          "title": "配置与代理组：从硬编码到声明式",
+          "goal": "实现 JSON 声明式配置（端口/节点/规则/组）与 select/url-test 组策略（含延迟探测与自动选优）",
+          "type": "build",
+          "hook": {
+            "kind": "observation",
+            "point": "到现在为止你的端口、密码、规则全硬编码在源码里——换台机器要改代码。真实 Clash 的全部行为由一份配置文件驱动，节点还能打包成组自动选优：你大概见过面板里 url-test 组自动跳到延迟最低的节点，这一章把它写出来。",
+            "phenomena": ["硬编码", "配置文件", "自动选优"]
+          },
+          "new_concepts": ["声明式配置", "代理组", "自动测速组", "延迟探测"],
+          "depends_on": ["aead-tunnel", "rule-engine"],
+          "milestone": "loadConfig + createRouter：配置解析为路由器；select 组按当前选择出节点，url-test 组按探测结果选最快节点（探测走回环桩）",
+          "milestone_verify": "测试：只改配置 JSON 的规则行→分流判决改变（不碰代码）；url-test 组在慢/快桩之间选中快者（可感知：demo 打印组决策）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/config-groups.test.ts（仓验收）",
+            "声明式配置的成因（数据与逻辑分离）与组的间接层收益各教透（文验收）",
+            "url-test 探测的度量含义（测什么 URL、延迟算到哪一段）对照 Clash 公开文档行为（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "assemble",
+          "title": "总装：跑起来的 mini-clash",
+          "goal": "把入口、fake-ip DNS、规则引擎、代理组、加密隧道、远端中继串成一条端到端链路，一条命令可演示",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "零件全齐了：入口、DNS、规则、组、隧道、远端——但它们还躺在各自模块里互不相识。这一章只做一件事：把零件接成整机，让一条命令拉起『远端服务器 + mini-clash + 目标站点』，用 curl 走完整条链路。",
+            "phenomena": ["零件", "整机", "一条命令"]
+          },
+          "depends_on": ["two-hop-relay", "aead-tunnel", "rule-engine", "fake-ip", "config-groups"],
+          "milestone": "startMiniClash(config)：端到端——域名 DNS 查询得 fake-ip → 连接还原域名 → 规则判决 → 组选节点 → AEAD 隧道 → 远端代连目标 → 响应原路返回",
+          "milestone_verify": "亲手开机：node demo/mini-clash-demo.mjs 一条命令拉起全部角色，把系统/DNS 指向 mini-clash 后 curl 拿到目标站响应（可感知）",
+          "acceptance": [
+            "本章验证信号通过：typecheck + vitest 全绿，含 tests/assemble.test.ts 端到端用例（仓验收）",
+            "链路全景图与第 1 章三角色图对账收口（文验收）",
+            "『你已经能做什么』能力清单与全书实际建立的模块对账（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        },
+        {
+          "slug": "review-vs-real",
+          "title": "回望：从 mini 到真实 Clash",
+          "goal": "概念对账 + 能力清单 + 与真实 Clash 的差异地图（协议面、连接复用、真实 TUN 栈、规则 providers、工程化）",
+          "type": "review",
+          "length_exempt": true,
+          "hook": {
+            "kind": "ability-gap",
+            "point": "12 章之前你只是个装过 Clash 的用户；现在你亲手写过它的每一个承重件。这一章把账对齐：你已经能什么、真实 Clash 还多什么、每一样差在哪。",
+            "phenomena": ["装过但不懂", "亲手写过", "差异地图"]
+          },
+          "depends_on": ["assemble"],
+          "acceptance": [
+            "driving_question 在本章收口回答（文验收）",
+            "差异清单与 divergence 附录逐条对账一致（文验收）",
+            "概念对账覆盖全书 new_concepts 主线，自查题附答案锚点（文验收）",
+            "零外部源码引用（仓验收）"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "wire-protocol-cheatsheet", "title": "字节协议速查表", "kind": "reference-table" },
+    { "slug": "divergence", "title": "与真实 Clash 的差异清单", "kind": "divergence" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "mini-clash：SOCKS5 入口、规则分流、AEAD 隧道，端到端跑通",
+    "verify": "node demo 一条命令拉起远端+入口+目标站，curl 经 mini-clash 拿到目标站响应；companion 全部测试绿"
+  }
+}

@@ -1,0 +1,301 @@
+{
+  "title": "Redis 原理与最小实现：亲手写一个迷你 Redis",
+  "audience": "会 TypeScript、用过数据库，没读过存储内部的开发者",
+  "driving_question": "一个把全部数据放进内存的键值服务器，凭什么做到快、省内存、还不丢数据？",
+  "input": { "kind": "topic" },
+  "profile": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "full",
+    "obligations": [],
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "code-lab:library",
+    "language": "TypeScript + Node net + vitest（零第三方运行时依赖）",
+    "scope": "最小键值服务器 ≈800 行：RESP 编解码、TCP 并发服务器、渐进 rehash 哈希表、跳表、TTL（惰性+定期）、近似 LRU 淘汰、AOF 追加/重放/重写、RDB 快照——每章一个测试文件，约 11 个"
+  },
+  "parts": [
+    {
+      "title": "它为什么存在：问题与对话",
+      "chapters": [
+        {
+          "slug": "why-in-memory",
+          "title": "磁盘太慢了：Redis 到底解决什么问题",
+          "goal": "用延迟数量级算清内存与磁盘的差距，讲明缓存是刚需、Redis 是住在内存里的数据结构服务器",
+          "type": "principle",
+          "hook": {
+            "kind": "observation",
+            "point": "同一台机器、同样的网卡：MySQL 走一次索引查一行要几毫秒，Redis 读一个键只要几十微秒——差两个数量级。硬件一模一样，差在数据住在哪、走什么路。",
+            "phenomena": ["毫秒", "微秒", "磁盘", "内存"]
+          },
+          "new_concepts": ["内存数据库", "缓存", "旁路缓存模式", "键值存储", "数据结构服务器"],
+          "misconceptions": ["Redis 比 MySQL 快是因为它「更先进」——其实主因是介质（内存）与访问路径（O(1) 结构），拿它当持久主库会在容量与断电上翻车", "缓存就是「把读变快」——写入侧的缓存一致性（先写库还是先删缓存）才是工程里真正的坑"],
+          "milestone": "无代码；一张「一次读的旅程」延迟对照表 + cache-aside 读写时序图",
+          "depends_on": [],
+          "promises_out": [
+            { "target": "resp-protocol", "what": "「Redis 怎么被连上、命令长什么样」下一章亲手写协议" }
+          ],
+          "acceptance": [
+            "文验收：延迟对照表的每个数量级断言有权威文档清单出处（Jeff Dean 数字谱系）",
+            "文验收：两个误区（更先进论 / 缓存=读快）均被公允复述并证伪",
+            "文验收：cache-aside 读写两条时序都画了，且指出了不一致窗口"
+          ]
+        },
+        {
+          "slug": "resp-protocol",
+          "title": "RESP：两个进程怎么对话",
+          "goal": "理解 TCP 字节流无边界，实现 RESP 解析器与应答编码，跑起第一个能答 GET/SET 的内存服务器",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "你给第 1 章的心愿写了个 TCP 服务，直接按裸文本收 \"SET a 1\"；用 redis-cli 一连，服务器收到的是一串带星号美元符的怪字符，而且一次 recv 可能只到半条命令、也可能挤着三条半。",
+            "phenomena": ["半包", "粘包", "redis-cli", "乱码"]
+          },
+          "new_concepts": ["RESP 协议", "字节流", "半包与粘包", "简单串与批量串"],
+          "misconceptions": ["「一次 send 对应一次 recv」——TCP 是无边界的字节流，切几段、合几段都合法"],
+          "milestone": "RespDecoder（带缓冲、逐行喂）+ 应答编码 + 能答 PING/SET/GET/DEL 的内存服务器（数据暂住 JS Map）；真 redis-cli 可以连上它",
+          "milestone_verify": "用本机 redis-cli 连上自己的服务器：PING 回 PONG、SET/GET 往返成功（可感知）",
+          "depends_on": ["why-in-memory"],
+          "promises_out": [
+            { "target": "hash-table-rehash", "what": "「Map 是 JS 送的暂住房，第 4 章换上自己写的哈希表」" }
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿（硬信号一票否决）",
+            "仓验收：测试含半包/粘包用例（一条命令切两段喂、三条命令一次喂）",
+            "文验收：五种 RESP 类型标记逐个教过且首现有大白话",
+            "仓验收：零外部源码引用（示例代码全部出自实验场或自包含用法示例）"
+          ]
+        },
+        {
+          "slug": "single-thread-event-loop",
+          "title": "单线程的事件循环：一个线程照看一千个连接",
+          "goal": "用被慢客户端卡死的反例理解阻塞 IO，讲清 IO 多路复用与事件驱动，实现并发不阻塞的 TCP 服务器与管道",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "给上一章的服务器做个「最笨版」：连上一个客户端就从头到尾只伺候它。telnet 连上但不敲回车——后面所有客户端全部卡死，一个慢用户冻结全场。",
+            "phenomena": ["卡死", "阻塞", "telnet", "并发"]
+          },
+          "new_concepts": ["阻塞 IO", "IO 多路复用", "事件循环", "事件驱动", "管道"],
+          "misconceptions": ["「单线程=并发低」——命令是微秒级内存操作时，单线程+多路复用足够；「多线程一定更快」——锁与切换的代价可能吞掉收益"],
+          "milestone": "createMiniRedisServer：net 事件驱动服务器，每连接独立解码缓冲；两客户端并发互不阻塞，一条连接一口气发 10 条命令一次收回 10 条应答（管道）",
+          "milestone_verify": "同时开两个连接，一个连上后一言不发，另一个照常 SET/GET 秒回（可感知）",
+          "depends_on": ["resp-protocol"],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试含并发用例（静默连接不阻塞活跃连接）与管道用例（批量发送一次收回）",
+            "文验收：select→epoll 的演进讲清了「为什么内核帮一个线程盯上千连接」",
+            "仓验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "数据住进什么结构",
+      "chapters": [
+        {
+          "slug": "hash-table-rehash",
+          "title": "全局哈希表：所有键的家",
+          "goal": "从数组+链表手写哈希表（冲突、负载因子、翻倍扩容），再解决全量搬迁的卡顿——渐进式 rehash",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "前两章的 Map 是 JS 白送的。现在自己写：灌 10 万个键，GET 必须还是瞬间；而扩容那一瞬间，也不许让所有请求排队等搬完一百万个键。",
+            "phenomena": ["哈希冲突", "扩容", "卡顿", "搬迁"]
+          },
+          "new_concepts": ["哈希函数", "哈希冲突", "链地址法", "负载因子", "渐进式 rehash"],
+          "misconceptions": ["「Map 是魔法」——它底下就是数组+冲突处理；「扩容必须停机搬完」——双表渐进搬迁把一次长阻塞摊薄"],
+          "milestone": "Dict（链地址、负载因子触发扩容、双表渐进 rehash 每操作一步），服务器换装；断言 rehash 进行中读写照常、最终桶全部搬完",
+          "milestone_verify": "灌 10 万键触发扩容，INFO 显示 rehash 进行中时 GET 立即返回正确值（可感知：卡顿消失）",
+          "depends_on": ["single-thread-event-loop"],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试断言 rehash 期间旧键可读、新键可写、结束后 size 不变",
+            "文验收：渐进式 rehash 的成因过了反事实检验（全量搬迁会发生什么算给读者看）",
+            "仓验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "skiplist-zset",
+          "title": "跳表：能二分查找的链表",
+          "goal": "实现跳表与 ZADD/ZRANGE/ZCARD，理解随机层数的概率成因；概览 Redis 的 type 与 encoding 分离",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "排行榜塞 10 万个 (玩家, 分数)：数组排序每次插入挪一半元素，DB order by 每次查询都全表排——你需要插得快、还能按分数切前 100 名的结构。",
+            "phenomena": ["排行榜", "范围查询", "插入慢"]
+          },
+          "new_concepts": ["跳表", "有序集合", "多层索引", "随机层数", "对象编码"],
+          "misconceptions": ["「范围查询必须先排序」——有序结构上范围查询是顺着走，不是排完再切"],
+          "milestone": "SkipList（随机层数、rangeByScore）+ ZADD/ZRANGE/ZCARD 命令；1 万随机分数的 ZRANGE 与排序基准一致",
+          "milestone_verify": "灌入 1 万个随机分数成员，ZRANGE 取前 100 与 Array.sort 基准逐一对上（可感知）",
+          "depends_on": ["hash-table-rehash"],
+          "promises_out": [
+            { "target": "ttl-expire", "what": "「键的家有了，键的寿命下一章管」" }
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试断言跳表插入顺序无关性（乱序插入结果有序）与随机性下限（层数用可控随机源测）",
+            "文验收：随机层数「抛硬币」的成因讲透（为什么不需要全局再平衡）",
+            "仓验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "内存是有限的",
+      "chapters": [
+        {
+          "slug": "ttl-expire",
+          "title": "过期删除：惰性与定期",
+          "goal": "实现过期字典与 EXPIRE/TTL/SET EX，理解惰性删除与定期抽样删除是 CPU 与内存的权衡",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "短信验证码 SET code ex 300，你以为 5 分钟一到它就自动消失。一个月后内存涨了三倍——没人再访问的过期键，一个都不会自己走。",
+            "phenomena": ["过期", "内存涨", "验证码", "定时器"]
+          },
+          "new_concepts": ["过期字典", "惰性删除", "定期删除", "抽样"],
+          "misconceptions": ["「EXPIRE 到点自动删」——百万键百万定时器不现实；真身是惰性查 + 周期抽" ],
+          "milestone": "过期字典 + EXPIRE/TTL 命令 + SET EX 选项；惰性删除（访问时检查）与定期抽样删除（activeCycle）；断言过期后 GET 返回 nil、周期跑后键真被删",
+          "milestone_verify": "SET k v EX 1，过期后 GET 返回 (nil)，INFO 的 expired 计数 +1（可感知）",
+          "depends_on": ["skiplist-zset"],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试断言惰性路径（访问即删）与定期路径（未访问也被抽样删除）各自独立成立",
+            "文验收：惰性/定期各自的代价讲成 CPU 与内存的账",
+            "仓验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "eviction-lru",
+          "title": "内存满了：不精确的 LRU",
+          "goal": "实现 maxmemory 上限（键数近似）与随机抽样近似 LRU 淘汰，理解为什么精确 LRU 太贵、LFU 纠什么偏",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "缓存把 maxmemory 吃满，线上突然批量报错 OOM command not allowed——写不进去了。业务问：为什么不清点旧的腾地方？默认策略还真是「宁可报错不扔数据」。",
+            "phenomena": ["maxmemory", "拒写", "OOM", "淘汰"]
+          },
+          "new_concepts": ["内存淘汰", "近似 LRU", "LRU 与 LFU", "idle 时钟"],
+          "misconceptions": ["「LRU 是精确全局有序的」——真身是随机抽 5 个踢最旧的，性能换准确；「淘汰=过期」——淘汰牺牲的是还活着的键"],
+          "milestone": "Evictor：键数上限 + 随机抽样近似 LRU（抽 5 踢 idle 最大）+ noeviction/allkeys-lru 两策略；断言写满后老键被逐新键能进、noeviction 拒写返回错误",
+          "milestone_verify": "设 100 键上限，灌满后先访问旧键 A 再灌新键——没被碰过的更旧键先消失（可感知：INFO 的 evicted 计数）",
+          "depends_on": ["ttl-expire"],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试断言近似 LRU 语义（最近访问的存活概率高）与 noeviction 拒写",
+            "文验收：抽 5 个的出处（antirez 设计文）与「为什么不用双向链表」讲清",
+            "仓验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "内存会断电",
+      "chapters": [
+        {
+          "slug": "aof",
+          "title": "AOF：把每一步写下来重放",
+          "goal": "实现 AOF 追加、重启重放与重写瘦身；分清写后日志与数据库的写前日志（WAL）",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "凌晨重启发布，进程起来缓存全空——登录态、限流计数清零。冷启动的流量洪峰全部砸向数据库（缓存雪崩），数据库 CPU 应声打红。",
+            "phenomena": ["重启", "丢数据", "重放", "冷启动"]
+          },
+          "new_concepts": ["写后日志", "AOF", "重放", "AOF 重写", "刷盘策略"],
+          "misconceptions": ["「AOF 是写前日志」——Redis 是先执行命令再记账（写后），与数据库 WAL 相反"],
+          "milestone": "Aof：写命令追加 + 新实例加载重放恢复原值 + rewriteFrom 按当前内存生成最小命令集（100 次 SET 同键只留最后一条）",
+          "milestone_verify": "SET 十轮后『重启』（新实例加载 AOF），GET 仍返回最后一轮的值；重写后日志条数肉眼可见变小（可感知）",
+          "depends_on": ["eviction-lru"],
+          "promises_out": [
+            { "target": "rdb-snapshot", "what": "「逐条重放太慢的问题，下一章用快照解决」" }
+          ],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试断言重放语义（写序列 → 新库等价）与重写语义（等价但条数变少）",
+            "文验收：写后 vs 写前的成因（先验命令合法再记账）过了反事实检验",
+            "仓验收：零外部源码引用"
+          ]
+        },
+        {
+          "slug": "rdb-snapshot",
+          "title": "RDB 快照：fork 与写时复制",
+          "goal": "实现全量快照 dump/load；讲清 fork + 写时复制（COW）如何让真 Redis 在持续写入下拍出一致快照",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "AOF 加载要逐条重放 1 亿条命令，重启等得人心慌。想要「某一瞬间的完整照片」——但拍照那几秒数据还在被写入，怎么保证照片不花？",
+            "phenomena": ["快照", "一致性", "重放慢"]
+          },
+          "new_concepts": ["RDB", "快照一致性", "fork", "写时复制", "页表"],
+          "misconceptions": ["「拍快照必须停写」——COW 让子进程看到冻结的那一瞬；「fork 马上复制翻倍内存」——页表先共享，谁改哪页才复制哪页"],
+          "milestone": "dump/load 全量快照 + SAVE 语义；fork 与 COW 页表图解；本课程单进程同步 dump 的简化边界声明（差异登记附录）",
+          "milestone_verify": "SAVE 后 FLUSHALL 再 LOAD，全部数据原样回来（可感知）",
+          "depends_on": ["aof"],
+          "acceptance": [
+            "仓验收：tsc --noEmit + vitest run 全绿",
+            "仓验收：测试断言快照往返（dump→load 等价）与过期键不入快照",
+            "文验收：COW 的页表图解 + 「真 Redis 用子进程、本课同步做」差异声明",
+            "仓验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "一台是不够的",
+      "chapters": [
+        {
+          "slug": "replication-ha",
+          "title": "一台是不够的：复制、哨兵与集群",
+          "goal": "概览主从复制（全量+增量）、哨兵故障转移与 16384 哈希槽分片——单机的三道天花板与各自的解法",
+          "type": "principle",
+          "hook": {
+            "kind": "real-incident",
+            "point": "主库凌晨 3 点挂掉：写入全停，等人工重启的十几分钟里缓存命中率归零，流量全部砸向数据库——这一夜就是单机的天花板。",
+            "phenomena": ["宕机", "故障转移", "命中率归零"]
+          },
+          "new_concepts": ["主从复制", "全量同步", "增量复制", "哨兵", "故障转移", "哈希槽"],
+          "misconceptions": ["「加从库=高可用」——没有自动选主，主挂了写还是停；「集群按 key 取模分片」——实际是 16384 个固定哈希槽，扩容搬槽不动全部数据"],
+          "milestone": "无代码；一次全量同步的时序推演图 + 主从/哨兵/集群三形态能力对照表",
+          "depends_on": ["rdb-snapshot"],
+          "acceptance": [
+            "文验收：全量同步时序图含 PSYNC/RDB 传输/增量缓冲三阶段",
+            "文验收：两个误区均被公允复述并证伪",
+            "文验收：声明本章为视野章、不在 mini 实现范围（能力对账诚实）"
+          ]
+        },
+        {
+          "slug": "review-and-beyond",
+          "title": "终章对账：你写了一个迷你 Redis",
+          "goal": "四问对账（快从哪来/内存怎么管/数据怎么不丢/一台挂了怎么办）回收全书，盘点与真 Redis 的差异与继续路线",
+          "type": "review",
+          "length_exempt": true,
+          "hook": {
+            "kind": "ability-gap",
+            "point": "第 1 章你只会说「Redis 快是因为在内存」；现在有人问你为什么快、内存满了怎么办、断电丢不丢、挂一台会怎样——四个问题你都能拆开讲。",
+            "phenomena": ["全景", "对账", "四问"]
+          },
+          "depends_on": ["replication-ha"],
+          "acceptance": [
+            "文验收：四问逐问回收，每问指向具体章的机制与亲手产物",
+            "文验收：driving_question（快/省/不丢）在终章显式收口",
+            "文验收：与真 Redis 的差异全部回指附录差异清单，无新开承诺"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "exercises", "title": "练习路线：从红到绿重写一遍", "kind": "exercises" },
+    { "slug": "divergence", "title": "与真 Redis 的差异清单", "kind": "divergence" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "亲手写一个迷你 Redis：RESP、哈希表、TTL、淘汰、AOF 全实现，测试全绿",
+    "verify": "本机 redis-cli 可连上自建服务器收发命令；cd companion && npm install && npm test 全绿"
+  }
+}

@@ -188,12 +188,12 @@ for (const b of blocks) {
   const header = b.slice(3, 300)
   const lines = b.split('\n').length - 2
   const isRepoQuote = REPO_REF.test(header)
-  if (lines > 12 && !isRepoQuote && !/\/\/\s*(src\/|tests\/|用法示例|companion|拼版)/.test(header))
-    issues.push(`snippet-source: ${lines} 行代码块未标注出处（首行注释 src/… 或 用法示例）`)
+  if (lines > 12 && !isRepoQuote && !/(?:\/\/|#)\s*(src\/|tests\/|用法示例|companion|拼版)/.test(header))
+    issues.push(`snippet-source: ${lines} 行代码块未标注出处（首行注释 src/… 或 用法示例；Python 等语言用 # 注释同样可标注）`)
 }
 for (const b of blocks) {
   const header = b.slice(0, 300)
-  const isCompanion = /\/\/\s*((?:src|tests)\/[\w./-]+)/.exec(header)
+  const isCompanion = /(?:\/\/|#)\s*((?:src|tests)\/[\w./-]+)/.exec(header)
   if (!isCompanion) continue
   const rel = isCompanion[1]
   if (!existsSync(join(companionRoot, rel)) && !existsSync(rel)) {

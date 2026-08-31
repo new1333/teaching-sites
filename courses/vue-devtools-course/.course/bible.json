@@ -1,0 +1,139 @@
+{
+  "glossary": [
+    { "term": "全局钩子", "en": "global hook", "definition": "挂在共享全局对象（如 window）上、按约定名字命名的会合点对象；应用代码与工具代码是两份独立 bundle，靠它相遇" },
+    { "term": "重放队列", "en": "replay queue", "definition": "先到的一方把「等钩子出现后要执行的回调」排队存好，后到的一方接管时逐个重放，解决加载时序竞态" },
+    { "term": "事件系统", "en": "events", "definition": "工具内核里的语义事件总线：按事件名注册监听、触发、解绑；原始钩子事件经转发与守门后进入这里" },
+    { "term": "应用记录", "en": "app record", "definition": "每个被调试应用对应的一条登记信息：唯一 id、名字、实例表；记录集合支持多应用与活动应用切换" },
+    { "term": "实例表", "en": "instance map", "definition": "应用记录里「实例唯一 id → 组件实例活引用」的映射表，是快照与回写的寻址基础" },
+    { "term": "遍历器", "en": "walker", "definition": "按需遍历虚拟节点树（而非 DOM 树）并产出组件树快照的机制，控制深度与过滤" },
+    { "term": "状态快照", "en": "state snapshot", "definition": "把活实例的 props/setup/data 分类、清洗成可安全传输的数据形态，每项带 editable 标记" },
+    { "term": "编码传输", "en": "transfer encoding", "definition": "把含循环引用的对象图编码成「对象表 + 索引」的平面结构，过桥后再解码还原" },
+    { "term": "回写", "en": "edit / write-back", "definition": "把面板上的修改沿属性路径逐层下行、写回页面里还活着的实例本身" },
+    { "term": "插件缓冲", "en": "plugin buffer", "definition": "应用未就绪时暂存第三方库的插件注册请求，应用登记后按序重放——重放队列思想在插件层的复用" },
+    { "term": "检查器", "en": "inspector", "definition": "第三方库通过插件 API 注册的树形状态面板：拉树函数产出节点、推状态函数产出快照" },
+    { "term": "双向 RPC", "en": "birpc", "definition": "通信双方互为客户端与服务端的远程调用协议：请求带自增 id，响应按 id 配对，双方都能调对方的函数" },
+    { "term": "通道", "en": "channel", "definition": "只含 post 与 on 两个函数的传输抽象；同一套 RPC 协议可跑在任意通道实现上" },
+    { "term": "中继", "en": "relay / proxy", "definition": "扩展宿主里「面板 → 后台端口 → 内容脚本」的三跳转发链，把隔离世界与页面世界连通" },
+    { "term": "宿主", "en": "host", "definition": "承载调试器 UI 客户端的形态：同源 iframe、开发服务器页面、浏览器扩展面板等" }
+  ],
+  "code_conventions": {
+    "language": "TypeScript（strict）+ vitest；ESM；只用具名导出，不用默认导出",
+    "structure": "companion/src/ 下每个机制一个小写连字符模块：hook / events / record / tree / state / transfer / editor / plugin / inspector / rpc / channel；公共类型集中在 types.ts；测试里的假应用与假实例放 tests/helpers/fake-app.ts",
+    "naming": "动宾式命名（createHook、getComponentTree、registerInstance）；布尔以 is/has 开头；全局约定名沿用教学语义（__MINI_DEVTOOLS_HOOK__、__MINI_DEVTOOLS_REPLAY__），不与真实库的 API 面刻意对齐",
+    "error_handling": "工具永远不能把应用搞崩：读取应用对象的每个属性都走安全读取（try/catch，失败返回 Error 对象或 undefined，不抛出）；遍历有深度上限；对未知形态的实例字段先判形再动手"
+  },
+  "api_contract": {
+    "principle": "全书导入面的单一事实源；只增不破。测试只从这些模块导入。",
+    "modules": [
+      {
+        "path": "src/hook.ts",
+        "introduced": "第 2 章",
+        "exports": [
+          "createHook(): Hook —— { on(event, fn): () => void; off; once; emit; apps: unknown[] }",
+          "installHook(target: HookTarget): Hook —— 幂等安装到目标对象；若目标上已有等待队列（__MINI_DEVTOOLS_REPLAY__）则重放并清空",
+          "queueUntilHookInstalled(target: HookTarget, cb: (hook: Hook) => void): void —— 无钩子时入队等待，有钩子时立即执行",
+          "type HookTarget —— { [key: string]: unknown }，测试里用普通对象模拟 window"
+        ]
+      },
+      {
+        "path": "src/events.ts",
+        "introduced": "第 3 章",
+        "exports": [
+          "createEvents<T>(): Events<T> —— { on(name, fn): () => void; emit(name, ...args): void }",
+          "subscribeHook(hook: Hook, events: Events): () => void —— 把原始钩子事件转发进事件系统；守门：app 或实例标记 devtools.hide 的事件不转发；返回解绑"
+        ]
+      },
+      {
+        "path": "src/record.ts",
+        "introduced": "第 4 章",
+        "exports": [
+          "createAppRegistry(): AppRegistry —— { registerApp(app, meta?): AppRecord; unregisterApp(app): void; setActive(id): void; apps: AppRecord[]; activeAppRecord: AppRecord }",
+          "AppRecord —— { id: string; name: string; app: unknown; instanceMap: Map<string, InstanceLike> }",
+          "registerInstance(app: unknown, instance: InstanceLike): string —— 分配并回写实例唯一 id（实例上记 lastId 复用，uid 不作唯一依据）；登记进所属记录的实例表",
+          "getInstance(app: unknown, id: string): InstanceLike | undefined"
+        ]
+      },
+      {
+        "path": "src/tree.ts",
+        "introduced": "第 5 章",
+        "exports": [
+          "getComponentTree(app: unknown, options?: { filter?: string; maxDepth?: number }): TreeNode[]",
+          "TreeNode —— { id: string; name: string; children: TreeNode[]; hasChildren: boolean; inactive: boolean; file: string }；inactive 覆盖 keep-alive 缓存实例；maxDepth 截断处 hasChildren 仍为 true"
+        ]
+      },
+      {
+        "path": "src/state.ts",
+        "introduced": "第 6 章",
+        "exports": [
+          "getInstanceState(instance: InstanceLike): InspectorStateItem[]",
+          "InspectorStateItem —— { type: 'props' | 'setup' | 'data'; key: string; value: unknown; editable: boolean }；函数值清洗为 '[Function]'；读取抛错时值为 Error 的描述串，不中断整份快照"
+        ]
+      },
+      {
+        "path": "src/transfer.ts",
+        "introduced": "第 7 章",
+        "exports": [
+          "encodeState(data: unknown): unknown[] —— 对象表编码：每个对象先登记拿索引，重复出现（含循环与共享）只写索引",
+          "decodeState(list: unknown[]): unknown —— 按索引还原对象图"
+        ]
+      },
+      {
+        "path": "src/editor.ts",
+        "introduced": "第 8 章",
+        "exports": [
+          "editState(instance: InstanceLike, path: Array<string | number>, value: unknown): boolean —— 沿路径逐层下行写回活实例；路径不存在或中途非对象返回 false，不抛出"
+        ]
+      },
+      {
+        "path": "src/plugin.ts",
+        "introduced": "第 9 章",
+        "exports": [
+          "setupDevToolsPlugin(descriptor: PluginDescriptor, setupFn: (api: PluginApi) => void): void —— 有活动应用则立即执行，否则进插件缓冲",
+          "registerPluginsForApp(app: unknown): void —— 应用登记后重放缓冲中属于该应用的插件（按 descriptor.app 过滤）",
+          "PluginApi —— { on(name, fn): () => void; addCustomInspector(descriptor: InspectorDescriptor): void }"
+        ]
+      },
+      {
+        "path": "src/inspector.ts",
+        "introduced": "第 9 章",
+        "exports": [
+          "addCustomInspector(descriptor: InspectorDescriptor & { tree(): InspectorTreeNode[]; state(): InspectorStateItem[] }): void",
+          "getInspectorTree(inspectorId: string): InspectorTreeNode[]",
+          "getInspectorState(inspectorId: string): InspectorStateItem[]",
+          "InspectorTreeNode —— { id: string; label: string; children?: InspectorTreeNode[] }"
+        ]
+      },
+      {
+        "path": "src/rpc.ts",
+        "introduced": "第 10 章",
+        "exports": [
+          "createRpc<Remote>(functions: object, channel: Channel): { call: Remote 的句柄 —— call(method, ...args) 返回 Promise，按消息 id 配对响应；永不超时 }"
+        ]
+      },
+      {
+        "path": "src/channel.ts",
+        "introduced": "第 10 章",
+        "exports": [
+          "createMemoryChannelPair(): [Channel, Channel] —— 全双工内存通道对，post 即达对端 on",
+          "type Channel —— { post(data: unknown): void; on(handler: (data: unknown) => void): void }"
+        ]
+      },
+      {
+        "path": "src/types.ts",
+        "introduced": "第 2 章起渐进",
+        "exports": [
+          "AppLike —— { uid: number; name?: string; _instance?: InstanceLike }",
+          "InstanceLike —— { uid: number; type: { name?: string; __file?: string; devtools?: { hide?: boolean } }; subTree?: VNodeLike; parent?: InstanceLike; props?: Record<string, unknown>; setupState?: Record<string, unknown>; data?: Record<string, unknown>; [key: string]: unknown }",
+          "VNodeLike —— { component?: InstanceLike; children?: VNodeLike[] | unknown; type?: unknown }（模拟框架内部虚拟节点形态，只取遍历所需最小面）"
+        ]
+      }
+    ]
+  },
+  "style_notes": {
+    "core_metaphors": [
+      "会合点（两个世界在 window 这个广场上按暗号碰头）——贯穿全书的核心比喻",
+      "过桥（跨上下文传输必须先编码成能过桥的形态）——序列化一章的承重比喻"
+    ],
+    "forbidden_metaphors": ["集中营", "陪葬", "水龙头"]
+  }
+}

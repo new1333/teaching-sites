@@ -1,0 +1,52 @@
+{
+  "chapters": {
+    "01-extension-channels": {
+      "summary": "已建立:扩展模型三关键词(激活事件/贡献点/提供方)、三条通道边界(装饰管显示、补全要快、悬停可慢)、全书管线地图。无代码变更(原理章)。读者已能:解释为什么图标预览必须走装饰、为什么数据要按需加载。",
+      "degraded": false
+    },
+    "02-configurable-regex": {
+      "summary": "已建立:IconIntelliConfig(delimiters/prefixes/suffixes/collections/aliases/customAliasesOnly)+createConfig 默认值;buildRegexes 产出 full/prefixed/namespace 三正则(转义+长度降序交替+可选段);findIconKeys 哨兵空格扫描返回 RawMatch{start,end,key}。src 新增 config.ts/collections.ts/scan.ts。读者已能:用配置驱动识别,改配置即换识别规则。",
+      "degraded": false
+    },
+    "03-offset-to-position": {
+      "summary": "已建立:Position{line,character}(0 起)+positionAt(偏移换行列,LF/CRLF 双正确,越界收敛)+IconMatch/collectMatches(带行列范围,start 含 end 不含)。scan.ts 扩充。读者已能:把任意偏移区间转成编辑器坐标。",
+      "degraded": false
+    },
+    "04-icon-parsing": {
+      "summary": "已建立:parseIcon(str, collectionIds)→{collection,icon}(长度降序消歧,分隔符剥离开--优先,失败返回undefined)+applyAlias(别名在解析前展开,未命中原样返回)。src 新增 parse.ts。识别段完成:文本→结构化键列表。",
+      "degraded": false
+    },
+    "05-cache-chain": {
+      "summary": "已建立:types.ts(IconSetData/IconData:prefix+icons{body});loader.ts:uniqPromise(在途去重,finally出表)+createLoader({fetchIconSet,cacheDir?,log?})→{loadIconSet,clearCache} 三级回源(内存→磁盘→下载,逐级回填,坏盘自愈,失败可重试),clearCache只清内存。读者已能:按需加载图标集合并保证并发只发一次请求。",
+      "degraded": false
+    },
+    "06-svg-pipeline": {
+      "summary": "已建立:base64.ts(utf8ToBase64/base64ToUtf8 手写编解码,往返无损);render.ts:IconRenderInfo+toRenderInfo(尺寸回退链 图标>集合>16)+pathToSvg(ratio撑宽+viewBox)+toDataUrl+createRenderer({toDataUrl?})→getIconDataUrl(info,fontSize?,color?) 按(色,号,键)缓存,currentColor 替换主题色。读者已能:集合数据→data URL。",
+      "degraded": false
+    },
+    "07-build-vs-runtime": {
+      "summary": "已建立(原理章,无代码):构建期/运行期数据分界——元数据(轻,常驻,喂识别/补全)打包,完整数据(重,按需,喂渲染)运行期三级缓存取;四笔账(启动/流量/更新/离线);离线=用过的都有。读者已能:解释为什么包不大、断网不全瞎。",
+      "degraded": false
+    },
+    "08-inplace-decorations": {
+      "summary": "已建立:decorations.ts:DecorationDescriptor{range,key,dataUrl,hoverMarkdown,hideText}+DecorationEnv+collectDecorations(text,env)——别名表单一事实源(键驱动识别+展开),容错链静默跳过,in-place 豁免以行为单位,描述符保留原始键。读者已能:文本+环境→完整装饰描述符列表。",
+      "degraded": false
+    },
+    "09-providers-lazy-docs": {
+      "summary": "已建立:providers.ts:CompletionItemDescriptor{label,detail,kind,replaceStart}+provideCompletions(两段式:命名空间补图标名/裸前缀补集合id,computeReplaceStart 锚定行尾分隔结构后的词)+resolveCompletion(延迟文档,kind 分发);markdown.ts:getIconMarkdown/getCollectionMarkdown(内嵌 data URL,别名展示原始键,失败返回空串)。config.ts 新增导出 escapeRegExp。读者已能:两段式补全+悬停预览,全链路同集合只下载一次。",
+      "degraded": false
+    },
+    "10-reactive-config": {
+      "summary": "已建立:reactivity.ts:ref(getter登记/setter派发)+computed(惰性+脏标记+notify桥接,链式传播)+watchEffect(立即执行+重跑前精确清理+stop)。track/trigger 双镜像表,全局 activeEffect。引擎接入:configRef+computed(findIconKeys)+watchEffect,改配置自动重扫。读者已能:让任意纯函数随数据源自动重算。",
+      "degraded": false
+    },
+    "11-custom-collections": {
+      "summary": "已建立:custom-collections.ts:createCustomCollections({readJson,fetchJson,watchFiles?,log?})→{collections(ReadonlyRef),update(paths),dispose}——file://+http 统一键表,分流/加载/扫除,本地热重载+远程diff,清单变化重挂监听,失败清旧;每次容器变更显式 sync 到 ref。组合:自定义前缀进 collectionIds(computed) 后解析/识别/补全自动扩展。读者已能:私有图标库改完即生效。",
+      "degraded": false
+    },
+    "12-activation-lifecycle": {
+      "summary": "已建立(原理章,无代码):按语言/工作区激活+两层惰性;命令=配置写入快捷方式+缓存治理入口;停用销毁监听与句柄;全书管线回望。12 章全部完成,无降级章。",
+      "degraded": false
+    }
+  }
+}

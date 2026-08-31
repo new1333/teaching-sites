@@ -1,0 +1,2 @@
+你好，fable！
+这是 www/hello.txt 的内容——v0 服务器把它原样发给了 curl。

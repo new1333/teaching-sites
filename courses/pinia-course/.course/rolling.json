@@ -1,0 +1,88 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "why-state-management",
+      "file": "01-why-state-management.md",
+      "degraded": false,
+      "summary": "原则章，无代码。已建立概念：store、容器（Pinia instance）、状态树、单例身份；四问主线（放哪/归谁/怎么共享/怎么观测）与章节依赖图。读者已能说出四种替代方案各自的翻车机理。伴生实现尚未开工。"
+    },
+    {
+      "n": 2,
+      "slug": "vue-reactivity-toolkit",
+      "file": "02-vue-reactivity-toolkit.md",
+      "degraded": false,
+      "summary": "原则章，无代码。已建立概念：六块地基（ref/reactive/computed/watch/effectScope/provide-inject）及 isRef/isReactive/toRefs/markRaw/nextTick 前瞻；效应作用域（effectScope）与活动容器（activePinia）术语已引入。读者已能解释 watcher 泄漏与解构断连。伴生实现未开工。"
+    },
+    {
+      "n": 3,
+      "slug": "create-pinia",
+      "file": "03-create-pinia.md",
+      "degraded": false,
+      "summary": "代码：新增 src/rootStore.ts（Pinia/MinimalApp 接口、piniaSymbol、activePinia/setActivePinia/getActivePinia）、src/createPinia.ts（createPinia 含 install 五动作与插件缓冲 toBeInstalled、disposePinia）、src/types.ts（StateTree/_Method/_GettersTree/_ActionsTree/插件类型）、src/index.ts 出口。API 已有：createPinia/disposePinia/setActivePinia/getActivePinia/piniaSymbol。读者已能创建隔离容器并 install 到 app 桩。"
+    },
+    {
+      "n": 4,
+      "slug": "define-store",
+      "file": "04-define-store.md",
+      "degraded": false,
+      "summary": "代码：新增 src/store.ts——defineStore(id, options|setup) 返回 useStore：三级回退找容器（显式>inject>activePinia）、无容器抛 🍌 错、按 id 查 _s 注册表惰性创建、store 外壳 reactive({ $id })；types.ts 加 DefineStoreOptions，index.ts 导出 defineStore。读者已能定义 store 并依赖容器担保的单例身份。store 目前是空壳，选项三件套未实现。"
+    },
+    {
+      "n": 5,
+      "slug": "option-store",
+      "file": "05-option-store.md",
+      "degraded": false,
+      "summary": "代码：store.ts 大改——新增 createOptionsStore（state 工厂写入 pinia.state.value[id]（已有则不覆盖）、toRefs 摊平、getters 编译为 computed（内部 setActivePinia）、assign 归一）与 createSetupStore（scope=pinia._e 下 effectScope、先立 reactive 外壳并登记 _s 再跑 setup、三通道分类循环（ref&&!computed|reactive→状态通道（组合式时搬进集中营）；computed→getter；function→action）、assign(store)+assign(toRaw(store),setupStore) 双份挂载、$state getter）。defineStore 按 isSetupStore 分流。读者已能用选项式三件套：state 读写、getter 联动互引、action this=store、$state 视图。"
+    },
+    {
+      "n": 6,
+      "slug": "setup-store",
+      "file": "06-setup-store.md",
+      "degraded": false,
+      "summary": "代码：store.ts 的 createSetupStore 分类循环加 hydration——initialState（占位后读取）、状态通道内 key in initialState 时 prop.value = initialState[key]（ref）/assign 浅合并（reactive，待 ch7 换深合并），随后 ref 本体入住 pinia.state.value[$id][key]。读者已能用组合式语法（ref/computed/函数/composable 组装）定义 store，hydration 时旧数据赢。"
+    },
+    {
+      "n": 7,
+      "slug": "patch-and-reset",
+      "file": "07-patch-and-reset.md",
+      "degraded": false,
+      "summary": "代码：新增 src/subscriptions.ts（noop/addSubscription（默认 onScopeDispose 自动清理）/triggerSubscriptions）；types.ts 加 MutationType/isPlainObject；store.ts 加 mergeReactiveObjects（普通对象递归、Map/Set 自身为目标时逐项合并、属性级整体替换、原地改保连接）、$patch（对象式/函数式 + 手动 triggerSubscriptions 恰一次）、$reset（选项式重跑 state 工厂走 $patch；组合式抛 🍌 错）、$state setter 走 $patch、hydration 的 reactive/Map/Set 分支升级为 clear+merge。读者已能批量变更与一键重置。"
+    },
+    {
+      "n": 8,
+      "slug": "subscriptions",
+      "file": "08-subscriptions.md",
+      "degraded": false,
+      "summary": "代码：store.ts 加 action 包装器（入口 setActivePinia、before 广播带 after/onError 收集器、同步 catch 上抛、Promise then/catch 两栖）、分类循环 action 通道改为挂 action(prop,key)；$subscribe（去重、watch deep 于 store scope、isListening 静音恢复于 nextTick、detached/flush 选项）；$onAction；$dispose（scope.stop+清订阅+注册表除名）；$patch 加 isListening=false/nextTick 恢复；types.ts 升级 StoreGeneric 为完整 $ 系公共面 + SubscriptionCallback/StoreOnActionListener 类型。读者已能观测 state 与 action 全时序，订阅自动托管。"
+    },
+    {
+      "n": 9,
+      "slug": "store-to-refs",
+      "file": "09-store-to-refs.md",
+      "degraded": false,
+      "summary": "代码：新增 src/storeToRefs.ts——toRaw 读分类信息（ch5 双份挂载兑现），状态走 toRef(store,key) 双向活引用，getter（value?.effect）包可写 computed 直通 store，函数/非响应式属性跳过；index.ts 导出 storeToRefs。读者已能在 setup 里安全解构（数据用 storeToRefs、函数直接解构），双向同步。"
+    },
+    {
+      "n": 10,
+      "slug": "plugins",
+      "file": "10-plugins.md",
+      "degraded": false,
+      "summary": "代码：store.ts 的 createSetupStore 末尾接入插件管线——optionsForPlugin（补 id/actions）、scope.run 内执行 extender({store,app,pinia,options})、返回值 assign 进 store（只对新建 store 生效）。契约：use 须在 install 后（install 前缓冲 toBeInstalled）。测试验证持久化插件（$patch 水合 + detached 订阅落盘 + $dispose 后重建恢复）。读者已能用插件扩展所有 store，pinia-mini 功能完备。"
+    },
+    {
+      "n": 11,
+      "slug": "active-pinia-and-ssr",
+      "file": "11-active-pinia-and-ssr.md",
+      "degraded": false,
+      "summary": "原则章，无代码。推演 SSR 串号完整时序（install 覆盖 activePinia + await 后裸 useStore）；三道防线：install 校准（ch3）、action/getter 入口校准（ch5/ch8）、app.runWithContext（真 pinia 有、mini 未实现）；残余窗口由纪律封口（同步开头取引用、异步后用闭包）。读者已能解释活动容器的两张脸与「状态在容器、指路牌在模块」。"
+    },
+    {
+      "n": 12,
+      "slug": "pinia-vs-mini",
+      "file": "12-pinia-vs-mini.md",
+      "degraded": false,
+      "summary": "对照章，无代码。mini 678 行 vs 真 pinia 2933 行；三类增量：开发体验（HMR/devtools/诊断警告）、生态兼容（mapHelpers）、类型表达（723 行 types.ts）；逐 API 差异与啃源码入口顺序（subscriptions→createPinia→rootStore→storeToRefs→store 主干→types）。全书完成：12 章、pinia-mini 678 行、40 测试全绿、无降级章。"
+    }
+  ]
+}

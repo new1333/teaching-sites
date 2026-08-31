@@ -1,0 +1,402 @@
+{
+ "reader_model": {
+  "audience_defaulted": false,
+  "source": ".course/calibration.json（2026-08-30 四题全答）",
+  "known": [
+   "现代 JavaScript：async/await、fetch、DOM API、ES Module 都是日常工具",
+   "用过浏览器 DevTools 的 Network 面板：会看请求列表、按关键字过滤、看状态码",
+   "会从商店安装浏览器插件，知道 chrome://extensions 这个管理页",
+   "日常使用 Chrome 或 Edge"
+  ],
+  "unfamiliar": [
+   {
+    "concept": "manifest.json 与 Manifest V3",
+    "why": "没写过插件，不知道插件世界的唯一入口是一份声明文件",
+    "anchor": "package.json 之于 npm 项目：一份写明我是谁、我要什么权限、我的代码在哪的说明书",
+    "first_chapter": "mv3-anatomy"
+   },
+   {
+    "concept": "content script 与 service worker 两个世界",
+    "why": "网页开发只有一个环境；插件至少有页面、后台两套环境，能力互不相通",
+    "anchor": "前台服务员与后厨：都能干活，但后厨摸不到餐桌，服务员进不了冷库",
+    "first_chapter": "mv3-anatomy"
+   },
+   {
+    "concept": "未打包扩展（Load unpacked）",
+    "why": "平时只从商店装插件，没见过开发装载方式",
+    "anchor": "开发模式：把一个本地文件夹直接挂进浏览器",
+    "first_chapter": "mv3-anatomy"
+   },
+   {
+    "concept": "blob: URL 与 MSE",
+    "why": "检查 <video> 看到 blob: 开头的 src，会误以为那就是视频文件地址",
+    "anchor": "blob: 是浏览器给内存里一块数据发的临时门牌，地址在地图上并不存在",
+    "first_chapter": "network-watch"
+   },
+   {
+    "concept": "webRequest 被动监听",
+    "why": "不知道插件能『看见』浏览器的全部网络流量",
+    "anchor": "Network 面板的编程版：你的代码代替你的眼睛盯着请求流",
+    "first_chapter": "network-watch"
+   },
+   {
+    "concept": "HLS 与 m3u8 播放列表",
+    "why": "直觉上视频等于一个文件；流媒体把『一个文件』拆成了清单+分片",
+    "anchor": "一部片切成几秒一段的胶片，外加一张写明段序的清单",
+    "first_chapter": "network-watch"
+   },
+   {
+    "concept": "master / media 两级播放列表",
+    "why": "打开 m3u8 才发现里面还有一层清单",
+    "anchor": "餐厅总菜单（列各清晰度）与单道菜的配方单（列分片）",
+    "first_chapter": "m3u8-parse"
+   },
+   {
+    "concept": "BANDWIDTH 与清晰度变体",
+    "why": "不知道同一视频预先压好了多档清晰度、分片各不相同",
+    "anchor": "同一部片提前压好的 360p/720p/1080p 三份拷贝",
+    "first_chapter": "m3u8-parse"
+   },
+   {
+    "concept": "service worker 没有 DOM",
+    "why": "JS 开发者默认 window、URL.createObjectURL 这类 API 处处可用",
+    "anchor": "后厨里没有餐桌：贴在页面上的 API（createObjectURL、alert）天生缺席",
+    "first_chapter": "download-pipeline"
+   },
+   {
+    "concept": "chrome.downloads 与 a[download] 两种落盘",
+    "why": "网页里存文件只有下载链接一种体感",
+    "anchor": "让浏览器替你存（后台 API）vs 造一个临时下载链接让页面点（前台）",
+    "first_chapter": "download-pipeline"
+   },
+   {
+    "concept": "host_permissions 与 CORS 豁免",
+    "why": "写网页被 CORS 教育过，以为跨域请求永远要对方点头",
+    "anchor": "提前报备过的访客可以进仓库，不必每次出示通行证",
+    "first_chapter": "download-pipeline"
+   },
+   {
+    "concept": "SPA：页面从不重载",
+    "why": "点击切换页面的体感等于跳页，实际只是换 DOM",
+    "anchor": "舞台剧换布景，剧场从不散场",
+    "first_chapter": "inject-ui"
+   },
+   {
+    "concept": "MutationObserver",
+    "why": "习惯了事件驱动（click/scroll），没监控过『DOM 长出了新元素』",
+    "anchor": "给 DOM 装监控摄像头：有元素新增就通知你",
+    "first_chapter": "inject-ui"
+   },
+   {
+    "concept": "data-testid 锚点选择器",
+    "why": "习惯用 class 选择器，而 X 的 class 是构建产物、随时会变",
+    "anchor": "衣柜里的衣服天天换，工牌号不变——测试专用属性就是工牌",
+    "first_chapter": "inject-ui"
+   },
+   {
+    "concept": "按钮状态机",
+    "why": "按钮在读者经验里就是 onlick 一件事，没有多态生命周期的概念",
+    "anchor": "电梯楼层灯：探测中→已找到→下载中→完成，每个灯只在自己的条件下亮",
+    "first_chapter": "inject-ui"
+   },
+   {
+    "concept": "runtime.sendMessage 消息传递",
+    "why": "两个世界不共享内存，跨世界调用对网页开发者是新模式",
+    "anchor": "前台与后厨之间传菜的小票",
+    "first_chapter": "inject-ui"
+   },
+   {
+    "concept": "权限最小化与商店审核",
+    "why": "以为权限弹窗走过场；实际上过度索权是被拒审/下架的常见原因",
+    "anchor": "进小区登记：登记越少越容易被放行，也越少被怀疑",
+    "first_chapter": "permissions-publish"
+   },
+   {
+    "concept": "MV3 砍掉 blocking webRequest 的来龙去脉",
+    "why": "不知道 MV2→MV3 迁移大战的背景，会误以为监听 API 天生长这样",
+    "anchor": "物业以安全为由收回了万能钥匙，只留下对讲机（只可观听、不可拦改）",
+    "first_chapter": "permissions-publish"
+   }
+  ]
+ },
+ "glossary": [
+  {
+   "term": "浏览器插件（扩展）",
+   "en": "browser extension",
+   "definition": "装进浏览器的小程序，能在你访问的网页里和浏览器本身做事，本课做的是它"
+  },
+  {
+   "term": "Manifest V3",
+   "en": "Manifest V3",
+   "definition": "Chrome 给插件定的第三代说明书规范，规定了插件能要什么权限、代码怎么组织"
+  },
+  {
+   "term": "manifest.json",
+   "en": "manifest.json",
+   "definition": "插件的唯一入口文件：声明插件叫什么、要什么权限、各段代码在哪"
+  },
+  {
+   "term": "未打包扩展",
+   "en": "load unpacked",
+   "definition": "开发阶段的装载方式：把本地文件夹直接挂进浏览器，不用上传商店"
+  },
+  {
+   "term": "content script",
+   "en": "content script",
+   "definition": "跑在你访问的页面里的插件代码：能摸 DOM，但拿不到多数浏览器 API"
+  },
+  {
+   "term": "service worker（插件后台）",
+   "en": "extension service worker",
+   "definition": "插件的后台代码：能拿浏览器 API（监听网络、下载），但没有任何页面/DOM 能力，且闲下来会被浏览器休眠"
+  },
+  {
+   "term": "权限声明",
+   "en": "permissions",
+   "definition": "manifest 里向浏览器报备的能力清单：API 权限（如 webRequest）与站点权限（host_permissions）"
+  },
+  {
+   "term": "host_permissions",
+   "en": "host_permissions",
+   "definition": "manifest 里声明允许访问哪些网站（如 x.com、twimg.com），也是跨域请求被豁免的依据"
+  },
+  {
+   "term": "被动监听",
+   "en": "passive listening",
+   "definition": "只能看请求流过、不能拦截或改写的观察模式；MV3 里 webRequest 只剩这种用法"
+  },
+  {
+   "term": "blob: URL",
+   "en": "blob URL",
+   "definition": "浏览器给内存里一块数据发的临时门牌，页面刷新就作废，不是硬盘上的文件地址"
+  },
+  {
+   "term": "MSE（媒体源扩展）",
+   "en": "Media Source Extensions",
+   "definition": "让网页用 JS 一段段喂视频给 <video> 播放的标准，喂进去后 src 只显示 blob: 门牌"
+  },
+  {
+   "term": "HLS",
+   "en": "HTTP Live Streaming",
+   "definition": "苹果发明的流媒体方案：把视频切成小分片、配一张清单，边下边播"
+  },
+  {
+   "term": "m3u8 播放列表",
+   "en": "m3u8 playlist",
+   "definition": "HLS 的清单文件，纯文本：写着有哪些清晰度或分片、各在什么地址"
+  },
+  {
+   "term": "master playlist",
+   "en": "master playlist",
+   "definition": "一级清单：只列各清晰度变体（带宽/分辨率）和它们的二级清单地址，不含分片"
+  },
+  {
+   "term": "media playlist",
+   "en": "media playlist",
+   "definition": "二级清单：列某一档清晰度的全部分片地址与时长"
+  },
+  {
+   "term": "分片",
+   "en": "segment",
+   "definition": "视频被切成的小段（通常几秒一段），播放器按清单顺序逐段取用"
+  },
+  {
+   "term": "EXTINF",
+   "en": "EXTINF",
+   "definition": "m3u8 里的标签行，写每个分片的时长，下一行就是分片地址"
+  },
+  {
+   "term": "EXT-X-STREAM-INF",
+   "en": "EXT-X-STREAM-INF",
+   "definition": "master 清单里的标签行，写一档清晰度的带宽/分辨率/编码，下一行是它的清单地址"
+  },
+  {
+   "term": "BANDWIDTH",
+   "en": "BANDWIDTH",
+   "definition": "一档清晰度播放时每秒要吞的数据量，数字越大一般越清晰"
+  },
+  {
+   "term": "清晰度变体",
+   "en": "variant",
+   "definition": "同一个视频预先压好的多份不同画质拷贝，各有一套分片"
+  },
+  {
+   "term": "EXT-X-MAP",
+   "en": "EXT-X-MAP",
+   "definition": "media 清单里指向初始化分片的标签：fMP4 格式的流要先取它才能解码后续分片"
+  },
+  {
+   "term": "字节拼接",
+   "en": "byte concatenation",
+   "definition": "把按顺序取回的分片原样首尾相接成一个文件；同编码参数的流拼完即可播放"
+  },
+  {
+   "term": "并发抓取",
+   "en": "concurrent fetching",
+   "definition": "同时开几个请求下分片、按原顺序交货，比一个接一个快"
+  },
+  {
+   "term": "chrome.downloads",
+   "en": "chrome.downloads API",
+   "definition": "插件后台用的浏览器下载 API：给个 URL 和文件名，浏览器替你存盘"
+  },
+  {
+   "term": "a[download]",
+   "en": "anchor download attribute",
+   "definition": "页面侧的落盘方式：造一个带 download 属性的链接点一下，把内存里的 Blob 存成文件"
+  },
+  {
+   "term": "CORS 豁免",
+   "en": "CORS exemption",
+   "definition": "插件在 host_permissions 报备过的站点上发请求，不受网页世界跨域限制"
+  },
+  {
+   "term": "SPA",
+   "en": "single-page application",
+   "definition": "只加载一次页面的应用：之后所有『翻页』都是 JS 换 DOM，浏览器从不重新加载"
+  },
+  {
+   "term": "MutationObserver",
+   "en": "MutationObserver",
+   "definition": "浏览器提供的 DOM 监控 API：指定的容器里长出/变化了什么，就回调通知你"
+  },
+  {
+   "term": "data-testid 锚点",
+   "en": "data-testid anchor",
+   "definition": "页面元素上测试专用的稳定属性，比 class 更适合当选择器；X 的推文元素带着 data-testid=\"tweet\""
+  },
+  {
+   "term": "状态机",
+   "en": "state machine",
+   "definition": "把一个东西的生命周期明确划成几个状态、规定谁能变到谁，避免逻辑糊成一团"
+  },
+  {
+   "term": "消息传递",
+   "en": "runtime messaging",
+   "definition": "插件两个世界之间唯一的通话方式：sendMessage 发小票、监听端回执"
+  },
+  {
+   "term": "CSP（内容安全策略）",
+   "en": "Content Security Policy",
+   "definition": "页面/插件声明『只允许从哪加载什么』的白名单；MV3 还额外禁止插件运行远程代码"
+  },
+  {
+   "term": "打包 zip",
+   "en": "packaging",
+   "definition": "把扩展目录压成一个 zip 上传商店；store 只认这个格式"
+  },
+  {
+   "term": "Chrome Web Store",
+   "en": "Chrome Web Store",
+   "definition": "Chrome 官方插件商店，插件的发布与审核都在这里"
+  },
+  {
+   "term": "权限最小化",
+   "en": "least privilege",
+   "definition": "只报备功能真正用到的最小能力集：用户公示更短、审核答得出用途、失守时爆炸半径最小"
+  },
+  {
+   "term": "MV3 砍掉 blocking webRequest 的来龙去脉",
+   "en": "MV2 to MV3 migration",
+   "definition": "2019 年 Chrome 宣布用声明式 DNR 取代 webRequest 拦改、2024-2025 逐步禁用 MV2 的七年迁移战；观察用法保留，拦改只剩企业策略扩展"
+  },
+  {
+   "term": "Blob",
+   "en": "Blob object",
+   "definition": "内存里的一段数据包着文件式的元信息（类型、大小），能整体交给下载、播放等 API 使用；两个世界都造得出它"
+  },
+  {
+   "term": "URL.createObjectURL",
+   "en": "URL.createObjectURL",
+   "definition": "把一块内存数据注册成 blob: 临时门牌的页面侧 API；service worker 里没有它（MDN：available in Web Workers, except for Service Workers）"
+  }
+ ],
+ "conventions": {
+  "directory": "companion 根即扩展根：manifest.json + icons/ + src/{shared,background,content} + tests/ + fixtures/ + scripts/；装载时在 chrome://extensions 选 companion 目录本身",
+  "zero_build": "扩展代码（src/、manifest.json）零构建、零运行时依赖：不得 import 任何 npm 包；测试与工具链只用 devDependencies（vitest、typescript、fflate 用于 zip 打包）",
+  "module_style": "src/shared/ 与 src/content/button-state.js 是可测逻辑的家：一律纯函数 + 环境能力注入（fetchLike、documentLike 从参数进）；值得测的逻辑必须住在这里，不许沉在装配层（sw.js / content 装配文件不直接测）",
+  "error_handling": "自定义错误类（PlaylistParseError、NoVariantError、SegmentFetchError）；禁止空 catch；SW 收到消息必须回执 { ok: boolean, error?: string }",
+  "jsdoc": "shared 模块每个导出写一行用途与参数/返回 JSDoc 类型，支撑 tsc --noEmit(checkJs) 门槛；代码标识符英文、注释中文、只写教学承重的约束",
+  "tests": "tests/{NN}-{slug}.test.js 按章 append-only、先红后绿；只依赖 shared 模块与注入的假 fetch/fixture 文本，不碰网络、不 sleep",
+  "fixtures": "m3u8 样本为自造、符合 RFC 8216 的文本（含 .ts 与 fMP4/EXT-X-MAP 两种形态），不含任何真实用户内容；URL 用形如 https://video.twimg.com/.../seg-0.ts 的示意地址",
+  "gate_commands": "cwd=companion：npm run typecheck（tsc --noEmit）与 npm test（vitest run）双硬门槛；observation 部分：正文验证槽任务清单（每条 = 读者操作 + 应看到的具体现象）",
+  "scaffold": "companion/package.json scripts: { typecheck, test, package }；devDependencies 实况：typescript ^7.0.2、vitest ^4.1.11、fflate ^0.8.3、@types/chrome ^0.2.7（均为 devDep，扩展运行时零依赖）；tsconfig: allowJs+checkJs、strict、noImplicitAny:false、resolveJsonModule、types:[\"chrome\"]、target/module ESNext、moduleResolution bundler、include src tests scripts"
+ },
+ "api_contract": {
+  "note": "验证物公共导出面，只增不破；括号标注首增章。装配层（src/background/sw.js、src/content/loader.js、src/content/main.js、manifest.json）不属于公共面",
+  "surface": [
+   "shared/badge.js: BADGE_ATTR 常量 + isStatusHref(href)/findTweetArticles(root)/tweetLinkFrom(article)——推文角标定位与链接提取纯函数（mv3-anatomy）",
+   "shared/video-url.js: isLikelyVideoUrl(url) → boolean——识别 video.twimg.com 的 .m3u8/.mp4/.ts 视频请求（mv3-anatomy 后第 2 章 network-watch）",
+   "shared/video-url.js: playlistKindOf(url) → 'master'|'media'|'mp4'|'unknown'——按 URL 形态分级（m3u8-parse）",
+   "shared/m3u8.js: parseMasterPlaylist(text) → { variants: [{ url, bandwidth, width?, height?, codecs? }] }——解析 EXT-X-STREAM-INF 与其后 URI 行（m3u8-parse）",
+   "shared/m3u8.js: parseMediaPlaylist(text) → { targetDuration, segments: [{ url, duration }], mapUrl: string|null }——解析 EXTINF/URI 与 EXT-X-MAP（m3u8-parse）",
+   "shared/m3u8.js: pickVariant(variants, { maxHeight? }) → variant——默认按 BANDWIDTH 最高选，可限 maxHeight（m3u8-parse）",
+   "shared/m3u8.js: PlaylistParseError——解析失败时抛出，message 指明行号或标签（m3u8-parse）",
+   "shared/download.js: resolveMediaPlaylistUrl(masterUrl, masterText, fetchLike) → { url, variant }——选档并取二级清单地址（download-pipeline）",
+   "shared/download.js: downloadSegments({ mediaUrl, fetchLike, concurrency=4, onProgress? }) → { init: ArrayBuffer|null, segments: ArrayBuffer[] }——按顺序稳定的并发抓取，含 EXT-X-MAP 初始化分片；失败抛 SegmentFetchError（download-pipeline）",
+   "shared/download.js: concatBuffers(chunks) → Uint8Array——字节拼接（download-pipeline）",
+   "shared/download.js: guessFilename(statusId, { ext, height }) → 'x-video-<statusId>-<height>p.<ext>'（download-pipeline）",
+   "shared/messages.js: MSG 常量表（DOWNLOAD_REQUEST / DOWNLOAD_PROGRESS / DOWNLOAD_DONE / DOWNLOAD_ERROR）与守卫 isDownloadRequest/isProgressPayload（inject-ui）；encodeBytes/decodeBytes——base64 分块编解码，二进制过 JSON 消息通道的渡船（inject-ui）",
+   "content/button-state.js: nextButtonState(state, event) → state——五正程态 idle/detecting/ready/downloading/done 加失败态 error，非法迁移抛 Error（inject-ui）",
+   "content/button-state.js: BUTTON_ATTR 常量——按钮注入标记，撤旧换新与防重复的依据（inject-ui）",
+   "content/button-state.js: statusIdFromUrl(url) → string|null——从 x.com 状态页 URL 提取推文数字 id（inject-ui）",
+   "content/button-state.js: findVideoTweetRoots(root, selector?) → Element[]——找含视频的推文根元素，默认锚 article[data-testid=\"tweet\"]（inject-ui）"
+  ]
+ },
+ "obligations": [
+  {
+   "kind": "legal",
+   "note": "本课程仅用于学习浏览器扩展开发：请只下载你拥有版权或已获明确授权的内容，遵守 X 服务条款与当地著作权法",
+   "surfaces": [
+    "docs/index.md",
+    "docs/about.md",
+    "docs/06-permissions-publish.md"
+   ]
+  },
+  {
+   "kind": "timeliness",
+   "note": "X 的前端 DOM、内部接口与视频投递方式随版本变化（截至 2026-08）。课程教的是标准协议与可迁移方法；易变细节（选择器、URL 形态）正文随讲给出现场核对步骤，不为任何快照背书",
+   "surfaces": [
+    "docs/about.md",
+    "docs/05-inject-ui.md"
+   ]
+  }
+ ],
+ "authority_docs": [
+  {
+   "name": "Chrome Extensions 开发文档（MV3）",
+   "url": "https://developer.chrome.com/docs/extensions/develop",
+   "covers": "manifest 字段、content scripts、service worker 生命周期、action"
+  },
+  {
+   "name": "chrome.webRequest 参考",
+   "url": "https://developer.chrome.com/docs/extensions/reference/api/webRequest",
+   "covers": "MV3 下仅被动监听；事件与 url 字段可见性"
+  },
+  {
+   "name": "chrome.downloads 参考",
+   "url": "https://developer.chrome.com/docs/extensions/reference/api/downloads",
+   "covers": "download() 参数、filename、权限要求"
+  },
+  {
+   "name": "权限与匹配模式",
+   "url": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+   "covers": "host_permissions 语法、CORS 豁免语义"
+  },
+  {
+   "name": "RFC 8216: HTTP Live Streaming",
+   "url": "https://www.rfc-editor.org/rfc/rfc8216",
+   "covers": "m3u8 标签语义（EXT-X-STREAM-INF/EXTINF/EXT-X-MAP）、两级播放列表结构"
+  },
+  {
+   "name": "MDN Web Docs",
+   "url": "https://developer.mozilla.org/",
+   "covers": "MutationObserver、Blob、URL.createObjectURL、fetch、a[download]"
+  },
+  {
+   "name": "Chrome Web Store 发布文档",
+   "url": "https://developer.chrome.com/docs/webstore",
+   "covers": "上架流程、审核要点、zip 要求"
+  }
+ ]
+}

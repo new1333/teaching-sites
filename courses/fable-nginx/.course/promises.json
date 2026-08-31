@@ -1,0 +1,66 @@
+[
+  {
+    "from_ch": 1,
+    "from": "first-http-server",
+    "target_ch": 2,
+    "target": "thread-per-connection-cost",
+    "what": "「怎么让服务器不等」：给阻塞循环接一连接一线程并压测量化其代价（C10K）",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 1,
+    "from": "first-http-server",
+    "target_ch": 4,
+    "target": "connection-state-machine",
+    "what": "v0「一次 recv 当读全/不读正文」的简化：掰碎到达的请求会读残，届时现场复现并修成连接状态机",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 2,
+    "from": "thread-per-connection-cost",
+    "target_ch": 3,
+    "target": "event-loop",
+    "what": "同机同探针对照实验：v1 的 302 线程 / 47.4 MiB 实占，对单线程事件循环版的线程数与内存，下一章现场跑（正文原话：同一个 bench、同一台机器，把 302 线程对 1 线程、47 MiB 对多少 MiB 的对照实验现场跑给你看）",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 3,
+    "from": "event-loop",
+    "target_ch": 4,
+    "target": "connection-state-machine",
+    "what": "v2 两条简化的事故现场：掰成几段发的请求会读残、写不下的响应会截断——下一章现场复现，再把连接从「一锤子回调」升级成「有记忆的状态机」",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 4,
+    "from": "connection-state-machine",
+    "target_ch": 5,
+    "target": "master-workers",
+    "what": "把这条已经结实的事件循环，长成 master 带多个 worker 的多进程骨架",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 5,
+    "from": "master-workers",
+    "target_ch": 7,
+    "target": "vs-real-nginx",
+    "what": "SO_REUSEPORT 与真 nginx 的惊群应对（accept_mutex/EPOLLEXCLUSIVE 的取舍），在终章差距地图展开",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 6,
+    "from": "reverse-proxy",
+    "target_ch": 7,
+    "target": "vs-real-nginx",
+    "what": "真 nginx upstream 的高级策略（带权重轮询、最少连接、健康检查）进终章差距地图",
+    "status": "fulfilled"
+  },
+  {
+    "from_ch": 5,
+    "from": "master-workers",
+    "target_ch": 6,
+    "target": "reverse-proxy",
+    "what": "下一章给这台多进程骨架装上当代主职——反向代理（第 5 章收束预告，评审补登）",
+    "status": "fulfilled"
+  }
+]

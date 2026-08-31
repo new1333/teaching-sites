@@ -1,0 +1,16 @@
+{
+  "name": "companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.7",
+    "fflate": "^0.8.3",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  }
+}

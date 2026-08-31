@@ -1,0 +1,45 @@
+{
+  "glossary": [
+    { "term": "反向代理", "en": "reverse proxy", "definition": "代替内部服务接收外部请求再转发出去的中间层，客户端只看到代理本身。" },
+    { "term": "location 匹配", "en": "location matching", "definition": "Nginx 按 URI 选择处理规则的指令块，精确、前缀、正则各有优先级。" },
+    { "term": "try_files", "en": "try_files", "definition": "依次尝试一组文件/URI 是否存在，都不存在则用最后一项作内部跳转的指令。" },
+    { "term": "proxy_pass", "en": "proxy_pass", "definition": "把当前请求转发给指定上游地址的指令，带不带路径决定是否改写 URI。" },
+    { "term": "upstream", "en": "upstream", "definition": "一组后端服务器的定义，配合代理实现负载均衡与故障摘除。" },
+    { "term": "gzip 压缩", "en": "gzip", "definition": "对响应体做压缩以减小传输体积的编码方式，由 Accept-Encoding 协商。" },
+    { "term": "强缓存", "en": "strong caching", "definition": "浏览器在有效期内不发起任何请求、直接使用本地副本（Cache-Control: max-age/immutable）。" },
+    { "term": "协商缓存", "en": "conditional request", "definition": "浏览器带 ETag/Last-Modified 凭证询问服务器，资源未变则返回 304。" },
+    { "term": "跨域资源共享", "en": "CORS", "definition": "浏览器同源策略下，服务端通过 Access-Control-* 响应头授权跨源访问的机制。" },
+    { "term": "MIME 类型", "en": "MIME type", "definition": "文件扩展名映射出的 Content-Type，决定浏览器如何解释响应体。" },
+    { "term": "master/worker 模型", "en": "master-worker model", "definition": "一个 master 进程管理配置与多个 worker 进程，worker 实际处理连接。" },
+    { "term": "事件驱动", "en": "event-driven", "definition": "每个 worker 用 epoll 等多路复用在单线程内非阻塞地处理成千上万连接。" },
+    { "term": "WebSocket 升级", "en": "WebSocket upgrade", "definition": "通过 Upgrade/Connection 请求头把 HTTP 连接升级为长连接的握手过程。" },
+    { "term": "X-Forwarded-For", "en": "X-Forwarded-For", "definition": "逐层代理追加、传递真实客户端 IP 的链式请求头。" },
+    { "term": "网关错误", "en": "502/504", "definition": "502 表示上游返回无效响应或不可达，504 表示上游超时，都是网关视角的错误。" }
+  ],
+  "code_conventions": {
+    "language": "TypeScript (strict) + node:http + node:zlib，零运行时第三方依赖；测试用 vitest",
+    "naming": "模块名与 Nginx 概念一一对应：location.ts / static.ts / proxy.ts / upstream.ts / gzip.ts / cache.ts / headers.ts；导出用 camelCase 函数，类型用 PascalCase",
+    "structure": "src/server.ts 组装请求管线，其余模块是纯函数或窄接口对象；fixtures/ 放静态资源测试文件；不引入 DI 容器、不用 class 继承",
+    "errors": "HTTP 语义即错误约定：文件不存在回 404、目录穿越拒绝 403、上游不可达回 502、上游超时回 504；错误响应体统一为 text/plain 小写短语",
+    "real_nginx_alignment": "配置对象的键名逐字复刻 nginx.conf 指令名（root/index/try_files/proxy_pass/proxy_set_header/expires/gzip/add_header），行为语义对齐官方文档；与真实 Nginx 的差异只在性能与边角，差异清单在第 12 章成表"
+  },
+  "api_contract": {
+    "entry": "src/index.ts 单入口导出",
+    "exports_initial": [
+      "createMiniNginx(config: MiniNginxConfig): MiniNginxServer —— 传入配置返回服务器实例",
+      "MiniNginxServer.listen(port?: number): Promise<{ port: number; url: string }> —— 省略 port 时绑定 0（随机端口），返回实际地址",
+      "MiniNginxServer.close(): Promise<void> —— 关闭并释放端口",
+      "type MiniNginxConfig = { upstreams?: Record<string, Upstream>; server: ServerBlock } —— 与 nginx.conf 的 http 块同构",
+      "type ServerBlock = { root?: string; locations?: LocationBlock[] } —— 与 server 块同构，第 8/9 章会在 ServerBlock 上只增字段（gzip 等）",
+      "type LocationBlock = { match: MatchRule; root?: string; index?: string; try_files?: string[]; proxy_pass?: string } —— 与 location 块同构，后续章只增字段，绝不改已有字段语义",
+      "type MatchRule = { type: '=' | '^~' | '~' | '~*' | 'prefix'; path: string }"
+    ],
+    "semantics": [
+      "location 匹配优先级对齐真实 Nginx：= > ^~（阻断正则的最长前缀）> 正则（按声明顺序）> 最长前缀",
+      "try_files 最后一项以 / 开头视为内部回退 URI 而非文件名",
+      "proxy_pass 含路径时改写 URI（replace 前缀），不含路径时透传原 URI",
+      "静态服务默认 index 为 index.html，路径含 .. 时拒绝"
+    ],
+    "later_chapters_append_only": "第 6 章：LocationBlock 增 proxy_set_header?: Record<string,string>；第 7 章：upstream 语法 'upstream_name' 引用与 Upstream 类型；第 8 章：ServerBlock 增 gzip?: GzipOptions；第 9 章：LocationBlock 增 expires 与 etag?: boolean；第 10 章：LocationBlock 增 add_header?: Record<string,string> 与 cors?: CorsOptions"
+  }
+}

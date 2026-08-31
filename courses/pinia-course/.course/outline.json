@@ -1,0 +1,292 @@
+{
+  "title": "Pinia 从零实现",
+  "audience": "会用 Vue 3 组合式 API、想真正吃透状态管理而非只会调 API 的开发者",
+  "input": {
+    "kind": "repo",
+    "ref": "vuejs/pinia@v4"
+  },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript + vitest（依赖 vue 的响应式原语）",
+    "scope": "pinia-mini：createPinia/defineStore/两种 store 语法/$patch/$reset/$subscribe/$onAction/storeToRefs/插件，约 400 行（不含测试）"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 地基与容器",
+      "chapters": [
+        {
+          "slug": "why-state-management",
+          "title": "状态管理的四种尝试与它们的极限",
+          "goal": "亲历 props 钻孔、模块级共享 ref、事件总线、Vuex 各自翻车的现场，理解 store 要解决的四件事",
+          "type": "principle",
+          "pain_point": "购物车计数从页面根组件出发，途经 5 层子组件 props 接力，中间有一层根本不用它；换成模块顶层共享的 ref 后热更新状态被清空、SSR 里两个用户串了登录态；上 Vuex 又是一个 mutation 写三处",
+          "depends_on": [],
+          "acceptance": [
+            "覆盖四种替代方案各自的翻车现象",
+            "给出状态管理四问（放哪/怎么共享/怎么改/怎么观测）作为全书主线",
+            "无代码，一张能力依赖图收尾"
+          ]
+        },
+        {
+          "slug": "vue-reactivity-toolkit",
+          "title": "Vue 响应式工具箱：pinia 的六块地基",
+          "goal": "过一遍 ref/reactive/computed/watch/effectScope/toRef 的非显然用法——pinia 每一行都建在它们之上",
+          "type": "principle",
+          "pain_point": "在组件外创建的 watcher 没人收拾：组件销毁后回调还在跑，测试第二次执行时同一段逻辑被触发了两遍；const { n } = reactive({n:1}) 解构完页面就死了",
+          "depends_on": [
+            "why-state-management"
+          ],
+          "acceptance": [
+            "六块地基各配一段可运行的最小示例",
+            "讲清 effectScope 的收集-停止语义与 toRef 的活引用语义（后两章直接复用）",
+            "无新增伴生代码，概念地图收尾"
+          ]
+        },
+        {
+          "slug": "create-pinia",
+          "title": "createPinia：一个挂在 app 上的容器",
+          "goal": "实现 createPinia()：根 state、store 注册表、effectScope、install 与 provide",
+          "type": "build",
+          "pain_point": "两个测试用例共享同一个模块级 store，第一个用例改过的 count 泄漏进第二个，用例单独跑全绿、一起跑必红",
+          "milestone": "createPinia() 返回可 install 的容器：install 后可注入 piniaSymbol、activePinia 生效、state 为根 ref、_s 为空注册表",
+          "milestone_verify": "tests/create-pinia.test.ts：最小 app 桩 install 后 getActivePinia() 返回该实例、两次 createPinia() 的 state 互不相干",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/createPinia.ts",
+              "why": "容器本体：install/use/_p 缓冲的对照"
+            },
+            {
+              "path": "packages/pinia/src/rootStore.ts",
+              "why": "Pinia 接口、activePinia、piniaSymbol 的对照"
+            }
+          ],
+          "depends_on": [
+            "vue-reactivity-toolkit"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过（tsc --noEmit + vitest run）",
+            "正文含「共享单例泄漏」痛点段落",
+            "源码引用 ≤10 行且只用于对照思想"
+          ]
+        },
+        {
+          "slug": "define-store",
+          "title": "defineStore 与 store 的单例身份",
+          "goal": "实现 defineStore 返回 useStore：惰性创建、按 id 注册进 _s、activePinia 回退链",
+          "type": "build",
+          "pain_point": "每次调用 useCounterStore() 都新建一个 store：两个组件各改各的 count，一边加到 5 另一边还是 0，页面永远凑不齐",
+          "milestone": "同一容器下两次 useStore() 拿到同一个 store（===）；无活动容器时调用抛错",
+          "milestone_verify": "tests/define-store.test.ts：两次调用全等、不同 id 不同实例、未 install 时 useStore 抛错",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/store.ts",
+              "why": "defineStore 的 useStore 实现与 activePinia 回退链对照"
+            }
+          ],
+          "depends_on": [
+            "create-pinia"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "正文讲清「惰性创建 + 注册表」如何同时解决单例与按需两个矛盾",
+            "源码引用 ≤10 行"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · store 的血肉",
+      "chapters": [
+        {
+          "slug": "option-store",
+          "title": "选项式 store：state、getters、actions 三件套",
+          "goal": "实现 createOptionsStore：state 工厂、toRefs 摊平、getters 编译为 computed、actions 绑定 store",
+          "type": "build",
+          "pain_point": "getter 写成普通函数：state 明明变了，页面上「总价」纹丝不动——因为那次计算没有发生在任何被追踪的渲染里",
+          "milestone": "选项式 store 完整可用：state 响应、getter 随 state 联动、action 修改状态后 getter 立即反映",
+          "milestone_verify": "tests/option-store.test.ts：increment 后 count 变化、double 联动、action 里 this 指向 store",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/store.ts",
+              "why": "createOptionsStore：setup() 内 toRefs 摊平 + computed getters 的对照"
+            }
+          ],
+          "depends_on": [
+            "define-store"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "正文讲清「选项式只是组合式的语法糖」这一归一思想",
+            "源码引用 ≤10 行"
+          ]
+        },
+        {
+          "slug": "setup-store",
+          "title": "组合式 store 与运行时分类",
+          "goal": "实现 createSetupStore：setup 返回值按 isRef/isReactive/isComputed/函数分类，一切 store 归一为 setup store，hydration 保留已有状态",
+          "type": "build",
+          "pain_point": "想在 store 里复用第三方 composable（比如 vue-router 的 useRouter），选项式语法装不下；换成 setup 语法后刷新页面，已登录用户的 state 被 setup 里的默认值覆盖回了未登录",
+          "milestone": "setup 语法的 store 与选项式等价可用；容器 state 已有值时（hydration）不被 setup 默认值覆盖",
+          "milestone_verify": "tests/setup-store.test.ts：两种语法的 counter 行为一致；先写入容器 state 再 useStore，值被保留",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/store.ts",
+              "why": "createSetupStore 的分类循环与 hydration 分支对照"
+            }
+          ],
+          "depends_on": [
+            "option-store"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "正文用「海关安检」比喻讲运行时分类的三条通道",
+            "源码引用 ≤10 行"
+          ]
+        },
+        {
+          "slug": "patch-and-reset",
+          "title": "$patch 深合并与 $reset",
+          "goal": "实现 mergeReactiveObjects 与 $patch 两种形态、恰好一次订阅事件、$reset 回到初始 state",
+          "type": "build",
+          "pain_point": "表单「重置」按钮要手写十几行赋值把字段一个个搬回默认值；想批量改 5 个字段时直接整体替换对象，兄弟字段被覆盖丢失，DevTools 里一次点击爆出 5 条变更记录",
+          "milestone": "$patch(obj) 深合并不丢兄弟字段（合并只对普通对象递归，Map/Set 属性整体替换）；$patch(fn) 函数式修改；事件管线就位（恰好一次订阅的断言在下一章 $subscribe 上岗后回归）；$reset 回到初始 state",
+          "milestone_verify": "tests/patch-and-reset.test.ts：嵌套对象合并保留兄弟键、Map/Set 替换语义、$reset 后与初始值全等、setup store 调 $reset 抛错（恰一次事件断言在 tests/subscriptions.test.ts）",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/store.ts",
+              "why": "mergeReactiveObjects 与 $patch/$reset 对照"
+            },
+            {
+              "path": "packages/pinia/__tests__/store.patch.spec.ts",
+              "why": "官方对深合并边界的测试视角"
+            }
+          ],
+          "depends_on": [
+            "setup-store"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "正文讲清「合并而非替换」与「一次事件」两个语义承诺的动机",
+            "源码引用 ≤10 行"
+          ]
+        },
+        {
+          "slug": "subscriptions",
+          "title": "订阅系统：$subscribe 与 $onAction",
+          "goal": "实现 addSubscription/triggerSubscriptions 双通道：watch deep 监听 state、action 包装器捕获 before/after/onError、作用域自动清理与 $dispose",
+          "type": "build",
+          "pain_point": "想给 20 个 action 统一加日志和错误上报，没有钩子就只能手写 20 个 wrapper；组件里订阅了 state 变化，路由切走忘了解绑，回调还在悄悄跑、内存一路涨",
+          "milestone": "$onAction 捕获同步/异步 action 的 after 与 onError（错误继续上抛）；$subscribe 在 $patch 时恰好回调一次；两者都返回解绑函数；$dispose 清空一切",
+          "milestone_verify": "tests/subscriptions.test.ts：异步 action 的 after 收到返回值、onError 收到错误且错误上抛、解绑后不再触发、$dispose 后订阅清空",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/subscriptions.ts",
+              "why": "addSubscription/triggerSubscriptions 全文对照"
+            },
+            {
+              "path": "packages/pinia/__tests__/onAction.spec.ts",
+              "why": "官方对 after/onError 时序的测试视角"
+            }
+          ],
+          "depends_on": [
+            "patch-and-reset"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "正文讲清 action 包装器如何同时服务 $onAction 与 this 绑定",
+            "源码引用 ≤10 行"
+          ]
+        },
+        {
+          "slug": "store-to-refs",
+          "title": "storeToRefs：解构不丢响应性的秘密",
+          "goal": "理解 Proxy 读取语义与 toRef 活引用，实现 storeToRefs：状态转 ref、getter 转可写 computed、函数跳过",
+          "type": "build",
+          "pain_point": "const { count, increment } = store 一解构，页面上的 count 纹丝不动了——且只有数据断、函数不断，这个不对称正是解法的全部线索",
+          "milestone": "storeToRefs(store) 返回 refs 化视图：解构出的 count 改 .value 即改 store、getter 解构后仍联动、action 不出现在结果中",
+          "milestone_verify": "tests/store-to-refs.test.ts：解构后 store.count++ 则 count.value 同步、double.value 联动、refs 里没有 action 键",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/storeToRefs.ts",
+              "why": "边界处理对照（思想已讲，差异只在边角）"
+            }
+          ],
+          "depends_on": [
+            "subscriptions"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "含「一解构就断连」痛点段落与「数据会断、函数免疫」的不对称分析",
+            "源码引用 ≤10 行"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 扩展与生产",
+      "chapters": [
+        {
+          "slug": "plugins",
+          "title": "插件系统：pinia.use 与 store 扩展",
+          "goal": "实现插件管线：context 注入、返回值合并进 store、install 前注册的插件缓冲补挂，写一个持久化插件",
+          "type": "build",
+          "pain_point": "想给所有 store 加「持久化到 localStorage」：每个 store 手抄一遍订阅逻辑，第三个 store 抄漏了一行，用户的购物车在刷新后悄悄变空",
+          "milestone": "pinia.use(plugin) 的返回值出现在之后创建的每个 store 上；install 之前 use 的插件在 install 时补挂；用插件实现 localStorage 持久化 demo",
+          "milestone_verify": "tests/plugins.test.ts：插件给 store 注入 router 属性、install 前 use 的插件同样生效、持久化插件在 $patch 后写入 localStorage 桩",
+          "relevant_files": [
+            {
+              "path": "packages/pinia/src/createPinia.ts",
+              "why": "use() 的 toBeInstalled 缓冲对照"
+            },
+            {
+              "path": "packages/pinia/__tests__/storePlugins.spec.ts",
+              "why": "官方对插件扩展时机的测试视角"
+            }
+          ],
+          "depends_on": [
+            "store-to-refs"
+          ],
+          "acceptance": [
+            "伴生实现门槛通过",
+            "正文含一个完整可运行的持久化插件示例",
+            "源码引用 ≤10 行"
+          ]
+        },
+        {
+          "slug": "active-pinia-and-ssr",
+          "title": "activePinia：一个应用一个容器",
+          "goal": "理解模块级 activePinia、setActivePinia 的调用时机与 SSR 串号事故的机理，画出无嵌套异步/嵌套异步两种交错下的正确性边界",
+          "type": "principle",
+          "pain_point": "SSR 服务器上模块级单例被两个并发请求共享：A 用户的请求先 setActivePinia，await 期间 B 请求覆盖了它，A 用户渲染出了 B 的购物车",
+          "depends_on": [
+            "plugins"
+          ],
+          "acceptance": [
+            "推演出串号事故的完整时序（谁在什么时候覆盖了 activePinia）",
+            "讲清真 pinia 的三道防线：install 时 setActive、action/getter 入口 setActive、app.runWithContext",
+            "无新增伴生代码，一张时序图收尾"
+          ]
+        },
+        {
+          "slug": "pinia-vs-mini",
+          "title": "pinia-mini vs pinia：差异地图",
+          "goal": "逐 API 对照 mini 与真源码：还差的 devtools/HMR/diagnostics/mapHelpers/SSR hydrate 都在哪、为什么可以不在",
+          "type": "source-mapping",
+          "pain_point": "读完 mini 打开真 pinia 的 store.ts（970 行）仍然迷路：一半的代码没见过——这张地图告诉你那些多出来的东西各自保卫什么",
+          "depends_on": [
+            "active-pinia-and-ssr"
+          ],
+          "acceptance": [
+            "逐 API 对照表：每行给 mini 行数感受与真源码位置",
+            "对每块「多出来的代码」给出一句话存在理由",
+            "给读者标注下一步可啃的真源码入口顺序"
+          ]
+        }
+      ]
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一个约 400 行、API 与真 pinia 同构的 pinia-mini：createPinia/defineStore/两种 store 语法/$patch/$reset/$subscribe/$onAction/storeToRefs/插件系统",
+    "verify": "cd companion && npm install && npm test——通过改编自官方 __tests__ 核心场景的 9 个测试文件"
+  }
+}

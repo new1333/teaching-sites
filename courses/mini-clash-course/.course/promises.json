@@ -1,0 +1,112 @@
+{
+  "promises": [
+    {
+      "from": "panorama",
+      "target": "crypto-basics",
+      "what": "隧道第二跳为什么必须加密、防的是谁（威胁模型），第 5 章展开",
+      "status": "fulfilled"
+    },
+    {
+      "from": "panorama",
+      "target": "tun-lab",
+      "what": "系统代理罩不住全部应用的根治办法（TUN 虚拟网卡、网络层收口），第 9 章展开",
+      "status": "fulfilled"
+    },
+    {
+      "from": "panorama",
+      "target": "http-proxy",
+      "what": "HTTP 正文的边界画法（Content-Length 一类长度规矩），第 2 章拆",
+      "status": "fulfilled"
+    },
+    {
+      "from": "panorama",
+      "target": "two-hop-relay",
+      "what": "教学版把远端搬进本机，两跳的真正接法，第 4 章展开",
+      "status": "fulfilled"
+    },
+    {
+      "from": "http-proxy",
+      "target": "socks5-server",
+      "what": "HTTP 入口只听得懂 HTTP 的两种说法，不认其他协议——通用入口 SOCKS5 第 3 章写",
+      "status": "fulfilled"
+    },
+    {
+      "from": "socks5-server",
+      "target": "two-hop-relay",
+      "what": "中继与帧：入口目前对每条连接直连目标，两跳链路把这一跳搬到目标可达的位置，第 4 章当主角",
+      "status": "fulfilled"
+    },
+    {
+      "from": "socks5-server",
+      "target": "crypto-basics",
+      "what": "这条链路眼下完全明文，谁加密、防的是谁，第 5 章算账",
+      "status": "fulfilled"
+    },
+    {
+      "from": "two-hop-relay",
+      "target": "crypto-basics",
+      "what": "裸奔链路的具体威胁模型在第 5 章展开",
+      "status": "fulfilled"
+    },
+    {
+      "from": "two-hop-relay",
+      "target": "aead-tunnel",
+      "what": "明文帧换密文帧（接缝本章已按块留好）；教学帧与 Shadowsocks 对表；密码派生钥匙（盐+HKDF）与每连接新 nonce、载荷逐帧 AEAD 封缄，第 6 章落地",
+      "status": "fulfilled"
+    },
+    {
+      "from": "aead-tunnel",
+      "target": "rule-engine",
+      "what": "入口现在对每个目标都走加密两跳——谁该直连、谁该走隧道，第 7 章规则引擎在 onConnect 钩子上接手",
+      "status": "fulfilled"
+    },
+    {
+      "from": "rule-engine",
+      "target": "fake-ip",
+      "what": "域名目标不做 DNS 解析，IP 网段行对域名目标永远失明——第 8 章 fake-ip 把「名字→IP」这一关搬进本地接管，顺带算清解析被动手脚的账",
+      "status": "fulfilled"
+    },
+    {
+      "from": "fake-ip",
+      "target": "tun-lab",
+      "what": "不经入口的应用拿到假门牌无人还原、连接找不到主人——第 9 章 TUN 虚拟网卡把全机流量收进代理进程，『人人可还』的根治",
+      "status": "fulfilled"
+    },
+    {
+      "from": "tun-lab",
+      "target": "review-vs-real",
+      "what": "真实 TUN 的完整形态（gvisor/system 用户态栈、设备/路由/ARP/DNS 接管、完整协议栈义务），第 12 章差异地图与概念对账收口",
+      "status": "fulfilled"
+    },
+    {
+      "from": "fake-ip",
+      "target": "assemble",
+      "what": "假电话簿、账本与入口还原接线长在测试与 demo 里——第 11 章总装把 DNS 也拉进一条命令可跑的整机",
+      "status": "fulfilled"
+    },
+    {
+      "from": "rule-engine",
+      "target": "assemble",
+      "what": "入口的规则判决接线目前长在测试与 demo 里——第 11 章总装把入口、规则、隧道、远端串成一条命令可跑的整机",
+      "status": "fulfilled"
+    },
+    {
+      "from": "aead-tunnel",
+      "target": "config-groups",
+      "what": "密码目前写在调用参数里——第 10 章声明式配置接管端口、密码与规则",
+      "status": "fulfilled"
+    },
+    {
+      "from": "config-groups",
+      "target": "assemble",
+      "what": "配置已能驱动全部零件但尚未成整机——第 11 章总装 startMiniClash(config) 把入口、fake-ip DNS、规则、组、隧道、远端串成一条命令拉起的整机（inbound.port 与节点密码由 loadConfig 产物接管）",
+      "status": "fulfilled"
+    },
+    {
+      "from": "assemble",
+      "target": "review-vs-real",
+      "what": "整机已一条命令跑通——第 12 章正式收口 driving_question（打开 Clash 之后流量经历了什么），并给 mini 与真实 Clash 的差异地图（协议面/连接复用/真实 TUN 栈/规则 providers）",
+      "status": "fulfilled"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "asked_at": "2026-08-30",
+  "answers": {
+    "js_level": "熟练（async/await、fetch、DOM、ESM 常写）",
+    "extension_experience": "装过插件、会开 chrome://extensions，没自己写过",
+    "network_hls": "用过 DevTools Network 面板，没系统了解过 HLS/m3u8",
+    "target_browser": "Chrome/Edge（Manifest V3），无需 Firefox 兼容层"
+  },
+  "decisions": [
+    "验证物用现代零构建 JavaScript（ES Modules），不引入 bundler/TS 源码——companion 目录本身就是可直接装载的未打包扩展；类型门槛用 tsc --noEmit(checkJs) 保留",
+    "第 1 章手把手教「装载未打包扩展」，manifest 字段逐个讲",
+    "第 2 章从「Network 面板过滤 m3u8」这个动作讲起，HLS 本身按全新概念教；第 3 章不额外加深 fMP4 变体细节，仅按 RFC 8216 标准覆盖 EXT-X-MAP",
+    "API 一律 chrome.* 前缀，发布章只讲 Chrome Web Store"
+  ],
+  "default_profile": null,
+  "note": "四题全答，无跳过项"
+}

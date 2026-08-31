@@ -1,0 +1,38 @@
+{
+  "terms": [
+    { "term": "中央处理器", "en": "CPU / 6502", "definition": "NES 的 8 位处理器(实际型号 2A03,砍掉了 BCD 十进制模式),一切指令的执行者,主频约 1.79MHz。" },
+    { "term": "图形处理器", "en": "PPU / 2C02", "definition": "独立于 CPU 的图形芯片,按 dot 逐点生成画面,频率是 CPU 的 3 倍,有自己的寄存器和显存。" },
+    { "term": "iNES 格式", "en": "iNES format", "definition": ".nes 文件的封装格式:16 字节文件头 + 可选 trainer + PRG-ROM + CHR-ROM,模拟器认识卡带的第一步。" },
+    { "term": "映射器", "en": "mapper", "definition": "卡带上的地址重排电路(NROM/MMC1/UxROM……),决定 CPU 的 $8000 窗口看到哪个 PRG bank;NROM 表示不重排。" },
+    { "term": "镜像", "en": "mirroring", "definition": "同一段内存出现在多个地址:CPU RAM 2KB 镜像到 $0000-$1FFF、PPU 寄存器每 8 字节重复一次、命名表有水平/垂直两种镜像。" },
+    { "term": "命名表", "en": "nametable", "definition": "显存中 32×30 的「瓦片编号墙」,每格 1 字节存图块号,外加每 16×16 像素共享 1 字节的属性表。" },
+    { "term": "图块表", "en": "pattern table", "definition": "256 个 8×8 瓦片的位图库,每瓦片两个位平面共 16 字节,两位平面叠出 0-3 的像素值。" },
+    { "term": "调色板", "en": "palette", "definition": "PPU 的 32 字节颜色索引表,把 2 位像素值映射为 64 种系统色之一;背景与精灵各占一半。" },
+    { "term": "精灵内存", "en": "OAM", "definition": "256 字节、64 个精灵 × 4 字节(y 坐标/图块号/属性/x 坐标)的专用显存,$4014 DMA 整块搬运。" },
+    { "term": "精灵零命中", "en": "sprite 0 hit", "definition": "精灵 0 与背景的不透明像素重叠时置位的状态位,游戏用它检测「扫描线画到这里了」,是分屏滚动的基石。" },
+    { "term": "垂直消隐", "en": "VBlank", "definition": "每帧最后 20 余条扫描线,PPU 不画图,是向显存上传数据的安全窗口,以置位 $2002 bit7 开场。" },
+    { "term": "不可屏蔽中断", "en": "NMI", "definition": "PPU 进入 VBlank 时拉起的中断线,CPU 压栈 PC 和 P 后跳到 $FFFA 向量;游戏借它在每帧开头干活。" },
+    { "term": "扫描线与点", "en": "scanline & dot", "definition": "PPU 的二维时间坐标:一帧 262 条扫描线 × 341 个 dot,可见区 240 线 × 256 点,其余是消隐期。" },
+    { "term": "寻址模式", "en": "addressing mode", "definition": "6502 取操作数的 13 种方式(立即/零页/绝对/间接/相对……),一条指令 = 操作码 + 寻址模式 + 操作。" },
+    { "term": "移位寄存器", "en": "shift register", "definition": "一位一位吐出数据的结构:PPU 背景 fetch 流水线靠它逐像素出图,手柄也靠它把 8 个键串行交给 CPU。" }
+  ],
+  "code_conventions": [
+    "一芯片一文件、小写文件名:src/ines.ts、src/cpu.ts、src/opcodes.ts、src/ppu.ts、src/controller.ts、src/bus.ts、src/nes.ts、src/palette.ts;demo 页在 demo/。",
+    "地址与字节值一律 number;字节值约定域 0-255,跨字节运算后用 u8()/u16() 归一化,禁止负数地址;地址在调试信息里以 $ 十六进制书写(仅字符串展示)。",
+    "内存块统一 Uint8Array:CPU RAM 2048、VRAM 2048、调色板 32、OAM 256、帧缓冲 256*240*3(RGB);不用普通 Array 存内存。",
+    "错误处理:未知官方 opcode 抛 Error(带 PC 与十六进制操作码);iNES 解析失败抛带原因的 Error;不静默吞错;未映射地址读返回 0(open bus 简化,文中说明)。",
+    "命名:类 PascalCase(Cpu/Ppu/Nes),函数与变量 camelCase,常量 SCREAMING_SNAKE;寄存器字段用大写短名(cpu.A/cpu.X/cpu.Y/cpu.SP/cpu.PC/cpu.P)。",
+    "注释克制,只在硬件语义非显然处写(镜像、页内绕回、NMI 竞态),不写「下一步要做什么」的流水注释。",
+    "测试里的机器码用十六进制字面量数组书写,每行注释对应助记符(如 0xA9,0x05 // LDA #$05),测试程序全部自设、自包含。"
+  ],
+  "api_contract": [
+    "src/ines.ts:parseINES(data: Uint8Array): Cartridge —— Cartridge { prgRom: Uint8Array; chrRom: Uint8Array | null; mapper: number; mirroring: 'horizontal' | 'vertical' | 'fourScreen' };chrRom 为 null 表示 CHR-RAM 卡带。",
+    "src/cpu.ts:class Cpu { constructor(mem: { read(addr): number; write(addr, val): void }); reset(): void; step(): number; nmi(): void } —— step() 返回本条指令消耗的 CPU 周期数;寄存器 A/X/Y/SP/PC/P 为公有 number 字段。",
+    "src/ppu.ts:class Ppu { cpuRead(addr): number; cpuWrite(addr, val): void; tick(): boolean } —— cpuRead/cpuWrite 走 $2000-$2007;tick() 前进一个 PPU dot,帧完成时返回 true;帧缓冲 frameBuffer: Uint8Array(256*240*3) 公有可读。",
+    "src/controller.ts:class Controller { cpuRead(addr): number; cpuWrite(addr, val): void; setButton(player: 0|1, button: NesButton, down: boolean): void } —— NesButton = 'A'|'B'|'Select'|'Start'|'Up'|'Down'|'Left'|'Right'。",
+    "src/nes.ts:class Nes { loadRom(bytes: Uint8Array): void; runFrame(): Uint8Array; setButton(player: 0|1, button: NesButton, down: boolean): void; cpu / ppu / bus 公有只读 } —— runFrame() 推进整机到帧缓冲就绪并返回该缓冲;先只在前几章兑现 Cpu 与 parseINES,后续章新导出只增不破。"
+  ],
+  "core_metaphors": [
+    { "metaphor": " NES 是一支三人乐队:CPU 主唱、PPU 吉他、卡带曲谱,总线是共享的舞台;节拍器是 CPU 时钟,PPU 每拍弹三个音", "used_for": "全书贯穿:第 1 章引入,时钟同步、总线、DMA 反复回指" }
+  ]
+}

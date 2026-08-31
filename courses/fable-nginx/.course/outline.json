@@ -1,0 +1,334 @@
+{
+  "title": "fable-nginx：亲手复刻一个 nginx",
+  "audience": "会写代码、用过 HTTP，但没碰过网络编程与事件驱动的开发者",
+  "driving_question": "同一台机器，为什么「一连接一线程」的服务器几千连接就趴下，而 nginx 能扛几万？我们能不能亲手写一个这样的服务器？",
+  "input": {
+    "kind": "topic"
+  },
+  "profile": {
+    "archetype": "principle-reimpl",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "full",
+    "presentation": {
+      "visual": "none"
+    },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "code-lab:library",
+    "language": "Python 3.10+ 纯标准库（socket/selectors/threading/multiprocessing/unittest，零第三方依赖；package.json 提供npm scripts 壳调 python 供 final-check 实跑）",
+    "scope": "演进式迷你 nginx（fable 包）：阻塞版 → 线程版 → 事件循环 → 状态机 → master-worker → 反向代理，预计 500-650 行 + 7 组测试"
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 先把服务器写出来",
+      "chapters": [
+        {
+          "slug": "first-http-server",
+          "title": "一个 HTTP 服务器的最小闭环",
+          "goal": "用 socket 写出第一个能被 curl 访问的阻塞版 HTTP 服务器（v0），讲清 Web 服务器的本质工作与 HTTP 报文的最小结构",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "你八成调过别人的接口，但让你现在凭空写一个「curl 能访问的服务」，第一行代码写什么？这一章把它写出来——它一次只能伺候一个客户端：下载大文件期间，第二个 curl 连上了却只能干等。这个「干等」就是全书的起点。",
+            "phenomena": [
+              "第二个 curl",
+              "干等"
+            ]
+          },
+          "new_concepts": [
+            "套接字",
+            "监听",
+            "接受连接",
+            "HTTP 报文",
+            "请求行",
+            "Content-Length"
+          ],
+          "misconceptions": [
+            "「HTTP 是二进制协议、浏览器专属」——其实 HTTP/1.1 报文是人能直接读的纯文本，手写客户端就能发",
+            "「自己写一个 Web 服务器是很高深的事」——v0 不到 60 行"
+          ],
+          "milestone": "v0 阻塞版服务器 fable.blocking_server：python -m fable.blocking_server 起服务，curl 拿到 hello 响应与静态文件内容；含最小 HTTP 解析（请求行+头部+空行）与响应构造",
+          "milestone_verify": "亲手开机：起服务后 curl http://127.0.0.1:8000/ 看到 Hello；curl 一个静态文件路径看到文件内容；大响应传输期间第二个 curl 连上后干等（可感知现象）",
+          "depends_on": [],
+          "acceptance": [
+            "仓验收：python -m compileall + unittest 全绿，且本章测试先红后绿（渐进语义）",
+            "文验收：HTTP 报文是纯文本这件事可亲手验证——用课程自带 send_raw 工具手打请求行拿到响应",
+            "文验收：「第二个 curl 干等」现象正文有可复现的指引",
+            "仓验收：零外部源码引用（示例代码全部出自 companion 或自包含用法示例）"
+          ]
+        },
+        {
+          "slug": "thread-per-connection-cost",
+          "title": "一连接一线程的代价：C10K 从哪来",
+          "goal": "给 v0 加上「一连接一线程」并发（v1），用压测探针量化每线程内存与上下文切换成本，讲清 1999 年 C10K 问题与 nginx 的诞生动因",
+          "type": "build",
+          "hook": {
+            "kind": "real-incident",
+            "point": "1999 年 Dan Kegel 把它写成一道公开题：一台服务器怎么同时伺候一万个连接（C10K）。2002 年前后的俄罗斯门户 Rambler 撞上了现实版：流量没把机器压垮，「每个连接一个线程/进程」的内存与切换开销先把它压垮——一万个连接乘上每线程预留的 MB 级栈内存，光站着不动就是天文数字。Igor Sysoev 为此写的答案叫 nginx：几万连接，每进程只有一条线程。",
+            "phenomena": [
+              "C10K",
+              "内存",
+              "切换"
+            ]
+          },
+          "new_concepts": [
+            "进程",
+            "线程",
+            "栈内存",
+            "上下文切换",
+            "C10K 问题"
+          ],
+          "misconceptions": [
+            "「服务器扛不住是因为 CPU 太慢」——压测里 CPU 大半时间花在「换人上场」而不是干活",
+            "「一个闲置连接不占什么资源」——在线程模型里它占着一整个线程的栈和调度名额，现场量给你看"
+          ],
+          "milestone": "v1 线程版服务器 fable.threaded_server + 压测探针 fable.bench：同机测出 N 个保活连接下线程版的线程数与内存占用，数字落盘",
+          "milestone_verify": "跑 bench：开 300 个只连不发的保活连接，探针输出线程版进程线程数 300+、内存随连接数线性上涨（可感知数字）；v1 在 300 并发下全部请求仍正常响应",
+          "depends_on": [
+            "first-http-server"
+          ],
+          "acceptance": [
+            "仓验收：门槛全绿且本章测试先红后绿",
+            "文验收：正文资源账的数字全部出自 bench 探针输出，不手写",
+            "文验收：C10K / Rambler / nginx 诞生时间线断言对照权威文档清单（kegel.com/c10k、nginx.org）",
+            "仓验收：零外部源码引用"
+          ],
+          "promises_out": [
+            {
+              "target": "event-loop",
+              "what": "线程版的线程数/内存数字与单线程事件循环版的对照实验，下一章现场跑"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · nginx 的心脏：事件驱动",
+      "chapters": [
+        {
+          "slug": "event-loop",
+          "title": "把「等」集中起来：非阻塞 IO 与事件循环",
+          "goal": "用非阻塞 socket + selectors 把服务器重构成单线程事件循环（v2）：一条线程同时伺候几百个连接，讲清 select 的上限与 epoll 为什么赢",
+          "type": "build",
+          "hook": {
+            "kind": "observation",
+            "point": "上一章结尾的账：300 个连接等于 300 个干等的线程、上百 MB 内存。可这 300 个线程在干什么？几乎全部卡在 read 上——等。等不需要人：解雇 299 个，留 1 个带一块「到货指示牌」的——谁的数据到了就处理谁。这就是 nginx 心脏的形状。",
+            "phenomena": [
+              "干等",
+              "内存"
+            ]
+          },
+          "new_concepts": [
+            "非阻塞 IO",
+            "文件描述符",
+            "IO 多路复用",
+            "select",
+            "epoll",
+            "事件循环",
+            "Reactor 模式"
+          ],
+          "misconceptions": [
+            "「非阻塞 IO 是读得更快」——非阻塞 read 常常什么都没读到就返回，它快在「不等」",
+            "「epoll 只是 select 的提速版」——是从「每次全量报名单」到「内核常驻登记、只报就绪」的模型切换"
+          ],
+          "milestone": "v2 事件循环版：fable.event_loop（selectors 封装）+ fable.event_server——单线程稳挂 300 个保活连接且全部并发请求正常响应；与 v1 的线程数/内存对照数字落盘",
+          "milestone_verify": "bench 对照输出：同 300 连接，线程版 300+ 线程 vs 事件版 1 条线程、内存差一个量级（可感知数字）；curl 一切如常",
+          "depends_on": [
+            "thread-per-connection-cost"
+          ],
+          "acceptance": [
+            "仓验收：门槛全绿且本章测试先红后绿",
+            "文验收：select 的描述符上限在 Windows 上真实触到（探针注册超限 fd 应报错），平台差异如实声明并登记差异清单",
+            "文验收：select / epoll 行为断言对照 man page 与 Python 官方文档",
+            "仓验收：零外部源码引用"
+          ],
+          "promises_out": [
+            {
+              "target": "connection-state-machine",
+              "what": "v2 遇到掰成几段发的请求、写不下的响应会出什么错，下一章现场复现并修复"
+            }
+          ]
+        },
+        {
+          "slug": "connection-state-machine",
+          "title": "半读半写的世界：事件驱动的连接状态机",
+          "goal": "拆掉「读一次当读全」的假设：HTTP 解析改造成增量状态机，每连接配收/发缓冲区，处理部分读与部分写；讲清水平触发与边缘触发",
+          "type": "build",
+          "hook": {
+            "kind": "bug-story",
+            "point": "v2 压测全绿，直到一个手机网络上的用户把它玩挂：他的 GET 请求走了三秒、分四段到达，事件循环第一段没读全就当完整请求解析，回了个 400；大响应方向反过来——内核发送缓冲区写满，write 只写出去一半，页面显示到一半戛然而止，剩下的一半静默丢了。",
+            "phenomena": [
+              "400",
+              "一半",
+              "静默"
+            ]
+          },
+          "new_concepts": [
+            "状态机",
+            "缓冲区",
+            "部分读",
+            "部分写",
+            "水平触发",
+            "边缘触发"
+          ],
+          "misconceptions": [
+            "「read 返回的数据就是一条完整请求」——TCP 是没有消息边界的字节流，一帧一帧到货是常态",
+            "「write 调用成功就全发出去了」——返回值只告诉你实发字节数，剩下的要自己记账"
+          ],
+          "milestone": "v3：fable.http_parser（喂字节块、吐解析事件的状态机）+ fable.buffers（收/发缓冲），fable.event_server 演进为状态机驱动；测试覆盖 5 段碎片请求与微缩发送缓冲下的大响应",
+          "milestone_verify": "机械：碎片/大响应测试全绿；可感知：用课程自带 slow_client 工具对 v3 复现 v2 的 400/截断现象，再看到 v3 修复",
+          "depends_on": [
+            "event-loop"
+          ],
+          "acceptance": [
+            "仓验收：门槛全绿且本章测试先红后绿",
+            "文验收：状态机每个状态与转移在正文有结构表或 ASCII 图，且与实现一致",
+            "文验收：水平/边缘触发断言对照 epoll(7) man page",
+            "仓验收：零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 长成 nginx 的形状",
+      "chapters": [
+        {
+          "slug": "master-workers",
+          "title": "master 与 worker：nginx 的多进程骨架",
+          "goal": "把单进程事件循环长成 master + N worker 的多进程形状（v4），讲清为什么多进程×单线程、worker 数为什么配 CPU 核数、accept 惊群与优雅重载",
+          "type": "build",
+          "hook": {
+            "kind": "observation",
+            "point": "ps 看一眼运行中的真 nginx：一个 master 带着几个 worker，数量恰好等于 CPU 核数；nginx -s reload 的瞬间，正在下载的连接一个不断。多线程共享内存不是更省吗？——共享的代价是每一行代码都要跟锁打交道，而事件循环里「一个连接一段状态」天然各管各的；进程还白送一样好东西：换引擎不熄火。",
+            "phenomena": [
+              "master",
+              "worker",
+              "核数",
+              "不断"
+            ]
+          },
+          "new_concepts": [
+            "master-worker 架构",
+            "accept 惊群",
+            "优雅重载"
+          ],
+          "misconceptions": [
+            "「多进程是过时设计、多线程才现代」——在事件循环的世界里进程反而是更配的单元：无锁、故障隔离、可热升级",
+            "「accept 惊群是内核 bug」——多个进程等同一个监听套接字的固有现象，不是 bug；内核的解法（SO_REUSEPORT）与 nginx 的应对正文都会讲"
+          ],
+          "milestone": "v4：fable.worker_pool——master 进程 + 2 个 worker 进程共享监听套接字（Windows 经 multiprocessing 传递 socket 派生，Unix 语义同构）；两 worker 实测分摊连接，master 不接客",
+          "milestone_verify": "可感知：起服务后进程列表出现 1 个 master + 2 个 worker；探针输出两 worker 各自服务的连接计数，证明分摊",
+          "depends_on": [
+            "connection-state-machine"
+          ],
+          "acceptance": [
+            "仓验收：门槛全绿且本章测试先红后绿",
+            "文验收：「为什么不是多线程」的反事实论证（锁竞争/故障隔离/热升级）在正文成立",
+            "仓验收：零外部源码引用。平台声明：Windows 下 multiprocessing 传监听 socket 若 3 轮门槛不过，降级为「多 worker = 多线程、各配独立事件循环」变体并登记差异清单——不允许静默降级"
+          ],
+          "promises_out": [
+            {
+              "target": "vs-real-nginx",
+              "what": "SO_REUSEPORT 与真 nginx 的惊群应对，在终章差距地图展开"
+            }
+          ]
+        },
+        {
+          "slug": "reverse-proxy",
+          "title": "反向代理：既当前台，又当传话员",
+          "goal": "给 mini nginx 装上当代主职（v5）：事件循环同时挂下游监听与上游连接，转发请求、转回响应，轮询分单、故障摘除",
+          "type": "build",
+          "hook": {
+            "kind": "ability-gap",
+            "point": "前五章的服务器只会自己回话。现实部署里，跑业务的是 Python/Java 应用，nginx 挡在前面——为什么不让人直连应用？让浏览器直连试试就知道：应用挂了没人兜底、两台应用没人分单、静态文件挤占应用宝贵的处理能力。你的服务器已经会伺候连接了，就差学会转身当客户端。",
+            "phenomena": [
+              "直连",
+              "分单",
+              "挡在前面"
+            ]
+          },
+          "new_concepts": [
+            "反向代理",
+            "上游",
+            "负载均衡",
+            "轮询"
+          ],
+          "misconceptions": [
+            "「代理就是翻墙用的那种」——方向相反：正向代理替客户端出头（服务器看不到真客户端），反向代理替服务器出头（客户端看不到真服务器）",
+            "「负载均衡均衡的是流量字节数」——均衡的是请求/连接的个数，轮询就是一圈圈发牌"
+          ],
+          "milestone": "v5：fable.proxy_server——下游到上游全链路非阻塞转发 + 两台上游（fable.upstream_demo）轮询分单；测试断言 10 个请求 5/5 分摊、摘除一台后请求全落另一台且不报错",
+          "milestone_verify": "可感知：起两台上游（响应自带名字）+ 代理，连 curl 十次看到 A/B 交替；杀掉 A 再 curl 十次全部 B、零报错",
+          "depends_on": [
+            "connection-state-machine"
+          ],
+          "acceptance": [
+            "仓验收：门槛全绿且本章测试先红后绿",
+            "文验收：「同一事件循环里 server 与 client 两类套接字并存」在正文代码里可见——下游与上游都注册在同一个 selectors 上",
+            "仓验收：零外部源码引用"
+          ],
+          "promises_out": [
+            {
+              "target": "vs-real-nginx",
+              "what": "真 nginx upstream 的高级策略（最少连接/权重/健康检查）进终章差距地图"
+            }
+          ]
+        },
+        {
+          "slug": "vs-real-nginx",
+          "title": "对账真 nginx：我们写的和它差在哪",
+          "goal": "盘点 mini 实现与真实 nginx 的差距地图——sendfile/零拷贝、内存池、TLS、SO_REUSEPORT、配置系统、过滤器链——分类为工程优化/架构差异/功能缺口，收口全书主线问题",
+          "type": "review",
+          "length_exempt": true,
+          "hook": {
+            "kind": "ability-gap",
+            "point": "现在的你能亲口解释 nginx 为什么扛得住了。但追问一句：「你写的这个和真 nginx 差在哪？」——这一章把每一笔账算清，也是全书的收口。",
+            "phenomena": [
+              "差在哪",
+              "收口"
+            ]
+          },
+          "new_concepts": [
+            "sendfile",
+            "零拷贝",
+            "内存池"
+          ],
+          "milestone": null,
+          "depends_on": [
+            "master-workers",
+            "reverse-proxy"
+          ],
+          "acceptance": [
+            "文验收：driving_question（一连接一线程为什么趴、nginx 为什么扛、我们写出来了吗）在本章收口作答",
+            "文验收：差距地图每项标注类别（工程优化/架构差异/功能缺口），未实现项全部登记差异清单附录",
+            "文验收：全部事实断言对照权威文档清单",
+            "仓验收：零外部源码引用"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "simplifications",
+      "title": "差异清单：我们对现实的每一处简化",
+      "kind": "divergence"
+    },
+    {
+      "slug": "exercises",
+      "title": "练习路线：把 mini nginx 再写一遍",
+      "kind": "exercises"
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "事件驱动、多进程、可反向代理的迷你 nginx（Python 实现，56 项测试全绿）",
+    "verify": "cd companion && npm test 全绿（56 项）；起代理后 curl 十次轮询命中两台上游，杀掉一台上游后零报错"
+  }
+}

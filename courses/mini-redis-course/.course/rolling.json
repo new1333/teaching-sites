@@ -1,0 +1,81 @@
+{
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "why-in-memory",
+      "file": "docs/01-why-in-memory.md",
+      "degraded": false,
+      "summary": "第 1 章（principle，验证物无变更）已建立：延迟数量级标尺（内存 ~100ns / SSD 随机读 ~150µs / 寻道 ~10ms / 同机房往返 ~500µs，Jeff Dean 谱系，标尺非精确值）；缓存与旁路缓存模式读写时序、写路径脏回填窗口与 TTL 兜底；Redis 定位＝内存数据库＋键值存储＋数据结构服务器；两误区（更先进论、缓存=读快）已公允复述并证伪；带出 Redis VM 移除史与缓存雪崩。读者已能：纸笔算清一次读的耗时差、画出 cache-aside 两条时序并指出不一致窗口。章末附按标题引用的全书地图。"
+    },
+    {
+      "n": 2,
+      "slug": "resp-protocol",
+      "file": "docs/02-resp-protocol.md",
+      "degraded": false,
+      "summary": "第 2 章已建立：RESP2 五类型（+ - : $ *）与 \\r\\n 终止、长度前缀按字节计（『你好』=6 字节）；字节流无边界 → 半包/粘包，解法＝缓冲＋不完整就等。验证物：src/resp.ts（七个 encode 含 encodeCommand + RespDecoder）、src/db.ts MiniRedis.execute（PING/SET/GET/DEL）、src/server.ts 事件回调雏形（每连接一缓冲、天然支持管道）、src/client.ts connect().cmd()、src/boot.ts；tests/resp-protocol.test.ts 18 条（TCP 用端口 0）。读者已能：逐字节读写 RESP 帧、让本机 redis-cli 连上自己的服务器。已声明简化（差异清单）：不收 inline command、仅 RESP2、解码以 JS 字符串为载体（TCP 切开多字节字符是声明边界）。注：第 4 章换装 Dict 后，本章 db.ts 引用块已按回写义务同步为当前形态。"
+    },
+    {
+      "n": 3,
+      "slug": "single-thread-event-loop",
+      "file": "docs/03-single-thread-event-loop.md",
+      "degraded": false,
+      "summary": "第 3 章已建立：阻塞 IO＝线程睡在 read 门口；一连接一线程的三笔账（内存/切换/锁）；IO 多路复用 select（1024 上限、全量过目）→poll（拆上限未拆全量）→epoll（登记＋就绪列表）；事件循环与事件驱动（setTimeout 同源）；铁律——免「等 IO」不免「干活慢」。验证物新增：src/naive-server.ts（串行反例）、boot-naive.ts（6398 开机）、client.pipe（N 条一次 write 一次收回）；server.ts 头注释固化并发语义（函数体零改动）；tests/single-thread-event-loop.test.ts 6 条（静默连接不阻塞＋管道十连问）。读者已能：复现并解释「一个不敲字客户端冻结全场」、跑通管道实验。"
+    },
+    {
+      "n": 4,
+      "slug": "hash-table-rehash",
+      "file": "docs/04-hash-table-rehash.md",
+      "degraded": false,
+      "summary": "第 4 章已建立：哈希函数（31-多项式，桶数 2 的幂、按位与取余）、哈希冲突与链地址法、负载因子到 1 翻倍、渐进式 rehash（双表同场每操作搬一桶；读先新后旧、写只进新表）。验证物新增：src/dict.ts（Dict：set/get/delete/size/isRehashing/entries/rehashStep，扩容搬迁自动触发）、db.ts 换装 Dict＋新增 INFO（keys:N、rehash:0/1，纯观察口）、tests/hash-table-rehash.test.ts 10 条；全书 34 条全绿。db.ts 被重构后第 2 章正文引用块已按回写义务同步并复跑 lint。读者已能：手算落桶与四步搬迁、用 redis-cli 看 INFO 的 rehash 0→1→0。三处简化已声明（教学哈希 vs SipHash；一律翻倍 vs 真货按需取 2 的幂另有缩容；每步必到非空桶 vs 真货 10 空桶上限）。"
+    },
+    {
+      "n": 5,
+      "slug": "skiplist-zset",
+      "file": "docs/05-skiplist-zset.md",
+      "degraded": false,
+      "summary": "第 5 章已建立：跳表＝多层索引有序链表（上层 1/4 抽稀、O(logN) 定位、底层顺走取段）；随机层数＝抛硬币 1/4 晋升、32 级封顶（4^32=2^64）、免全局再平衡；排序键（分数, 成员）、同分字典序；ZSET＝跳表＋字典双结构；type vs encoding 概览（listpack 一句带过）。验证物：src/skiplist.ts（可注入随机源、entries()、levelOf() 观察口）、db.ts 单键空间 Dict<string|SkipList>＋ZADD/ZRANGE/ZCARD＋WRONGTYPE 门禁、tests 14 条，全书 48 条绿；ch2/ch4 引用块已按回写义务同步。已声明简化（差异清单）：JS 序 vs 字节序；ZRANGE 顺底层 vs 真 Redis span 字段；inf/nan 从简；zset 单一编码不做 listpack 转换。读者已能：开机 redis-cli 看涨分搬家、讲清抛硬币免再平衡。"
+    },
+    {
+      "n": 6,
+      "slug": "ttl-expire",
+      "file": "docs/06-ttl-expire.md",
+      "degraded": false,
+      "summary": "第 6 章已建立：过期字典（键→绝对时刻）、惰性删除（访问即删）与定期删除（抽 20+25% 重复+1ms 预算，命令间节流 100ms 一拍）；SET EX、EXPIRE/TTL、KEYS 观察窗；键级过期不分值类型。验证物：src/expire.ts、db.ts 接入（可注入 now/random/cycleMs）、tests 19 条，全书 67 绿；INFO 加 expires/expired；ch2/4/5 引用块已同步。差异已声明（节流驱动、经典口径、全名单抽样、KEYS 极简 glob）。读者已能推演两条删除路径。"
+    },
+    {
+      "n": 7,
+      "slug": "eviction-lru",
+      "file": "docs/07-eviction-lru.md",
+      "degraded": false,
+      "summary": "第 7 章已建立：内存淘汰＝键数上限 + noeviction/allkeys-lru；近似 LRU＝idle 时钟 + 随机抽 5 踢最旧（antirez 出处、双向链表贵在哪、LFU 带出不实现）；淘汰≠过期，删键统一走 dropKey。验证物：src/eviction.ts、db.ts 接入（CONFIG SET/GET、touch、admitNewKey、INFO 加 evicted）、tests 12 条，全书 79 绿；ch2/4/5/6 引用块已同步。差异已声明（键数近似、毫秒时钟、仅拦新增键等 6 笔）。读者已能复现 OOM 与老键出局。"
+    },
+    {
+      "n": 8,
+      "slug": "aof",
+      "file": "docs/08-aof.md",
+      "degraded": false,
+      "summary": "第 8 章已建立：AOF＝写后日志（先执行成功才记账，反事实：先记会复活被拒命令）；重放＝新实例逐条再执行；重写＝按内存反推最小命令集；write 每笔走、fsync 三档管断电；过期/淘汰经 dropKey 补记 DEL。验证物：src/aof.ts（可注入回调）、db.ts 接入（重放、记账、BGREWRITEAOF、INFO 加 aof）、boot.ts 文件账本；tests 13 条、全书 92 绿；ch2/4/5/6/7 引用块已同步。差异已声明 6 笔（同步重写、无后台线程等）。boot 自本章带文件持久化，旧实验重跑先删 appendonly.aof。"
+    },
+    {
+      "n": 9,
+      "slug": "rdb-snapshot",
+      "file": "docs/09-rdb-snapshot.md",
+      "degraded": false,
+      "summary": "第 9 章已建立：RDB 快照＝某一瞬全库照片，恢复成本∝数据量（vs 重放∝账长）；快照一致性；fork 复制页表不复制内存、写时复制谁先改哪页才复制哪页（BGSAVE/BGREWRITEAOF 同款、SAVE 同步阻塞）；页表三阶段图解。验证物：src/rdb.ts（dump/load 纯函数、一行一键 JSON、寿命记绝对时刻）；db.ts 接 SAVE/LOAD/FLUSHALL＋collectSnapshotEntries＋INFO 加 rdb 行；tests 9 条、全书 101 绿；ch2/4 引用块已同步。差异登记（差异清单）：照片不落盘、LOAD 教学专用、无 CRC64、BGSAVE 不实现、FLUSHALL 逐键 DEL、照片不写账本。读者已能拍-砸-装、跟算 COW 账。"
+    },
+    {
+      "n": 10,
+      "slug": "replication-ha",
+      "file": "docs/10-replication-ha.md",
+      "degraded": false,
+      "summary": "第 10 章（principle 视野章，验证物无变更、101 条照绿）已建立：主从复制＝全量同步三阶段（PSYNC→BGSAVE 的 RDB→传输→增量缓冲补发，兑现第 9 章 fork 承诺）＋命令流日常（与 dropKey 补 DEL 同源）；增量复制＝PSYNC 报 (ID,offset)＋backlog 环形缓冲；哨兵＝quorum 认定＋多数授权＋自动故障转移（≥3 台异机）；集群＝16384 固定哈希槽、CRC16 取模、hash tag、搬槽扩容。两误区证伪（加从库≠高可用；集群不是按 key 取模）；异步丢写窗口诚实账。mini 不实现多机（能力对账声明）。读者已能推演全量同步三阶段、算 backlog 补发与槽号。"
+    },
+    {
+      "n": 11,
+      "slug": "review-and-beyond",
+      "file": "docs/11-review-and-beyond.md",
+      "degraded": false,
+      "summary": "第 11 章（复习终章，验证物无变更、101 条照绿）：四问逐问回收（快＝介质＋结构＋调度；内存＝寿命闸＋容量闸；不丢＝AOF 过程账＋RDB 结果账；一台挂了＝第 10 章地图）；driving_question 显式收口；兑现「mini 缺的是多机那一层」承诺并逐件对零件；能力对账诚实（13 文件约 1300 行不含空行、101 测试、16 命令、redis-cli -p 6399 可连）；未实现项全回指差异清单（./divergence、./exercises 附录组装期生成）；附文档/源码/练习三路线。全书完。"
+    }
+  ]
+}

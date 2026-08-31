@@ -1,0 +1,293 @@
+{
+  "title": "WebGL 图形学入门：从第一个三角形到 3D 世界",
+  "audience": "会写 TypeScript、但没碰过图形学的 Web 开发者",
+  "input": { "kind": "topic", "ref": "webgl 图形学入门：从 WebGL 讲起，讲清图形学概念，到能构建 3D 世界；每章带可在 VitePress 内实时预览/在线编辑的示例" },
+  "companion": {
+    "form": "library",
+    "language": "TypeScript（strict）+ vitest",
+    "scope": "minigl——纯 TypeScript 的图形数学与场景库：插值、向量、矩阵（变换/投影/lookAt/法线矩阵）、几何生成、程序化纹理、Phong CPU 参考、场景树、相机控制、世界装配；约 1200 行，126 条原理断言。GL 接线本身不可在 Node 里机械验证，由 docs 内嵌实时演示承担可感知验证"
+  },
+  "demo_mechanism": "每章正文内嵌自包含 Vue+WebGL 演示组件（docs/.vitepress/theme/components/）：着色器类章节用可在线编辑 GLSL、即时重编译、错误内联显示的 Playground；参数类章节用滑杆/拖拽/开关实时交互；全部资源程序化生成、零外部图片",
+  "parts": [
+    {
+      "title": "第一部 · 点亮像素",
+      "chapters": [
+        {
+          "slug": "gpu-pipeline",
+          "title": "为什么你的画布卡成幻灯片：GPU 与渲染管线",
+          "goal": "理解 GPU 并行与「顶点→光栅化→片元」三段流水线，建立全书地图",
+          "type": "principle",
+          "pain_point": "数据大屏要画两万个粒子：用 Canvas 2D 的 fillRect 逐个画，本地 60 帧，投上 4K 大屏掉到 5 帧、CPU 单核跑满风扇起飞——CPU 逐个画矩形的循环，核再多也只有一个核在画图",
+          "new_concepts": ["GPU", "渲染管线", "光栅化", "帧率与掉帧"],
+          "depends_on": [],
+          "demo": "同屏对比演示：同一粒子数下 Canvas 2D 逐个 fillRect vs WebGL 一次 drawArrays，粒子数滑杆从 1 万拉到 50 万，肉眼看到两边帧率分道扬镳",
+          "acceptance": [
+            "文验收：正文含 Canvas 2D 两万粒子掉帧、单核跑满的现象段落",
+            "文验收：顶点/光栅化/片元三段各有一句外行能复述的大白话解释",
+            "文验收：正文内嵌粒子数可调的 Canvas2D vs WebGL 对比演示组件，且组件真实渲染",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "first-triangle",
+          "title": "第一个三角形：着色器、缓冲区与顶点属性",
+          "goal": "写出并讲清 WebGL 的最小可运行单元：GLSL 编译链接、VBO、attribute、varying 插值",
+          "type": "build",
+          "pain_point": "跟着教程抄完 100 行，gl.drawArrays 调完画布一片黑——着色器编译失败的报错被吞在 console 里没人看、attribute 没绑对时 GPU 读到的是 0，三角形退化成看不见的点",
+          "new_concepts": ["着色器", "GLSL", "顶点着色器", "片元着色器", "缓冲区", "顶点属性", "varying", "裁剪坐标系"],
+          "milestone": "实验场有了 geometry/triangle 模块：教学三角形的 NDC 坐标数据 + 断言（顶点落在 [-1,1]、三顶点不共线）",
+          "milestone_verify": "vitest：createTriangle() 返回 9 个浮点数、全部在 [-1,1]、叉积面积大于 0（非退化三角形）",
+          "depends_on": ["gpu-pipeline"],
+          "demo": "渐变三角形 Playground：textarea 在线编辑片元着色器（改颜色、改 varying 混合），即时重编译、编译错误内联显示；旁边是同款编译错误演示开关（复刻『一片黑』痛点）",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：含『画布一片黑、报错被吞』的痛点段落与排查路径",
+            "文验收：attribute/uniform/varying 三种进料口各有首现人话解释",
+            "文验收：正文内嵌可在线编辑 GLSL 的三角形演示，改错代码能看到内联报错",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "uniforms-and-animation",
+          "title": "动起来：uniform 与渲染循环",
+          "goal": "掌握不重建缓冲的逐帧动画：uniform、requestAnimationFrame、增量时间、插值与缓动",
+          "type": "build",
+          "pain_point": "想让三角形转起来：每帧用 JS 重算 9 个顶点坐标再整块重传缓冲——一个三角形没感觉，换成 10 万粒子后每帧都在重建缓冲，页面从 60 帧掉到 12 帧；其实 GPU 每帧只需要一个新的角度 uniform",
+          "new_concepts": ["统一变量 uniform", "渲染循环", "增量时间", "线性插值", "缓动", "精度限定符"],
+          "milestone": "实验场有了 math/interpolate 模块：lerp/clamp/smoothstep（与 GLSL 同名内建同语义）",
+          "milestone_verify": "vitest：lerp(0,10,0.5)=5、clamp 越界收拢、smoothstep 端点为 0/1 且中点 0.5、t 越界行为与 GLSL 一致",
+          "depends_on": ["first-triangle"],
+          "demo": "动画 Playground：三角形旋转 + 颜色呼吸，速度/相位滑杆实时调 uniform；线框模式可见『只改 uniform 不动缓冲』；缓动曲线对比小图（lerp vs easeInOut）",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：含『每帧重建 10 万粒子缓冲掉帧』的痛点段落与两种做法的对照",
+            "文验收：smoothstep 实验场版与 GLSL 内建版语义一致在正文有对账说明",
+            "文验收：正文内嵌 uniform 滑杆可实时交互的动画演示",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部 · 三维的数学",
+      "chapters": [
+        {
+          "slug": "vectors",
+          "title": "向量：图形世界的语言",
+          "goal": "从零掌握 vec3 运算：加减、数乘、点积、叉积、归一化——后续一切光照与相机的地基",
+          "type": "build",
+          "pain_point": "想让飞船朝目标点飞：用减法算出方向后直接当速度用，结果离目标越远飞得越快、快到了又猛减速——方向向量里混着距离，忘了先归一化成『每帧走固定一步』",
+          "new_concepts": ["向量", "点积", "叉积", "归一化", "单位向量", "向量投影"],
+          "milestone": "实验场有了 math/vec3 模块：add/sub/scale/dot/cross/length/normalize/distance",
+          "milestone_verify": "vitest：3-4-5 三角形手算对账（length([3,4,0])=5）、点积交换律、叉积右手定则具体值、normalize 长度为 1、零向量返回约定",
+          "depends_on": ["gpu-pipeline"],
+          "demo": "向量可视化：两个方向滑杆的向量 + 实时点积/夹角/叉积读数（3D 运算的 2D 投影展示），归一化开关对比『忽快忽慢 vs 等速』的飞船动画",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：点积按『方向一致度打分机』四步教（成因→载体→演算→锚点），含 3-4-5 数值演算",
+            "文验收：含飞船忽快忽慢的痛点段落与归一化修复",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "transform-matrices",
+          "title": "矩阵变换：平移、旋转、缩放与顺序陷阱",
+          "goal": "理解矩阵是变换机器：mat4 列主序、齐次坐标、TRS 组合与不可交换性",
+          "type": "build",
+          "pain_point": "想让图形绕自己的中心旋转，结果它绕着屏幕左下角转飞出去——先平移后旋转还是先旋转后平移，顺序一错整个世界都在漂移；而对着 4×4=16 个数硬看，根本看不出哪一步错了",
+          "new_concepts": ["矩阵", "矩阵乘法", "列主序", "齐次坐标", "模型矩阵", "变换顺序不可交换"],
+          "milestone": "实验场有了 math/mat4 基础：identity/multiply/translate/rotX/rotY/rotZ/scale/transformPoint",
+          "milestone_verify": "vitest：单位阵乘不变、rotY(90°) 把 +X 点转到 -Z（手算对账）、T·R ≠ R·T 的具体数值差异、齐次坐标平移等价性",
+          "depends_on": ["vectors"],
+          "demo": "TRS 交互演示：平移/旋转/缩放滑杆 + 组合顺序切换（TRS/RTS/…），右侧同屏显示 4×4 矩阵实时数值，看图形怎么被顺序坑到转飞",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：列主序与齐次坐标各按成因→载体（内存布局图）→演算→锚点教透",
+            "文验收：含『绕左下角转飞』痛点段落与顺序修复前后对照",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "projection",
+          "title": "投影：把三维压进屏幕",
+          "goal": "理解视锥体、透视除法（除以 w）、正交与透视两套矩阵、NDC 到屏幕",
+          "type": "build",
+          "pain_point": "把一个立方体线框摆进场景，屏幕上看到的还是一个平淡的六边形——没有透视除法，远边和近边一样长、三维被压成了机械制图；你想让近处的东西大一点，却不知道该动哪个数",
+          "new_concepts": ["投影", "透视投影", "正交投影", "视锥体", "透视除法", "宽高比"],
+          "milestone": "实验场 mat4 增加投影：perspective(fov, aspect, near, far)、ortho(...)，及 transformPoint 完整链路",
+          "milestone_verify": "vitest：视锥中心点→NDC(0,0,-z 中点)、fov 增大→同点 NDC 偏向中心（视野变宽）、near 平面点 z 映射到 -1、ortho 下平行线保持平行",
+          "depends_on": ["transform-matrices"],
+          "demo": "透视 vs 正交同屏对比（同一立方体线框两套投影）+ fov/near/far/aspect 滑杆，实时看透视强度变化与 near 裁剪",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：透视除法按『近大远小』锚点教透，含一个点从眼空间到屏幕的完整手算演算",
+            "文验收：视锥体有 ASCII 结构图（载体）",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "camera-lookat",
+          "title": "相机：lookAt 与搬世界",
+          "goal": "理解视图矩阵的直觉：WebGL 没有相机，是矩阵把世界搬到相机眼前；实现 lookAt",
+          "type": "build",
+          "pain_point": "物体放在 z=+5，相机『默认』从原点朝 -Z 看——怎么都看不到它；想转头去看，又发现改顶点坐标等于把整个世界拆了重摆：正确做法是让一个矩阵搬世界，而不是改模型",
+          "new_concepts": ["视图矩阵", "相机", "眼/目标/上向量", "右手坐标系", "MVP 组合"],
+          "milestone": "实验场 mat4 增加 lookAt(eye, center, up)",
+          "milestone_verify": "vitest：eye=(0,0,5) 看原点→原点在视图空间为 (0,0,-5)；上向量固定 x 轴不翻转；相机绕 Y 转 90° 后世界点的视图空间落位手算对账；lookAt 求逆恒等（V·V⁻¹=I）",
+          "depends_on": ["vectors", "transform-matrices"],
+          "demo": "轨道雏形：经度/纬度/半径滑杆驱动 eye，target 固定，场景实时换视角；MVP 三矩阵数值面板实时显示（第一次凑齐 MVP）",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：『搬世界而不是造相机』的直觉按锚点讲透（正文承重比喻之一）",
+            "文验收：MVP 相乘顺序与『坐标先过哪台机器』的流水线图对齐",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "depth-and-cube",
+          "title": "深度缓冲与第一个 3D 物体",
+          "goal": "掌握 depth test、索引绘制（drawElements）、背面剔除；画出会旋转的真立方体",
+          "type": "build",
+          "pain_point": "立方体转起来像幽灵方块：背面的墙穿透到前面、面的遮挡随绘制顺序乱跳——没有深度测试时，谁后画谁覆盖，眼睛的『近者遮远者』规则没有人执行",
+          "new_concepts": ["深度缓冲", "深度测试", "索引绘制", "缠绕方向", "背面剔除"],
+          "milestone": "实验场有了 geometry/cube：24 顶点（position+normal+uv 交错）+ 36 索引",
+          "milestone_verify": "vitest：24 顶点 36 索引、索引全部 < 24、每面法线为单位向量且朝外、包围盒恰为 [-1,1]³、UV 每面铺满 [0,1]",
+          "depends_on": ["camera-lookat", "transform-matrices"],
+          "demo": "旋转立方体：深度测试开关（关掉立刻看到幽灵方块复刻痛点）、背面剔除开关、线框模式看 8 顶点如何被 24 顶点复用",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：深度测试按『每像素记远近的账本』锚点教透，含两个片元争一个像素的演算",
+            "文验收：含幽灵方块痛点段落与开关对照",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部 · 光与表面",
+      "chapters": [
+        {
+          "slug": "textures",
+          "title": "纹理：给世界穿上皮肤",
+          "goal": "掌握 UV 坐标、采样、过滤（NEAREST/LINEAR）、程序化纹理数据",
+          "type": "build",
+          "pain_point": "给立方体贴上 8×8 格子纹理，靠近看格子的边缘糊成一片彩色锯齿、放大后全是马赛克块——采样过滤差一个参数；UV 的 v 轴还和图片 y 轴方向相反，贴上去整个上下颠倒",
+          "new_concepts": ["纹理", "UV 坐标", "纹素", "采样", "过滤", "包裹方式", "程序化纹理"],
+          "milestone": "实验场有了 texture/procedural：checkerboard(size, cells) 生成 Uint8Array 纹理数据；cube 补齐 UV",
+          "milestone_verify": "vitest：总字节数 = size²×4、(0,0) 像素为黑、黑白格数与 cells 一致、UV 遍历立方体六面均在 [0,1]",
+          "depends_on": ["first-triangle"],
+          "demo": "纹理立方体：格子密度滑杆（程序化重生成）、NEAREST/LINEAR 切换（放大特写马赛克 vs 调匀）、REPEAT/CLAMP 切换、UV 上下颠倒开关复刻痛点",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：UV 首现有贴纸坐标锚点解释；过滤按『放大照片怎么调色』讲两种策略",
+            "文验收：正文内嵌纹理演示为纯程序化数据（零外部图片）",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "lighting",
+          "title": "光照：法线与 Phong 三件套",
+          "goal": "掌握法线、法线矩阵（逆转置）与 Phong 模型（环境光+漫反射+高光），写出会立体明暗的着色器",
+          "type": "build",
+          "pain_point": "给立方体加了方向光，六个面亮度一模一样，转起来还是一张平面卡片的错觉——法线没传进着色器（或旋转后直接拿模型矩阵变换法线，拉伸把垂直关系搬歪了），光照算了个寂寞",
+          "new_concepts": ["法线", "法线矩阵", "环境光", "漫反射", "高光", "Phong 光照模型"],
+          "milestone": "实验场 mat4 增加 normalFromMat4（逆转置）；light/phong CPU 参考实现与着色器公式同形",
+          "milestone_verify": "vitest：45° 入射光的漫反射 ≈ 0.707（N·L 手算）、光在背面漫反射为 0、视线与反射对齐时高光峰值、均匀缩放下法线矩阵结果与归一化模型矩阵一致、非均匀缩放下两者不同（逆转置必要性）",
+          "depends_on": ["vectors", "depth-and-cube", "uniforms-and-animation"],
+          "demo": "Phong 立方体/球：光源位置拖拽滑杆、三件套各自开关与强度、shininess 滑杆（高光从巴掌大到针尖）、法线可视化线框叠加",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：法线按『表面垂直小箭头』锚点教透；法线矩阵讲清为什么不能直接用模型矩阵（含非均匀缩放的演算）",
+            "文验收：Phong 三件套各有成因解释与公式，CPU 参考实现与 GLSL 公式在正文对账",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第四部 · 组装 3D 世界",
+      "chapters": [
+        {
+          "slug": "scene-graph",
+          "title": "场景树：坐标跟着上级走",
+          "goal": "掌握局部矩阵/世界矩阵/层级组合；实现 SceneNode 与递归链乘",
+          "type": "build",
+          "pain_point": "太阳系 demo：月亮要绕地球转，你每帧手算它的世界坐标——但地球还在绕太阳公转，两套手算坐标系互相打架，月亮的轨道飘成随机曲线；层级关系早就写好了答案：月亮的局部变换只描述『绕地球』，剩下交给父节点链乘",
+          "new_concepts": ["场景图", "局部矩阵", "世界矩阵", "层级动画", "遍历绘制"],
+          "milestone": "实验场有了 scene/node：SceneNode（local + children + updateWorld 递归链乘）",
+          "milestone_verify": "vitest：地球自转+公转 90° 时月亮世界坐标手算对账、子节点 local 不变而世界矩阵随父动、深层嵌套链乘 = 逐级矩阵连乘",
+          "depends_on": ["transform-matrices", "depth-and-cube"],
+          "demo": "太阳系：太阳自转、地球公转+自转、月亮绕地球，各自速度滑杆；开关『不用场景树的手算版』看轨道飘掉（复刻痛点）",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：局部/世界矩阵按组织架构图锚点教透，含两层链乘的数值演算",
+            "文验收：含月亮轨道飘掉的痛点段落",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "camera-controls",
+          "title": "可操控的相机：轨道与漫游",
+          "goal": "实现轨道相机（球坐标+拖拽+滚轮）与漫游相机（yaw/pitch+移动基向量）",
+          "type": "build",
+          "pain_point": "给场景加拖拽旋转：水平拖过 180° 之后垂直拖动，画面开始朝反方向转——yaw 与 pitch 的组合顺序悄悄翻了车；滚轮缩放直接改眼位却忘了沿视线方向退，相机一头扎进场景里",
+          "new_concepts": ["轨道相机", "球坐标", "偏航角 yaw", "俯仰角 pitch", "相机基向量"],
+          "milestone": "实验场有了 scene/camera：orbitEye（球坐标→眼位）、viewBasis（yaw/pitch→前/右/上基向量）",
+          "milestone_verify": "vitest：orbitEye(0°,90°,r) 眼位在 +Z 轴；极角越界收拢；yaw 90° 后 forward 指向预期轴（手算对账）；W 与 S 移动互为反向、组合移动沿基向量叠加",
+          "depends_on": ["camera-lookat", "vectors"],
+          "demo": "完整交互相机：画布内拖拽轨道旋转、滚轮缩放、WASD+方向键漫游——第一次真正『进入』场景玩起来",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：yaw/pitch 顺序翻车痛点有具体现象与修复；球坐标有 ASCII 载体图",
+            "文验收：漫游移动=基向量线性组合，与向量章手算对账",
+            "零外部源码引用"
+          ]
+        },
+        {
+          "slug": "build-3d-world",
+          "title": "组装：一个可漫游的 3D 小世界",
+          "goal": "整合场景树+纹理+光照+漫游相机+雾，程序化装配一个可漫游小世界——终点里程碑",
+          "type": "build",
+          "pain_point": "零件全验证过了：场景树、纹理、光照、漫游相机——真要拼一个『小世界』时，远处一片纯黑没有纵深、十几个物体每个都复制一段几乎一样的绘制代码、改一个材质要翻五个文件：把零件装配成世界，缺的是一份『世界清单』：什么东西、什么材质、怎么摆、相机从哪进",
+          "new_concepts": ["雾", "材质", "程序化布局", "渲染清单"],
+          "milestone": "实验场有了 world/world：createWorld(seed) 确定性生成场景树（地面/柱廊/太阳光源/若干物件，各带 Phong 材质参数）",
+          "milestone_verify": "vitest：同 seed 两次生成结构完全一致（确定性）、地面节点缩放正确、所有材质强度在 [0,1]、节点总数与深度符合声明、相机初始位可看到场景主体",
+          "depends_on": ["scene-graph", "camera-controls", "lighting", "textures"],
+          "demo": "最终世界：WASD 漫游+拖拽视角+滚轮调移动速度（漫游相机上调速比缩放更贴身，正文声明）；白天/夜晚切换（太阳光强、环境光、雾色联动）；全部资源程序化生成、零外部文件——可感知的终点里程碑",
+          "acceptance": [
+            "实验场门槛通过：tsc --noEmit + vitest run（先红后绿）",
+            "文验收：雾按距离混色讲透（与插值章 mix 对账）；材质=皮肤参数包有首现解释",
+            "文验收：正文内嵌可漫游最终世界演示，含亲手开机指引（按什么键、看到什么）",
+            "零外部源码引用，演示零外部资源"
+          ]
+        },
+        {
+          "slug": "beyond-webgl",
+          "title": "写完了 WebGL：Three.js、WebGL2 与 WebGPU",
+          "goal": "看清自写引擎与生态库的边界：库替你做了什么、什么时候该上库、以及往哪走",
+          "type": "principle",
+          "pain_point": "你的引擎想加一个投影阴影，查资料发现是一整套深度纹理渲染流程；想加载一个 glTF 模型文件，又是一个几千行的解析器——每一项都是几周工作量，而别人一行 new THREE.Mesh 就有了。手写到这一步图什么",
+          "new_concepts": ["视锥剔除", "实例化渲染", "WebGL2", "WebGPU"],
+          "depends_on": ["build-3d-world"],
+          "demo": "无新演示；正文回链最终世界，并给『同一个立方体：你的代码 vs 库的概念等价物』清单式对照（只提公开概念，不引库源码）",
+          "acceptance": [
+            "文验收：含『手写 vs 上库』的决策清单（什么场景值得自写、什么场景直接上库）",
+            "文验收：WebGL2/WebGPU 定位描述与权威文档清单一致",
+            "文验收：对库的描述只涉公开概念与行为，零源码引用",
+            "零外部源码引用"
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "cheatsheet", "title": "速查表：GLSL 与 WebGL 调用", "kind": "reference-table" },
+    { "slug": "divergences", "title": "简化清单：本课程与真实引擎的差距", "kind": "divergence" },
+    { "slug": "exercises", "title": "练习路线：把 minigl 再写一遍", "kind": "exercises" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "minigl 图形库 + 一个可漫游的 3D 小世界，全部原理断言测试通过",
+    "verify": "cd companion && npm test 全绿；正文终章内嵌的世界可实时漫游（WASD + 拖拽 + 滚轮）"
+  }
+}
