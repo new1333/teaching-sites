@@ -52,6 +52,19 @@ type CourseProfile = {
 
 `mixed` 只表示课程包含多种模式，不是可执行模式。每个 build/walkthrough 章必须在 outline 写一个具体 `verification`。
 
+## 保守准入下限（defaulted 校准用）
+
+用户跳过校准时，保守画像按定案 archetype 套用这里的准入下限，不即兴发明；允许上浮（更保守），不允许下探。判定口径：每条都能回答「这个读者能否独立做 X」。
+
+| archetype | 保守准入下限 |
+|---|---|
+| `principle-reimpl` | 能读懂并修改现成代码；未从零实现过该领域的同类系统；命令按步骤可执行 |
+| `source-walkthrough` | 能用该语言读写中等长度单文件；会查官方文档；未读过万行级仓库 internals |
+| `knowledge-path` | 能做四则与百分比运算、跟纸笔或表格演算；不假设专业数学训练 |
+| `skill-training` | 按文档完成过基础安装与配置；遇到报错会检索；不假设命令行肌肉记忆 |
+
+混合终点取各下限的交集；术语一律按首现即外行处理。archetype 定案与 ingestion hint 不一致时，重套下限并回填 `calibration.json` 的 `default_reason`。
+
 ## 章级验证解析
 
 ```text
