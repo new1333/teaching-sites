@@ -68,6 +68,15 @@
       "from_n": 6,
       "target": "wire-protocol",
       "what": "refs 目录里这份分支清单,在 wire-protocol 章握手时原样变成引用发现的输出",
+      "status": "fulfilled",
+      "resolution": "第 10 章开章逐字回收第 6 章原话;encodeRefAdvertisement 循环体即 listBranches+readRef 原样复用,清单与磁盘 refs 一致性由测试钉死,收束明写「原样兑现到循环体,一个字节没改」;评审复核兑现。"
+    },
+    {
+      "id": "p10-negotiation-input",
+      "from": "wire-protocol",
+      "from_n": 10,
+      "target": "sync-operations",
+      "what": "引用发现返回的清单直接成为 fetch/push 协商的输入:fetch 拿它算「缺哪些对象」,push 拿它算「对方会不会拒我」,零号占位行在 clone 空仓库时再见",
       "status": "open"
     },
     {

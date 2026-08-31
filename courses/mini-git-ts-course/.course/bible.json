@@ -55,7 +55,7 @@
     "framework": "Vitest + tsx",
     "red_green": "每章先写断言外部行为的测试并观察到因能力缺失而红,再实现转绿;旧章测试文件保持只读",
     "golden_constants": "使用确定性金样(如空 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391、\"hello world\\n\" blob 3b18e512dba79e4c8300dd08aeb37f8e728b8dad)避免依赖本机 git 配置",
-    "isolation": "测试用临时目录与固定时间戳/固定 author,不依赖网络与本机 git 配置;与真 git 的互操作仅在第 12 章以「有 git 才跑」的守卫测试出现",
+    "isolation": "测试用临时目录与固定时间戳/固定 author,不依赖外网与环境网络配置(网络路径固定 127.0.0.1 回环加随机端口)与本机 git 配置;与真 git 的互操作仅在第 12 章以「有 git 才跑」的守卫测试出现",
     "commands": { "typecheck": "pnpm typecheck", "test": "pnpm test" }
   },
   "api_contract": [

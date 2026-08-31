@@ -17,6 +17,7 @@ import { attachHead, detachHead, listBranches, readHead, readRef, resolveHead, u
 import { diffLines, renderUnified, splitLines } from './diff.ts'
 import { isAncestor, mergeBase } from './graph.ts'
 import { mergeCommits } from './merge.ts'
+import { discoverRefs, startRefServer } from './serve.ts'
 
 /** 40 位十六进制;checkout 用它分辨「给的是提交名还是分支名」。 */
 const HASH_RE = /^[0-9a-f]{40}$/
@@ -47,9 +48,16 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
   mini-git merge-base <A> <B>     两笔提交(分支名或 40 位哈希)的最近公共祖先,输出它的哈希
   mini-git merge-base --is-ancestor <A> <B>
                                   换一个问题:A 是 B 的祖先吗?答「是」或「否」
-  mini-git merge <分支|提交名>     三方合并:能自动合入就产双父提交,改到同处则把冲突标记写进工作区`
+  mini-git merge <分支|提交名>     三方合并:能自动合入就产双父提交,改到同处则把冲突标记写进工作区
+  mini-git serve [端口]            起最小 TCP 服务(默认 9419,只听 127.0.0.1):每条连接先送一遍
+                                  引用发现流,送完收线;对端于是不下载任何对象就知道你有什么
+  mini-git ls-remote <主机:端口>   引用发现客户端:连上 mini-git serve,把对端的引用清单逐行
+                                  列成 哈希 + Tab + 引用名;不碰本地仓库,也不下载任何对象`
 
-/** 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。 */
+/**
+ * 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。
+ * 只管当域能同步算完的本地命令;serve 与 ls-remote 要等 TCP 往返,走 runNetCli。
+ */
 export function runCli(argv: string[], cwd: string = process.cwd()): string {
   const [cmd, ...args] = argv
   if (cmd === undefined || cmd === '--help' || cmd === 'help') {
@@ -84,6 +92,9 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdMergeBase(cwd, args)
     case 'merge':
       return cmdMerge(cwd, args)
+    case 'serve':
+    case 'ls-remote':
+      throw new Error('serve 与 ls-remote 要等网络往返——用 runNetCli(命令行入口走的就是它)')
     default:
       return `mini-git: 未知命令 '${cmd}'(收到参数:${args.join(' ')})。运行 mini-git --help 查看可用命令。`
   }
@@ -591,10 +602,60 @@ function cmdMerge(cwd: string, args: string[]): string {
   }
 }
 
-// 直接用 `tsx src/cli.ts` 运行时才执行;被测试 import 时不执行。
+/**
+ * 起引用发现服务:listen 127.0.0.1,每条连接先送一遍引用发现流,送完即收线。
+ * 端口默认 9419(参数可换;真 git daemon 用 9418,mini-git 不冒用它的端口——两边协议并不互通)。
+ * 返回的是启动消息;listen 句柄会一直把进程撑着,Ctrl+C 才停。
+ */
+async function cmdServe(cwd: string, args: string[]): Promise<string> {
+  const usage = '用法:mini-git serve [端口];端口可省,默认 9419,只听 127.0.0.1'
+  if (args.length > 1 || (args.length === 1 && !/^\d+$/.test(args[0]))) {
+    throw new Error(usage)
+  }
+  const port = args.length === 1 ? Number(args[0]) : 9419
+  if (port < 1 || port > 65535) {
+    throw new Error(`${usage};端口是 1-65535 的整数`)
+  }
+  const started = await startRefServer(requireGitDir(cwd), { port })
+  return `mini-git serve 已上线:${started.host}:${started.port}(每条连接先送引用清单,送完收线;Ctrl+C 停止)`
+}
+
+/**
+ * 引用发现客户端:连上 mini-git serve,把对端的引用清单排成真 git ls-remote 同款的形状——
+ * 哈希 + Tab + 引用名,一行一条。不碰本地仓库,不下载任何对象:「远端有什么」的全部信息就是这张清单。
+ * 零号占位行(capabilities^{})只在线上有,显示层不列——真 git ls-remote 对空仓库也输出空。
+ */
+async function cmdLsRemote(_cwd: string, args: string[]): Promise<string> {
+  const usage = '用法:mini-git ls-remote <主机:端口>;目标是 mini-git serve 的地址,恰好一个'
+  if (args.length !== 1) {
+    throw new Error(usage)
+  }
+  const refs = await discoverRefs(args[0])
+  return refs
+    .filter((r) => !(r.hash === '0000000000000000000000000000000000000000' && r.name === 'capabilities^{}'))
+    .map((r) => `${r.hash}\t${r.name}`)
+    .join('\n')
+}
+
+/**
+ * 命令行统一入口:两条网络命令在此等 TCP 往返,其余原路转给同步的 runCli。
+ * 返回 Promise 只意味着「要等网络」,不改变输出的形状。
+ */
+export async function runNetCli(argv: string[], cwd: string = process.cwd()): Promise<string> {
+  const [cmd, ...args] = argv
+  if (cmd === 'serve') {
+    return cmdServe(cwd, args)
+  }
+  if (cmd === 'ls-remote') {
+    return cmdLsRemote(cwd, args)
+  }
+  return runCli(argv, cwd)
+}
+
+// 直接用 `tsx src/cli.ts` 运行时才执行;被测试 import 时不执行。入口走 runNetCli,网络命令才等得住。
 if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    console.log(runCli(process.argv.slice(2)))
+    console.log(await runNetCli(process.argv.slice(2)))
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err))
     process.exitCode = 1

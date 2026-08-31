@@ -257,6 +257,8 @@ if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.a
 }
 ```
 
+上面这段是本章动手时的样子。第 10 章接入网络命令后,入口改为 `console.log(await runNetCli(...))`,runCli 的同步签名原样保留;终态见第 10 章的动刀范围。
+
 </details>
 
 顺带对齐一处行为。真 git 的 hash-object 不带 -w 时在仓库外也能跑,带 -w 才要求身在仓库——mini-git 一模一样:裸算行,落盘要 init。这恰好又一次说明,算名字不需要任何 git 状态。真正分岔的是两件小事:真 git 的对象名支持缩写,前几位就行,mini-git 只认完整 40 位;真 git 会一层层向上找 .git,mini-git 只认当前目录。

@@ -171,6 +171,27 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/09-three-way-merge.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 --new 三方合并 冲突标记 merge 提交 --pain 自动完成 <<<<<<< 怪符号", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 10,
+      "slug": "wire-protocol",
+      "file": "docs/10-wire-protocol.md",
+      "status": "complete",
+      "summary": "读者能手工给引用行标出 4 位长度前缀与载荷边界、说出 flush 用途,解释 ls-remote 为何不下载即答;能起 mini-git serve 用 ls-remote 列出与磁盘 refs 一致的清单(含 unborn 零号行),裸 socket 读出帧界,与真 git ls-remote . 逐行对拍一致。验证物:+src/pkt.ts、+src/serve.ts(encodeRefAdvertisement/startRefServer/discoverRefs)、cli 接 serve/ls-remote 与 runNetCli、+23 例测试;回环+随机端口三连跑 192/192 全绿,对象库零新增;不与真 git 互通的五条分岔就地声明。第 2 章入口守卫引用补终态指针。评审 0 阻断 5 建议已修清。",
+      "artifacts": [
+        "companion/src/pkt.ts",
+        "companion/src/serve.ts",
+        "companion/tests/pkt.test.ts",
+        "companion/tests/serve.test.ts",
+        "companion/src/cli.ts",
+        "docs/02-content-addressed-store.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/10-wire-protocol.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 pkt-line 引用发现 --new pkt-line 引用发现 --pain ls-remote 不下载 对暗号", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }
