@@ -11,11 +11,12 @@
 ## 必读
 
 1. `{skill_dir}/references/chapter-writing.md`
-2. `{skill_dir}/references/prose-patterns.md`
-3. `{skill_dir}/references/verification-and-gates.md`
-4. 当前章解析出的 `verification/{mode}.md`
+2. `{skill_dir}/references/verification-and-gates.md`
+3. 当前章解析出的 `verification/{mode}.md`
 
-读取 outline/profile、bible、rolling、promises、正文与相关 companion。全书评审读取全部章节和完整 companion。
+fix 建议需要正例支撑时才回查 `{skill_dir}/references/prose-patterns.md` 的对应小节，不整卷必读。
+
+读取 outline（含 profile）、bible、rolling、正文与 companion 相关部分。单章评审的待清 promises 以 spawn prompt 给出的清单为准，不重读 promises 全账；companion 只读本章引用与新增的文件。全书评审读取全部章节和完整 companion。
 
 ## 三轴
 
@@ -25,7 +26,7 @@
 
 ### 2. 证据一致
 
-按选中模式文件复跑 gate。核对正文代码、数字、图表、任务、探针和事实来源与终态一致；测试与实现可能同错，客观事实仍需 authority docs。
+复跑本章新增或变更的 gate；旧门槛核对 rolling 记录并至多抽样复跑 1 项，全量实跑由 course-final-check 收口。核对正文代码、数字、图表、任务、探针和事实来源与终态一致；测试与实现可能同错，客观事实仍需 authority docs。
 
 ### 3. 结构与体验
 

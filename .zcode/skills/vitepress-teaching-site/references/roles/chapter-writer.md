@@ -11,13 +11,16 @@
 
 ## 必读
 
-1. `{skill_dir}/references/state-contracts.md`
-2. `{skill_dir}/references/chapter-writing.md`
-3. `{skill_dir}/references/prose-patterns.md`
-4. `{skill_dir}/references/verification-and-gates.md`
-5. 解析出的唯一 `verification/{mode}.md`
+1. `{skill_dir}/references/chapter-writing.md`
+2. `{skill_dir}/references/verification-and-gates.md`
+3. 解析出的唯一 `verification/{mode}.md`
 
-再读取 outline 的本章 spec/profile、bible、截至 N-1 的 rolling 与 companion 当前状态。
+按需回查，不整卷必读：
+
+- `{skill_dir}/references/prose-patterns.md`：本章要用定向破坏预言、埋账/清账、手术清单开场、平台诚实三件套或数字换体感等范式时，读对应小节仿写；
+- `{skill_dir}/references/state-contracts.md`：仅 rolling/promises 草稿字段拿不准时查 `RollingState`/`PromiseState` 两节。
+
+再读取 outline 的本章 spec/profile、截至 N-1 的 rolling 与 companion 当前状态；bible 只回查本章涉及术语的定义与事实来源，已教概念以截至 N-1 各章 `new_concepts` 为准。
 
 ## 事务
 

@@ -12,7 +12,7 @@
 
 1. repo 输入可委派 ingestion；topic 输入由主智能体直接拆解。
 2. 每章启动一个 chapter writer，输入只有路径、章号/slug 和待清承诺。
-3. writer 返回并落盘后，启动独立 reviewer。评审 prompt 不携带作者报告或主智能体结论。
+3. writer 返回并落盘后，启动独立 reviewer。评审 prompt 不携带作者报告或主智能体结论，但给出本章待清承诺清单。
 4. 主智能体按 finding 类型修订/回灌。
 5. 阻断清零后，主智能体提交 rolling、promises 与 run 指针，再进入下一章。
 6. 全章完成后启动一次 full-book reviewer。
