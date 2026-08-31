@@ -5,14 +5,15 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 7,
+  "next_chapter": 8,
   "completed_chapters": [
     "git-mental-model",
     "content-addressed-store",
     "tree-snapshots",
     "commit-dag",
     "index-file",
-    "refs-branches"
+    "refs-branches",
+    "line-diff"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -21,6 +22,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "refs-branches"
+    "id": "line-diff"
   }
 }

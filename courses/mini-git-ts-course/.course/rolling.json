@@ -116,6 +116,24 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/06-refs-branches.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD --new 引用 符号引用 detached HEAD --pain 建分支 detached HEAD 警告", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 7,
+      "slug": "line-diff",
+      "file": "docs/07-line-diff.md",
+      "status": "complete",
+      "summary": "读者能推出红绿行来历:行是原子、LCS 与编辑脚本互为补集(可纸笔填表回溯)、@@ 头与 3 行上下文窗口、间隔 ≤6 合并 hunk;挪动=等量增删有实测;diff 两把尺子(无参数=工作区对暂存区,--cached=暂存区对 HEAD)。验证物:+src/diff.ts(splitLines/diffLines/renderUnified)、+tests/diff.test.ts(20 例金样与真 git 对拍固化,平手偏好口径两层声明)、cli 接 diff;126/126 全绿。收束姿态已轮换。评审 3 阻断 3 建议已修清。",
+      "artifacts": [
+        "companion/src/diff.ts",
+        "companion/tests/diff.test.ts",
+        "companion/src/cli.ts"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/07-line-diff.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk --new 编辑脚本 最长公共子序列 unified diff hunk --pain 红绿行 删三行加三行 合并成一个大块", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

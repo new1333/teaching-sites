@@ -14,6 +14,7 @@ import {
   scanWorktree,
 } from './index.ts'
 import { attachHead, detachHead, listBranches, readHead, readRef, resolveHead, updateRef } from './refs.ts'
+import { diffLines, renderUnified, splitLines } from './diff.ts'
 
 /** 40 位十六进制;checkout 用它分辨「给的是提交名还是分支名」。 */
 const HASH_RE = /^[0-9a-f]{40}$/
@@ -38,7 +39,9 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
   mini-git branch <名字>          在当前提交处建分支——写一个 41 字节的小文件
   mini-git checkout <分支|提交名>  切换分支或检出提交;给 40 位提交名进入 detached HEAD
   mini-git commit -m <消息>       一条龙:暂存区清单 → tree → commit → 推进当前分支引用;
-                                  名字/邮箱/时间的口径与 commit-tree 相同`
+                                  名字/邮箱/时间的口径与 commit-tree 相同
+  mini-git diff [--cached]        行级差异;不带开关比「工作区 对 暂存区」,
+                                  --cached 比「暂存区 对 HEAD」(HEAD 不存在时全部算新增)`
 
 /** 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。 */
 export function runCli(argv: string[], cwd: string = process.cwd()): string {
@@ -69,6 +72,8 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdCheckout(cwd, args)
     case 'commit':
       return cmdCommit(cwd, args)
+    case 'diff':
+      return cmdDiff(cwd, args)
     default:
       return `mini-git: 未知命令 '${cmd}'(收到参数:${args.join(' ')})。运行 mini-git --help 查看可用命令。`
   }
@@ -417,6 +422,66 @@ function renderLogEntry(c: LogEntry): string {
     lines.push(`    ${line}`)
   }
   return lines.join('\n')
+}
+
+/**
+ * 行级差异:不带开关比「工作区 对 暂存区」,--cached 比「暂存区 对 HEAD」。
+ * 口径与真 git 对齐:无参数时只看暂存区里登记过的路径(未跟踪文件不出现);
+ * HEAD 不存在(unborn)时 --cached 把旧侧当空,全部显示为新增。
+ * 从简:不输出 index 行与 mode 行,@@ 头不带函数名,只比内容不比模式。
+ */
+function cmdDiff(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git diff [--cached];至多一个开关,不收文件参数'
+  const flags = args.filter((a) => a.startsWith('-'))
+  const rest = args.filter((a) => !a.startsWith('-'))
+  if (rest.length !== 0) {
+    throw new Error(`${usage};登记在清单里的文件全比,不按路径筛`)
+  }
+  if (flags.length > 1 || (flags.length === 1 && flags[0] !== '--cached')) {
+    throw new Error(`${usage};mini-git 只认 --cached 这一个开关`)
+  }
+  const gitDir = requireGitDir(cwd)
+  const index = new Map(loadIndex(gitDir).map((e) => [e.path, e.hash]))
+  const blobText = (hash: string): string => readObject(gitDir, hash).body.toString('utf8')
+
+  // 两侧的「路径 → 文本」;undefined 表示这一侧没有该文件(新文件 / 被删文件)
+  let oldSide: Map<string, string | undefined>
+  let newSide: Map<string, string | undefined>
+  if (flags[0] === '--cached') {
+    const head = resolveHead(gitDir)
+    const headFiles =
+      head === null
+        ? new Map<string, { mode: number; hash: string }>() // unborn:HEAD 这侧是空的
+        : flattenTree(gitDir, parseCommit(readObject(gitDir, head).body).tree)
+    oldSide = new Map([...headFiles].map(([path, sig]) => [path, blobText(sig.hash)]))
+    newSide = new Map([...index].map(([path, hash]) => [path, blobText(hash)]))
+  } else {
+    oldSide = new Map([...index].map(([path, hash]) => [path, blobText(hash)]))
+    newSide = new Map()
+    for (const path of index.keys()) {
+      const abs = join(cwd, path)
+      newSide.set(path, existsSync(abs) ? readFileSync(abs, 'utf8') : undefined) // 文件没了 = 整文件删除
+    }
+  }
+
+  const sections: string[] = []
+  for (const path of [...new Set([...oldSide.keys(), ...newSide.keys()])].sort()) {
+    const oldText = oldSide.get(path)
+    const newText = newSide.get(path)
+    const hunks = renderUnified(diffLines(splitLines(oldText ?? ''), splitLines(newText ?? '')))
+    if (hunks === '') {
+      continue // 同文本(含两边都没有)不输出
+    }
+    sections.push(
+      [
+        `diff --git a/${path} b/${path}`,
+        `--- ${oldText === undefined ? '/dev/null' : `a/${path}`}`,
+        `+++ ${newText === undefined ? '/dev/null' : `b/${path}`}`,
+        hunks,
+      ].join('\n'),
+    )
+  }
+  return sections.join('\n')
 }
 
 // 直接用 `tsx src/cli.ts` 运行时才执行;被测试 import 时不执行。
