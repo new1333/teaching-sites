@@ -192,6 +192,28 @@
         { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/10-wire-protocol.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 pkt-line 引用发现 --new pkt-line 引用发现 --pain ls-remote 不下载 对暗号", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 11,
+      "slug": "sync-operations",
+      "file": "docs/11-sync-operations.md",
+      "status": "complete",
+      "summary": "读者能算对象枚举的账(减去本地已有即缺),讲清 fetch 只动对象库与 refs/remotes/<主机>-<端口>/ 记号、push 由服务端 isAncestor 把关(非快进拒 non-fast-forward,与 git-push PUSH RULES 对齐)、bare 仓库无工作区当落点、clone=发现+全量拉+检出+重建 index。验证物:+src/remote.ts(枚举/会话/帧装拆/fetch/push/clone)、serve.ts 三导出+半关闭、+initRepoBare、cli 接三命令与 init --bare、+19 例测试(17 先红,含 detached 广告);merge 金样钉死时间戳后 d6c4df2 两次独立复跑一致;三连 211/211 全绿;第 2/10 章引用回写终态(serve 消息「再听来意」)。评审 4 阻断 5 建议经回灌 writer 修清。",
+      "artifacts": [
+        "companion/src/remote.ts",
+        "companion/tests/remote.test.ts",
+        "companion/src/serve.ts",
+        "companion/src/objects.ts",
+        "companion/src/cli.ts",
+        "docs/02-content-addressed-store.md",
+        "docs/10-wire-protocol.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/mini-git-ts-course docs/11-sync-operations.md 快照模型 工作区 暂存区 对象库 底层命令 内容寻址 SHA-1 对象头 松散对象 tree 对象 文件模式 十六进制转储 Buffer commit 对象 父提交 提交图 index 文件 三态对比 引用 符号引用 detached HEAD 编辑脚本 最长公共子序列 unified diff hunk 可达性 最近公共祖先 fast-forward 三方合并 冲突标记 merge 提交 pkt-line 引用发现 remote-tracking 引用 bare 仓库 --new remote-tracking 引用 bare 仓库 --pain non-fast-forward 被拒绝 工作区没变", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

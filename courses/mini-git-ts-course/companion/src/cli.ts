@@ -2,7 +2,7 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, type Stats } from 'node:fs'
 import { join, relative, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { hashObject, initRepo, readObject, writeObject } from './objects.ts'
+import { hashObject, initRepo, initRepoBare, readObject, writeObject } from './objects.ts'
 import { checkoutTree, parseTree, writeTree, writeTreeFromIndex } from './trees.ts'
 import { commitTree, logWalk, parseCommit, type CommitIdentity, type LogEntry } from './commits.ts'
 import {
@@ -17,7 +17,8 @@ import { attachHead, detachHead, listBranches, readHead, readRef, resolveHead, u
 import { diffLines, renderUnified, splitLines } from './diff.ts'
 import { isAncestor, mergeBase } from './graph.ts'
 import { mergeCommits } from './merge.ts'
-import { discoverRefs, startRefServer } from './serve.ts'
+import { discoverRefs } from './serve.ts'
+import { cloneRepo, fetchObjects, pushObjects, startSyncServer } from './remote.ts'
 
 /** 40 位十六进制;checkout 用它分辨「给的是提交名还是分支名」。 */
 const HASH_RE = /^[0-9a-f]{40}$/
@@ -27,6 +28,7 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
 用法:
   mini-git --help                 打印这份帮助
   mini-git init                   在当前目录建立 .git 仓库骨架
+  mini-git init --bare            建裸仓库骨架:没有工作区,目录本身就是仓库,当远端落点
   mini-git hash-object [-w] 文件  算出文件内容的对象名;-w 顺手写入对象库
   mini-git cat-file -p 对象名     把对象内容原文读回;tree 按条目逐行列出
   mini-git cat-file -t 对象名     只看对象的类型
@@ -50,9 +52,16 @@ export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实�
                                   换一个问题:A 是 B 的祖先吗?答「是」或「否」
   mini-git merge <分支|提交名>     三方合并:能自动合入就产双父提交,改到同处则把冲突标记写进工作区
   mini-git serve [端口]            起最小 TCP 服务(默认 9419,只听 127.0.0.1):每条连接先送一遍
-                                  引用发现流,送完收线;对端于是不下载任何对象就知道你有什么
+                                  引用发现流,再听对方来意——看清单、要对象、推送,办完收线;
+                                  也可以在裸仓库目录里起,当 push/fetch 的远端
   mini-git ls-remote <主机:端口>   引用发现客户端:连上 mini-git serve,把对端的引用清单逐行
-                                  列成 哈希 + Tab + 引用名;不碰本地仓库,也不下载任何对象`
+                                  列成 哈希 + Tab + 引用名;不碰本地仓库,也不下载任何对象
+  mini-git fetch <主机:端口>       拉对端对象入库,并前移 refs/remotes/<主机>-<端口>/ 下的
+                                  remote-tracking 引用;工作区、暂存区、HEAD 与本地分支一概不动
+  mini-git push <主机:端口> <分支>  把分支尖端推给对端同名分支;对端拿旧尖端对新尖端量 isAncestor,
+                                  非快进推送被拒(non-fast-forward)
+  mini-git clone <主机:端口> <目录> 整仓库搬回家:对象、分支、remote-tracking 引用与工作区一次重建;
+                                  对端是空仓库时只建骨架`
 
 /**
  * 把一组命令行参数变成一段输出;不直接碰终端,方便测试。cwd 注入,默认当前目录。
@@ -65,7 +74,7 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
   }
   switch (cmd) {
     case 'init':
-      return `已初始化空 mini-git 仓库:${initRepo(cwd)}`
+      return cmdInit(cwd, args)
     case 'hash-object':
       return cmdHashObject(cwd, args)
     case 'cat-file':
@@ -94,7 +103,10 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
       return cmdMerge(cwd, args)
     case 'serve':
     case 'ls-remote':
-      throw new Error('serve 与 ls-remote 要等网络往返——用 runNetCli(命令行入口走的就是它)')
+    case 'fetch':
+    case 'push':
+    case 'clone':
+      throw new Error('serve、ls-remote、fetch、push、clone 要等网络往返——用 runNetCli(命令行入口走的就是它)')
     default:
       return `mini-git: 未知命令 '${cmd}'(收到参数:${args.join(' ')})。运行 mini-git --help 查看可用命令。`
   }
@@ -107,6 +119,21 @@ function requireGitDir(cwd: string): string {
     throw new Error(`当前目录不是 mini-git 仓库(在 ${gitDir} 下没找到 objects),先运行 mini-git init`)
   }
   return gitDir
+}
+
+/**
+ * 建仓库骨架:默认套 .git 壳;--bare 直接把骨架铺在当前目录(没有工作区,目录就是仓库)。
+ * 骨架内容两口子一样:objects、refs/heads、指向 unborn main 的 HEAD。
+ */
+function cmdInit(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git init [--bare];至多一个开关'
+  if (args.length > 1 || (args.length === 1 && args[0] !== '--bare')) {
+    throw new Error(usage)
+  }
+  if (args[0] === '--bare') {
+    return `已初始化空裸仓库:${initRepoBare(cwd)}(没有工作区,目录本身就是仓库,当远端落点)`
+  }
+  return `已初始化空 mini-git 仓库:${initRepo(cwd)}`
 }
 
 function cmdHashObject(cwd: string, args: string[]): string {
@@ -603,8 +630,9 @@ function cmdMerge(cwd: string, args: string[]): string {
 }
 
 /**
- * 起引用发现服务:listen 127.0.0.1,每条连接先送一遍引用发现流,送完即收线。
- * 端口默认 9419(参数可换;真 git daemon 用 9418,mini-git 不冒用它的端口——两边协议并不互通)。
+ * 起双向会话服务:listen 127.0.0.1,每条连接先送一遍引用发现流,再听对方来意(看清单/要对象/推送)。
+ * 服务目录两口子都收:普通仓库取它的 .git,裸仓库取目录本身(bare:目录就是仓库)。
+ * 端口默认 9419(真 git daemon 用 9418,mini-git 不冒用它的端口——两边协议并不互通)。
  * 返回的是启动消息;listen 句柄会一直把进程撑着,Ctrl+C 才停。
  */
 async function cmdServe(cwd: string, args: string[]): Promise<string> {
@@ -616,8 +644,16 @@ async function cmdServe(cwd: string, args: string[]): Promise<string> {
   if (port < 1 || port > 65535) {
     throw new Error(`${usage};端口是 1-65535 的整数`)
   }
-  const started = await startRefServer(requireGitDir(cwd), { port })
-  return `mini-git serve 已上线:${started.host}:${started.port}(每条连接先送引用清单,送完收线;Ctrl+C 停止)`
+  let gitDir: string
+  if (existsSync(join(cwd, '.git', 'objects'))) {
+    gitDir = join(cwd, '.git') // 普通仓库:骨架在 .git 壳里
+  } else if (existsSync(join(cwd, 'objects')) && existsSync(join(cwd, 'HEAD'))) {
+    gitDir = cwd // 裸仓库:目录本身就是仓库
+  } else {
+    throw new Error(`当前目录不是 mini-git 仓库(普通仓库要有 .git/objects,裸仓库要有 objects),先运行 mini-git init 或 mini-git init --bare`)
+  }
+  const started = await startSyncServer(gitDir, { port })
+  return `mini-git serve 已上线:${started.host}:${started.port}(每条连接先送引用清单,再听来意;Ctrl+C 停止)`
 }
 
 /**
@@ -638,7 +674,54 @@ async function cmdLsRemote(_cwd: string, args: string[]): Promise<string> {
 }
 
 /**
- * 命令行统一入口:两条网络命令在此等 TCP 往返,其余原路转给同步的 runCli。
+ * fetch 的命令层:拉对象、前移 remote-tracking 引用,把战报排成人话。
+ * 空仓库对端(只有零号占位行)不是错误——如实报告「那边什么都没有」。
+ */
+async function cmdFetch(cwd: string, args: string[]): Promise<string> {
+  const usage = '用法:mini-git fetch <主机:端口>;目标是 mini-git serve 的地址,恰好一个'
+  if (args.length !== 1) {
+    throw new Error(usage)
+  }
+  const report = await fetchObjects(requireGitDir(cwd), args[0])
+  if (report.updated.length === 0) {
+    return `远端是空仓库(零号占位行的意思就是「我什么都没有」),没有可拉的引用`
+  }
+  const lines = [`已从 ${args[0]} 拉取 ${report.pulled} 个对象:`]
+  lines.push(
+    ...report.updated.map((u) => `  ${u.branch} → refs/remotes/${report.remote}/${u.branch}(${u.hash.slice(0, 7)})`),
+  )
+  return lines.join('\n')
+}
+
+/**
+ * push 的命令层:推送本地分支;判词 ng(含 non-fast-forward)会带着理由抛出来,
+ * 对端的引用与本地的工作区都不因此受损。
+ */
+async function cmdPush(cwd: string, args: string[]): Promise<string> {
+  const usage = '用法:mini-git push <主机:端口> <分支>;分支是本地已存在的分支名'
+  if (args.length !== 2 || args[1].startsWith('-')) {
+    throw new Error(usage)
+  }
+  const report = await pushObjects(requireGitDir(cwd), args[0], args[1])
+  return `已推送 ${report.branch} → 对端 ${report.ref}(${report.to.slice(0, 7)},送了 ${report.sent} 个对象)`
+}
+
+/** clone 的命令层:整仓库搬回家,战报里报对象数、分支与检出的文件数。 */
+async function cmdClone(cwd: string, args: string[]): Promise<string> {
+  const usage = '用法:mini-git clone <主机:端口> <目录>;目录必填,相对当前目录解析'
+  if (args.length !== 2 || args[1].startsWith('-')) {
+    throw new Error(usage)
+  }
+  const dest = resolve(cwd, args[1])
+  const report = await cloneRepo(args[0], dest)
+  if (report.empty) {
+    return `远端是空仓库:只在 ${dest} 建了 mini-git 骨架,没有分支也没有提交`
+  }
+  return `克隆完成:${report.objects} 个对象、${report.branches.length} 条分支,检出 ${report.files} 个文件到 ${dest}(HEAD 在 ${report.head})`
+}
+
+/**
+ * 命令行统一入口:网络命令在此等 TCP 往返,其余原路转给同步的 runCli。
  * 返回 Promise 只意味着「要等网络」,不改变输出的形状。
  */
 export async function runNetCli(argv: string[], cwd: string = process.cwd()): Promise<string> {
@@ -648,6 +731,15 @@ export async function runNetCli(argv: string[], cwd: string = process.cwd()): Pr
   }
   if (cmd === 'ls-remote') {
     return cmdLsRemote(cwd, args)
+  }
+  if (cmd === 'fetch') {
+    return cmdFetch(cwd, args)
+  }
+  if (cmd === 'push') {
+    return cmdPush(cwd, args)
+  }
+  if (cmd === 'clone') {
+    return cmdClone(cwd, args)
   }
   return runCli(argv, cwd)
 }

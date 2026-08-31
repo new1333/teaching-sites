@@ -21,6 +21,20 @@ export function initRepo(workDir: string): string {
   return gitDir
 }
 
+/**
+ * 建裸仓库骨架:不套 .git 这层壳,骨架直接铺在 workDir 本身——没有工作区,目录就是仓库,
+ * 天生当 push/fetch 的服务端落点(对齐 git clone --bare 的口径)。
+ */
+export function initRepoBare(workDir: string): string {
+  mkdirSync(join(workDir, 'objects'), { recursive: true })
+  mkdirSync(join(workDir, 'refs', 'heads'), { recursive: true })
+  const head = join(workDir, 'HEAD')
+  if (!existsSync(head)) {
+    writeFileSync(head, 'ref: refs/heads/main\n', 'utf8')
+  }
+  return workDir
+}
+
 /** 拼出「对象头 + 内容」的完整字节流:对象头是 `<类型> <字节数>\0` 这段文本。 */
 function frameObject(type: ObjectType, body: Buffer): Buffer {
   const header = Buffer.from(`${type} ${body.length}\0`, 'utf8')

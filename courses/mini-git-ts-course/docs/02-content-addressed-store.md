@@ -190,7 +190,7 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
   }
   switch (cmd) {
     case 'init':
-      return `已初始化空 mini-git 仓库:${initRepo(cwd)}`
+      return cmdInit(cwd, args)
     case 'hash-object':
       return cmdHashObject(cwd, args)
     case 'cat-file':
@@ -200,6 +200,8 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
   }
 }
 ```
+
+上面这个分发块是本章动手时的样子:当时 `case 'init'` 直接返回 `已初始化空 mini-git 仓库:${initRepo(cwd)}`。第 11 章加了 `init --bare` 后,这一格改成调 `cmdInit(cwd, args)`(普通与裸仓库两路都在里面),上面已按终态更新。
 
 两个子命令的实现,连同入口守卫的变化,收在这里。
 

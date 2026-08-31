@@ -16,7 +16,7 @@ export type RemoteRef = { name: string; hash: string }
 export type RefServer = { server: Server; host: string; port: number; close(): Promise<void> }
 
 /** 引用发现流里没有真引用时的占位名字,连同 40 个 0 一起,只在线上出现。 */
-const ZERO_ID = '0'.repeat(40)
+export const ZERO_ID = '0'.repeat(40)
 
 /**
  * 把服务端的引用清单编成一段引用发现流:HEAD 有效就第一行先报 HEAD,其余分支按名字排序,
@@ -86,6 +86,7 @@ export async function startRefServer(
 export async function discoverRefs(address: string): Promise<RemoteRef[]> {
   const { host, port } = parseAddress(address)
   const socket = connect({ host, port })
+  socket.on('connect', () => socket.end()) // 看清单的客户端连上就把写侧收掉:一个字节不说,服务端送完清单即送客
   return new Promise<RemoteRef[]>((resolve, reject) => {
     const chunks: Buffer[] = []
     socket.on('error', (err) => {
@@ -108,7 +109,7 @@ export async function discoverRefs(address: string): Promise<RemoteRef[]> {
 }
 
 /** 把 '主机:端口' 拆开;端口必须是 1-65535 的整数,其余当场报错。 */
-function parseAddress(address: string): { host: string; port: number } {
+export function parseAddress(address: string): { host: string; port: number } {
   const colon = address.lastIndexOf(':')
   if (colon < 0) {
     throw new Error(`ls-remote:地址 '${address}' 少了端口——写成 主机:端口,如 127.0.0.1:9419`)
@@ -123,7 +124,7 @@ function parseAddress(address: string): { host: string; port: number } {
 }
 
 /** 把数据帧逐行拆成引用条目;坏行当场报错,不猜。 */
-function parseRefLines(frames: PktFrame[]): RemoteRef[] {
+export function parseRefLines(frames: PktFrame[]): RemoteRef[] {
   const refs: RemoteRef[] = []
   for (const frame of frames) {
     if (frame.kind === 'flush') {

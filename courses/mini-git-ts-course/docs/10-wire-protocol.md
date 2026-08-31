@@ -222,8 +222,16 @@ async function cmdServe(cwd: string, args: string[]): Promise<string> {
   if (port < 1 || port > 65535) {
     throw new Error(`${usage};端口是 1-65535 的整数`)
   }
-  const started = await startRefServer(requireGitDir(cwd), { port })
-  return `mini-git serve 已上线:${started.host}:${started.port}(每条连接先送引用清单,送完收线;Ctrl+C 停止)`
+  let gitDir: string
+  if (existsSync(join(cwd, '.git', 'objects'))) {
+    gitDir = join(cwd, '.git') // 普通仓库:骨架在 .git 壳里
+  } else if (existsSync(join(cwd, 'objects')) && existsSync(join(cwd, 'HEAD'))) {
+    gitDir = cwd // 裸仓库:目录本身就是仓库
+  } else {
+    throw new Error(`当前目录不是 mini-git 仓库(普通仓库要有 .git/objects,裸仓库要有 objects),先运行 mini-git init 或 mini-git init --bare`)
+  }
+  const started = await startSyncServer(gitDir, { port })
+  return `mini-git serve 已上线:${started.host}:${started.port}(每条连接先送引用清单,再听来意;Ctrl+C 停止)`
 }
 
 // src/cli.ts · cmdLsRemote
@@ -248,9 +256,20 @@ export async function runNetCli(argv: string[], cwd: string = process.cwd()): Pr
   if (cmd === 'ls-remote') {
     return cmdLsRemote(cwd, args)
   }
+  if (cmd === 'fetch') {
+    return cmdFetch(cwd, args)
+  }
+  if (cmd === 'push') {
+    return cmdPush(cwd, args)
+  }
+  if (cmd === 'clone') {
+    return cmdClone(cwd, args)
+  }
   return runCli(argv, cwd)
 }
 ```
+
+上面代码块是第 11 章扩容后的终态。本章动手时,cmdServe 只有 `startRefServer(requireGitDir(cwd), { port })` 一行,runNetCli 也只挂 serve 与 ls-remote 两条。下一章接 fetch/push/clone 时,serve 换成 startSyncServer——送完清单改听来意,目录探测多了裸仓库一路,runNetCli 长到五条。本章测试针对的行为没变,旧测试原样全绿。
 
 </details>
 
@@ -305,7 +324,7 @@ MINI_GIT_TIMESTAMP=1700003600 $MG $CLI commit -m 'main 前进'
 ```bash
 # 用法示例 · 终端 A:起服务,窗口别关
 $MG $CLI serve
-# mini-git serve 已上线:127.0.0.1:9419(每条连接先送引用清单,送完收线;Ctrl+C 停止)
+# mini-git serve 已上线:127.0.0.1:9419(每条连接先送引用清单,再听来意;Ctrl+C 停止)
 ```
 
 终端 B 动手前先押三样:ls-remote 会列出几行;HEAD 那行的哈希与哪条分支相同;dev 与 main 的哈希谁新谁旧(提示:两笔提交的时间戳不同)。押完再跑:
@@ -320,7 +339,7 @@ $MG $CLI ls-remote 127.0.0.1:9419
 
 对答案:三行——HEAD 第一,dev、main 按名字排序。HEAD 与 main 同哈希:HEAD 是符号引用,顺着 ref: 链落到 refs/heads/main 的 37aba2a3。dev 停在第一笔 70cb1c6。一张清单,零对象下载——第 6 章「分支是 41 字节小文件」的账,此刻在两台进程之间兑现了一遍。
 
-第二猜,亲眼看线上字节:不经过 ls-remote,用一行 Node 裸连上去,把收到的字节打成十六进制打印出来。
+第二猜,亲眼看线上字节:不经过 ls-remote,用一行 Node 裸连上去,把收到的字节打成十六进制打印出来。字节会立刻打出来,但这条命令约 5 秒后才自行退出——双向服务端送完清单还要等一会儿来意,等不到才送客,不是卡死,别按 Ctrl+C。
 
 ```bash
 # 用法示例 · 裸 socket 读原始流
