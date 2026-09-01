@@ -100,7 +100,7 @@ if (existsSync(packagePath)) {
       else if (name === 'portal-sync.mjs' && readFileSync(script, 'utf8').includes('ignoreDeadLinks: true'))
         issues.push('scripts/portal-sync.mjs suppresses dead-link failures')
     }
-    if (pkg.scripts?.['check:skill'] !== 'node .agents/skills/vitepress-teaching-site/scripts/check-skill.mjs')
+    if (pkg.scripts?.['check:skill'] !== 'node .zcode/skills/vitepress-teaching-site/scripts/check-skill.mjs')
       issues.push('package.json check:skill does not point to the canonical checker')
   }
 }
