@@ -351,7 +351,7 @@ export default defineConfig({
 
 一行配置:测试文件只认 tests/ 目录下的 *.test.ts。src 保持纯实现,想找某个模块的测试,直接去 tests/ 按名字找。
 
-主角登场,`companion/src/cli.ts` 全文:
+主角登场,`companion/src/cli.ts` 本章搭架子时的全文(后续每章只往里加命令、加分支,终态入口等讲到网络命令时再看):
 
 ```ts
 // src/cli.ts · runCli

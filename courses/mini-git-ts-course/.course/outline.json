@@ -86,7 +86,7 @@
           "acceptance": [
             { "kind": "gate", "criterion": "本章测试先红后绿;全量 pnpm typecheck/test 通过,金样哈希断言在测试中可见" },
             { "kind": "prose", "criterion": "能解释「对象头参与哈希」带来的同内容不同类型不同名现象,并推导出内容寻址的去重效果" },
-            { "kind": "source", "criterion": "对象字节格式描述与 gitformat-object 官方文档一致,首现处给出处" }
+            { "kind": "source", "criterion": "对象字节格式描述与 gitformat-loose(5) 官方文档一致,首现处给出处" }
           ]
         },
         {
@@ -116,7 +116,7 @@
           "acceptance": [
             { "kind": "gate", "criterion": "本章测试先红后绿,含金样 tree 哈希与字节级 round-trip 断言;全量门槛通过" },
             { "kind": "prose", "criterion": "读者能对一个给定的 tree 十六进制转储手工划出每条 entry 的模式、名字与哈希边界" },
-            { "kind": "source", "criterion": "tree 模式取值(100644/100755/40000)与 gitformat-object 文档一致,首现处给出处" }
+            { "kind": "source", "criterion": "tree 模式取值(100644/100755/40000)与 gitdatamodel(7) 文档一致,首现处给出处" }
           ]
         },
         {
@@ -145,7 +145,7 @@
           "acceptance": [
             { "kind": "gate", "criterion": "本章测试先红后绿,覆盖链式、分叉、双父三种图形;全量门槛通过" },
             { "kind": "prose", "criterion": "能从父指针推出「哈希全变」的原因,并说出提交图是有向无环图而非链表" },
-            { "kind": "source", "criterion": "commit 对象文本格式与 gitformat-object 文档一致,首现处给出处" }
+            { "kind": "source", "criterion": "commit 对象文本格式与 gitdatamodel(7) 文档一致,首现处给出处" }
           ]
         }
       ]

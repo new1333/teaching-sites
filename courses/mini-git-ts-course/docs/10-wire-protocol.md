@@ -10,7 +10,7 @@ title: 一根管道上的对话:pkt-line 与引用发现
 
 零件是现成的。第 6 章把分支拆成了 refs/heads/ 下 41 字节的小文件,把 HEAD 拆成了符号引用。清单里的 40 位哈希指向一笔笔 commit 对象,第 2 章的 SHA-1 与内容寻址担保它们跨机器可验。第 6 章收束时还立过一笔账,原话是:「refs 目录里这份分支清单,第 10 章握手时原样变成引用发现的输出」。「原样」二字今天兑现——你会亲眼看到服务端编清单的循环体,就是第 6 章那两个老函数。
 
-本章三步走。先讲清为什么「知道远端有什么」是一个独立的、便宜到不成比例的问题。再拆 pkt-line:这根管道上的帧格式,四个字符的长度前缀如何在一根没有边界的字节流里圈出消息。最后落进 mini-git:src/pkt.ts 编解码,src/serve.ts 服务端与客户端,加 serve、ls-remote 两条命令,先红后绿。
+本章分三段推进。「知道远端有什么」为什么是一个独立的、便宜到不成比例的问题,先讲清这一层。然后拆 pkt-line——这根管道上的帧格式,四个字符的长度前缀如何在一根没有边界的字节流里圈出消息。拆完格式就落进 mini-git。src/pkt.ts 做编解码,src/serve.ts 做服务端与客户端,加 serve、ls-remote 两条命令,先红后绿。
 
 ## 一句不搬东西的远端命令
 
@@ -65,13 +65,13 @@ title: 一根管道上的对话:pkt-line 与引用发现
 ```text
 # 用法示例 · 红的关键几行
  × 引用发现:进程内服务往返 > 多分支:客户端列出的引用与磁盘 refs 完全一致,HEAD 在最前、其余按名字排序
-   → 尚未实现:startRefServer(C:\Users\deare\AppData\Local\Temp\mini-git-wire-NDmq91\.git, {})
+   → 尚未实现:startRefServer(C:\Users\…\Temp\mini-git-wire-NDmq91\.git, {})
  × mini-git ls-remote 命令 > 地址不成形各报各的错:缺端口、端口不是数字
    → AssertionError: expected [Function] to throw error including '主机:端口' but got '尚未实现:discoverRefs(127.0.0.1)'
- Tests  21 failed | 170 passed (191)
+ Tests  21 failed | 171 passed (192)
 ```
 
-二十一条红,红因清一色「尚未实现」——是能力缺失,不是语法或环境错误。绿的 170 条里,169 条旧测试,外加本章一条:flush 帧那条只断言 FLUSH_PKT 常量本身,关口不经过任何未实现的函数,自然绿。还有一条要如实交代:「同步入口 runCli 不收网络命令」那条是 cli 接线时同写的,落地即绿,不在红账里。开始填肉。
+二十一条红,红因清一色「尚未实现」——是能力缺失,不是语法或环境错误。绿的 171 条里,169 条旧测试,外加本章两条。flush 帧那条只断言 FLUSH_PKT 常量本身,关口不经过任何未实现的函数。「同步入口 runCli 不收网络命令」那条是 cli 接线时同写的,同样落地即绿。开始填肉。
 
 ### pktEncode:四字符前缀
 

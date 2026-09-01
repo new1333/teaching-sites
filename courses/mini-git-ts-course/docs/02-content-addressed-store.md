@@ -30,7 +30,7 @@ $ git hash-object hello.txt
 3b18e512dba79e4c8300dd08aeb37f8e728b8dad
 ```
 
-逐字符一致。这串字节的格式有官方正本:[gitformat-object](https://git-scm.com/docs/gitformat-object)。关于名字怎么来,它的原话是「The object ID of the object is the SHA-1 … hash of the uncompressed data」。翻译过来:对象名就是对「对象头 + 内容」拼成的完整字节流取的哈希。
+逐字符一致。这串字节的格式有官方正本:[gitformat-loose(5)](https://git-scm.com/docs/gitformat-loose)。关于名字怎么来,它的原话是「The object ID of the object is the SHA-1 … hash of the uncompressed data」。翻译过来:对象名就是对「对象头 + 内容」拼成的完整字节流取的哈希。
 
 对象头为什么要参与哈希?先替「直接哈希内容」说句公道话:做缓存键、算文件校验值时大家都这么干,直觉完全合理。边界在这里。git 的对象分好几种类型,同一串字节完全可能既是一份文件内容(blob),又恰好长得和某个目录记录(tree)的编码一样。若名字只由内容决定,这两个不同种类的对象就会共享一个名字,取回时无从知道该按哪种格式解析。头里有类型,这种撞名从机制上就被排除了。不信?做个对照:
 
