@@ -96,7 +96,7 @@ export function enumerateObjects(gitDir: string, tips: readonly string[]): strin
 ### 会话服务端:先送清单,再听来意
 
 ```ts
-// src/remote.ts · startSyncServer 的连接回调(收线与句柄管理的骨架与第 10 章同款)
+// src/remote.ts · startSyncServer 的连接回调(拼版:去缩进骨架,收线与句柄管理同第 10 章)
 socket.on('error', () => {}) // 一条连接的异常不拖垮整个服务
 socket.setTimeout(5000, () => socket.end()) // 连上却一直不说话的,5 秒后送客
 socket.write(encodeRefAdvertisement(gitDir)) // 清单每条连接现编现送:对端引用变了,下一条就是新值
@@ -144,7 +144,7 @@ function handlePush(gitDir: string, socket: Socket, frames: { kind: 'data'; payl
 <summary>点开看:收货的对账与 fetch 的算缺(src/remote.ts;两处白捡的便宜)。</summary>
 
 ```ts
-// src/remote.ts · storeObjectFrames 的落库段(收满一个对象时)
+// src/remote.ts · storeObjectFrames 的落库段(拼版:去缩进,收满一个对象时)
 const written = writeObject(gitDir, head.type, content)
 if (written !== head.hash) {
   throw new Error(`远端送来的对象自称 ${head.hash},落库前算出来却是 ${written}——内容与名字对不上,拒收`)
@@ -154,7 +154,7 @@ if (written !== head.hash) {
 对象头不上线:线上只报类型与字节,落库时对象头由收方按第 2 章的口径自己拼,zlib 壳也是收方自己套。于是校验是白捡的——writeObject 本来就要算 SHA-1,把结果与线上自称的哈希一对,传输坏了当场现形。SHA-1 在这里既是名字又是封条。
 
 ```ts
-// src/remote.ts · fetchObjects 的协商段
+// src/remote.ts · fetchObjects 的协商段(拼版:去缩进)
 const wants = [...new Set(heads.map((h) => h.hash))]
 const haves = new Set(enumerateObjects(gitDir, localTips(gitDir, remote)))
 const request: Buffer[] = []

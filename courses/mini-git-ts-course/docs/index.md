@@ -1,0 +1,75 @@
+---
+layout: home
+hero:
+  name: Git 原理重实现:用 TypeScript 写一个 mini-git
+  text: 会写日常 TypeScript、想把 git 用明白的开发者
+  tagline: 读完本课程,从 add 到 clone 的 mini-git,产物能被真 git 直接读取
+  actions:
+    - theme: brand
+      text: 开始阅读
+      link: ./01-git-mental-model
+    - theme: alt
+      text: 课程介绍
+      link: ./about
+features:
+  - icon: 🗂️
+    title: 1. 把 .git 打开:三个区域和一堆文件
+    details: 会解剖任意仓库的 .git 目录,把 git add/commit 分解为工作区、暂存区、对象库之间的搬运
+    link: ./01-git-mental-model
+    linkText: 进入本章
+  - icon: 🔑
+    title: 2. 内容的名字:SHA-1 与第一个对象
+    details: 实现 mini-git init/hash-object/cat-file,任意文件的哈希与真 git 完全一致
+    link: ./02-content-addressed-store
+    linkText: 进入本章
+  - icon: 🌳
+    title: 3. 目录也是对象:Buffer 与二进制格式初遇
+    details: 从零掌握 Buffer 字节操作,编码并解析 tree 二进制格式,实现 write-tree 与整树检出
+    link: ./03-tree-snapshots
+    linkText: 进入本章
+  - icon: 🕸️
+    title: 4. 历史是一张图:提交对象与 log
+    details: 实现 commit 对象读写与 log 遍历,解释提交哈希为何改一行历史就全变
+    link: ./04-commit-dag
+    linkText: 进入本章
+  - icon: 📋
+    title: 5. 暂存区不是观念,是一个文件
+    details: 解析并生成 index v2 二进制格式,实现 mini-git add/status,三态判定与 git status 同口径
+    link: ./05-index-file
+    linkText: 进入本章
+  - icon: 🌿
+    title: 6. 分支是一个文件,HEAD 是个指针的指针
+    details: 用文件操作实现引用读写、分支创建切换与第一个 porcelain 级 mini-git commit
+    link: ./06-refs-branches
+    linkText: 进入本章
+  - icon: 🔀
+    title: 7. 每一行增删的来历:diff 算法
+    details: 实现行级 LCS diff 与 unified diff 输出,mini-git diff 能对任意两次改动给出 hunk
+    link: ./07-line-diff
+    linkText: 进入本章
+  - icon: 🧭
+    title: 8. 在提交图上找路:祖先与 merge-base
+    details: 实现可达性与最近公共祖先,会判定 fast-forward,为合并找到 base
+    link: ./08-merge-base
+    linkText: 进入本章
+  - icon: 🤝
+    title: 9. 合并:以 base 为裁判的三方对齐
+    details: 实现三方文件合并与冲突标记,mini-git merge 产出双父提交或冲突现场
+    link: ./09-three-way-merge
+    linkText: 进入本章
+  - icon: 📡
+    title: 10. 一根管道上的对话:pkt-line 与引用发现
+    details: 实现 pkt-line 帧编解码与最小引用发现服务,mini-git ls-remote 能列出对端引用
+    link: ./10-wire-protocol
+    linkText: 进入本章
+  - icon: 🔁
+    title: 11. fetch、push、clone:把图搬到另一边
+    details: 实现对象枚举与传输,mini-git fetch/push/clone 打通,说清远端引用与本地分支的分野
+    link: ./11-sync-operations
+    linkText: 进入本章
+  - icon: ✅
+    title: 12. 和真 git 对拍:你已经写了一个 git
+    details: 用真 git 读取 mini-git 仓库完成互操作对拍,把全书机制收口成日常命令地图
+    link: ./12-end-to-end
+    linkText: 进入本章
+---

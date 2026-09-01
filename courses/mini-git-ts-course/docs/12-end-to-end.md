@@ -37,7 +37,7 @@ skipIf 是 vitest 的开关:条件成立时整组测试显示为 skipped,不算�
 
 ```ts
 // tests/interop.test.ts
-it('同一批输入,四笔提交的名字都是金样:跨机器逐字符相同(含 merge 提交)', () => {
+it('同一批输入,四笔提交的名字都是金样:跨机器逐字符相同(含 merge 提交)', () => { // 拼版:去缩进摘录
   expect(c1).toBe('91ad33a8c5025a6630eaadc4e93e4104a0e3fcfc')
 ```
 

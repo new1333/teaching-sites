@@ -354,7 +354,7 @@ export default defineConfig({
 主角登场,`companion/src/cli.ts` 本章搭架子时的全文(后续每章只往里加命令、加分支,终态入口等讲到网络命令时再看):
 
 ```ts
-// src/cli.ts · runCli
+// src/cli.ts · runCli(第 1 章脚手架时点拼版:此后每章只加命令与分支,入口终态见第 10 章)
 import { pathToFileURL } from 'node:url'
 
 export const HELP = `mini-git —— 一个用来弄懂 git 原理的迷你实现

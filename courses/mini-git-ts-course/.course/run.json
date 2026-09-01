@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
-  "status": "generating",
-  "phase": "book-review",
+  "status": "complete",
+  "phase": "delivery",
   "language": "zh",
   "outline_revision": 1,
   "next_chapter": null,
@@ -26,7 +26,7 @@
     "outline-confirmation"
   ],
   "last_commit": {
-    "kind": "chapter",
-    "id": "end-to-end"
+    "kind": "assembly",
+    "id": "final-check-and-builds"
   }
 }

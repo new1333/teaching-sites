@@ -191,7 +191,7 @@ node:net 的最小用法都在这了:createServer 给一条连接一个回调,so
 ### 客户端:攒齐再解,见 flush 才认账
 
 ```ts
-// src/serve.ts · discoverRefs(收线后统一解码;错误处理在测试里钉死)
+// src/serve.ts · discoverRefs(拼版:去缩进、省 try/catch 的主逻辑,终态含第 11 章加的半关闭一行)
 socket.on('error', (err) => {
   socket.destroy()
   reject(new Error(`ls-remote:连不上 ${host}:${port}(${err.message})——对端起 mini-git serve 了吗?`))
@@ -212,7 +212,7 @@ socket.on('close', () => {
 <summary>点开看:cmdServe、cmdLsRemote 与 runNetCli(src/cli.ts;网络命令的落点)。</summary>
 
 ```ts
-// src/cli.ts · cmdServe
+// src/cli.ts · cmdServe 与网络命令落点(拼版:三段在终态中不相邻)
 async function cmdServe(cwd: string, args: string[]): Promise<string> {
   const usage = '用法:mini-git serve [端口];端口可省,默认 9419,只听 127.0.0.1'
   if (args.length > 1 || (args.length === 1 && !/^\d+$/.test(args[0]))) {

@@ -290,7 +290,7 @@ CLI 这边的接线收进折叠:
 <summary>点开看:identityFromEnv、cmdLog 与 renderLogEntry(src/cli.ts 本轮改动,节选)。</summary>
 
 ```ts
-// src/cli.ts · 身份、log 命令与 log 渲染(节选)
+// src/cli.ts · 身份、log 命令与 log 渲染(节选拼版:三段在终态中不相邻)
 /** 身份与环境:mini-git 不偷看任何机器状态,名字/邮箱/时间全部由环境变量声明。 */
 function identityFromEnv(): CommitIdentity {
   const stamp = process.env.MINI_GIT_TIMESTAMP

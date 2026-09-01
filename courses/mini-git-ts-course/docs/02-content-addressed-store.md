@@ -87,7 +87,7 @@ const HELLO_RAW_SHA1 = '22596363b3de40b06f981fb85d82312e8c0ed511'
 断言四个方向各钉一条:
 
 ```ts
-// tests/objects.test.ts · 断言摘录
+// tests/objects.test.ts · 断言摘录(拼版:非连续节选)
 it('空内容与 hello world 的金样哈希', () => {
   expect(hashObject('blob', Buffer.alloc(0))).toBe(EMPTY_BLOB)
   expect(hashObject('blob', Buffer.from('hello world\n'))).toBe(HELLO_BLOB)
@@ -146,7 +146,7 @@ export function writeObject(gitDir: string, type: ObjectType, body: Buffer): str
 existsSync 那一行就是上一节的去重策略:同名即同内容,重写毫无意义。deflateSync 把拼好的字节流压成 zlib 格式;level 1 对齐真 git 的默认档,这一行不加也全对,加了连字节都对齐。读是写的逆运算,看节选。
 
 ```ts
-// src/objects.ts · 读回(节选)
+// src/objects.ts · 读回(节选拼版:去缩进教学视图)
 const framed = inflateSync(readFileSync(path))
 const zero = framed.indexOf(0)
 if (zero < 0) {
@@ -182,7 +182,7 @@ export function initRepo(workDir: string): string {
 最后是 cli.ts 的接线。runCli 多了一个带默认值的参数 cwd:测试注入临时目录,不必挪动进程的当前目录;命令失败不再伪装成正常输出,而是 throw 出去,由入口接住打到 stderr、退出码置 1。
 
 ```ts
-// src/cli.ts · 分发(节选)
+// src/cli.ts · 分发(节选拼版:完整 switch 已随章扩容)
 export function runCli(argv: string[], cwd: string = process.cwd()): string {
   const [cmd, ...args] = argv
   if (cmd === undefined || cmd === '--help' || cmd === 'help') {
@@ -209,7 +209,7 @@ export function runCli(argv: string[], cwd: string = process.cwd()): string {
 <summary>点开看:cmdHashObject、cmdCatFile 与新的入口守卫(src/cli.ts 全文节选)。</summary>
 
 ```ts
-// src/cli.ts · 子命令与入口
+// src/cli.ts · 子命令与入口(本章时点拼版:入口终态见第 10 章)
 /** 当前目录下的 .git 必须已经有对象库,否则提示先 init。 */
 function requireGitDir(cwd: string): string {
   const gitDir = join(cwd, '.git')

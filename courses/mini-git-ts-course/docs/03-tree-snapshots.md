@@ -353,7 +353,7 @@ writeTree 的镜像:递归照着条目造目录、写文件,文件的字节就�
 <summary>点开看:renderTree、cmdWriteTree 与新 HELP(src/cli.ts 本轮全部改动)。</summary>
 
 ```ts
-// src/cli.ts · tree 的渲染与 write-tree 命令
+// src/cli.ts · tree 的渲染与 write-tree 命令(拼版:两段在终态中不相邻)
 /** 把 tree 按真 git cat-file -p 的口径渲染成一行一条:模式(补足 6 位)、类型、哈希、Tab、名字。 */
 function renderTree(body: Buffer): string {
   return parseTree(body)
