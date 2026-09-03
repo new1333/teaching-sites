@@ -4,6 +4,7 @@ import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import ChartCanvas from './components/ChartCanvas.vue'
 import KLineChart from './components/KLineChart.vue'
+import MaCrossChart from './components/MaCrossChart.vue'
 import './custom.css'
 
 export default {
@@ -11,5 +12,6 @@ export default {
   enhanceApp({ app }) {
     app.component('ChartCanvas', ChartCanvas)
     app.component('KLineChart', KLineChart)
+    app.component('MaCrossChart', MaCrossChart)
   },
 } satisfies Theme
