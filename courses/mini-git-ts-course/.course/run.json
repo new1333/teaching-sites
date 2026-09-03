@@ -1,0 +1,32 @@
+{
+  "schema_version": 2,
+  "skill": "vitepress-teaching-site",
+  "status": "complete",
+  "phase": "delivery",
+  "language": "zh",
+  "outline_revision": 1,
+  "next_chapter": null,
+  "completed_chapters": [
+    "git-mental-model",
+    "content-addressed-store",
+    "tree-snapshots",
+    "commit-dag",
+    "index-file",
+    "refs-branches",
+    "line-diff",
+    "merge-base",
+    "three-way-merge",
+    "wire-protocol",
+    "sync-operations",
+    "end-to-end"
+  ],
+  "degraded_chapters": [],
+  "blocked_chapters": [],
+  "skipped_interactions": [
+    "outline-confirmation"
+  ],
+  "last_commit": {
+    "kind": "assembly",
+    "id": "final-check-and-builds"
+  }
+}

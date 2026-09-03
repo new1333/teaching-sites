@@ -1,0 +1,32 @@
+{
+  "schema_version": 2,
+  "status": "answered",
+  "audience": "会日常 TypeScript 的开发者:用过 Node crypto/zlib 内置库,但没独立解析过二进制格式,也没从零搭过千行级带测试的工程;git 使用停留在 add/commit/push 三板斧,学完想让日常 git 命令不再是黑盒。",
+  "known": [
+    "日常 TypeScript 读写(类型、模块、async/await)",
+    "Node 内置库的调用式使用:crypto 算哈希、zlib 压缩解压",
+    "git add/commit/push 的肌肉记忆级操作"
+  ],
+  "unfamiliar": [
+    "二进制 Buffer 解析:字节偏移、定长字段、十六进制转储",
+    "从零搭建带 Vitest 的完整 TS 工程",
+    "暂存区、分支、合并的工作原理",
+    "任何 git 底层命令(cat-file/ls-files/reflog)与 .git 内部结构",
+    "git 传输协议与远端同步机制"
+  ],
+  "anchors": [
+    { "concept": "二进制解析按零基础教", "known_anchor": "判别题「处理过二进制 Buffer」未被选择,仅选了 crypto/zlib 一项" },
+    { "concept": "工程脚手架需扶一步", "known_anchor": "判别题「从零写过千行级 TS 项目」未被选择" },
+    { "concept": "哈希与压缩 API 可直接使用", "known_anchor": "判别题「用过 crypto/zlib 内置库」被选择" },
+    { "concept": "git 用户侧操作也按不熟处理,branch/merge 现象需先展示再解释", "known_anchor": "熟练度题选「基础三板斧」:出奇怪状态只能复制搜来的命令" },
+    { "concept": "远端同步纳入主线", "known_anchor": "范围题选「加上远端同步」" },
+    { "concept": "示例侧重日常命令反推底层,弱化造轮子工程论", "known_anchor": "目标题选「理解日常工具」" }
+  ],
+  "decisions": [
+    "tree/index 两个二进制格式章从十六进制转储与 Buffer 偏移讲起,不假设任何前置二进制经验",
+    "第 1 章给出完整工程脚手架(tsconfig/vitest/package.json)并解释每行,后续章不再重述",
+    "所有 hook 用「基础三板斧用户见过的现象」引入,不用底层命令经验",
+    "主线含 wire-protocol 与 fetch/clone/push;packfile/delta 不进主线,放 divergence 附录导读",
+    "收尾用「与真 git 互操作对拍」作为终点验证信号,强化理解日常工具的目标"
+  ]
+}

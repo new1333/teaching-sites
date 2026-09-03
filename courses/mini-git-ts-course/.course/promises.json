@@ -1,0 +1,95 @@
+{
+  "schema_version": 2,
+  "promises": [
+    {
+      "id": "p1-map-to-commands",
+      "from": "git-mental-model",
+      "from_n": 1,
+      "target": "end-to-end",
+      "what": "三区域地图在终章扩成「日常命令 → 内部机制」对照表,读者拿写完的 mini-git 逐条钉回地图收口;「拷走 .git 等于带走整个仓库」终章用 mini-git 再验一次",
+      "status": "fulfilled",
+      "resolution": "第 12 章开章逐字回收第 1 章两句原话;「日常命令→内部机制」十行对照表逐条钉回函数与章节(评审逐行核实章号与 companion 终态一致);「拷走 .git」以 interop 测试与读者实验双钉(只拷 .git 后 git log 完整、status 仅报工作区删除);driving question 收口成一段答案;评审复核兑现。"
+    },
+    {
+      "id": "p2-name-from-content",
+      "from": "git-mental-model",
+      "from_n": 1,
+      "target": "content-addressed-store",
+      "what": "内容凭什么担保名字:5 个对象跨机器逐字符相同的原因,第 2 章亲手算出对象名",
+      "status": "fulfilled",
+      "resolution": "第 2 章开章逐字回收第 1 章原话;正文「先亲手算出一个对象名」用 sha1sum 算出金样、「五个对象凭什么跨机器相同」解释成因(SHA-1 纯函数,输入无机器/时间/人)、演练金样测试钉死;评审复核三处兑现。"
+    },
+    {
+      "id": "p3-writetree-vs-index",
+      "from": "tree-snapshots",
+      "from_n": 3,
+      "target": "index-file",
+      "what": "mini-git write-tree 扫工作区、真 git 吃暂存区——这个差异在 index 章补全,write-tree 将改为从暂存区清单生成树",
+      "status": "fulfilled",
+      "resolution": "第 5 章开章逐字回收第 3 章原话;writeTreeFromIndex + cmdWriteTree 两路分流落地,测试钉死「暂存旧版后改工作区,write-tree 仍旧值」;第 3 章正文 cmdWriteTree 引用回写终态;评审复核兑现。"
+    },
+    {
+      "id": "p3-commit-record-left",
+      "from": "tree-snapshots",
+      "from_n": 3,
+      "target": "commit-dag",
+      "what": "第 1 章 6 对象账清至「还欠 1 份提交记录」,commit-dag 章拆解提交对象兑现",
+      "status": "fulfilled",
+      "resolution": "第 4 章开章逐字回收第 3 章原话;「先挖出一笔真的提交」逐行拆解、演练金样与真 git 逐字符一致、收束宣布 6 对象账结清第一部分收官;评审复核兑现。"
+    },
+    {
+      "id": "p5-resolvehead",
+      "from": "index-file",
+      "from_n": 5,
+      "target": "refs-branches",
+      "what": "readHeadHash 是第 5 章的临时讲法,只服务 status;「ref: 指向另一个引用」的符号引用解析规则在 refs 章正式化为 resolveHead,分支建立/切换/detached 全踩在它上面",
+      "status": "fulfilled",
+      "resolution": "第 6 章开章逐字回收第 5 章原话;readHeadHash 迁入 refs.ts 正式化为 resolveHead(三形状语义原样平移,测试断言一字未改),branch/checkout/commit/detached 全踩其上;真 git rev-parse 读 mini-git 分支对拍一致;评审复核兑现。"
+    },
+    {
+      "id": "p6-reachability",
+      "from": "refs-branches",
+      "from_n": 6,
+      "target": "merge-base",
+      "what": "detached 丢弃的提交只能靠哈希找回——没有引用兜底的提交最终命运(被谁清理、凭什么判死),merge-base 章用可达性收口",
+      "status": "fulfilled",
+      "resolution": "第 8 章开章逐字回收第 6 章原话;「对象库的生死簿」一节当面回答(判死=从任何引用走不到,引 fsck 原文;行刑=gc,pruneExpire 两周、reflog 30/90 天兜底),验证节用真 git fsck/gc 亲见三件对象变 unreachable 后被清;评审复核兑现。"
+    },
+    {
+      "id": "p6-refdiscovery",
+      "from": "refs-branches",
+      "from_n": 6,
+      "target": "wire-protocol",
+      "what": "refs 目录里这份分支清单,在 wire-protocol 章握手时原样变成引用发现的输出",
+      "status": "fulfilled",
+      "resolution": "第 10 章开章逐字回收第 6 章原话;encodeRefAdvertisement 循环体即 listBranches+readRef 原样复用,清单与磁盘 refs 一致性由测试钉死,收束明写「原样兑现到循环体,一个字节没改」;评审复核兑现。"
+    },
+    {
+      "id": "p7-alignment-as-base",
+      "from": "line-diff",
+      "from_n": 7,
+      "target": "three-way-merge",
+      "what": "diffLines 的编辑脚本=行对齐账;三方合并以它为底座——base 对 ours/theirs 各算一张账定夺自动合入或冲突,diff 不止用来给人看",
+      "status": "fulfilled",
+      "resolution": "第 9 章开章逐字回收第 7 章「行对齐账/diffLines 就是那章合并算法的心脏」原话;changeRegions 把编辑脚本折算成改动区,mergeBlobs 主循环即「两张账对一对」;第 8 章「互不包含格」叙事债同时清偿(mergeCommits 头两行复用 isAncestor,第三格产双父提交);评审复核兑现。"
+    },
+    {
+      "id": "p8-ff-gate",
+      "from": "merge-base",
+      "from_n": 8,
+      "target": "sync-operations",
+      "what": "isAncestor 的 ff 判定将在 push 章成为远端拒绝非快进推送的同一把尺子——push 吃的 non-fast-forward,就是远端拿旧尖端对新尖端量了同一把 isAncestor",
+      "status": "fulfilled",
+      "resolution": "第 11 章开章逐字回收第 8 章原话;handlePush 的 !isAncestor(旧尖端,新尖端) 行当面结清,与 git-push 文档 PUSH RULES 三截引文对齐;拒绝文案含 non-fast-forward 且测试钉死引用不挪;撤闸定向破坏恰好 1 红;评审复核兑现。"
+    },
+    {
+      "id": "p10-negotiation-input",
+      "from": "wire-protocol",
+      "from_n": 10,
+      "target": "sync-operations",
+      "what": "引用发现返回的清单直接成为 fetch/push 协商的输入:fetch 拿它算「缺哪些对象」,push 拿它算「对方会不会拒我」,零号占位行在 clone 空仓库时再见",
+      "status": "fulfilled",
+      "resolution": "第 11 章开章逐字回收第 10 章原话;清单三处兑现:fetch 的 want 直取广告、have 为本地闭包,push 用广告算不重送闭包(正文声明:mini-git 客户端不预判「对方会不会拒」,判权在服务端 isAncestor——与真协议协商期即拒的分岔同源登记),零号占位行在 cloneRepo 空仓库判 empty 只建骨架;测试与验证节双钉;评审复核兑现。"
+    }
+  ]
+}

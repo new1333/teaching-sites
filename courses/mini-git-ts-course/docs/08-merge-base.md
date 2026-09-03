@@ -1,0 +1,352 @@
+---
+title: 在提交图上找路:祖先与 merge-base
+---
+
+# 在提交图上找路:祖先与 merge-base
+
+同样一句 git merge,收场却分三副面孔。有时它眨眼完成,末尾还打一行 Fast-forward;有时它认真造出一笔新提交,连消息编辑器都替你打开;还有时它什么也不做,只丢下一句 Already up to date。pull 也一样:多数时候拉下来就合,偶尔却原地不动说一切都新。这三种结局你一个都选不了——git 自己判。它判的是什么?
+
+判据不新,零件早就备齐。第 4 章把历史立成了一张提交图:提交是节点,parent 边指向来路,log 的名单是从起点现算的遍历。第 6 章把分支拆成 41 字节的引用文件,把 HEAD 拆成指针的指针。缺的只是一样东西:在这张图上「从谁能走到谁」的系统说法。第 7 章开篇分过工——最长公共子序列算出编辑脚本,渲染成 unified diff 的 hunk,管的是文件内部每一行的来历;提交图上的路,归本章。
+
+还有一笔旧账正好压在这条路上。第 6 章讲 detached HEAD 时埋过一笔账。原话是:「至于没有引用兜底的提交最终命运如何——会不会一直躺在对象库里,还是哪天被清理掉」;判它需要「可达性」这把尺子,去向点名了本章。可达性正是本章的第一个词。这笔账在「对象库的生死簿」一节当面结清:被谁清理、凭什么判死,你在验证节还能亲手观察一次。
+
+本章做三件事。先把「可达」二字立成一把能画在纸上的尺子。再用它定义祖先判定与最近公共祖先——命令 merge-base 的本职。最后推出 fast-forward 的判定条件:它不是可选的优化,是图论结论。落进 mini-git,是 src/graph.ts 的三个函数加一条 merge-base 命令,答案与真 git 逐字符对拍。
+
+## 一把叫「可达」的尺子
+
+先把图上的走法说死。提交图的边只有一种:parent。从一笔提交出发,只能沿着 parent 边往回走,走到它的父提交、父提交的父提交,一路走回根。普通提交一条出边,双父的 merge 提交两条都算,根提交走到头。方向是单向的:谁也不可能走到自己的后代。
+
+现在给「走得到」一个正式名字。**可达性(reachability)——从某个起点沿 parent 边能走到的提交,统称从该起点可达;起点几乎总是一个引用。**这个词是 git 世界通用的生死与合并判据,官方文档里 fsck、gc、merge-base 三处都在用它。把它画在纸上,就是「可达集」:起点自己打头,身后跟着全部走得到的祖先。
+
+```text
+教学示意 · 一张小提交图(箭头从子指向父,沿箭头走就是往回走)
+
+C1 ←── C2 ←── C3        ← main 的引用指在 C3
+ └──←── SIDE            ← 分支 side 的引用指在 SIDE
+
+可达集(C3)   = {C3, C2, C1}
+可达集(SIDE)  = {SIDE, C1}
+```
+
+拿铅笔沿图描一遍,三条性质当场能验。其一,起点自身在集合里——自己可达自己,这条后面撑起相等判定。其二,集合只往「过去」长:从 C3 出发永远收不到 SIDE,从 SIDE 出发也永远收不到 C3,两条腿各走各的。其三,两支一旦在历史上汇合过,公共祖先只收一次,不会因为 merge 提交有两条边就重复入账。
+
+这趟走法你已经写过一遍。第 4 章的 logWalk 就在做这件事:从起点沿 parent 边收集全部可达提交,再按 committer 时间戳排序输出。本章只是把同一个循环收敛成集合,丢掉排序——log 回答「按什么顺序列出」,可达集回答「在不在里面」。问题从排队变成了点名。
+
+### 对象库的生死簿:第 6 章的账
+
+尺子立好了,先拿它结旧账。第 6 章那笔游离提交的问题是:对象还在库里,cat-file 读得到,可它凭什么还算「活着」?反过来,谁有权判它死?
+
+答案是:可达性量的是活,量的人是引用。分支、tag、HEAD——HEAD 经第 6 章的符号引用解析,最终也落在一笔提交上——这些引用是图上的根;从根出发沿边走得到的对象,就活着。注意「对象」不只是 commit。走到一笔 commit 对象,顺着它的 tree 字段再往下摊开:tree 对象的条目里记着名字、文件模式与 20 字节的哈希,一路通到叶子上的 blob。这些第 2、3 章按内容寻址落盘的松散对象,SHA-1 是名字,对象头标着类型与长度,同一条可达链上同生共死。判死的标准因此只有一条:从任何引用都走不到。这样的对象,官方文档 [git-fsck](https://git-scm.com/docs/git-fsck) 专门给了一台验尸的尺,--unreachable 开关。它打印的对象,原文是「exist but that aren't reachable from any of the reference nodes」。翻译:存在,但从任何引用节点都够不着。存在,却没人指路——这就是 detached 提交的处境。
+
+执行死刑的是 [git gc](https://git-scm.com/docs/git-gc)。文档开宗明义,原话是它负责「removing unreachable objects」——清除不可达对象。但死刑有宽限期,同页写明默认只清「2 weeks ago」之前的东西,配置项 gc.pruneExpire 管这个时限。宽限之上还有一层兜底:真 git 判可达时,不只数分支和 tag,还把 reflog——引用的变动日记——也算作根。你昨天 amend 掉、前天切走的那笔提交,大概率还躺在 reflog 里指名道姓地活着,要等 30 到 90 天的 reflog 过期后才真正轮到 gc。第 6 章「只能靠哈希找回」的警告,实际含义是:找回的窗口期有限,过时不候。
+
+凭什么判死,值得多问一句:为什么标准是「没根」,不是「太老」?反事实一戳就破。假如 gc 按年龄清理,一个三年的活跃仓库会把自己的全部历史清成空壳,checkout 旧版本、clone、切分支当场全坏。可达性标准下,活多久与年龄无关——三年前的根提交,只要 main 还认得它,它就永远可达、永远活着。反过来,五分钟前才生成的对象,一落地就没有任何根指路,就已经在死刑名单上了。生死簿上看的是有没有根,不是几岁。
+
+mini-git 与真 git 在这里有一条登记在差异附录的分岔:mini-git 不写 reflog,引用之外没有任何兜底的根。后果在验证节你会亲眼看到——同样的游离提交,真 git 有 reflog 垫着,mini-git 的库里谁都救不了它。
+
+## 祖先判定:可达集的一问一答
+
+有了集合,「祖先」就只是一句问话。A 是 B 的祖先,当且仅当 A 在 B 的可达集里。就这么多——判祖先不看时间戳,不比对内容,也不问谁先创建,只看图上走不走得到。
+
+三个直接推论,后面全要用。方向是单向的:C1 在 C3 的可达集里,C3 却不在 C1 的可达集里,祖先关系不可倒读。兄弟不算:SIDE_A 与 SIDE_B 的可达集互不包含对方,分叉的两条腿谁也不是谁的祖先。判定是自反的:每笔提交都在自己的可达集里,所以 A 总是 A 的祖先——这不是诡辩,它让「两个引用指向同一笔提交」可以走同一条祖先判定的路,后面 Already up to date 就靠它。
+
+真 git 把这个问话做成了命令,归在底层命令一族,文档在 [git-merge-base](https://git-scm.com/docs/git-merge-base)。--is-ancestor 模式的原话分两截。前半:「Check if the first \<commit\> is an ancestor of the second \<commit\>」。后半:「and exit with status 0 if true, or with status 1 if not」。翻译:检查第一个提交是不是第二个的祖先;是退出 0,不是退出 1。注意这个顺序语义——问话的方向是「前对后」,反过来问答案会翻面。mini-git 在演练里照抄这把尺子,只把退出码换成一句「是」或「否」:mini-git 的命令层只产文本,这条从简口径登记在差异附录。
+
+纸上再来一遍,这次把两个集合都摊开。用第 4 章那套 fixture 的分叉:C1 分出 SIDE_A、SIDE_B,再合成双父的 MERGE。问:C1 是 MERGE 的祖先吗?从 MERGE 往回走,两条 parent 边一条经 SIDE_A、一条经 SIDE_B,两条路都通到 C1——在,是祖先,而且两条边任一条都能作证。问:SIDE_A 是 MERGE 的祖先吗?经第一条 parent 边一步就到,是。问:MERGE 是 SIDE_A 的祖先吗?从 SIDE_A 往回走,只收得到 C1,永远够不着 MERGE——不是。图上任何「是不是祖先」的问题,都是一次铅笔活。
+
+## merge-base:公共祖先里离得最近的那笔
+
+先说为什么需要它。下一章的三方合并需要一位裁判:拿一笔「两边共同的老底」当基准,ours 与 theirs 各自相对它算改动,谁改了什么才判得清。这笔基准提交有个名字——base。找 base,就是本章的主命令 merge-base 的本职,真 git 也把它归在底层命令里,porcelain 的 merge 在幕后调它。
+
+怎么找?两步。第一步求公共祖先:把两边的可达集摊开取交集,交集里的每一笔,两边都走得到。第二步在交集里挑「最好的」。什么叫更好,官方文档给了定义,原文分两截。前半:「One common ancestor is better than another common ancestor」。后半:「if the latter is an ancestor of the former」。翻译:候选甲若是候选乙的祖先,乙就比甲好——离两边更近。好到没有更好的,就是最好的公共祖先,也就是 merge base。**最近公共祖先(lowest common ancestor)——两笔提交的全部公共祖先中,不再被其他公共祖先挡在前面的那笔;通常就一支,是两边的分叉点。**
+
+「分叉点」这个日常说法在大多数图上恰好转。还是那张分叉图:merge-base SIDE_A SIDE_B 的答案是 C1——两边唯一共同的老底。但要小心,「最近」是图上的近,不是日历上的近。最能说明问题的形状是菱形:SIDE_A、SIDE_B 合并成 MERGE 之后,再从 MERGE 分出两条新分支 D1、D2。D1 与 D2 的公共祖先是 MERGE、SIDE_A、SIDE_B、C1 四笔,但 SIDE_A 是 MERGE 的祖先,C1 更是,一个个被「更好」的候选比下去,最好的只剩 MERGE。菱形的 base 是那笔 merge 提交——它可以比两条分支的出生都晚。「分叉点」的直觉到这里就不够用了,定义却纹丝不动。
+
+麻烦的形状也存在。官方文档专门画了一张 criss-cross 拓扑:
+
+```text
+教学示意 · 官方文档的 criss-cross 拓扑(箭头从子指向父)
+
+---1---o---A
+    \ /
+     X
+    / \
+---2---o---o---B
+```
+
+A 与 B 各自把对方的部分历史合了进来,又各有对方没有的提交。此时 1 与 2 都是公共祖先,而且谁也不是谁的祖先——两个都是最好的。文档原话说得直白:「both 1 and 2 are merge bases of A and B」。紧接一句:「Neither one is better than the other」。输出哪个,规范不承诺——原话是「it is unspecified which best one is output」,说的是不带 --all 的情形;--all 则把并列的都列出来。mini-git 不实现 --all,多候选时只按本章声明的取法给一个确定答案。
+
+这里埋着一个流传不广但值得清算的直觉:base 是两个分支里更早创建的那个。先替它说句公道话:日常绝大多数合并发生在「从主分支拉出特性分支」的形状里,分叉点恰好就是较晚创建那条分支的出生地。界面上又从来没人告诉过你 base 是谁,「拿更早的当底」猜起来八九不离十。恰好不成立的地方有两处。一处是定义层面的:第 6 章拆过了,分支只是贴在提交图上的 41 字节标签,「分支的创建时间」是标签文件的属性。base 则是两笔提交之间的图论关系,拿标签的生日去猜图的关系,两边根本不对口。另一处是实物层面的:菱形里 base 是那笔 merge 提交,比两条分支都晚出生;amend 之后旧祖先还躺在图上,却已不在任何一边的可达集里,连候选都不是。base 由图形状唯一决定,创建时间顶多是个弱相关的外围线索。
+
+mini-git 面对多候选时必须给出确定答案,取法一行说清:交集里 committer 时间戳最新的那笔;同刻并列时,取哈希字典序最小的那笔。日常图形里最好的候选唯一,这个取法与真 git 逐字符一致;criss-cross 里它钉死一个确定值,而真 git 不做承诺。代价也要说透:时间戳不是拓扑,第 4 章造过「子比父还早」的时钟倒挂,极端构造下时间戳最新的公共祖先可能不是最好的那条。这条简化连同取法,登记进差异附录。
+
+## fast-forward:不是选项,是结论
+
+三样零件齐了,现在回答开篇。设你站在 current 分支上,执行 merge incoming。三种结局的判定,全写在祖先判定的一张表里:
+
+| 图上的关系 | merge 的结局 |
+| --- | --- |
+| incoming 可达自 current(incoming 在 current 的可达集里) | Already up to date |
+| current 可达自 incoming(current 在 incoming 的可达集里) | Fast-forward |
+| 互不包含,两边各有对方没有的提交 | 造一笔双父的新提交 |
+
+第一种最好懂:要合进来的东西,你全都有了。第二种就是 fast-forward——本章第三个新词。**fast-forward——一方是另一方的祖先时,合并不需要任何新提交,只把当前分支的引用沿着图前移到对方尖端。**字面意思是「快进」,像拖进度条跳过没有新剧情的段落:两边的分叉根本不存在,你的历史是对方历史的开头一段。
+
+为什么前移指针就等价于合并?分两步看。current 可达自 incoming,意味着 current 的每一笔提交都在 incoming 的可达集里——你没有对方缺的东西。而快照模型下,一笔提交就是完整快照:把引用挪到 incoming 的尖端后,current 与 incoming 指向同一笔提交、同一棵树,内容一字不差。真要劳驾三方合并,算出来的结果也是这棵树。既然产物相同又无物可合,生成一笔内容与对方尖端相同的「合并提交」纯属多余——git 直接挪指针,这就是那行 Fast-forward 的全部机关。挪完指针,工作区与暂存区照例检成目标提交的样子,那是第 6 章 checkout 的老手艺;index 文件里的清单随检出刷新,第 5 章的三态对比拿新尖端重新量一遍——机制一行都不用改。
+
+第三种为什么必须造新提交,用可达性说最有劲。互不包含时,current 手里有 incoming 没有的提交。假如这时还硬前移指针,current 引用就离开了原来的尖端,那几笔独有提交顿时失去所有引用——正是第 6 章游离提交的处境,瞬间变成不可达对象。git 不肯替你默默丢历史,于是造一笔双父的 merge 提交,第一条边守住 current 的旧尖端,第二条边接上 incoming:两边的可达集都完整地挂在新尖端之下。谁也不丢,这是 merge 提交存在的理由。
+
+两个直觉顺路清算。其一,「fast-forward 是 git 的性能优化选项」。公道话:名字里带 fast,听感就像速度开关;真 git 确实还提供 --ff-only 与 --no-ff,长得像偏好设置;ff 时秒完成、无编辑器弹出,「快」的体感也真实。不成立的地方在方向:可行与否由图形状判死,git 别无选择;你能选的只是「可行时走不走」。--no-ff 不是关掉优化,是明明可以走捷径,偏要造一笔 merge 提交留个合并记录——它在改变历史形状,不在调节性能。其二,「merge 总会生成合并提交」。公道话:日常合并大多真生成了提交,教程画的合并示意图也全是菱形,merge 提交的存在感极强。反例就藏在最普通的操作里:拉分支后只在一边前进,另一边合它,行输出的是 Fast-forward,一笔新提交都没有——不是 git 偷懒,是这种形状下「无物可合」。**merge 生成不生成提交,不由 merge 说了算,由图说了算。**
+
+三种结局至此收进同一句话:git 判的不是「谁更新」,是图上的包含关系。这把尺子在 mini-git 里三行就能立起来,演练见。
+
+## 演练:从红到绿
+
+手术清单先交代,这一章是纯新增。新文件 src/graph.ts,住三个导出的函数:ancestorSet 算可达集,isAncestor 问祖先,mergeBase 找最近公共祖先。外加一个私有的 requireCommit,负责「读对象、验类型、拆字段」。新文件 tests/graph.test.ts,22 条。src/cli.ts 只在文件尾新增 cmdMergeBase,帮助文本加一段,switch 与 import 各一行,旧命令一行未动。七份旧测试一字未动,其余六个源文件一字未动。这一章也没有 Buffer,没有十六进制转储,连文件都不用摸——图论的章节,纸和铅笔就是开发工具。
+
+先立只会抛错的骨架。graph.ts 三个函数体一律抛「尚未实现」,cli 接好线。跑全量:
+
+```text
+# 用法示例 · 红的关键几行
+ × ancestorSet:可达集 > 链:从 C3 出发收到全部三代,起点自身也在集合里——「可达」含起点
+   → 尚未实现:ancestorSet
+ × mergeBase:最近公共祖先 > 菱形(双父 merge 后再分叉):mergeBase(D1, D2) = MERGE,唯一,不再退回 C1
+   → 尚未实现:mergeBase
+ × ff 判定:祖先关系换算成 merge 的三种结局 > 落后方合领先方 ⇒ fast-forward:dev 在 C1、main 在 C3……
+   → 尚未实现:isAncestor   ← 判定函数还没牙,先撞上的是它
+ × mini-git merge-base 命令 > 没有公共祖先报错;不存在的分支、一个或三个参数、不认识的开关,各报各的错
+   → expected [Function] to throw error including '公共祖先' but got '尚未实现:mergeBase'
+ Tests  22 failed | 126 passed (148)
+```
+
+22 条全红,红因清一色「尚未实现」。与第 7 章不同,本章没有一条只守参数关口的绿测试——连报错测试都要先造出两笔不相连的提交才测得到「无公共祖先」,关口在库不在壳。126 条旧测试全绿,公共行为没有回退。开始填肉。
+
+### ancestorSet:第 4 章的旧循环,收敛成集合
+
+```ts
+// src/graph.ts · ancestorSet
+export function ancestorSet(gitDir: string, head: string): Set<string> {
+  const seen = new Set<string>()
+  const queue = [head]
+  while (queue.length > 0) {
+    const hash = queue.shift()!
+    if (seen.has(hash)) {
+      continue // 双父两支汇合的提交会第二次进队:已收过,跳过
+    }
+    seen.add(hash)
+    queue.push(...requireCommit(gitDir, hash).parents)
+  }
+  return seen
+}
+```
+
+与 logWalk 摆在一起看,同一个骨架:队列打头,seen 记名,parents 进队。差别只有两处。logWalk 把提交拆成 LogEntry 收进数组、最后按时间戳排序;ancestorSet 只收哈希、不排序——集合不关心次序,只回答在不在。logWalk 要展示消息与作者所以留全字段;这里后续三步都只拿哈希说事,拆开便浪费。那个 continue 守的是「每个提交只收一次」:菱形图里两支都汇到 C1,C1 会被推入队列两次,第二次撞上 seen 就跳过。提交图无环,这个守卫不是防死循环,是防重复记账。
+
+### isAncestor 与 mergeBase:问话与挑人
+
+```ts
+// src/graph.ts · isAncestor 与 mergeBase
+/** ancestor 是不是 descendant 的祖先:沿父边从 descendant 往回走,走得到就是;相等也算——自己可达自己。 */
+export function isAncestor(gitDir: string, ancestor: string, descendant: string): boolean {
+  return ancestorSet(gitDir, descendant).has(ancestor)
+}
+
+/**
+ * 最近公共祖先:两边可达集的交集里,committer 时间戳最新的那笔;同刻取哈希字典序最小者;交为空返回 null。
+ * 从简口径(登记差异附录):真 git 先按「不被其他候选可达」筛出全部最好候选,多候选时 unspecified 挑一个;
+ * mini-git 直接按时间戳挑——通常与图论取法一致,时钟倒挂的极端构造下可能偏(第 4 章见过倒挂),但永远确定。
+ */
+export function mergeBase(gitDir: string, a: string, b: string): string | null {
+  const bSide = ancestorSet(gitDir, b)
+  const common = [...ancestorSet(gitDir, a)].filter((h) => bSide.has(h))
+  if (common.length === 0) {
+    return null
+  }
+  const stamp = (hash: string): number => requireCommit(gitDir, hash).committer.timestamp
+  return common.sort((x, y) => stamp(y) - stamp(x) || (x < y ? -1 : 1))[0]
+}
+```
+
+isAncestor 一行正文:把「是不是祖先」翻译成「在不在可达集里」。注意参数方向与真 git 的 --is-ancestor 对齐——问的是前者在不在后者的可达集里,反着问答案翻面。mergeBase 两步:先取交集,交集空返回 null,对应两段不相连的历史;再按声明过的取法挑人。排序键里那个 `||` 是平手分支:时间戳相同就比哈希字典序,让 criss-cross 的并列候选也落进同一个确定值。
+
+命令层是旧零件的再会面,没有新机制:
+
+<details>
+<summary>点开看:cmdMergeBase 函数体(src/cli.ts;双口径参数与从简口径见下方文字)。</summary>
+
+```ts
+// src/cli.ts · cmdMergeBase
+function cmdMergeBase(cwd: string, args: string[]): string {
+  const usage = '用法:mini-git merge-base [--is-ancestor] <提交A> <提交B>;参数收分支名或 40 位提交名'
+  const flags = args.filter((a) => a.startsWith('-'))
+  const rest = args.filter((a) => !a.startsWith('-'))
+  if (flags.length > 1 || (flags.length === 1 && flags[0] !== '--is-ancestor') || rest.length !== 2) {
+    throw new Error(`${usage};恰好两个提交参数,至多一个 --is-ancestor 开关`)
+  }
+  const gitDir = requireGitDir(cwd)
+  const resolveTarget = (target: string): string => {
+    if (HASH_RE.test(target)) {
+      return target
+    }
+    const found = readRef(gitDir, `refs/heads/${target}`)
+    if (found === null) {
+      throw new Error(`merge-base:'${target}' 既不是 40 位提交名,也不是已存在的分支`)
+    }
+    return found
+  }
+  const [a, b] = rest.map(resolveTarget)
+  if (flags[0] === '--is-ancestor') {
+    return isAncestor(gitDir, a, b) ? '是' : '否'
+  }
+  const base = mergeBase(gitDir, a, b)
+  if (base === null) {
+    throw new Error(`merge-base:'${a.slice(0, 7)}' 与 '${b.slice(0, 7)}' 没有公共祖先——两段不相连的历史,给不出 base`)
+  }
+  return base
+}
+```
+
+参数收分支名或 40 位哈希,与第 6 章 checkout 同款的双口径:是哈希就直用,是名字就去 refs/heads 下查。--is-ancestor 把「是/否」当输出,没有公共祖先时抛一行可读的错。真 git 这两处分别用退出码 0/1 与静默退出 1 表达;mini-git 的命令层只产文本,故改用文字。两条从简口径都登记差异附录。
+
+</details>
+
+跑全量门槛:
+
+```text
+# 用法示例 · 全量门槛
+$ pnpm typecheck        ← 无输出即 0 错误
+$ pnpm test
+ ✓ tests/smoke.test.ts (3 tests)
+ ✓ tests/objects.test.ts (18 tests)
+ ✓ tests/diff.test.ts (20 tests)
+ ✓ tests/trees.test.ts (19 tests)
+ ✓ tests/index.test.ts (25 tests)
+ ✓ tests/refs.test.ts (19 tests)
+ ✓ tests/commits.test.ts (22 tests)
+ ✓ tests/graph.test.ts (22 tests)
+
+ Test Files  8 passed (8)
+      Tests  148 passed (148)
+```
+
+22 条新测试分五组铺开。可达集四条:链上三代、分叉交集、双父不重收、坏起点报错。祖先判定四条:方向、自反、兄弟不算、双父两条边任一作证。merge-base 八条:链上 base 即被包含方本身、分叉点、相等、菱形唯一、穿过 merge 边的斜交、criss-cross 两个变体(时间戳取法与同刻字典序)、不相连返回 null。ff 判定三条:测试里立了一个 mergeOutcome 小函数,把「在谁身上合谁」翻成三种结局。落后合领先得 fast-forward;领先合落后与相等得 already-up-to-date;兄弟分叉只能真合并。命令三条:分支与哈希双口径、--is-ancestor 三问、报错与用法。金样沿用第 4 章那套:同 fixture、同时间戳,C1、SIDE_A、SIDE_B、MERGE 的名字一个都没变——图还是那张图,只是换了问题。
+
+## 亲手验证:先猜,再跑
+
+开新实验场,还是那套三层 fixture:
+
+```bash
+# 用法示例 · 建 merge-lab:一笔提交,一条 dev 分支,main 再前进一笔
+cd ..                                  # 来到课程根(mini-git-ts-course/)
+mkdir merge-lab && cd merge-lab
+MG=../companion/node_modules/.bin/tsx
+CLI=../companion/src/cli.ts
+$MG $CLI init
+printf 'hello world\n' > a.txt
+printf 'note\n' > lib.txt
+mkdir -p lib/deep
+printf 'util\n' > lib/util.txt
+printf 'hello world\n' > lib/deep/leaf.txt
+$MG $CLI add a.txt lib.txt lib/deep/leaf.txt lib/util.txt
+MINI_GIT_TIMESTAMP=1700000000 $MG $CLI commit -m '第一次提交'
+$MG $CLI branch dev
+printf 'hello world\nsecond line\n' > a.txt
+printf 'b\n' > b.txt
+$MG $CLI add a.txt b.txt
+MINI_GIT_TIMESTAMP=1700003600 $MG $CLI commit -m '第二次提交'
+```
+
+此刻的图:main 在第二笔,dev 还停在第一笔。第一猜,merge-base 的输出。动手前先押:输出的是 main 的新哈希、dev 的哈希,还是别的什么?三个都写下,再跑:
+
+```bash
+# 用法示例 · 分叉后的 merge-base
+$MG $CLI merge-base main dev
+# bf05977bd740a2b2fa530935475587501704d0cc
+$MG $CLI merge-base dev main
+# bf05977bd740a2b2fa530935475587501704d0cc   ← 同一个答案,交集不关心参数顺序
+```
+
+对答案:两问输出同一个哈希——dev 指着的那笔,第一笔提交。这不是巧合是交换律:交集不关心谁先谁后。main 的尖端与 dev 的尖端都不是 base,base 是两边可达集的交集里最好的那笔。请真 git 来验货,它读的是同一批引用文件:
+
+```bash
+# 用法示例 · 真 git 对拍同一个 base
+git -c core.autocrlf=false merge-base main dev
+# bf05977bd740a2b2fa530935475587501704d0cc
+git merge-base --is-ancestor dev main; echo $?
+# 0                                     ← dev 的尖端是 main 的祖先:落后方
+git merge-base --is-ancestor main dev; echo $?
+# 1                                     ← main 的尖端不是 dev 的祖先
+```
+
+第二猜,三种结局的换算。现在不跑 merge(mini-git 还没有 merge 命令,那是下一章的活),用尺子算。押两个答案:在 main 上合 dev,是哪种结局？在 dev 上合 main 呢？然后跑 mini-git 的问话:
+
+```bash
+# 用法示例 · 同一把尺子,问两个方向
+$MG $CLI merge-base --is-ancestor dev main    # dev 在 main 的怀里吗?
+# 是
+$MG $CLI merge-base --is-ancestor main dev    # main 在 dev 的怀里吗?
+# 否
+$MG $CLI merge-base --is-ancestor main main   # 自己在自己怀里吗?
+# 是
+```
+
+对答案:在 main 上合 dev——要合的 dev 已在 main 可达集里,Already up to date；在 dev 上合 main——dev 可达自 main,Fast-forward。同一张图,两个方向,两种结局,尺子只有一把。「自己问自己」答是,就是那个自反推论在托底——两个引用指向同一笔提交时,merge 的一句 Already up to date 走的正是它。
+
+第三猜,第 6 章那笔账的行刑现场。这个实验要借真 git 的眼睛(mini-git 没有 fsck 与 gc),先照本章开头造一笔游离提交:checkout 第一笔进入 detached,改 a.txt 提交一笔,再切回 main。动手前押:git fsck --unreachable 会列几行?一行,还是三行?押完再跑:
+
+```bash
+# 用法示例 · 游离提交的生死簿(借真 git 的眼睛)
+$MG $CLI checkout bf05977bd740a2b2fa530935475587501704d0cc
+printf 'detached edit\n' > a.txt
+$MG $CLI add a.txt
+MINI_GIT_TIMESTAMP=1700007200 $MG $CLI commit -m '游离的提交'
+$MG $CLI checkout main
+git -c core.autocrlf=false fsck --unreachable
+# unreachable blob 4b4fa786f90e4befb69666996a23c31d0a192085
+# unreachable tree edad9374e7341c91278090d831674c2ba445f8d2
+# unreachable commit 3bb651345a4e1019d4b2ec84650728b3763b4ef2
+```
+
+对答案:三行,不是一行。一笔提交拖着它那棵 tree 与改过的 blob 一起成了 unreachable——可达性从引用出发,沿 commit 的 tree 字段一路摊到叶子,整条家眷一起判。这就是「没有引用兜底的提交」的全部处境:对象都在,cat-file 读得到,但没有任何根指路。再往前走一步,亲眼看 gc 行刑:
+
+```bash
+# 用法示例 · gc 行刑(只在实验场跑,别对真项目用 --prune=now)
+git gc --prune=now --quiet
+git fsck --unreachable                     # 无输出:三件对象全没了
+git cat-file -t 3bb651345a4e1019d4b2ec84650728b3763b4ef2
+# fatal: git cat-file: could not get object info
+```
+
+哈希还在你终端里,对象已经不在库里了——「只能靠哈希找回」原来还有下半句:窗口期有限。真仓库里这笔提交通常还死不了:reflog 记着 HEAD 的每次移动,gc 还有默认两周的宽限期,所以真 git 里找回游离提交往往还有 30 天以上。mini-git 不写 reflog,这里 --prune=now 一刀见血。也正因为如此,这条命令只许在实验场跑。
+
+第四猜,定向破坏。指认一处:src/graph.ts 的 ancestorSet,在 return seen 之前插一行 `seen.delete(head)`——把起点自己扔出可达集。其余全部不碰。先写下预测:22 条新测试红几条?菱形那条红不红?「落后方合领先方」那条呢?criss-cross 呢?跑。
+
+对答案:恰好 9 条红,13 条绿。倒下的分三类。可达集那三条直接红:链上少一笔、分叉少一笔、双父集合从 4 缩到 3——少的就是起点自己。自反与相等那一族全塌:「每笔提交都是自己的祖先」变 false,mergeBase(C1, C1) 变 null,「领先方合落后方」被误判成真合并,CLI 的「自己问自己」答出否。最扎眼的是第三类:mergeBase(C3, C2) 不再是 C2,退成了 C1;斜交那条也从 SIDE_A 退成 C1。起点不在自己的可达集里,「被包含方的 base 就是它本身」这个等价就断了——base 沿 parent 边多倒退了一步,错得安静而深远。不红的同样有话讲。菱形那条,交集中本就只有 MERGE 算候选,D1、D2 互不为对方起点,毫发无伤。criss-cross 两条,X1、X2 都不是起点,取法照旧。「落后方合领先方」那条,C1 在 C3 的可达集里这件事不依赖 C3 自身入集——它守的是真祖先方向。把那行删掉再跑,148 条全绿,复原确认。
+
+## 收束:merge 判的是包含,不是新旧
+
+Fast-forward 的胆气来自包含:current 可达自 incoming——你的历史是对方的开头一段,挪指针就等于合并,一笔新提交都不必造。造新提交,是因为互不包含——硬前移会让 current 的独有提交失去引用,git 不肯默默丢历史,只能造双父提交把两边的可达集都挂住。Already up to date,是要合的东西已在怀里,相等只是它的退化情形。git 从头到尾没看过时间戳,没比过谁更新——merge 的判定,从头到尾只是把可达集这一个集合问了两遍。
+
+本章的收成可以数出来。三个新词:可达性、最近公共祖先、fast-forward。一个新文件 src/graph.ts,ancestorSet、isAncestor、mergeBase 三个函数。一条命令 merge-base,带 --is-ancestor 一把副尺,与真 git 逐字符对拍过。第 6 章那笔「游离提交的最终命运」也结清了:判死的标准是从任何根走不到,行刑的是 gc,宽限两周,reflog 是真 git 多出的一层保命符。另有几条从简口径已在正文就地声明:多候选按时间戳取、--is-ancestor 用文字作答、无公共祖先抛错不静默、不实现 --all,差异附录集中登记。
+
+下一站就在眼前:第 9 章的三方合并,裁判要的 base 就是 mergeBase 的返回值,判定表里「互不包含」的那个格子,该填上真合并的算法了。更远处再埋一颗你已见过预告的雷:push 偶尔吃的一记「non-fast-forward」拒绝。远端拿它手里的旧尖端与你的新尖端做的那次祖先判定,用的正是今天这把 isAncestor。同一把尺子,本地量 merge,远端量 push;到讲同步的那一章,让它再上岗一次。
+
+三问离开,图全是新的,理是旧的。每题末尾各附一条提示,展开前先自己走一遍。
+
+<details>
+<summary>1. 同一个仓库,你在 main 上合 dev 得到 Already up to date,同事在 dev 上合 main 得到 Fast-forward。两次输出不一致,谁的 git 坏了?</summary>
+
+都没坏。两次 merge 站的方向不同:main 的可达集包含 dev 的尖端,这同一事实读到两个方向里,合 dev 进 main 是「要合的已在怀里」,合 main 进 dev 是「我是对方的开头一段」。判定表是同一张,只是 current 与 incoming 换了座位。要是哪天两边输出颠倒——main 合 dev 变成 Fast-forward——那才说明图形状变了,比如 dev 上多了新提交。回查「fast-forward:不是选项,是结论」的判定表。
+</details>
+
+<details>
+<summary>2. 反事实:假如 gc 的判死标准改成「对象年龄超过 90 天」,而不是无可达性。一个运行了三年的活跃仓库会发生什么?这条标准又为什么荒谬?</summary>
+
+历史被成批清掉:三年的仓库,根提交与绝大部分中间提交都超过 90 天。clone 拿不到完整历史,checkout 旧版本直接报对象不存在,切换分支随机坏死——引用指着的对象没了。荒谬之处在于把「年龄」当成了「有用」:可达性标准量的是有没有根指路,根指着的对象哪怕一万岁也必须活;没有根的对象哪怕五分钟前才写,也只是垃圾。年龄与生死在图上没有因果关系。回查「对象库的生死簿」一节。
+</details>
+
+<details>
+<summary>3. 一张新图:A←B 一条链,B 分出 C 与 D 两支,E 是合并 C、D 的双父提交。笔算三个答案:merge-base(C, D) 是谁？merge-base(E, D) 是谁？在 D 上 merge E,走哪种结局？</summary>
+
+merge-base(C, D) 是 B:C、D 的公共祖先只有 A 与 B,B 是 A 的后代,更近,把 A 比下去。merge-base(E, D) 是 D 本身:D 在 E 的可达集里(经 E 的第二条 parent 边),被包含方的 base 就是它自己。在 D 上 merge E 是 Fast-forward:D 可达自 E,而 E 不在 D 的可达集里,「current 可达自 incoming」成立,前移指针,无新提交。三问共用一支铅笔:每个答案都是一次可达集的圈划。回查「merge-base」与「fast-forward」两节。
+</details>
