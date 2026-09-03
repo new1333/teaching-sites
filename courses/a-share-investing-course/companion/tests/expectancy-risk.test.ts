@@ -230,8 +230,8 @@ describe('compoundCurve：期望值复利曲线（第 22 章处置效应演算�
   })
 
   it.each([
-    ['步数为 0', () => compoundCurve(ok, 0)],
-    ['步数非整数', () => compoundCurve(ok, 3.5)],
+    ['步数为 0', () => compoundCurve(PAIN, 0)],
+    ['步数非整数', () => compoundCurve(PAIN, 3.5)],
     ['非法 stats', () => compoundCurve({ winRate: 1.5, avgWin: 0.1, avgLoss: 0.05 }, 10)],
   ])('%s', (_name, fn) => {
     expect(fn).toThrow()

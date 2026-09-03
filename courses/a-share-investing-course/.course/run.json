@@ -1,0 +1,40 @@
+{
+  "schema_version": 2,
+  "skill": "vitepress-teaching-site",
+  "status": "complete",
+  "phase": "delivery",
+  "language": "zh",
+  "outline_revision": 1,
+  "next_chapter": null,
+  "completed_chapters": [
+    "what-moves-price",
+    "order-journey",
+    "candle-anatomy",
+    "candle-rendering",
+    "single-patterns-wicks",
+    "single-patterns-doji",
+    "multi-patterns-two",
+    "multi-patterns-three",
+    "pattern-stats",
+    "trend-anatomy",
+    "moving-averages",
+    "volume-analysis",
+    "support-resistance",
+    "chip-distribution",
+    "reversal-structures",
+    "macd",
+    "rsi-kdj",
+    "bollinger",
+    "fundamentals-peek",
+    "expectancy-risk",
+    "backtest-engine",
+    "trading-system"
+  ],
+  "degraded_chapters": [],
+  "blocked_chapters": [],
+  "skipped_interactions": ["calibration", "outline-confirmation"],
+  "last_commit": {
+    "kind": "assembly",
+    "id": "final-check 清零 + 单课 build + 聚合 build（2026-09-04 续跑收口）"
+  }
+}
