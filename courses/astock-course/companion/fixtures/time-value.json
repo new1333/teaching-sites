@@ -1,0 +1,148 @@
+{
+  "chapter": "01-time-value",
+  "title": "你的钱正在变少：时间价值、通胀与复利",
+  "as_of": "2026-09",
+  "note": "第 1 章 worksheet 的题目输入与唯一期望答案。除存款挂牌利率外，所有利率与通胀率均为教学示意假设，不构成任何真实产品的收益承诺。",
+  "conventions": {
+    "rate_unit": "利率与通胀率以小数存储（0.03 = 3%）",
+    "money_rounding": "金额四舍五入保留 2 位小数（src/round.ts round2）",
+    "rate_rounding": "年化收益率按百分数保留 2 位小数（即小数保留 4 位）",
+    "real_purchasing_power": "本金 ×（1 + 年收益率）^年数 ÷（1 + 年通胀率）^年数，一步算完最后舍入",
+    "annualized": "年化收益率 =（1 + 总收益）^(1/年数) − 1"
+  },
+  "rate_anchor": {
+    "deposit_1y": 0.0095,
+    "as_of": "2025-05-20",
+    "source": "六大行一年期整存整取挂牌利率 0.95%（人民网 2025-05-20 报道）；正文提示读者以银行最新挂牌为准"
+  },
+  "cases": [
+    {
+      "id": "deposit-1y",
+      "label": "钩子前菜：1 万元存一年定期（挂牌利率，通胀示意 2%）",
+      "principal": 10000,
+      "annual_rate": 0.0095,
+      "years": 1,
+      "annual_inflation": 0.02,
+      "expected": {
+        "future_value": 10095,
+        "real_purchasing_power": 9897.06,
+        "simple_future_value": null
+      }
+    },
+    {
+      "id": "hook-2004-2024",
+      "label": "钩子：10 万元存 20 年（利率示意 2.25%，通胀示意 3%）",
+      "principal": 100000,
+      "annual_rate": 0.0225,
+      "years": 20,
+      "annual_inflation": 0.03,
+      "expected": {
+        "future_value": 156050.92,
+        "real_purchasing_power": 86401.61,
+        "simple_future_value": null
+      }
+    },
+    {
+      "id": "A",
+      "label": "演练跟算：1 万元、3%、10 年、通胀 2%",
+      "principal": 10000,
+      "annual_rate": 0.03,
+      "years": 10,
+      "annual_inflation": 0.02,
+      "expected": {
+        "future_value": 13439.16,
+        "real_purchasing_power": 11024.8,
+        "simple_future_value": 13000
+      }
+    },
+    {
+      "id": "A-inflation-zero",
+      "label": "变体：A 的通胀归零（反事实世界）",
+      "principal": 10000,
+      "annual_rate": 0.03,
+      "years": 10,
+      "annual_inflation": 0,
+      "expected": {
+        "future_value": 13439.16,
+        "real_purchasing_power": 13439.16,
+        "simple_future_value": null
+      }
+    },
+    {
+      "id": "B",
+      "label": "验证自算：5 万元、2%、30 年、通胀 2.5%",
+      "principal": 50000,
+      "annual_rate": 0.02,
+      "years": 30,
+      "annual_inflation": 0.025,
+      "expected": {
+        "future_value": 90568.08,
+        "real_purchasing_power": 43177.67,
+        "simple_future_value": null
+      }
+    },
+    {
+      "id": "C",
+      "label": "验证自算：10 万元、6%、20 年、通胀 2%",
+      "principal": 100000,
+      "annual_rate": 0.06,
+      "years": 20,
+      "annual_inflation": 0.02,
+      "expected": {
+        "future_value": 320713.55,
+        "real_purchasing_power": 215831.02,
+        "simple_future_value": 220000
+      }
+    },
+    {
+      "id": "no-compound-30y",
+      "label": "反事实：10 万元、6%、30 年，复利 vs 单利（通胀不计）",
+      "principal": 100000,
+      "annual_rate": 0.06,
+      "years": 30,
+      "annual_inflation": 0,
+      "expected": {
+        "future_value": 574349.12,
+        "real_purchasing_power": 574349.12,
+        "simple_future_value": 280000
+      }
+    }
+  ],
+  "annualization": [
+    {
+      "id": "plan-jia",
+      "label": "方案甲：3 年总共 +30%",
+      "total_return": 0.3,
+      "years": 3,
+      "expected_annualized": 0.0914
+    },
+    {
+      "id": "plan-yi",
+      "label": "方案乙：1 年 +10%",
+      "total_return": 0.1,
+      "years": 1,
+      "expected_annualized": 0.1
+    },
+    {
+      "id": "plan-bing",
+      "label": "方案丙：5 年总共 +60%",
+      "total_return": 0.6,
+      "years": 5,
+      "expected_annualized": 0.0986
+    },
+    {
+      "id": "plan-ding",
+      "label": "自查用：2 年总共 +8%",
+      "total_return": 0.08,
+      "years": 2,
+      "expected_annualized": 0.0392
+    },
+    {
+      "id": "plan-wu",
+      "label": "自查用：5 年总共 +21%",
+      "total_return": 0.21,
+      "years": 5,
+      "expected_annualized": 0.0389
+    }
+  ]
+}
