@@ -8,13 +8,14 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { buildCh01 } from './datasets/ch01-time-value'
+import { buildCh04 } from './datasets/ch04-kline'
 
 const OUT = join(process.cwd(), 'docs', 'assets', 'data')
 
 type Dataset = { file: string; data: unknown }
 
 // 逐章注册表：章节写作者在对应事务中在此追加一行
-const DATASETS: Array<() => Dataset> = [buildCh01]
+const DATASETS: Array<() => Dataset> = [buildCh01, buildCh04]
 
 function stableStringify(value: unknown): string {
   return JSON.stringify(value, null, 2) + '\n'

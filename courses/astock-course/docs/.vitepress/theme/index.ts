@@ -3,11 +3,13 @@
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
 import ChartCanvas from './components/ChartCanvas.vue'
+import KLineChart from './components/KLineChart.vue'
 import './custom.css'
 
 export default {
   extends: DefaultTheme,
   enhanceApp({ app }) {
     app.component('ChartCanvas', ChartCanvas)
+    app.component('KLineChart', KLineChart)
   },
 } satisfies Theme

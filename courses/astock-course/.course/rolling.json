@@ -57,6 +57,29 @@
         { "command": "node scripts/course-lint.mjs … 03-market-rules.md", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "k-line",
+      "file": "docs/04-k-line.md",
+      "status": "complete",
+      "summary": "第4章（canvas-app）建立4块积木：K线、阳线与阴线、上影线与下影线、成交量。验证物：market.ts固定种子合成行情（六类可教特征18条测试锁定）+kline-demo.json+KLineChart组件（40根先猜后揭晓20根、悬停读四价量、平盘灰色与阳线判定对齐）。四价成因从撮合时间线组装（开盘竞价+连续竞价+收盘竞价），调用11块旧积木（工具箱三组）。评审阻断2处（收盘价机理与前章冲突、量能证据句与数据矛盾）已修。gates全绿，build过，lint 0。",
+      "artifacts": [
+        "companion/src/market.ts",
+        "companion/src/datasets/ch04-kline.ts",
+        "companion/tests/market.test.ts",
+        "docs/assets/data/kline-demo.json",
+        "docs/.vitepress/theme/components/KLineChart.vue",
+        "docs/04-k-line.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm export ×2（逐字节一致）", "result": "passed" },
+        { "command": "pnpm docs:build", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs … 04-k-line.md", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

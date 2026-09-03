@@ -16,6 +16,14 @@
       "target": "divergence",
       "what": "佣金示例值（万分之2.5、单笔最低5元）为课程假设，实际以开户券商合同为准；两融、大宗交易、打新等高级机制不在课程范围（正文成本节声明+收束括注导航已留）",
       "status": "open"
+    },
+    {
+      "id": "prom-k-line-synthetic-data",
+      "from": "k-line",
+      "from_n": 4,
+      "target": "divergence",
+      "what": "K线教学数据为固定种子（42）合成的示意行情（D1-D60），与任何真实个股无关；正文开篇/演练图注/收束三处声明，去向括注已留",
+      "status": "open"
     }
   ]
 }
