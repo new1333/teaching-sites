@@ -37,6 +37,26 @@
         { "command": "node scripts/course-lint.mjs … 02-stock-nature.md", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "market-rules",
+      "file": "docs/03-market-rules.md",
+      "status": "complete",
+      "summary": "第3章（worksheet）建立6块积木：集合竞价、T+1、涨跌停板、印花税、佣金、过户费。验证物：costs.ts纯函数+market-rules.json 9题（3成本/2涨跌停/4时点）+12条测试互锁。读者能用15:00分界+交易日历+T+1三步判定任意委托归属与最早可卖日，用前收盘×(1±幅度)算涨跌停价，合出五笔完整成本。评审阻断1（T+1法条依据为1998版证券法，现行载体是交易所规则）已修，bible/正文/注释三处同口径改。gates全绿，lint 0。",
+      "artifacts": [
+        "companion/src/costs.ts",
+        "companion/fixtures/market-rules.json",
+        "companion/tests/costs.test.ts",
+        "docs/03-market-rules.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm export ×2（逐字节一致）", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs … 03-market-rules.md", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

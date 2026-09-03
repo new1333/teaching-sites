@@ -8,6 +8,14 @@
       "target": "divergence",
       "what": "「实际收益率≈名义收益率−通胀率」为近似式，精确式与适用条件登记差异附录（正文通货膨胀节已按此口径引用附录「简化与差异清单」）",
       "status": "open"
+    },
+    {
+      "id": "prom-market-rules-commission-assumption",
+      "from": "market-rules",
+      "from_n": 3,
+      "target": "divergence",
+      "what": "佣金示例值（万分之2.5、单笔最低5元）为课程假设，实际以开户券商合同为准；两融、大宗交易、打新等高级机制不在课程范围（正文成本节声明+收束括注导航已留）",
+      "status": "open"
     }
   ]
 }

@@ -5,10 +5,11 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 3,
+  "next_chapter": 4,
   "completed_chapters": [
     "time-value",
-    "stock-nature"
+    "stock-nature",
+    "market-rules"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
