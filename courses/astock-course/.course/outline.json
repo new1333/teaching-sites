@@ -16,12 +16,20 @@
       {
         "kind": "compliance",
         "note": "课程内容仅用于学习交流，不构成任何投资建议；不荐股、不承诺收益、不代客理财",
-        "surfaces": ["docs/index.md", "docs/reference-table.md", "docs/15-your-system.md"]
+        "surfaces": [
+          "docs/index.md",
+          "docs/reference-table.md",
+          "docs/15-your-system.md"
+        ]
       },
       {
         "kind": "timeliness",
         "note": "费率、税率、涨跌幅、存款利率等数字有时效，正文首现处标注 as_of 与权威来源，读者以最新公告为准",
-        "surfaces": ["docs/about.md", "docs/03-market-rules.md", "docs/07-valuation-multiples.md"]
+        "surfaces": [
+          "docs/about.md",
+          "docs/03-market-rules.md",
+          "docs/07-valuation-multiples.md"
+        ]
       }
     ],
     "presentation": {
@@ -54,23 +62,47 @@
           "hook": {
             "kind": "现象观察",
             "point": "2004年把10万元存进银行，2024年取出时数字变多了，能买的东西却变少了——钱到底是多了还是少了",
-            "phenomena": ["存款", "购买力"]
+            "phenomena": [
+              "存款",
+              "购买力"
+            ]
           },
-          "new_concepts": ["货币时间价值", "复利", "通货膨胀", "实际购买力", "收益率"],
-          "misconceptions": ["银行存款没有风险，所以存款不亏钱", "收益率高的方案一定更好，不用看年限"],
+          "new_concepts": [
+            "货币时间价值",
+            "复利",
+            "通货膨胀",
+            "实际购买力",
+            "收益率"
+          ],
+          "misconceptions": [
+            "银行存款没有风险，所以存款不亏钱",
+            "收益率高的方案一定更好，不用看年限"
+          ],
           "structure": "默认结构：工具箱省略（首章无积木）→ 钩子 → 原理 → 演练 → 验证 → 收束",
           "milestone": "复利与购买力计算函数 + 正文「存款缩水与复利曲线」双曲线图（数据由 companion 导出）",
           "milestone_verify": "3 组本金/利率/年限的组合，读者先笔算终值与实际购买力再核对期望答案；曲线图数据固定种子导出两次逐字节一致",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "「实际收益率≈名义收益率−通胀率」为近似式，精确式与适用条件登记差异附录" }
+            {
+              "target": "divergence",
+              "what": "「实际收益率≈名义收益率−通胀率」为近似式，精确式与适用条件登记差异附录"
+            }
           ],
           "depends_on": [],
           "uses": [],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm test 与 pnpm export 通过；compound-vs-inflation.json 连续导出两次逐字节一致" },
-            { "kind": "prose", "criterion": "用「没有复利会怎样」的反事实解释指数增长来源，读者能复述实际购买力的换算式" },
-            { "kind": "source", "criterion": "示例利率与通胀率标注为教学示意值；一年期存款利率引用 authority 记录的挂牌值与日期" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm test 与 pnpm export 通过；compound-vs-inflation.json 连续导出两次逐字节一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用「没有复利会怎样」的反事实解释指数增长来源，读者能复述实际购买力的换算式"
+            },
+            {
+              "kind": "source",
+              "criterion": "示例利率与通胀率标注为教学示意值；一年期存款利率引用 authority 记录的挂牌值与日期"
+            }
           ]
         },
         {
@@ -82,20 +114,50 @@
           "hook": {
             "kind": "数据反差",
             "point": "一家年年赚钱的公司，股价却能在同一年里被腰斩、几年后又翻倍——市场到底在给什么定价",
-            "phenomena": ["腰斩", "翻倍"]
+            "phenomena": [
+              "腰斩",
+              "翻倍"
+            ]
           },
-          "new_concepts": ["股票", "股权", "市值", "盈利", "估值"],
-          "misconceptions": ["股票是击鼓传花的筹码，赚的都是别人亏的钱", "股价跌了就是公司不行了"],
+          "new_concepts": [
+            "股票",
+            "股权",
+            "市值",
+            "盈利",
+            "估值"
+          ],
+          "misconceptions": [
+            "股票是击鼓传花的筹码，赚的都是别人亏的钱",
+            "股价跌了就是公司不行了"
+          ],
           "structure": "默认结构（无演练章）：钩子 → 原理 → 推演 → 解释检查 → 收束",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["time-value"],
-          "uses": ["复利", "收益率"],
+          "depends_on": [
+            "time-value"
+          ],
+          "uses": [
+            "复利",
+            "收益率",
+            "货币时间价值",
+            "通货膨胀",
+            "实际购买力"
+          ],
           "acceptance": [
-            { "kind": "experience", "criterion": "读者能用自己的一句话向外行解释「你赚的是谁的钱」，并举例区分盈利贡献与估值贡献" },
-            { "kind": "prose", "criterion": "用「股东剩余索取权」推出收益两来源，并以反例证伪「零和博弈」误区" },
-            { "kind": "source", "criterion": "不引用任何虚构统计数字；长期回报来自盈利的论证由推导与公开常识完成" }
-          ]
+            {
+              "kind": "experience",
+              "criterion": "读者能用自己的一句话向外行解释「你赚的是谁的钱」，并举例区分盈利贡献与估值贡献"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用「股东剩余索取权」推出收益两来源，并以反例证伪「零和博弈」误区"
+            },
+            {
+              "kind": "source",
+              "criterion": "不引用任何虚构统计数字；长期回报来自盈利的论证由推导与公开常识完成"
+            }
+          ],
+          "verification": "none"
         }
       ]
     },
@@ -112,23 +174,49 @@
           "hook": {
             "kind": "现象观察",
             "point": "上午9:20挂出的买单，9:25集合竞价结束才知道成没成；当天买的股票，下午怎么点卖出都是废单",
-            "phenomena": ["废单", "集合竞价"]
+            "phenomena": [
+              "废单",
+              "集合竞价"
+            ]
           },
-          "new_concepts": ["集合竞价", "T+1", "涨跌停板", "印花税", "佣金", "过户费"],
-          "misconceptions": ["佣金是股票交易唯一的成本", "买卖股票都要交印花税", "跌停放量大开就是反转信号"],
+          "new_concepts": [
+            "集合竞价",
+            "T+1",
+            "涨跌停板",
+            "印花税",
+            "佣金",
+            "过户费"
+          ],
+          "misconceptions": [
+            "佣金是股票交易唯一的成本",
+            "买卖股票都要交印花税",
+            "跌停放量大开就是反转信号"
+          ],
           "structure": "词表开局（6 个新概念挂词表）→ 钩子 → 竞价与T+1 → 涨跌停 → 成本 → 演练 → 验证 → 收束",
           "milestone": "交易成本计算函数 + 涨跌停价计算 + 下单时点判定清单（fixtures 期望答案）",
           "milestone_verify": "3 道完整成本题、2 道涨跌停价题、4 个下单时点题，读者先笔算再逐题核对唯一答案",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "佣金示例值（万2.5、单笔最低5元）为课程假设，实际以券商合同为准；两融、大宗交易、打新等高级机制不在课程范围" }
+            {
+              "target": "divergence",
+              "what": "佣金示例值（万2.5、单笔最低5元）为课程假设，实际以券商合同为准；两融、大宗交易、打新等高级机制不在课程范围"
+            }
           ],
           "depends_on": [],
           "uses": [],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm test（costs fixtures）通过，每道题输入确定、答案唯一" },
-            { "kind": "prose", "criterion": "用「集合竞价最大成交量原则」解释开盘价如何产生，并证伪「佣金是唯一成本」" },
-            { "kind": "source", "criterion": "印花税、过户费、涨跌幅限制引用 authority_docs，正文标注生效日期（含2026-07主板ST统一为10%的新规）" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm test（costs fixtures）通过，每道题输入确定、答案唯一"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用「集合竞价最大成交量原则」解释开盘价如何产生，并证伪「佣金是唯一成本」"
+            },
+            {
+              "kind": "source",
+              "criterion": "印花税、过户费、涨跌幅限制引用 authority_docs，正文标注生效日期（含2026-07主板ST统一为10%的新规）"
+            }
           ]
         },
         {
@@ -141,23 +229,53 @@
           "hook": {
             "kind": "现象观察",
             "point": "同样一根大阳线，前一天放量、这一天缩量，背后是两种完全相反的故事",
-            "phenomena": ["大阳线", "放量", "缩量"]
+            "phenomena": [
+              "大阳线",
+              "放量",
+              "缩量"
+            ]
           },
-          "new_concepts": ["K线", "阳线与阴线", "上影线与下影线", "成交量"],
-          "misconceptions": ["阳线代表第二天还会涨", "影线越长越危险，不分位置"],
+          "new_concepts": [
+            "K线",
+            "阳线与阴线",
+            "上影线与下影线",
+            "成交量"
+          ],
+          "misconceptions": [
+            "阳线代表第二天还会涨",
+            "影线越长越危险，不分位置"
+          ],
           "structure": "默认结构",
           "milestone": "交互式K线图组件（K线主图 + 成交量副图 + 悬停读数）+「先猜后揭晓」的隐藏行情数据",
           "milestone_verify": "读者对可见的40根K线逐根读出四价二线并与组件悬停读数对照；点击「揭晓」展开隐藏的20根，核对自己的走势预测",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "K线教学数据为固定种子合成的示意行情，与任何真实个股无关" }
+            {
+              "target": "divergence",
+              "what": "K线教学数据为固定种子合成的示意行情，与任何真实个股无关"
+            }
           ],
-          "depends_on": ["market-rules"],
-          "uses": ["集合竞价", "涨跌停板", "T+1"],
+          "depends_on": [
+            "market-rules"
+          ],
+          "uses": [
+            "集合竞价",
+            "涨跌停板",
+            "T+1"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "typecheck、test、export 全绿；kline-demo.json 连续导出两次逐字节一致" },
-            { "kind": "prose", "criterion": "用单日撮合全过程（开盘集合竞价→连续竞价→收盘）解释四价二线的成因，而非词典式罗列" },
-            { "kind": "source", "criterion": "图表与图注标注「教学示意·课程自产合成数据」，组件直接消费导出数据、无平行手抄" }
+            {
+              "kind": "gate",
+              "criterion": "typecheck、test、export 全绿；kline-demo.json 连续导出两次逐字节一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用单日撮合全过程（开盘集合竞价→连续竞价→收盘）解释四价二线的成因，而非词典式罗列"
+            },
+            {
+              "kind": "source",
+              "criterion": "图表与图注标注「教学示意·课程自产合成数据」，组件直接消费导出数据、无平行手抄"
+            }
           ]
         },
         {
@@ -170,23 +288,53 @@
           "hook": {
             "kind": "数据反差",
             "point": "按金叉买、死叉卖跑完十年行情，扣掉手续费，收益反而不如闭眼拿着不动",
-            "phenomena": ["金叉", "死叉", "手续费"]
+            "phenomena": [
+              "金叉",
+              "死叉",
+              "手续费"
+            ]
           },
-          "new_concepts": ["均线", "趋势", "支撑与压力", "金叉与死叉"],
-          "misconceptions": ["均线金叉就是买入信号", "跌到均线就一定会反弹"],
+          "new_concepts": [
+            "均线",
+            "趋势",
+            "支撑与压力",
+            "金叉与死叉"
+          ],
+          "misconceptions": [
+            "均线金叉就是买入信号",
+            "跌到均线就一定会反弹"
+          ],
           "structure": "默认结构",
           "milestone": "均线交互图（价格 + MA5/MA20 + 交叉点标记）+「交叉策略 vs 一直持有」双净值曲线",
           "milestone_verify": "读者在图上指认最近一次金叉与死叉的位置并说出含义；对照组件统计的「交叉策略（含手续费）」与「持有不动」两条曲线的期末值",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "均线回测基于固定种子合成行情；回测参数（MA5/MA20、单边费率）登记差异附录" }
+            {
+              "target": "divergence",
+              "what": "均线回测基于固定种子合成行情；回测参数（MA5/MA20、单边费率）登记差异附录"
+            }
           ],
-          "depends_on": ["k-line"],
-          "uses": ["K线", "成交量", "阳线与阴线"],
+          "depends_on": [
+            "k-line"
+          ],
+          "uses": [
+            "K线",
+            "成交量",
+            "阳线与阴线"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "typecheck、test、export 全绿；ma-cross.json 连续导出两次逐字节一致" },
-            { "kind": "prose", "criterion": "证伪「金叉是买入信号」：用回测对比展示扣费后的劣势，并从「均线是滞后平均」推出滞后性成因" },
-            { "kind": "source", "criterion": "回测标注为合成数据教学示意；技术分析表述保持「描述工具而非预测工具」的边界" }
+            {
+              "kind": "gate",
+              "criterion": "typecheck、test、export 全绿；ma-cross.json 连续导出两次逐字节一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "证伪「金叉是买入信号」：用回测对比展示扣费后的劣势，并从「均线是滞后平均」推出滞后性成因"
+            },
+            {
+              "kind": "source",
+              "criterion": "回测标注为合成数据教学示意；技术分析表述保持「描述工具而非预测工具」的边界"
+            }
           ]
         }
       ]
@@ -204,23 +352,56 @@
           "hook": {
             "kind": "公开事件",
             "point": "某公司连续三年净利润高增长、账上躺着几百亿货币资金，一夜之间公告自认这些钱是虚增的",
-            "phenomena": ["货币资金", "净利润"]
+            "phenomena": [
+              "货币资金",
+              "净利润"
+            ]
           },
-          "new_concepts": ["资产负债表", "利润表", "现金流量表", "毛利率", "净利润", "应收账款", "货币资金", "经营现金流"],
-          "misconceptions": ["净利润等于公司实际赚到的钱", "营收高增长就是好公司", "分红多的公司财务一定健康"],
+          "new_concepts": [
+            "资产负债表",
+            "利润表",
+            "现金流量表",
+            "毛利率",
+            "净利润",
+            "应收账款",
+            "货币资金",
+            "经营现金流"
+          ],
+          "misconceptions": [
+            "净利润等于公司实际赚到的钱",
+            "营收高增长就是好公司",
+            "分红多的公司财务一定健康"
+          ],
           "structure": "词表开局（8 个新概念挂词表）→ 钩子 → 三张表各一节 → 体检指标 → 演练 → 验证 → 收束",
           "milestone": "两家匿名公司（一家健康、一家暴雷式）的简化三张表工作台 + 五项体检指标期望答案",
           "milestone_verify": "读者对甲乙两公司各算5项指标、先判断哪家更健康，再逐项核对答案与暴雷公司的真实后续",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "体检用三张表为合成教学数据，科目远少于真实财报；真实报表阅读路径在差异附录给指引" }
+            {
+              "target": "divergence",
+              "what": "体检用三张表为合成教学数据，科目远少于真实财报；真实报表阅读路径在差异附录给指引"
+            }
           ],
-          "depends_on": ["stock-nature"],
-          "uses": ["盈利", "股权"],
+          "depends_on": [
+            "stock-nature"
+          ],
+          "uses": [
+            "盈利",
+            "股权"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm test（statements fixtures）通过，两家公司答案唯一" },
-            { "kind": "prose", "criterion": "用真实处罚案例解释「利润是观点，现金是事实」，证伪「净利润等于公司赚到的钱」" },
-            { "kind": "source", "criterion": "案例背景引自证监会行政处罚公开报道并标注；工作台数字标注为合成教学数据" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm test（statements fixtures）通过，两家公司答案唯一"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用真实处罚案例解释「利润是观点，现金是事实」，证伪「净利润等于公司赚到的钱」"
+            },
+            {
+              "kind": "source",
+              "criterion": "案例背景引自证监会行政处罚公开报道并标注；工作台数字标注为合成教学数据"
+            }
           ]
         },
         {
@@ -233,23 +414,54 @@
           "hook": {
             "kind": "数据反差",
             "point": "两只股票都卖10元：A公司一年赚1元，B公司一年赚1分钱——谁才是贵的那个",
-            "phenomena": ["市盈率", "回本"]
+            "phenomena": [
+              "市盈率",
+              "回本"
+            ]
           },
-          "new_concepts": ["市盈率", "盈利收益率", "市净率", "股息率", "无风险利率"],
-          "misconceptions": ["市盈率低就是便宜", "股价高就是贵，股价低就是便宜"],
+          "new_concepts": [
+            "市盈率",
+            "盈利收益率",
+            "市净率",
+            "股息率",
+            "无风险利率"
+          ],
+          "misconceptions": [
+            "市盈率低就是便宜",
+            "股价高就是贵，股价低就是便宜"
+          ],
           "structure": "默认结构",
           "milestone": "估值倍数计算工作台（PE/PB/股息率/盈利收益率）+ 与一年期存款利率的对照判断题",
           "milestone_verify": "6 道估值题先猜后核对；用 1÷PE 与存款利率比较得出「贵/便宜」判定并对照答案",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "PE 统一按最近年报净利润的静态口径计算，静态/TTM/动态口径的差异登记差异附录" }
+            {
+              "target": "divergence",
+              "what": "PE 统一按最近年报净利润的静态口径计算，静态/TTM/动态口径的差异登记差异附录"
+            }
           ],
-          "depends_on": ["financial-statements", "time-value"],
-          "uses": ["净利润", "收益率", "复利"],
+          "depends_on": [
+            "financial-statements",
+            "time-value"
+          ],
+          "uses": [
+            "净利润",
+            "收益率",
+            "复利"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm test（valuation fixtures）通过，每道题答案唯一" },
-            { "kind": "prose", "criterion": "用存款利率锚推出「贵/便宜」判定式，证伪「股价高=贵」的绝对股价直觉" },
-            { "kind": "source", "criterion": "存款利率引用 authority 记录的2025-05挂牌值并提示读者查最新挂牌利率" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm test（valuation fixtures）通过，每道题答案唯一"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用存款利率锚推出「贵/便宜」判定式，证伪「股价高=贵」的绝对股价直觉"
+            },
+            {
+              "kind": "source",
+              "criterion": "存款利率引用 authority 记录的2025-05挂牌值并提示读者查最新挂牌利率"
+            }
           ]
         },
         {
@@ -261,20 +473,48 @@
           "hook": {
             "kind": "公开事件",
             "point": "同一家公司，市盈率跌到9倍时无人问津，涨到60倍时人人喊买——事后看，9倍那年是随后十年最好的买点",
-            "phenomena": ["市盈率", "买点"]
+            "phenomena": [
+              "市盈率",
+              "买点"
+            ]
           },
-          "new_concepts": ["内在价值", "安全边际", "能力圈", "护城河"],
-          "misconceptions": ["好公司任何时候买入都是好投资", "便宜的没好货，所以低市盈率没机会"],
+          "new_concepts": [
+            "内在价值",
+            "安全边际",
+            "能力圈",
+            "护城河"
+          ],
+          "misconceptions": [
+            "好公司任何时候买入都是好投资",
+            "便宜的没好货，所以低市盈率没机会"
+          ],
           "structure": "默认结构（无演练章）：钩子 → 原理 → 推演 → 解释检查 → 收束",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["valuation-multiples"],
-          "uses": ["市盈率", "盈利收益率", "估值", "复利"],
+          "depends_on": [
+            "valuation-multiples"
+          ],
+          "uses": [
+            "市盈率",
+            "盈利收益率",
+            "估值",
+            "复利"
+          ],
           "acceptance": [
-            { "kind": "experience", "criterion": "读者能对自己关注的一只股票说出能力圈内/外的判定与理由" },
-            { "kind": "prose", "criterion": "用茅台8.83倍到60倍的真实区间解释「好公司≠好股票」，并给出安全边际的量化操作规则" },
-            { "kind": "source", "criterion": "茅台估值区间引用 authority_docs 两条（中证网2014年8.83倍、东方财富2021年60倍）并标注年份" }
-          ]
+            {
+              "kind": "experience",
+              "criterion": "读者能对自己关注的一只股票说出能力圈内/外的判定与理由"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用茅台8.83倍到60倍的真实区间解释「好公司≠好股票」，并给出安全边际的量化操作规则"
+            },
+            {
+              "kind": "source",
+              "criterion": "茅台估值区间引用 authority_docs 两条（中证网2014年8.83倍、东方财富2021年60倍）并标注年份"
+            }
+          ],
+          "verification": "none"
         }
       ]
     },
@@ -291,23 +531,52 @@
           "hook": {
             "kind": "数据反差",
             "point": "账户亏了50%之后，涨回50%时你还亏着25%——回本所需的涨幅比直觉大得多",
-            "phenomena": ["回本", "回撤"]
+            "phenomena": [
+              "回本",
+              "回撤"
+            ]
           },
-          "new_concepts": ["波动率", "最大回撤", "盈亏不对称", "回本涨幅"],
-          "misconceptions": ["亏了多少涨回多少就回本", "波动大的资产就是不能碰，波动最小的一定最好"],
+          "new_concepts": [
+            "波动率",
+            "最大回撤",
+            "盈亏不对称",
+            "回本涨幅"
+          ],
+          "misconceptions": [
+            "亏了多少涨回多少就回本",
+            "波动大的资产就是不能碰，波动最小的一定最好"
+          ],
           "structure": "默认结构",
           "milestone": "回撤模拟交互图（3条不同形状的路径 + 各自最大回撤与回本涨幅标注）+ 回本涨幅对照曲线",
           "milestone_verify": "读者对3条路径先猜最大回撤与回本涨幅，再逐一对照组件标注值；并用公式自己验算一条路径",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "波动率按月收益率标准差年化的简化口径，日频口径与√252法则登记差异附录" }
+            {
+              "target": "divergence",
+              "what": "波动率按月收益率标准差年化的简化口径，日频口径与√252法则登记差异附录"
+            }
           ],
-          "depends_on": ["time-value", "stock-nature"],
-          "uses": ["收益率", "复利"],
+          "depends_on": [
+            "time-value",
+            "stock-nature"
+          ],
+          "uses": [
+            "收益率",
+            "复利"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "typecheck、test、export 全绿；drawdown-paths.json 连续导出两次逐字节一致" },
-            { "kind": "prose", "criterion": "推导回本涨幅公式并证伪「亏多少涨多少就回本」，讲清波动率与真实风险的边界" },
-            { "kind": "source", "criterion": "路径数据为合成教学数据并标注；公式结果与组件标注一致" }
+            {
+              "kind": "gate",
+              "criterion": "typecheck、test、export 全绿；drawdown-paths.json 连续导出两次逐字节一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "推导回本涨幅公式并证伪「亏多少涨多少就回本」，讲清波动率与真实风险的边界"
+            },
+            {
+              "kind": "source",
+              "criterion": "路径数据为合成教学数据并标注；公式结果与组件标注一致"
+            }
           ]
         },
         {
@@ -320,23 +589,52 @@
           "hook": {
             "kind": "数据反差",
             "point": "两只各自上蹿下跳、最深都亏过40%的资产，各买一半后组合最深只亏18%——什么都没做，风险自己变小了",
-            "phenomena": ["组合", "波动"]
+            "phenomena": [
+              "组合",
+              "波动"
+            ]
           },
-          "new_concepts": ["分散化", "相关性", "资产配置", "再平衡"],
-          "misconceptions": ["买很多只股票就是分散", "资产配置一次定好就一劳永逸"],
+          "new_concepts": [
+            "分散化",
+            "相关性",
+            "资产配置",
+            "再平衡"
+          ],
+          "misconceptions": [
+            "买很多只股票就是分散",
+            "资产配置一次定好就一劳永逸"
+          ],
           "structure": "默认结构",
           "milestone": "相关性实验台（可切换相关水平的组合波动对比）+ 股债组合与单资产的回撤对比图 + 再平衡计算例",
           "milestone_verify": "读者先猜不同相关水平下组合波动的方向再切换验证；手工算一道60/40股债再平衡题并对照组件答案",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "股债组合数据为固定种子合成序列；「债券」以低波动合成资产代替真实债券指数" }
+            {
+              "target": "divergence",
+              "what": "股债组合数据为固定种子合成序列；「债券」以低波动合成资产代替真实债券指数"
+            }
           ],
-          "depends_on": ["risk-math"],
-          "uses": ["波动率", "最大回撤", "回本涨幅"],
+          "depends_on": [
+            "risk-math"
+          ],
+          "uses": [
+            "波动率",
+            "最大回撤",
+            "回本涨幅"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "typecheck、test、export 全绿；portfolio-mix.json 连续导出两次逐字节一致" },
-            { "kind": "prose", "criterion": "用相关性抵消的几何直觉解释分散降波动的成因，证伪「买很多只=分散」" },
-            { "kind": "source", "criterion": "组合数据为合成教学数据并标注；再平衡例题数字与组件一致" }
+            {
+              "kind": "gate",
+              "criterion": "typecheck、test、export 全绿；portfolio-mix.json 连续导出两次逐字节一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用相关性抵消的几何直觉解释分散降波动的成因，证伪「买很多只=分散」"
+            },
+            {
+              "kind": "source",
+              "criterion": "组合数据为合成教学数据并标注；再平衡例题数字与组件一致"
+            }
           ]
         },
         {
@@ -349,21 +647,49 @@
           "hook": {
             "kind": "现象观察",
             "point": "同样亏20%，有人整夜失眠割在地板上，有人淡定加仓——差别不在市场，在进场前有没有定过「输多少」",
-            "phenomena": ["仓位", "割肉"]
+            "phenomena": [
+              "仓位",
+              "割肉"
+            ]
           },
-          "new_concepts": ["仓位", "仓位管理", "单笔风险预算", "定投"],
-          "misconceptions": ["满仓才能让收益最大化", "定投稳赚不赔"],
+          "new_concepts": [
+            "仓位",
+            "仓位管理",
+            "单笔风险预算",
+            "定投"
+          ],
+          "misconceptions": [
+            "满仓才能让收益最大化",
+            "定投稳赚不赔"
+          ],
           "structure": "默认结构",
           "milestone": "风险预算仓位反推器（fixtures）+ 12期定投核算表（逐期成本）",
           "milestone_verify": "给定月结余与亏损底线，读者先算仓位上限再核对；定投核算表逐期跟算平均成本并对照答案",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["risk-math", "market-rules"],
-          "uses": ["盈亏不对称", "回本涨幅", "佣金", "印花税"],
+          "depends_on": [
+            "risk-math",
+            "market-rules"
+          ],
+          "uses": [
+            "盈亏不对称",
+            "回本涨幅",
+            "佣金",
+            "印花税"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm test（position fixtures）通过，反推与定投答案唯一" },
-            { "kind": "prose", "criterion": "按「先定输多少→再算买多少」的顺序推出仓位公式，证伪「满仓收益最大化」" },
-            { "kind": "source", "criterion": "费用沿用课程示例值并在正文声明；定投表数字与导出一致" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm test（position fixtures）通过，反推与定投答案唯一"
+            },
+            {
+              "kind": "prose",
+              "criterion": "按「先定输多少→再算买多少」的顺序推出仓位公式，证伪「满仓收益最大化」"
+            },
+            {
+              "kind": "source",
+              "criterion": "费用沿用课程示例值并在正文声明；定投表数字与导出一致"
+            }
           ]
         },
         {
@@ -375,20 +701,48 @@
           "hook": {
             "kind": "公开事件",
             "point": "2021年1月，新发基金一天售罄、千亿资金抢购；三年后回头看，抢在最热闹处进场的人大多还套在水下",
-            "phenomena": ["爆款基金", "抢购"]
+            "phenomena": [
+              "爆款基金",
+              "抢购"
+            ]
           },
-          "new_concepts": ["损失厌恶", "处置效应", "锚定效应", "从众效应"],
-          "misconceptions": ["亏钱是因为不够聪明或信息不够", "拿得住靠的是意志力"],
+          "new_concepts": [
+            "损失厌恶",
+            "处置效应",
+            "锚定效应",
+            "从众效应"
+          ],
+          "misconceptions": [
+            "亏钱是因为不够聪明或信息不够",
+            "拿得住靠的是意志力"
+          ],
           "structure": "默认结构（无演练章）：钩子 → 原理 → 案例推演 → 解释检查 → 收束",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["risk-math"],
-          "uses": ["盈亏不对称", "最大回撤", "仓位管理", "再平衡"],
+          "depends_on": [
+            "risk-math"
+          ],
+          "uses": [
+            "盈亏不对称",
+            "最大回撤",
+            "仓位管理",
+            "再平衡"
+          ],
           "acceptance": [
-            { "kind": "experience", "criterion": "读者能从自己或身边人的一笔真实交易里指认至少一种陷阱并说明识别依据" },
-            { "kind": "prose", "criterion": "四种陷阱各配一个真实场景与一条机械防御规则，证伪「拿得住靠意志力」" },
-            { "kind": "source", "criterion": "爆款基金现象引用公开报道并标注时间；损失厌恶比例标注为行为金融文献的经典实验结论" }
-          ]
+            {
+              "kind": "experience",
+              "criterion": "读者能从自己或身边人的一笔真实交易里指认至少一种陷阱并说明识别依据"
+            },
+            {
+              "kind": "prose",
+              "criterion": "四种陷阱各配一个真实场景与一条机械防御规则，证伪「拿得住靠意志力」"
+            },
+            {
+              "kind": "source",
+              "criterion": "爆款基金现象引用公开报道并标注时间；损失厌恶比例标注为行为金融文献的经典实验结论"
+            }
+          ],
+          "verification": "none"
         }
       ]
     },
@@ -405,23 +759,59 @@
           "hook": {
             "kind": "公开事件",
             "point": "一场持续十年的赌局：一组华尔街顶尖对冲基金，十年累计只跑到一只无人管理的指数基金的零头",
-            "phenomena": ["十年赌局", "指数基金"]
+            "phenomena": [
+              "十年赌局",
+              "指数基金"
+            ]
           },
-          "new_concepts": ["指数", "宽基指数", "指数基金", "ETF", "费率"],
-          "misconceptions": ["指数基金不会亏，比个股安全就是保本", "ETF是短线投机工具，不适合长期持有"],
+          "new_concepts": [
+            "指数",
+            "宽基指数",
+            "指数基金",
+            "ETF",
+            "费率"
+          ],
+          "misconceptions": [
+            "指数基金不会亏，比个股安全就是保本",
+            "ETF是短线投机工具，不适合长期持有"
+          ],
           "structure": "默认结构",
           "milestone": "费率复利差计算（fixtures）+ 定投回测图（一次性 vs 定投 vs 平均成本线，含两档费率终值对比）",
           "milestone_verify": "读者先猜0.2%与1.5%两档费率20年后的终值差再核对；定投图上读出平均成本线位置并核对",
           "relevant_files": [],
           "promises_out": [
-            { "target": "divergence", "what": "定投回测基于固定种子合成指数路径，非真实指数历史；宽基指数仅举例不构成推荐" }
+            {
+              "target": "divergence",
+              "what": "定投回测基于固定种子合成指数路径，非真实指数历史；宽基指数仅举例不构成推荐"
+            }
           ],
-          "depends_on": ["valuation-multiples", "diversification", "position-sizing"],
-          "uses": ["市盈率", "盈利收益率", "资产配置", "定投", "再平衡", "复利", "无风险利率"],
+          "depends_on": [
+            "valuation-multiples",
+            "diversification",
+            "position-sizing"
+          ],
+          "uses": [
+            "市盈率",
+            "盈利收益率",
+            "资产配置",
+            "定投",
+            "再平衡",
+            "复利",
+            "无风险利率"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm test（index-etf fixtures）通过；dca-vs-lump.json 连续导出两次逐字节一致" },
-            { "kind": "prose", "criterion": "用十年赌局解释费用与纪律对长期收益的吞噬，证伪「指数基金不会亏」" },
-            { "kind": "source", "criterion": "赌局数字引用 authority（伯克希尔2017年度信）并标注区间与年化口径" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm test（index-etf fixtures）通过；dca-vs-lump.json 连续导出两次逐字节一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用十年赌局解释费用与纪律对长期收益的吞噬，证伪「指数基金不会亏」"
+            },
+            {
+              "kind": "source",
+              "criterion": "赌局数字引用 authority（伯克希尔2017年度信）并标注区间与年化口径"
+            }
           ]
         },
         {
@@ -434,21 +824,58 @@
           "hook": {
             "kind": "现象观察",
             "point": "打开任意一家公司的行情页，F10资料几千页——大多数人从分时图开始研究，这正是亏损的起点",
-            "phenomena": ["F10", "分时图"]
+            "phenomena": [
+              "F10",
+              "分时图"
+            ]
           },
-          "new_concepts": ["商业模式", "研究清单"],
-          "misconceptions": ["研究就是看研报、听消息", "清单会限制灵活性，高手靠盘感"],
+          "new_concepts": [
+            "商业模式",
+            "研究清单"
+          ],
+          "misconceptions": [
+            "研究就是看研报、听消息",
+            "清单会限制灵活性，高手靠盘感"
+          ],
           "structure": "默认结构（组装章：工具箱约12块积木，逐块接口回顾）",
           "milestone": "七步研究清单（每步带通过标准与不通过出口）+ 一家真实A股公司的完整走查记录",
           "milestone_verify": "读者任选一家A股公司按清单走查，每步留下可检查的答案；任意一步不通过即触发放弃出口，走查全程只用公开免登录信息",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["margin-of-safety", "trend-ma", "position-sizing", "behavior-traps"],
-          "uses": ["护城河", "能力圈", "毛利率", "经营现金流", "货币资金", "应收账款", "市盈率", "股息率", "安全边际", "趋势", "均线", "仓位管理", "处置效应"],
+          "depends_on": [
+            "margin-of-safety",
+            "trend-ma",
+            "position-sizing",
+            "behavior-traps"
+          ],
+          "uses": [
+            "护城河",
+            "能力圈",
+            "毛利率",
+            "经营现金流",
+            "货币资金",
+            "应收账款",
+            "市盈率",
+            "股息率",
+            "安全边际",
+            "趋势",
+            "均线",
+            "仓位管理",
+            "处置效应"
+          ],
           "acceptance": [
-            { "kind": "experience", "criterion": "observation 任务清单每条含动作与可对照结果，全部基于公开披露信息免登录可完成" },
-            { "kind": "prose", "criterion": "清单每步带「不通过出口」；示例走查记录完整覆盖七步并给出明确的放弃/通过判定" },
-            { "kind": "source", "criterion": "走查记录全部来自公开披露（行情软件F10、交易所公告），不含荐股结论与未公开信息" }
+            {
+              "kind": "experience",
+              "criterion": "observation 任务清单每条含动作与可对照结果，全部基于公开披露信息免登录可完成"
+            },
+            {
+              "kind": "prose",
+              "criterion": "清单每步带「不通过出口」；示例走查记录完整覆盖七步并给出明确的放弃/通过判定"
+            },
+            {
+              "kind": "source",
+              "criterion": "走查记录全部来自公开披露（行情软件F10、交易所公告），不含荐股结论与未公开信息"
+            }
           ]
         },
         {
@@ -457,26 +884,73 @@
           "goal": "能写出自己的一页纸投资计划书（目标、配置、买入规则、卖出规则、风控红线、复盘节奏），每条规则可检查、可执行",
           "type": "review",
           "feature_id": "your-system",
-          "reviews": ["time-value", "stock-nature", "market-rules", "k-line", "trend-ma", "financial-statements", "valuation-multiples", "margin-of-safety", "risk-math", "diversification", "position-sizing", "behavior-traps", "index-etf", "stock-checklist"],
+          "reviews": [
+            "time-value",
+            "stock-nature",
+            "market-rules",
+            "k-line",
+            "trend-ma",
+            "financial-statements",
+            "valuation-multiples",
+            "margin-of-safety",
+            "risk-math",
+            "diversification",
+            "position-sizing",
+            "behavior-traps",
+            "index-etf",
+            "stock-checklist"
+          ],
           "hook": {
             "kind": "能力盘点",
             "point": "这门课16章只回答一个问题：普通人凭什么赚钱。现在把答案压进一页纸，让规则替你上战场",
-            "phenomena": ["一页纸"]
+            "phenomena": [
+              "一页纸"
+            ]
           },
-          "new_concepts": ["投资体系", "投资计划书"],
-          "misconceptions": ["投资体系是高手才需要的东西", "计划书写完就一劳永逸，不用复盘修订"],
+          "new_concepts": [
+            "投资体系",
+            "投资计划书"
+          ],
+          "misconceptions": [
+            "投资体系是高手才需要的东西",
+            "计划书写完就一劳永逸，不用复盘修订"
+          ],
           "structure": "声明结构：跨章积木对账 → 计划书六槽逐槽建立 → 重考开篇之题 → 合规收束",
           "milestone": "一页纸投资计划书模板（六槽，每槽带可判定填写标准）",
           "milestone_verify": "读者的计划书六槽全部可判定：目标有数字、配置有比例、买卖规则有触发条件、红线有具体数值、复盘有节奏日期",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["index-etf", "stock-checklist"],
-          "uses": ["资产配置", "再平衡", "仓位管理", "定投", "安全边际", "能力圈", "处置效应", "从众效应", "宽基指数", "回本涨幅"],
+          "depends_on": [
+            "index-etf",
+            "stock-checklist"
+          ],
+          "uses": [
+            "资产配置",
+            "再平衡",
+            "仓位管理",
+            "定投",
+            "安全边际",
+            "能力圈",
+            "处置效应",
+            "从众效应",
+            "宽基指数",
+            "回本涨幅"
+          ],
           "acceptance": [
-            { "kind": "experience", "criterion": "读者的计划书六槽每槽都能被同伴对照模板判定「填没填对」" },
-            { "kind": "prose", "criterion": "以积木为单位完成跨章对账，重考 driving question 并收口成一段答案；收尾附合规声明" },
-            { "kind": "source", "criterion": "能力清单与 outline 终点一致，无来历不明的能力；不新增任何未经建立的事实断言" }
-          ]
+            {
+              "kind": "experience",
+              "criterion": "读者的计划书六槽每槽都能被同伴对照模板判定「填没填对」"
+            },
+            {
+              "kind": "prose",
+              "criterion": "以积木为单位完成跨章对账，重考 driving question 并收口成一段答案；收尾附合规声明"
+            },
+            {
+              "kind": "source",
+              "criterion": "能力清单与 outline 终点一致，无来历不明的能力；不新增任何未经建立的事实断言"
+            }
+          ],
+          "verification": "none"
         },
         {
           "slug": "expert-roadmap",
@@ -488,28 +962,63 @@
           "hook": {
             "kind": "能力盘点",
             "point": "把三份真实的持仓清单摆在你面前，你已经能指出各自缺哪块积木——这是刚翻开这门课时做不到的事",
-            "phenomena": ["持仓清单", "积木"]
+            "phenomena": [
+              "持仓清单",
+              "积木"
+            ]
           },
           "new_concepts": [],
-          "misconceptions": ["学完一门课就能成为专家", "进阶就是学更多指标和战法"],
+          "misconceptions": [
+            "学完一门课就能成为专家",
+            "进阶就是学更多指标和战法"
+          ],
           "structure": "声明结构（压缩视野章）：定位 → 三份持仓的缺口分析 → 12个月路径 → 书单与边界",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["your-system"],
-          "uses": ["能力圈", "研究清单", "投资体系", "投资计划书"],
+          "depends_on": [
+            "your-system"
+          ],
+          "uses": [
+            "能力圈",
+            "研究清单",
+            "投资体系",
+            "投资计划书"
+          ],
           "acceptance": [
-            { "kind": "experience", "criterion": "读者能给自己标出当前积木缺口并写下12个月路径的三个检查点" },
-            { "kind": "prose", "criterion": "压缩声明显式出现；三份示例持仓的缺口分析覆盖至少6块积木的定位" },
-            { "kind": "source", "criterion": "进阶资源只列公开可得的经典书目与官方投教渠道，无付费社群导流" }
-          ]
+            {
+              "kind": "experience",
+              "criterion": "读者能给自己标出当前积木缺口并写下12个月路径的三个检查点"
+            },
+            {
+              "kind": "prose",
+              "criterion": "压缩声明显式出现；三份示例持仓的缺口分析覆盖至少6块积木的定位"
+            },
+            {
+              "kind": "source",
+              "criterion": "进阶资源只列公开可得的经典书目与官方投教渠道，无付费社群导流"
+            }
+          ],
+          "verification": "none"
         }
       ]
     }
   ],
   "appendices": [
-    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
-    { "slug": "reference-table", "title": "速查表：费率、规则与公式", "kind": "reference-table" },
-    { "slug": "divergence", "title": "简化与差异清单", "kind": "divergence" }
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "reference-table",
+      "title": "速查表：费率、规则与公式",
+      "kind": "reference-table"
+    },
+    {
+      "slug": "divergence",
+      "title": "简化与差异清单",
+      "kind": "divergence"
+    }
   ],
   "final_milestone": {
     "what_reader_built": "带走一套可执行的投资体系：看得懂市场、算得出估值、管得住风险",

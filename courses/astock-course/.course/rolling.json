@@ -21,6 +21,22 @@
         { "command": "node scripts/course-lint.mjs … 01-time-value.md", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "stock-nature",
+      "file": "docs/02-stock-nature.md",
+      "status": "complete",
+      "summary": "第2章（principle/none）建立5块积木：股票、股权、市值、盈利、估值；核心拆解「市值=盈利×估值倍数」，任何涨跌劈成盈利因子与估值因子。用无人交易持股、市值蒸发无人赚两反例证伪零和误区；用盈利+21%而股价−51.6%证伪「股价跌=公司不行」。调用第1章复利、收益率、货币时间价值、通胀、购买力五块积木（工具箱5行），无companion增量。评审阻断1（枚举计数）已修，outline uses 已对账补齐，gates全绿，lint 0。",
+      "artifacts": [
+        "docs/02-stock-nature.md"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs … 02-stock-nature.md", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }
