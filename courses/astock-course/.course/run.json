@@ -5,12 +5,13 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 5,
+  "next_chapter": 6,
   "completed_chapters": [
     "time-value",
     "stock-nature",
     "market-rules",
-    "k-line"
+    "k-line",
+    "trend-ma"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -20,6 +21,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "01-time-value"
+    "id": "05-trend-ma"
   }
 }

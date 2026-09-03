@@ -15,10 +15,22 @@
         "docs/assets/data/compound-vs-inflation.json"
       ],
       "gates": [
-        { "command": "pnpm typecheck", "result": "passed" },
-        { "command": "pnpm test", "result": "passed" },
-        { "command": "pnpm export ×2（sha256 一致）", "result": "passed" },
-        { "command": "node scripts/course-lint.mjs … 01-time-value.md", "result": "passed" }
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2（sha256 一致）",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 01-time-value.md",
+          "result": "passed"
+        }
       ],
       "review_blockers": 0
     },
@@ -32,9 +44,18 @@
         "docs/02-stock-nature.md"
       ],
       "gates": [
-        { "command": "pnpm typecheck", "result": "passed" },
-        { "command": "pnpm test", "result": "passed" },
-        { "command": "node scripts/course-lint.mjs … 02-stock-nature.md", "result": "passed" }
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 02-stock-nature.md",
+          "result": "passed"
+        }
       ],
       "review_blockers": 0
     },
@@ -51,10 +72,22 @@
         "docs/03-market-rules.md"
       ],
       "gates": [
-        { "command": "pnpm typecheck", "result": "passed" },
-        { "command": "pnpm test", "result": "passed" },
-        { "command": "pnpm export ×2（逐字节一致）", "result": "passed" },
-        { "command": "node scripts/course-lint.mjs … 03-market-rules.md", "result": "passed" }
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2（逐字节一致）",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 03-market-rules.md",
+          "result": "passed"
+        }
       ],
       "review_blockers": 0
     },
@@ -73,11 +106,64 @@
         "docs/04-k-line.md"
       ],
       "gates": [
-        { "command": "pnpm typecheck", "result": "passed" },
-        { "command": "pnpm test", "result": "passed" },
-        { "command": "pnpm export ×2（逐字节一致）", "result": "passed" },
-        { "command": "pnpm docs:build", "result": "passed" },
-        { "command": "node scripts/course-lint.mjs … 04-k-line.md", "result": "passed" }
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2（逐字节一致）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 04-k-line.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 5,
+      "slug": "trend-ma",
+      "file": "docs/05-trend-ma.md",
+      "status": "complete",
+      "summary": "第5章（canvas-app）建立4块积木：均线、趋势、支撑与压力、金叉与死叉。验证物：market.ts扩展250日合成行情+交叉回测器（费用复用第3章costs.ts）+ma-cross.json+MaCrossChart组件（MA5/MA20+8交叉标记+策略/持有双净值），30条测试锁定。核心反直觉由实算证伪：含费交叉策略18091.59 vs 持有18804.90，滞后是大头、费用仅占7.5%。评审零阻断4建议已修（D74量价措辞、净值/回测首现括注、收束句式、promise登记）。",
+      "artifacts": [
+        "companion/src/market.ts",
+        "companion/src/datasets/ch05-trend-ma.ts",
+        "companion/tests/ma-cross.test.ts",
+        "docs/assets/data/ma-cross.json",
+        "docs/.vitepress/theme/components/MaCrossChart.vue",
+        "docs/05-trend-ma.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（75条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 05-trend-ma.md",
+          "result": "passed"
+        }
       ],
       "review_blockers": 0
     }
