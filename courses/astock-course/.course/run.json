@@ -2,16 +2,18 @@
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
   "status": "planning",
-  "phase": "calibration",
+  "phase": "bible",
   "language": "zh",
   "outline_revision": 0,
   "next_chapter": null,
   "completed_chapters": [],
   "degraded_chapters": [],
   "blocked_chapters": [],
-  "skipped_interactions": [],
+  "skipped_interactions": [
+    "calibration"
+  ],
   "last_commit": {
     "kind": "phase",
-    "id": "ingestion"
+    "id": "calibration"
   }
 }
