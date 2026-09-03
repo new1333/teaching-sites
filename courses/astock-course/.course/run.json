@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
-  "status": "planning",
-  "phase": "bible",
+  "status": "generating",
+  "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
   "next_chapter": null,
@@ -10,10 +10,11 @@
   "degraded_chapters": [],
   "blocked_chapters": [],
   "skipped_interactions": [
-    "calibration"
+    "calibration",
+    "outline-confirmation"
   ],
   "last_commit": {
     "kind": "phase",
-    "id": "calibration"
+    "id": "outline"
   }
 }
