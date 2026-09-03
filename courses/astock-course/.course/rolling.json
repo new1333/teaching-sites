@@ -166,6 +166,38 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 6,
+      "slug": "financial-statements",
+      "file": "docs/06-financial-statements.md",
+      "status": "complete",
+      "summary": "第6章（worksheet）建立8块积木：资产负债表、利润表、现金流量表、毛利率、净利润、应收账款、货币资金、经营现金流。验证物：statements.ts纯函数+fixtures甲乙两家合成公司三张表与五项指标唯一答案+丙自查，15条测试互锁（全书90条）。康美案钩子（处罚决定书〔2020〕24号，三年虚增货币资金约886亿）经评审对照原文核实；「利润是观点，现金是事实」三层递进讲透。评审零阻断6建议已修（第三误区补落点、利息表述、工具箱复利行、存货/科目括注）。",
+      "artifacts": [
+        "companion/src/statements.ts",
+        "companion/fixtures/statements.json",
+        "companion/tests/statements.test.ts",
+        "docs/06-financial-statements.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（90条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 06-financial-statements.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

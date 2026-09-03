@@ -1,0 +1,125 @@
+{
+  "chapter": "06-financial-statements",
+  "title": "财报三张表：利润是观点，现金是事实",
+  "as_of": "2026-09",
+  "unit": "金额单位：亿元",
+  "note": "公司甲、乙为教学用匿名合成公司，与任何真实上市公司无关；科目远少于真实财报，真实报表阅读路径在差异附录给出。康美药业案例数字引自证监会行政处罚决定书〔2020〕24号（2020-05-14公布），不在本 fixture 内。",
+  "conventions": {
+    "ratio_unit": "比率与增速以小数存储，呈现为百分数保留 2 位小数（0.1295 = 12.95%）",
+    "money_rounding": "金额四舍五入保留 2 位小数（src/round.ts round2）",
+    "ratio_rounding": "比率一步算完再舍入：百分数保留 2 位小数，即小数保留 4 位（src/statements.ts roundRatio）",
+    "indicator_formulas": {
+      "gross_margin": "毛利率 =（营业收入 − 营业成本）÷ 营业收入",
+      "net_margin": "净利率 = 净利润 ÷ 营业收入",
+      "ocf_to_profit": "利润含金量 = 经营现金流净额 ÷ 净利润",
+      "recv_vs_revenue_gap": "应收-营收增速差 = 应收账款增速 − 营业收入增速（2025 年报对 2024 年报；百分点 = 小数 × 100）",
+      "cash_to_debt": "现金债务覆盖 = 期末货币资金 ÷ 期末有息负债"
+    },
+    "judgement_rules": {
+      "ocf_to_profit": "连续三年 ≥ 1（100%）为健康；逐年下滑且报告期转负为红旗",
+      "recv_vs_revenue_gap": "差值在 ±0.05（±5 个百分点）内为温和；> 0.20（20 个百分点）为激增红旗",
+      "cash_to_debt": "≥ 1（100%）为覆盖无虞；若同时利润含金量 < 1（经营不造血），账上大额现金记「存贷双高」嫌疑",
+      "verdict": "无红旗 = 健康；任一红旗 = 体检不通过"
+    }
+  },
+  "companies": [
+    {
+      "id": "jia",
+      "label": "公司甲（合成教学数据·健康样板）",
+      "income_statement": [
+        { "year": 2023, "revenue": 72, "cost": 43.2, "gross_profit": 28.8, "expense_and_tax": 20.2, "net_profit": 8.6 },
+        { "year": 2024, "revenue": 80, "cost": 48, "gross_profit": 32, "expense_and_tax": 22.1, "net_profit": 9.9 },
+        { "year": 2025, "revenue": 88, "cost": 52.8, "gross_profit": 35.2, "expense_and_tax": 23.8, "net_profit": 11.4 }
+      ],
+      "balance_sheet": [
+        { "year": 2023, "cash": 20, "receivables": 6.5, "inventory": 10, "fixed_and_other": 28.5, "total_assets": 65, "interest_bearing_debt": 10, "other_liabilities": 13, "total_liabilities": 23, "equity": 42 },
+        { "year": 2024, "cash": 22, "receivables": 8, "inventory": 11, "fixed_and_other": 29, "total_assets": 70, "interest_bearing_debt": 10, "other_liabilities": 13.5, "total_liabilities": 23.5, "equity": 46.5 },
+        { "year": 2025, "cash": 25, "receivables": 9, "inventory": 12, "fixed_and_other": 30, "total_assets": 76, "interest_bearing_debt": 10, "other_liabilities": 14, "total_liabilities": 24, "equity": 52 }
+      ],
+      "cash_flow_statement": [
+        { "year": 2023, "cash_beginning": 16, "operating": 9.3, "investing": -8, "financing": 2.7, "net_change": 4, "cash_ending": 20 },
+        { "year": 2024, "cash_beginning": 20, "operating": 10.7, "investing": -9, "financing": 0.3, "net_change": 2, "cash_ending": 22 },
+        { "year": 2025, "cash_beginning": 22, "operating": 13.1, "investing": -10.5, "financing": 0.4, "net_change": 3, "cash_ending": 25 }
+      ],
+      "expected": {
+        "gross_margin": { "2023": 0.4, "2024": 0.4, "2025": 0.4 },
+        "net_margin_2025": 0.1295,
+        "net_profit_growth_2025": 0.1515,
+        "revenue_growth_2025": 0.1,
+        "ocf_to_profit": { "2023": 1.0814, "2024": 1.0808, "2025": 1.1491 },
+        "receivables_growth_2025": 0.125,
+        "recv_vs_revenue_gap_2025": 0.025,
+        "cash_to_debt_2025": 2.5,
+        "three_year_totals": { "operating": 33.1, "investing": -27.5, "financing": 3.4, "net_change": 9, "net_profit": 29.9, "ocf_to_profit": 1.107 },
+        "health_flags": {
+          "ocf_covers_profit_2025": true,
+          "receivables_calm_2025": true,
+          "cash_covers_debt_2025": true,
+          "deposit_loan_both_high": false,
+          "verdict": "健康"
+        }
+      }
+    },
+    {
+      "id": "yi",
+      "label": "公司乙（合成教学数据·暴雷式样板）",
+      "income_statement": [
+        { "year": 2023, "revenue": 40, "cost": 28.8, "gross_profit": 11.2, "expense_and_tax": 8.7, "net_profit": 2.5 },
+        { "year": 2024, "revenue": 50, "cost": 36, "gross_profit": 14, "expense_and_tax": 11, "net_profit": 3 },
+        { "year": 2025, "revenue": 75, "cost": 52.5, "gross_profit": 22.5, "expense_and_tax": 16.5, "net_profit": 6 }
+      ],
+      "balance_sheet": [
+        { "year": 2023, "cash": 30, "receivables": 6, "inventory": 5, "fixed_and_other": 14, "total_assets": 55, "interest_bearing_debt": 28, "other_liabilities": 10, "total_liabilities": 38, "equity": 17 },
+        { "year": 2024, "cash": 38, "receivables": 10.5, "inventory": 7, "fixed_and_other": 14.5, "total_assets": 70, "interest_bearing_debt": 35, "other_liabilities": 15, "total_liabilities": 50, "equity": 20 },
+        { "year": 2025, "cash": 45, "receivables": 21, "inventory": 9, "fixed_and_other": 15, "total_assets": 90, "interest_bearing_debt": 42, "other_liabilities": 22, "total_liabilities": 64, "equity": 26 }
+      ],
+      "cash_flow_statement": [
+        { "year": 2023, "cash_beginning": 22, "operating": 1.2, "investing": -1, "financing": 7.8, "net_change": 8, "cash_ending": 30 },
+        { "year": 2024, "cash_beginning": 30, "operating": 0.8, "investing": -1.2, "financing": 8.4, "net_change": 8, "cash_ending": 38 },
+        { "year": 2025, "cash_beginning": 38, "operating": -0.9, "investing": -2.1, "financing": 10, "net_change": 7, "cash_ending": 45 }
+      ],
+      "expected": {
+        "gross_margin": { "2023": 0.28, "2024": 0.28, "2025": 0.3 },
+        "net_margin_2025": 0.08,
+        "net_profit_growth_2025": 1,
+        "revenue_growth_2025": 0.5,
+        "ocf_to_profit": { "2023": 0.48, "2024": 0.2667, "2025": -0.15 },
+        "receivables_growth_2025": 1,
+        "recv_vs_revenue_gap_2025": 0.5,
+        "cash_to_debt_2025": 1.0714,
+        "three_year_totals": { "operating": 1.1, "investing": -4.3, "financing": 26.2, "net_change": 23, "net_profit": 11.5, "ocf_to_profit": 0.0957 },
+        "health_flags": {
+          "ocf_covers_profit_2025": false,
+          "receivables_calm_2025": false,
+          "cash_covers_debt_2025": true,
+          "deposit_loan_both_high": true,
+          "verdict": "红旗：体检不通过"
+        }
+      }
+    }
+  ],
+  "self_check": {
+    "id": "bing",
+    "label": "公司丙（自查用，合成教学数据）",
+    "inputs_2025": {
+      "revenue": 60,
+      "cost": 42,
+      "net_profit": 4.8,
+      "operating_cash_flow": 3.6,
+      "revenue_prev_year": 50,
+      "receivables": 8,
+      "receivables_prev_year": 5,
+      "cash": 6,
+      "interest_bearing_debt": 12
+    },
+    "expected": {
+      "gross_margin": 0.3,
+      "net_margin": 0.08,
+      "ocf_to_profit": 0.75,
+      "revenue_growth": 0.2,
+      "receivables_growth": 0.6,
+      "recv_vs_revenue_gap": 0.4,
+      "cash_to_debt": 0.5
+    }
+  }
+}

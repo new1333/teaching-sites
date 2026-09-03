@@ -32,6 +32,14 @@
       "target": "divergence",
       "what": "均线回测基于固定种子（42）250日合成行情；回测参数（MA5/MA20、课程示例单边费率、信号次日开盘成交、期末按收盘估值）登记差异附录",
       "status": "open"
+    },
+    {
+      "id": "prom-financial-statements-synthetic-data",
+      "from": "financial-statements",
+      "from_n": 6,
+      "target": "divergence",
+      "what": "体检用三张表为合成教学数据（甲乙丙均为匿名合成公司，科目远少于真实财报；净利润不分归母等口径；真实报表阅读路径在差异附录给指引）",
+      "status": "open"
     }
   ]
 }
