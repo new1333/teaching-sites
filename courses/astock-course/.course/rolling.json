@@ -1,0 +1,26 @@
+{
+  "schema_version": 2,
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "time-value",
+      "file": "docs/01-time-value.md",
+      "status": "complete",
+      "summary": "第1章建立5块积木：货币时间价值、收益率（含年化）、复利、通货膨胀、实际购买力。验证物：finance.ts纯函数+fixtures 7题5年化（15条测试互锁）+compound-vs-inflation.json双曲线数据，导出两次逐字节一致。读者能笔算任意本金/利率/年限的终值与实际购买力，用收益率对照通胀判断输赢；「存款不亏钱」「高收益不看年限」两误区已证伪。评审阻断1（落桶判定）已修，gates全绿，lint 0。",
+      "artifacts": [
+        "companion/src/finance.ts",
+        "companion/fixtures/time-value.json",
+        "companion/tests/finance.test.ts",
+        "companion/src/datasets/ch01-time-value.ts",
+        "docs/assets/data/compound-vs-inflation.json"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm export ×2（sha256 一致）", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs … 01-time-value.md", "result": "passed" }
+      ],
+      "review_blockers": 0
+    }
+  ]
+}

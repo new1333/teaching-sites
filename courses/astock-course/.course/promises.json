@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "promises": [
+    {
+      "id": "prom-time-value-real-return-approx",
+      "from": "time-value",
+      "from_n": 1,
+      "target": "divergence",
+      "what": "「实际收益率≈名义收益率−通胀率」为近似式，精确式与适用条件登记差异附录（正文通货膨胀节已按此口径引用附录「简化与差异清单」）",
+      "status": "open"
+    }
+  ]
+}

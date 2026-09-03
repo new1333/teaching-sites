@@ -5,8 +5,10 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": null,
-  "completed_chapters": [],
+  "next_chapter": 2,
+  "completed_chapters": [
+    "time-value"
+  ],
   "degraded_chapters": [],
   "blocked_chapters": [],
   "skipped_interactions": [
@@ -14,7 +16,7 @@
     "outline-confirmation"
   ],
   "last_commit": {
-    "kind": "phase",
-    "id": "outline"
+    "kind": "chapter",
+    "id": "01-time-value"
   }
 }
