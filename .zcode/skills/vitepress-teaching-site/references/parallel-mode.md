@@ -47,7 +47,7 @@ type BlueprintState = {
 
 ### 正文线
 
-等全部验证物终态冻结后再并行。writer 只写自己的章和 lint；前情来自 blueprint planned summaries，概念首教来自 concept_first。
+等全部验证物终态冻结后再并行。writer 只写自己的章和 lint；可用积木来自 blueprint planned summaries（截至本章的 `new_concepts` 累积），概念首教来自 concept_first。
 
 ## 缝合审计
 

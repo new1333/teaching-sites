@@ -33,7 +33,7 @@ lite 课程可由主智能体执行同一角色契约，不减少任何完成条
 |---|---|---|
 | 正文解释、结构、术语、承诺 | 主智能体定向修 | chapter lint + reviewer 指出项复查 |
 | 验证物、代码、答案、探针、资产 | 原 writer 回灌 | 对应模式 gate + lint |
-| 读者模型失真 | 主智能体修订 `bible.reader_model` 与校准边界 | 受影响章前情与术语首现重算 + lint + reviewer 复查 |
+| 读者模型失真 | 主智能体修订 `bible.reader_model` 与校准边界 | 受影响章工具箱与术语首现重算 + lint + reviewer 复查 |
 | outline/profile 契约错误 | 主智能体回到阶段 2 | revision 增加，受影响章按 DAG 重算 |
 | 跨章终态漂移 | 主智能体列受影响章，writer/主智能体修 | 全量引用闸门 + full-book review |
 

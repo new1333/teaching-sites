@@ -124,7 +124,7 @@ type BibleState = {
       anchor: string
     }>
   }
-  glossary: Array<{ term: string; en?: string; definition: string }>
+  glossary: Array<{ term: string; en?: string; definition: string; interface?: string }>
   verification_conventions: Record<string, unknown>
   api_contract?: Array<{
     name: string
@@ -141,7 +141,7 @@ type BibleState = {
 }
 ```
 
-`factual_claims: true` 时 `authority_docs` 非空。定义、监管规则、协议行为、硬件行为和时间敏感数字都以这里的来源为核验入口；测试自洽不替代事实正确。概念首教章由 outline `new_concepts` 决定，最终领域义务由 profile `obligations` 决定，bible 不缓存这两份映射。
+`factual_claims: true` 时 `authority_docs` 非空。定义、监管规则、协议行为、硬件行为和时间敏感数字都以这里的来源为核验入口；测试自洽不替代事实正确。glossary 条目分两个面：`definition` 是建立面（成因与机理，只在首教章展开一次）；`interface` 是接口面（一句人话用途 + 使用方式），供后章工具箱与正文首用时引用——承重概念必填，只用于辨认的词可省。概念首教章由 outline `new_concepts` 决定，最终领域义务由 profile `obligations` 决定，bible 不缓存这两份映射。
 
 ## `rolling.json`
 
@@ -164,6 +164,8 @@ type RollingState = {
 一个 slug 只能有一条记录；重生成时原位替换，不追加第二条。`summary` ≤200 字，不写计划与作者意图，只写已建立概念、验证物变化和读者当前能力。
 
 ## `promises.json`
+
+作者侧规划账：登记大纲层面的兑现义务（哪块积木规划在哪章登场、哪个简化何时登记差异附录），供 outline 完整性与全书评审对账。读者可见正文不承担叙事债——欠账式闪前与情节式回顾按章间能力衔接契约禁止，lint 阻断。
 
 ```ts
 type PromiseState = {

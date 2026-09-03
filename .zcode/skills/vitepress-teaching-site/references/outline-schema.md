@@ -55,15 +55,16 @@ type Chapter = {
     point: string
     phenomena: string[]
   }
-  new_concepts: string[]
+  new_concepts: string[]                 // 本章提供的积木（provides）：首次正式教授的概念，进 bible glossary 并配接口句
   misconceptions: string[]
   structure?: string
   milestone?: string
   milestone_verify?: string
   relevant_files: Array<{ path: string; why: string }>
   length_exempt?: boolean
-  promises_out: Array<{ target: string; what: string }>
-  depends_on: string[]
+  promises_out: Array<{ target: string; what: string }>   // 作者侧规划账：目标章生成时对账，不写成读者可见欠账
+  depends_on: string[]                   // 章级 DAG：失败传播用
+  uses: string[]                         // 积木级对账：本章正文调用的既有积木，须已由更早章 new_concepts 提供或在读者已知边界内
   acceptance: Array<{
     kind: 'gate' | 'prose' | 'source' | 'experience'
     criterion: string
@@ -77,7 +78,7 @@ type Appendix = {
 }
 ```
 
-旧版 string[] acceptance 可读取；v2 新写入统一使用带 `kind` 的对象，评审由此区分机械验收与正文验收。
+旧版 string[] acceptance 可读取；v2 新写入统一使用带 `kind` 的对象，评审由此区分机械验收与正文验收。旧 outline 缺 `uses` 时按空数组读取，重写大纲时补齐。
 
 ## 大纲算法
 
@@ -85,7 +86,8 @@ type Appendix = {
 2. 每个教学 feature 映射到一个 principle/build/walkthrough 章；需要跨 feature 对账时才增加 review 章。
 3. 按学习阶段分 part，不改变拓扑顺序。
 4. 为每章解析验证模式，补齐 milestone、reader signal 与 acceptance。
-5. 校验全部依赖、来源政策、术语首教章和终点能力。
+5. 为每章列 `uses`：正文真正调用的既有积木；`new_concepts` 即本章提供的积木。提供在前、调用在后——不能调用未定义的函数。
+6. 校验全部依赖（章级 `depends_on` 与积木级 `uses`）、来源政策、术语首教章和终点能力。
 
 ## 硬规则
 
@@ -99,6 +101,7 @@ type Appendix = {
 
 - `depends_on` 只指向更早 slug，且覆盖该章真正需要的全部前置能力。
 - DAG 中失败章的传递依赖会被阻断，因此依赖不能只写“主要前置”。
+- `uses` 只能引用更早章节 `new_concepts` 已提供的积木，或校准 `known` 边界内的能力——它驱正文的工具箱槽与自包含 lint；`depends_on` 驱失败传播，两者由大纲保持一致，不互相替代。
 - walkthrough 的顺序来自 source map 的理解依赖，不按目录顺序抄文件。
 
 ### 钩子
@@ -162,7 +165,8 @@ type Appendix = {
   "milestone_verify": "给出 4 个时刻，读者先猜再逐项核对结算日",
   "relevant_files": [],
   "promises_out": [],
-  "depends_on": [],
+  "depends_on": ["unit-nav"],
+  "uses": ["单位净值"],
   "acceptance": [
     { "kind": "experience", "criterion": "4 个任务均包含操作与唯一可对照结果" },
     { "kind": "prose", "criterion": "用抢跑反例解释未知价法存在的约束" },
@@ -180,6 +184,7 @@ type Appendix = {
 - JSON 可解析且 `schema_version = 2`；
 - feature 覆盖无漏项/重项，review 引用均有效；
 - depends_on 是有向无环图且只向后引用已出现章节；
+- `uses` 的每个条目都有来历：更早章的 `new_concepts` 或校准 `known`，无“调用了未提供的积木”；
 - 每章能解析到唯一验证模式；
 - mixed 章全部显式消歧；
 - acceptance、source policy、hero 长度与 final milestone 均有效。

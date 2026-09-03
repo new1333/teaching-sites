@@ -13,7 +13,7 @@
 //   --pain <词...>                     大纲 hook/pain_point 的现象词（开篇检查以它们为准——检测与 spec 对齐，
 //                                      不奖励硬造踩坑故事，issues/010 教训）
 //   --lang <zh|en>                     默认 zh。en 时跳过中文专用规则（中英空格/被字句/长句/黑话/翻译腔/
-//                                      term-intro 句式信号），跨语言通用规则（出处真实、承诺账、判词密度、
+//                                      term-intro 句式信号），跨语言通用规则（出处真实、章间自包含、判词密度、
 //                                      省略纪律、snippet 存在性、痛点开章、字数参考线）全语言生效
 //   --source-policy <zero-trace|guided-walkthrough>
 //                                      默认读 <course_dir>/.course/outline.json 的 profile.source_policy，
@@ -33,6 +33,13 @@
 //   rhythm-info  开篇首句与同书各章的句式相似度（剥数字标点后 bigram Jaccard≥0.3）、二级节加粗>3、句尾立论连发>4
 //   leak-info    流水线词汇（锚点：/phenomena/pain_point/new_concepts）进入正文——<details> 内的回查指针豁免
 //   timeliness-info  即时性措辞（就在你读/的这周/撰稿时）——会自我过期
+//
+// 章间自包含检查（对照 chapter-writing.md「章间能力衔接」；review 章职责即跨章对账，豁免叙事位置类规则）：
+//   toolbox        uses 声明的积木必须有「## 工具箱」槽且逐块收录（阻断）；声明后正文未用（info）
+//   recall         情节式回顾句（上一章/前面讲过/旧账…）——跨章只调积木，不要求读者记得他章叙事（阻断）
+//   chapter-ref    章号出现在括注/链接之外——章号只作导航出处，不作论据或情节锚（阻断）
+//   forward-debt   欠账式闪前（下一章会讲/留个雷第 N 章拆…）——去向只写括注导航（阻断）
+//   nav-info       括注内指向后续章的导航计数（info——保持一行去向，不承担解释义务）
 //
 // 退出码：有阻断问题 1，干净 0；「info:」前缀的行不阻断。
 
@@ -177,38 +184,74 @@ for (const b of blocks) {
 const bolds = (text.match(/\*\*[^*\n]+\*\*/g) ?? []).length
 if (bolds > 8) issues.push(`bold-density: 加粗判断 ${bolds} 处（上限 8，含列表标签）`)
 
+// ---- 章间自包含：能力积木衔接（工具箱对账 / 叙事回顾 / 欠账式闪前 / 章号分级）----
+// 对照 chapter-writing.md「章间能力衔接」。review 章的职责就是跨章对账：豁免叙事位置类规则，工具箱对账仍适用。
 const cur = Number((mdPath.match(/[\\/](\d+)-/) ?? [])[1] ?? 0)
-const fwdMatches = [...text.matchAll(/第\s*(\d+)\s*章/g)].filter((m) => Number(m[1]) > cur)
-if (fwdMatches.length > 3) issues.push(`forward-ref: 闪前「第 N 章」${fwdMatches.length} 处（上限 3，去向收在章末地图）`)
-if (fwdMatches.length) {
-  const targets = [...new Set(fwdMatches.map((m) => m[1]))].sort((a, b) => a - b)
-  // promise 登记核对：按账本实际形状解析目标章（target_ch 数字 / target slug→outline 章号），字符串包含只作兜底——
-  // 旧实现搜「第 N 章」/「"N"」，数字型 target_ch 永远匹配不上，已登记的闪前也会误报未登记。
-  const promisesPath = join(courseDir, '.course', 'promises.json')
-  let knownTargets = new Set()
-  let raw = ''
-  if (existsSync(promisesPath)) {
-    raw = readFileSync(promisesPath, 'utf8')
-    try {
-      const list = Array.isArray(JSON.parse(raw)) ? JSON.parse(raw) : JSON.parse(raw).promises ?? []
-      const slugToNum = new Map()
-      try {
-        const ol = JSON.parse(readFileSync(outlinePath, 'utf8'))
-        let n = 0
-        for (const part of ol.parts ?? []) for (const ch of part.chapters ?? []) { n += 1; slugToNum.set(ch.slug, n) }
-      } catch { /* 无 outline 时 slug 映射缺省，走字符串兜底 */ }
-      for (const p of list) {
-        const t = p?.target_ch ?? p?.to_ch ?? p?.target
-        const num = typeof t === 'number' ? t : typeof t === 'string' ? (slugToNum.get(t) ?? /^\s*(\d+)/.exec(t)?.[1]) : null
-        if (num != null) knownTargets.add(String(num))
-      }
-    } catch { /* 账本不可解析时退回字符串包含 */ }
+const isReviewCh = chapterSpec?.type === 'review'
+const CH_REF = /第\s*(\d+)(?:\s*[、和至到\-]\s*\d+)*\s*章/g
+// 导航级载体：Markdown 链接与圆/全角括注。章号出现在这里只算出处，不算叙事位置。
+const navSpans = []
+for (const re of [/\[[^\]\n]*\]\([^)\n]*\)/g, /（[^）\n]*）/g, /\([^)\n]*\)/g])
+  for (const m of text.matchAll(re)) navSpans.push([m.index, m.index + m[0].length])
+const inNavSpan = (i) => navSpans.some(([a, b]) => i >= a && i < b)
+// 掩掉括注与链接后的叙事文本：句式类规则在这里查
+let narrative = ''
+{
+  let pos = 0
+  for (const [a, b] of [...navSpans].sort((x, y) => x[0] - y[0])) {
+    if (a < pos) { pos = Math.max(pos, b); continue }
+    narrative += text.slice(pos, a); pos = b
   }
-  const unregistered = fwdMatches.filter((m) => !knownTargets.has(m[1]) && !raw.includes(`第 ${m[1]} 章`) && !raw.includes(`"${m[1]}"`)).length
-  const regNote = existsSync(promisesPath)
-    ? (unregistered ? `（${unregistered} 处未在 .course/promises.json 登记——目标章生成时清账）` : '（均已登记）')
-    : '（登记进 .course/promises.json，目标章生成时清账）'
-  infos.push(`promise-info: 本章闪前指向第 ${targets.join('、')} 章${regNote}`)
+  narrative += text.slice(pos)
+}
+// 工具箱对账：uses 声明的积木必须开箱即用
+const usesBlocks = Array.isArray(chapterSpec?.uses) ? chapterSpec.uses : []
+const tbHead = /^#{2,3}[ \t]*工具箱/m.exec(text)
+let toolboxSection = ''
+if (tbHead) {
+  const rest = text.slice(tbHead.index + tbHead[0].length)
+  const nextHead = /^#{1,3}[ \t]+\S/m.exec(rest)
+  toolboxSection = nextHead ? rest.slice(0, nextHead.index) : rest
+}
+if (usesBlocks.length && !tbHead)
+  issues.push(`toolbox: uses 声明 ${usesBlocks.length} 块积木但正文无「## 工具箱」槽——每块一行：名字 — 一句接口 — 括注回查`)
+for (const u of usesBlocks) {
+  if (tbHead && !toolboxSection.includes(u))
+    issues.push(`toolbox: uses 声明的「${u}」未收录进工具箱——调用前接口必须就位`)
+  if (!text.includes(u)) infos.push(`uses-info: 「${u}」声明为调用但正文未出现——uses 只写真正用到的积木`)
+}
+const chRefs = [...text.matchAll(CH_REF)]
+const narrativeRefs = chRefs.filter((m) => !inNavSpan(m.index))
+if (!isReviewCh) {
+  // 情节式回顾：要求读者记得他章叙事，而不是调用其能力
+  for (const p of [
+    /上一章/, /上章(末|说|讲|留|结束)/,
+    /前面(章节|我们)?(已经|都)?(讲过|说过|提过|学过|写过|见过|算过|介绍过)/,
+    /如前所述/, /(旧账|欠账|还账|清账|对个账)/,
+    /(接上|对上)第\s*\d+\s*章(末尾|结尾|那句话)/,
+  ]) {
+    const m = narrative.match(p)
+    if (m) issues.push(`recall: 情节式回顾「${m[0]}」——跨章只调积木（一句接口 + 括注链接），不要求读者记得他章叙事`)
+  }
+  // 章号分级：括注/链接内 = 导航出处；出现在叙事位置 = 论据或情节锚
+  if (narrativeRefs.length) {
+    const sample = [...new Set(narrativeRefs.map((m) => m[0].replace(/\s/g, '')))].slice(0, 5).join('、')
+    const fwd = narrativeRefs.some((m) => Number(m[1]) > cur)
+    issues.push(`chapter-ref: ${sample} 出现在括注/链接之外——章号只作导航出处（（第 N 章）或链接），不作论据或情节锚${fwd ? '，且含指向后续章的闪前' : ''}`)
+  }
+  // 欠账式闪前：当下理解需要的当场讲清，去向只写括注导航
+  for (const p of [
+    /(下一章|后面[的]?章节?|后续章节?|往后[的]?(章|课))[^\n。；]{0,20}(讲|介绍|展开|登场|解决|回收|兑现|回来|拆)/,
+    /(留|记|埋)一?[个点颗]?[^\n。]{0,12}(问题|现象|悬案|坑|雷|账)[^\n。；]{0,40}第\s*\d+\s*章/,
+  ]) {
+    const m = narrative.match(p)
+    if (m) issues.push(`forward-debt: 欠账式闪前「${m[0].slice(0, 40)}」——当下理解需要的当场讲清，去向只写括注导航`)
+  }
+}
+const navFwd = chRefs.filter((m) => inNavSpan(m.index) && Number(m[1]) > cur)
+if (navFwd.length) {
+  const targets = [...new Set(navFwd.map((m) => m[1]))].sort((a, b) => a - b)
+  infos.push(`nav-info: 括注导航指向第 ${targets.join('、')} 章——保持一行去向，不承担解释义务`)
 }
 
 for (const w of ['集中营']) if (text.includes(w)) issues.push(`metaphor: 禁用比喻词「${w}」`)
