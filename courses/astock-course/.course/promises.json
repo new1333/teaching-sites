@@ -40,6 +40,22 @@
       "target": "divergence",
       "what": "体检用三张表为合成教学数据（甲乙丙均为匿名合成公司，科目远少于真实财报；净利润不分归母等口径；真实报表阅读路径在差异附录给指引）",
       "status": "open"
+    },
+    {
+      "id": "prom-valuation-static-pe",
+      "from": "valuation-multiples",
+      "from_n": 7,
+      "target": "divergence",
+      "what": "PE 统一按最近年报净利润的静态口径计算，静态/TTM/动态口径的差异登记差异附录",
+      "status": "open"
+    },
+    {
+      "id": "prom-valuation-synthetic-targets",
+      "from": "valuation-multiples",
+      "from_n": 7,
+      "target": "divergence",
+      "what": "本章七只标的与自查标的均为合成教学数据，与任何真实上市公司无关；存款锚为粗筛口径（一次性收益用主业判定、锚会调整需查最新挂牌）",
+      "status": "open"
     }
   ]
 }

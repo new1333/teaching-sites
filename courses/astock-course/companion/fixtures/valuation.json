@@ -1,0 +1,96 @@
+{
+  "chapter": "07-valuation-multiples",
+  "title": "给公司称重：市盈率、市净率与股息率",
+  "as_of": "2026-09",
+  "unit": "价格与每股金额单位：元；总量路线的净利润、所有者权益单位：亿元，总股本单位：亿股（本册合成标的统一按 8 亿股）",
+  "note": "股票 A、B 与公司丁、戊、己、庚、辛、壬均为教学用合成标的，与任何真实上市公司无关。无风险利率锚为 2025-05-20 五大行（工农中建交）一年期整存整取挂牌利率 0.95%（邮储 0.98%），挂牌利率会调整，以银行最新挂牌为准。",
+  "conventions": {
+    "ratio_unit": "比率以小数存储，呈现为百分数保留 2 位小数（0.10 = 10.00%）",
+    "multiple_rounding": "估值倍数用原始输入一步算完再四舍五入保留 1 位小数（src/round.ts round1）",
+    "yield_rounding": "盈利收益率、股息率按分子 ÷ 分母一步算完再舍入；不要用舍入后的倍数取倒数——两条口径会差零点几个百分点，以一步口径为准",
+    "formulas": {
+      "eps": "每股盈利 = 净利润 ÷ 总股本",
+      "bvps": "每股净资产 = 所有者权益 ÷ 总股本",
+      "pe": "市盈率 = 股价 ÷ 每股盈利 = 市值 ÷ 净利润（同一倍数，两条路线）",
+      "earnings_yield": "盈利收益率 = 每股盈利 ÷ 股价 = 1 ÷ 市盈率（未舍入口径）",
+      "pb": "市净率 = 股价 ÷ 每股净资产",
+      "dividend_yield": "股息率 = 每股分红 ÷ 股价",
+      "core_eps": "主业每股盈利 = 报表每股盈利 − 一次性收益每股；含一次性收益的标的，判定一律用主业口径"
+    },
+    "judgement_rules": {
+      "deposit_anchor": "盈利收益率与一年期存款挂牌利率 0.0095（0.95%，2025-05-20 五大行挂牌）直接比较：不低于 → 「不输存款」（便宜侧）；低于 → 「贵得危险」（贵侧）。课程粗筛口径，不是买入建议",
+      "pb_boundary": "市净率对家底大体上账、账面接近可变现价值的行业（银行、重资产，book_quality = asset-heavy）有称重意义；轻资产行业（book_quality = asset-light）核心家底不进资产负债表，市净率参考意义弱"
+    }
+  },
+  "risk_free_anchor": {
+    "deposit_1y": 0.0095,
+    "label": "0.95%",
+    "as_of": "2025-05-20",
+    "source": "工农中建交五大行一年期整存整取挂牌利率 0.95%（邮储 0.98%；人民网 2025-05-20 报道口径）",
+    "note": "挂牌利率会调整，读者以银行最新挂牌为准"
+  },
+  "stocks": {
+    "a": { "label": "股票A（钩子样板·有赚头）", "price": 10, "net_profit_yi": 8, "total_shares_yi": 8, "dps": 0.5 },
+    "b": { "label": "股票B（钩子样板·赚头薄）", "price": 10, "net_profit_yi": 0.08, "total_shares_yi": 8, "dps": 0 }
+  },
+  "companies": {
+    "ding": { "label": "公司丁", "price": 24, "net_profit_yi": 19.2, "equity_yi": 96, "total_shares_yi": 8, "dps": 0.96 },
+    "wu": { "label": "公司戊（银行样板·重资产）", "price": 8.4, "net_profit_yi": 8.4, "equity_yi": 96, "total_shares_yi": 8, "dps": 0.42, "book_quality": "asset-heavy" },
+    "ji": { "label": "公司己（软件样板·轻资产）", "price": 36, "net_profit_yi": 14.4, "equity_yi": 9.6, "total_shares_yi": 8, "dps": 0.18, "book_quality": "asset-light" },
+    "geng": { "label": "公司庚", "price": 25, "net_profit_yi": 40, "equity_yi": 120, "total_shares_yi": 8, "dps": 1.25 },
+    "xin": { "label": "公司辛（低市盈率陷阱样板·报表口径含一次性收益）", "price": 20, "eps_reported_2025": 3, "one_off_2025": 2.85, "eps_reported_2024": 1.2, "one_off_2024": 1.05, "dps": 0 }
+  },
+  "questions": [
+    {
+      "id": "q1-hook-a-vs-b",
+      "label": "题1·两只 10 元的股票，谁贵（钩子复算）",
+      "asks": ["pe", "pe_via_market_cap", "earnings_yield", "dividend_yield", "verdict"],
+      "expected": {
+        "a": { "pe": 10, "pe_via_market_cap": 10, "earnings_yield": 0.1, "dividend_yield": 0.05, "verdict": "不输存款" },
+        "b": { "pe": 1000, "pe_via_market_cap": 1000, "earnings_yield": 0.001, "dividend_yield": 0, "verdict": "贵得危险" }
+      }
+    },
+    {
+      "id": "q2-ding-full-suite",
+      "label": "题2·给公司丁称全套",
+      "asks": ["pe", "pb", "earnings_yield", "dividend_yield", "verdict"],
+      "expected": { "pe": 10, "pb": 2, "earnings_yield": 0.1, "dividend_yield": 0.04, "verdict": "不输存款" }
+    },
+    {
+      "id": "q3-pb-boundary",
+      "label": "题3·两本家底账：市净率的适用边界",
+      "asks": ["pb", "pe", "pb_meaningful"],
+      "expected": {
+        "wu": { "pb": 0.7, "pe": 8, "pb_meaningful": true },
+        "ji": { "pb": 30, "pe": 20, "pb_meaningful": false }
+      }
+    },
+    {
+      "id": "q4-dividend-floor",
+      "label": "题4·现金回报下限：股息率对照存款锚",
+      "asks": ["dividend_yield"],
+      "expected": {
+        "wu": { "dividend_yield": 0.05 },
+        "ji": { "dividend_yield": 0.005 }
+      }
+    },
+    {
+      "id": "q5-geng-cheap-side",
+      "label": "题5·便宜的一侧：盈利收益率判定",
+      "asks": ["pe", "pb", "earnings_yield", "dividend_yield", "verdict"],
+      "expected": { "pe": 5, "pb": 1.7, "earnings_yield": 0.2, "dividend_yield": 0.05, "verdict": "不输存款" }
+    },
+    {
+      "id": "q6-xin-pe-trap",
+      "label": "题6·诱人的低市盈率：一次性收益与主业口径判定",
+      "asks": ["pe_reported", "earnings_yield_reported", "profit_growth_2025", "core_eps", "pe_core", "earnings_yield_core", "verdict"],
+      "expected": { "pe_reported": 6.7, "earnings_yield_reported": 0.15, "profit_growth_2025": 1.5, "core_eps": 0.15, "pe_core": 133.3, "earnings_yield_core": 0.0075, "verdict": "贵得危险" }
+    }
+  ],
+  "self_check": {
+    "id": "ren",
+    "label": "股票壬（自查锚，合成教学数据）",
+    "inputs": { "price": 50, "net_profit_yi": 16, "equity_yi": 200, "total_shares_yi": 8, "dps": 1 },
+    "expected": { "pe": 25, "pb": 2, "earnings_yield": 0.04, "dividend_yield": 0.02, "verdict": "不输存款" }
+  }
+}

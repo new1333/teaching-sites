@@ -198,6 +198,38 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 7,
+      "slug": "valuation-multiples",
+      "file": "docs/07-valuation-multiples.md",
+      "status": "complete",
+      "summary": "第7章（worksheet）建立5块积木：市盈率、盈利收益率、市净率、股息率、无风险利率。验证物：valuation.ts纯函数+fixtures 6题1自查（判定边界0.95%含等号），17条新测试全书107条互锁。钩子（两只10元股票十年vs千年回本）闭环；存款锚粗筛判定推出「不输存款/贵得危险」；辛的一次性收益陷阱与拆股算术双证伪误区。评审阻断1（邮储0.98%例外，六大行表述失准）已修：正文/代码注释/fixtures/bible五处同口径改；收束句式已换写法。",
+      "artifacts": [
+        "companion/src/valuation.ts",
+        "companion/fixtures/valuation.json",
+        "companion/tests/valuation.test.ts",
+        "docs/07-valuation-multiples.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（107条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 07-valuation-multiples.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

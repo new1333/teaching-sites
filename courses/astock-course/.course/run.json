@@ -5,14 +5,15 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 7,
+  "next_chapter": 8,
   "completed_chapters": [
     "time-value",
     "stock-nature",
     "market-rules",
     "k-line",
     "trend-ma",
-    "financial-statements"
+    "financial-statements",
+    "valuation-multiples"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -22,6 +23,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "06-financial-statements"
+    "id": "07-valuation-multiples"
   }
 }
