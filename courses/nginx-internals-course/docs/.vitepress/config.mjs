@@ -2,6 +2,7 @@
 export default {
   title: 'nginx 实现原理：亲手写一个事件驱动 HTTP 服务器',
   description: '配过 nginx、懂 HTTP 的 Web 开发者，未接触过 socket 编程',
+  created: '2026-08-17',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

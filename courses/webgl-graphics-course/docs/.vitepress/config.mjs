@@ -1,6 +1,7 @@
 export default {
   title: 'WebGL 图形学入门：从第一个三角形到 3D 世界',
   description: '会写 TypeScript、但没碰过图形学的 Web 开发者',
+  created: '2026-08-18',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

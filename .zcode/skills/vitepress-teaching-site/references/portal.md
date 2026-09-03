@@ -51,7 +51,7 @@ VitePress/Vue 版本优先复用当前仓库 manifest；脚手架不在 referenc
 
 ## Sync 输出
 
-1. `courses/index.md`：课程卡片由 config title/description/sidebar 章数派生。
+1. `courses/index.md`：课程卡片由 config title/description/sidebar 章数派生。课程卡片与「全部课程」菜单按 config `created`（ISO `YYYY-MM-DD`）倒序排列，最新创建的在前；缺 `created` 的课程排最后并在 sync 日志告警。
 2. `courses/.vitepress/config.mjs`：
    - rewrites 将 `{course}/docs/*` 映射为 `/{course}/*`；
    - sidebar link 加课程前缀；

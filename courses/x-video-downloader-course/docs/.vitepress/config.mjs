@@ -1,6 +1,7 @@
 export default {
   title: 'X 视频下载插件：从零写一个真能用的浏览器扩展',
   description: '会写 JS、装过插件没写过的开发者，做一个真能用的下载器',
+  created: '2026-08-31',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

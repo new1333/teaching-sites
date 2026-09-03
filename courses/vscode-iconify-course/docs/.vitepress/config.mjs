@@ -2,6 +2,7 @@
 export default {
   title: '编辑器里的图标智能:VSCode 扩展原理十二讲',
   description: '想理解 VSCode 扩展如何对代码文本做识别、补全与内联渲染的前端开发者;不要求写过扩展,但需要 TypeScript 基础',
+  created: '2026-08-16',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

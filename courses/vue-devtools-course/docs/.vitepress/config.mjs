@@ -1,6 +1,7 @@
 export default {
   title: 'Vue DevTools 原理：从零实现一个调试器内核',
   description: '写过 Vue 应用、用过分水岭级调试工具，想知道「面板为什么能看见我的组件和状态」并亲手做出最小实现的开发者',
+  created: '2026-08-15',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

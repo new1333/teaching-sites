@@ -1,6 +1,7 @@
 export default {
   title: '手写 mini-clash：代理软件的原理与实现',
   description: '会写 TypeScript、网络与密码学从零起步的开发者',
+  created: '2026-08-30',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

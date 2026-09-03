@@ -1,6 +1,7 @@
 export default {
   title: 'fable-nginx：亲手复刻一个 nginx',
   description: '会写代码、用过 HTTP，但没碰过网络编程与事件驱动的开发者',
+  created: '2026-08-30',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

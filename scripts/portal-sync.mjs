@@ -42,10 +42,23 @@ for (const name of courseNames) {
     name,
     title: cfg.title ?? name,
     description: cfg.description ?? '',
+    created: cfg.created,
     sidebar,
     chapterCount,
   })
 }
+
+// 课程列表按 created（ISO 日期）倒序，最新创建的排最前；不从 git 或文件时间戳推导——
+// CI 是浅克隆，两者都不可靠。缺 created 的课程排在最后并告警，督促补上字段。
+const undated = courses.filter((c) => !c.created)
+if (undated.length)
+  console.warn(`[portal] 缺 created 字段，已排在列表末尾：${undated.map((c) => c.name).join('、')}`)
+courses.sort((a, b) => {
+  if (a.created && b.created) return b.created.localeCompare(a.created) || a.name.localeCompare(b.name)
+  if (a.created) return -1
+  if (b.created) return 1
+  return a.name.localeCompare(b.name)
+})
 
 if (!courses.length) {
   console.error('[portal] courses/ 下没有可用课程（需 *-course 后缀目录或 docs/.vitepress/config.mjs）')

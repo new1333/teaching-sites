@@ -1,6 +1,7 @@
 export default {
   title: 'Nginx 前端实战课',
   description: '会打包部署前端应用、但遇到 Nginx 配置只会复制粘贴的前端工程师',
+  created: '2026-08-15',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

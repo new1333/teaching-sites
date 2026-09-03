@@ -1,6 +1,7 @@
 export default {
   title: 'dayjs 源码走读：一个日期库的最小内核',
   description: '看得懂 JavaScript、想读一个真实开源库的工程师',
+  created: '2026-08-28',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

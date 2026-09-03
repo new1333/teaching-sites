@@ -2,6 +2,7 @@
 export default {
   title: '用 TypeScript 造一台 NES：从比特到第一声开机音',
   description: '会 TS 的前端工程师，二进制与汇编零基础',
+  created: '2026-08-17',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

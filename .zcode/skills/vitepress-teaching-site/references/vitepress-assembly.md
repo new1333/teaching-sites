@@ -120,6 +120,7 @@ features:
 export default {
   title: '{outline.title}',
   description: '{outline.audience}',
+  created: '{创建日期}', // ISO YYYY-MM-DD；课程中心按它倒序排列课程，缺省排最后
   base: '/',
   themeConfig: {
     nav: [{ text: '首页', link: '/' }, { text: '关于', link: '/about' }],

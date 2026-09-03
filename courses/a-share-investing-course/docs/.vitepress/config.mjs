@@ -1,6 +1,7 @@
 export default {
   title: "从零基础小白到A股投资入门",
   description: "零基础新手，看懂K线、算清概率、装上风控",
+  created: '2026-08-18',
   base: '/',
   themeConfig: {
     nav: [{ text: '首页', link: '/' }, { text: '关于', link: '/about' }],

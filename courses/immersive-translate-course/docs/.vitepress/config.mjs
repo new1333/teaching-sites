@@ -2,6 +2,7 @@
 export default {
   title: '复刻沉浸式翻译：双语对照引擎的原理与实现',
   description: '会写 TS 与原生 DOM、想复刻双语翻译工具的开发者',
+  created: '2026-08-31',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

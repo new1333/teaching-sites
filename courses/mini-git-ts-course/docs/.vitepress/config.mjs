@@ -1,6 +1,7 @@
 export default {
   title: 'Git 原理重实现:用 TypeScript 写一个 mini-git',
   description: '会写日常 TypeScript、想把 git 用明白的开发者',
+  created: '2026-08-31',
   base: '/',
   themeConfig: {
     nav: [

@@ -1,6 +1,7 @@
 export default {
   title: '代理软件实现原理：从一条 TCP 隧道到 mini-proxy',
   description: '会 TypeScript、用过代理工具的开发者',
+  created: '2026-08-31',
   base: '/',
   themeConfig: {
     nav: [

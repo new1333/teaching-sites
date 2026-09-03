@@ -2,6 +2,7 @@
 export default {
   title: "用 TypeScript 从零写一台 NES:NES 模拟器原理与实现",
   description: "会写 TypeScript、玩过红白机、想搞懂「一个 .nes 文件怎么变成屏幕上 60fps 的游戏画面」的开发者;不需要汇编或硬件基础,6502 汇编在课程内从零教起。",
+  created: '2026-08-16',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

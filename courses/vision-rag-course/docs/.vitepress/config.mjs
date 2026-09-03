@@ -1,6 +1,7 @@
 export default {
   title: "视觉 RAG 原理课：让 AI 真正看懂 PDF 与视频",
   description: "会写基础 Python、想弄懂视觉 RAG 原理的入门者",
+  created: '2026-08-27',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

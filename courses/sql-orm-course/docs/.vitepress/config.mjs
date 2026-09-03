@@ -1,6 +1,7 @@
 export default {
   title: 'SQL 与 ORM：给前端的数据库课',
   description: '会写 Node 脚本的前端：SQL 与 ORM 从零开始',
+  created: '2026-08-18',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

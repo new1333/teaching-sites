@@ -1,6 +1,7 @@
 export default {
   title: 'Pinia 从零实现',
   description: '会用 Vue 3 组合式 API、想真正吃透状态管理而非只会调 API 的开发者',
+  created: '2026-08-15',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

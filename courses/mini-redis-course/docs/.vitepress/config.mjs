@@ -1,6 +1,7 @@
 export default {
   title: 'Redis 原理与最小实现：亲手写一个迷你 Redis',
   description: '会 TypeScript、用过数据库，没读过存储内部的开发者',
+  created: '2026-08-31',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

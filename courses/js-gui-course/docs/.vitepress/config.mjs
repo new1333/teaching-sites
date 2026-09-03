@@ -2,6 +2,7 @@
 export default {
   title: 'JS 接入原生 GUI 的原理——从零理解 Electron 式桌面端',
   description: '会用 Electron/Tauri 调 API，但说不清「JS 一行代码怎么变成屏幕上的一个窗口」的开发者',
+  created: '2026-08-15',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {

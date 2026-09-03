@@ -1,6 +1,7 @@
 export default {
   title: '基金净值与费率：从看得懂的数字到算得清的账',
   description: '净值怎么来、按哪天结算、每类费用怎么算——十章把每笔账算到分',
+  created: '2026-08-28',
   base: '/',
   ignoreDeadLinks: true,
   themeConfig: {
