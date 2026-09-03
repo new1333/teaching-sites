@@ -151,8 +151,9 @@ if (zh) {
   const prose = text.replace(/^---[\s\S]*?---/, '').replace(/^#{1,6}[^\n]*$/gm, '').replace(/^\|.*$/gm, '')
   const long = prose.split(/[。！？；]/).filter((s) => s.replace(/[^\u4e00-\u9fffA-Za-z0-9]/g, '').length > 80)
   if (long.length > 1) issues.push(`long-sentence: 超 80 字长句 ${long.length} 处——拆短，一句只装一件事`)
+  // jargon 黑名单为启发式；课程正式教授的术语（--new 首教 + 累积术语，如投资课的「护城河」）是术语教学而非黑话滥用，跳过
   for (const w of ['赋能', '抓手', '组合拳', '打法', '底层逻辑', '心智模型', '护城河'])
-    if (text.includes(w)) issues.push(`jargon: 黑话「${w}」——说人话`)
+    if (text.includes(w) && !newTerms.includes(w) && !terms.includes(w)) issues.push(`jargon: 黑话「${w}」——说人话`)
   for (const t of newTerms) {
     const i = text.indexOf(t)
     if (i < 0) continue // 存在性由 terminology 检查负责

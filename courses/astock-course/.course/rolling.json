@@ -230,6 +230,31 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 8,
+      "slug": "margin-of-safety",
+      "file": "docs/08-margin-of-safety.md",
+      "status": "complete",
+      "summary": "第8章（principle/none）建立4块积木：内在价值（折现估区间）、安全边际（七折出手示意规则）、能力圈（三问）、护城河（十年之问）。茅台约8.83倍到超60倍真实区间（中证网/东方财富，带年份与约）讲透好公司≠好股票，双误区证伪；四道闸检查链组装。无companion增量，基线107条全绿。评审零阻断2建议已修（收束句式去同构、2021顶部断言加免登录复核锚）。附：lint脚本jargon规则修正为豁免课程正式教授术语（护城河为投资课术语）。",
+      "artifacts": [
+        "docs/08-margin-of-safety.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（107条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 08-margin-of-safety.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }
