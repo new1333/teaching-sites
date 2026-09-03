@@ -1,0 +1,10 @@
+/* docs/.vitepress/theme/custom.css · 课程级微调（保持克制，统一留白） */
+.astock-chart {
+  margin: 12px 0;
+}
+
+.astock-figure-caption {
+  font-size: 0.85em;
+  color: var(--vp-c-text-2);
+  margin: 4px 0 16px;
+}
