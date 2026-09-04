@@ -10,13 +10,14 @@ import { join } from 'node:path'
 import { buildCh01 } from './datasets/ch01-time-value'
 import { buildCh04 } from './datasets/ch04-kline'
 import { buildCh05 } from './datasets/ch05-trend-ma'
+import { buildCh09 } from './datasets/ch09-risk'
 
 const OUT = join(process.cwd(), 'docs', 'assets', 'data')
 
 type Dataset = { file: string; data: unknown }
 
 // 逐章注册表：章节写作者在对应事务中在此追加一行
-const DATASETS: Array<() => Dataset> = [buildCh01, buildCh04, buildCh05]
+const DATASETS: Array<() => Dataset> = [buildCh01, buildCh04, buildCh05, buildCh09]
 
 function stableStringify(value: unknown): string {
   return JSON.stringify(value, null, 2) + '\n'

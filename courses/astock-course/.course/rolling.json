@@ -255,6 +255,44 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 9,
+      "slug": "risk-math",
+      "file": "docs/09-risk-math.md",
+      "status": "complete",
+      "summary": "第9章（canvas-app）建立4块积木：盈亏不对称、最大回撤、波动率（月频×√12简化口径）、回本涨幅=亏损÷(1−亏损)。验证物：finance.ts扩展4函数+三条24月种子路径（浅16.38%/深51.05%/慢磨23.73%但波动最低）+对照曲线，23条新测试全书130条互锁；DrawdownChart峰谷标注。钩子闭环、双误区证伪、舍入陷阱转为教学点。评审阻断1（正文乘法示例矛盾）与2建议已修。",
+      "artifacts": [
+        "companion/src/finance.ts",
+        "companion/src/datasets/ch09-risk.ts",
+        "companion/tests/risk-math.test.ts",
+        "docs/assets/data/drawdown-paths.json",
+        "docs/.vitepress/theme/components/DrawdownChart.vue",
+        "docs/09-risk-math.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（130条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 09-risk-math.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

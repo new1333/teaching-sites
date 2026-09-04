@@ -56,6 +56,14 @@
       "target": "divergence",
       "what": "本章七只标的与自查标的均为合成教学数据，与任何真实上市公司无关；存款锚为粗筛口径（一次性收益用主业判定、锚会调整需查最新挂牌）",
       "status": "open"
+    },
+    {
+      "id": "prom-risk-math-vol-approx",
+      "from": "risk-math",
+      "from_n": 9,
+      "target": "divergence",
+      "what": "波动率按月收益率标准差×√12 简化口径年化（母体标准差、24个月样本）；日频×√252 等实务口径与适用条件登记差异附录",
+      "status": "open"
     }
   ]
 }
