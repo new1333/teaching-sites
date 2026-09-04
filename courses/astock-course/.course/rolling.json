@@ -392,6 +392,44 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 13,
+      "slug": "index-etf",
+      "file": "docs/13-index-etf.md",
+      "status": "complete",
+      "summary": "第13章（worksheet）建立5块积木：指数、宽基指数、指数基金、ETF、费率。验证物：indexfund.ts（feeDrag复用第1章growthFactor+合成净值+折溢价）+fixtures 6题+21条新测试全书204条互锁；dca-vs-lump.json（种子63合成宽基240月）+DcaChart三层图。组装证据：第11章dcaSchedule一行未改跑完240期定投。十年赌局按2017年度信十年终局口径（125.8%对21.7–87.7%，四只不过半线、最好约七成），评审阻断（原用2016年信九年口径）已回灌修复。",
+      "artifacts": [
+        "companion/src/indexfund.ts",
+        "companion/src/datasets/ch13-dca.ts",
+        "companion/tests/indexfund.test.ts",
+        "docs/assets/data/dca-vs-lump.json",
+        "docs/.vitepress/theme/components/DcaChart.vue",
+        "docs/13-index-etf.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 13-index-etf.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

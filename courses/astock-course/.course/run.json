@@ -5,7 +5,7 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 13,
+  "next_chapter": 14,
   "completed_chapters": [
     "time-value",
     "stock-nature",
@@ -18,7 +18,8 @@
     "risk-math",
     "diversification",
     "position-sizing",
-    "behavior-traps"
+    "behavior-traps",
+    "index-etf"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -28,6 +29,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "12-behavior-traps"
+    "id": "13-index-etf"
   }
 }

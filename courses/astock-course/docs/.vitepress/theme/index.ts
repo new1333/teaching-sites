@@ -7,6 +7,7 @@ import KLineChart from './components/KLineChart.vue'
 import MaCrossChart from './components/MaCrossChart.vue'
 import DrawdownChart from './components/DrawdownChart.vue'
 import PortfolioMixChart from './components/PortfolioMixChart.vue'
+import DcaChart from './components/DcaChart.vue'
 import './custom.css'
 
 export default {
@@ -17,5 +18,6 @@ export default {
     app.component('MaCrossChart', MaCrossChart)
     app.component('DrawdownChart', DrawdownChart)
     app.component('PortfolioMixChart', PortfolioMixChart)
+    app.component('DcaChart', DcaChart)
   },
 } satisfies Theme
