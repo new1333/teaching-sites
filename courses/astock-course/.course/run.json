@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
-  "status": "generating",
-  "phase": "chapters",
+  "status": "complete",
+  "phase": "delivery",
   "language": "zh",
   "outline_revision": 0,
   "next_chapter": null,
@@ -31,7 +31,7 @@
     "outline-confirmation"
   ],
   "last_commit": {
-    "kind": "chapter",
-    "id": "16-expert-roadmap"
+    "kind": "assembly",
+    "id": "astock-course"
   }
 }

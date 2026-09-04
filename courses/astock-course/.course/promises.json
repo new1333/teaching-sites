@@ -7,7 +7,8 @@
       "from_n": 1,
       "target": "divergence",
       "what": "「实际收益率≈名义收益率−通胀率」为近似式，精确式与适用条件登记差异附录（正文通货膨胀节已按此口径引用附录「简化与差异清单」）",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-market-rules-commission-assumption",
@@ -15,7 +16,8 @@
       "from_n": 3,
       "target": "divergence",
       "what": "佣金示例值（万分之2.5、单笔最低5元）为课程假设，实际以开户券商合同为准；两融、大宗交易、打新等高级机制不在课程范围（正文成本节声明+收束括注导航已留）",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-k-line-synthetic-data",
@@ -23,7 +25,8 @@
       "from_n": 4,
       "target": "divergence",
       "what": "K线教学数据为固定种子（42）合成的示意行情（D1-D60），与任何真实个股无关；正文开篇/演练图注/收束三处声明，去向括注已留",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-trend-ma-backtest-synthetic",
@@ -31,7 +34,8 @@
       "from_n": 5,
       "target": "divergence",
       "what": "均线回测基于固定种子（42）250日合成行情；回测参数（MA5/MA20、课程示例单边费率、信号次日开盘成交、期末按收盘估值）登记差异附录",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-financial-statements-synthetic-data",
@@ -39,7 +43,8 @@
       "from_n": 6,
       "target": "divergence",
       "what": "体检用三张表为合成教学数据（甲乙丙均为匿名合成公司，科目远少于真实财报；净利润不分归母等口径；真实报表阅读路径在差异附录给指引）",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-valuation-static-pe",
@@ -47,7 +52,8 @@
       "from_n": 7,
       "target": "divergence",
       "what": "PE 统一按最近年报净利润的静态口径计算，静态/TTM/动态口径的差异登记差异附录",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-valuation-synthetic-targets",
@@ -55,7 +61,8 @@
       "from_n": 7,
       "target": "divergence",
       "what": "本章七只标的与自查标的均为合成教学数据，与任何真实上市公司无关；存款锚为粗筛口径（一次性收益用主业判定、锚会调整需查最新挂牌）",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-risk-math-vol-approx",
@@ -63,7 +70,8 @@
       "from_n": 9,
       "target": "divergence",
       "what": "波动率按月收益率标准差×√12 简化口径年化（母体标准差、24个月样本）；日频×√252 等实务口径与适用条件登记差异附录",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-diversification-synthetic-pair",
@@ -71,7 +79,8 @@
       "from_n": 10,
       "target": "divergence",
       "what": "股债组合数据为固定种子合成序列，「债券」以低波动合成资产代替真实债券指数；组合口径为每月末拨回各半（一种不动手的再平衡），买入持有所口径差异一并登记",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-position-sizing-fractional-shares",
@@ -79,7 +88,8 @@
       "from_n": 11,
       "target": "divergence",
       "what": "定投表按金额确认份额、允许碎股（不按手取整）；定投两条行情为固定输入合成数据；仓位上限与天花板公式为粗尺口径；佣金示例值沿用第3章",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     },
     {
       "id": "prom-index-etf-synthetic-index",
@@ -87,7 +97,8 @@
       "from_n": 13,
       "target": "divergence",
       "what": "定投回测基于固定种子合成指数路径（种子63，沪深300式形状），非真实指数历史；宽基指数与两档费率（0.2%/1.5%、毛收益8%）仅举例不构成推荐；ETF买卖沿用第3章股票费用口径（实际ETF免印花税，课程口径偏保守）；折溢价按市价÷净值−1简化；回测定投每期撞佣金5元下限",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "已登记于 docs/divergence.md（差异附录行，与正文声明处互指）"
     }
   ]
 }
