@@ -293,6 +293,44 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 10,
+      "slug": "diversification",
+      "file": "docs/10-diversification.md",
+      "status": "complete",
+      "summary": "第10章（canvas-app）建立4块积木：相关性、分散化、资产配置、再平衡。验证物：portfolio.ts纯函数+实验台五档相关水平（6.21%→18.63%单调台阶）+丙丁0.95伪分散例+60/40三年漂移（72.42%）与再平衡对照，35条新测试全书165条互锁；PortfolioMixChart切换交互。评审阻断3处（图表读数与正文矛盾、相关性手算符号、与第9章四处句式同款）已修。",
+      "artifacts": [
+        "companion/src/portfolio.ts",
+        "companion/src/datasets/ch10-mix.ts",
+        "companion/tests/portfolio.test.ts",
+        "docs/assets/data/portfolio-mix.json",
+        "docs/.vitepress/theme/components/PortfolioMixChart.vue",
+        "docs/10-diversification.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（165条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 10-diversification.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

@@ -64,6 +64,14 @@
       "target": "divergence",
       "what": "波动率按月收益率标准差×√12 简化口径年化（母体标准差、24个月样本）；日频×√252 等实务口径与适用条件登记差异附录",
       "status": "open"
+    },
+    {
+      "id": "prom-diversification-synthetic-pair",
+      "from": "diversification",
+      "from_n": 10,
+      "target": "divergence",
+      "what": "股债组合数据为固定种子合成序列，「债券」以低波动合成资产代替真实债券指数；组合口径为每月末拨回各半（一种不动手的再平衡），买入持有所口径差异一并登记",
+      "status": "open"
     }
   ]
 }

@@ -5,7 +5,7 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 10,
+  "next_chapter": 11,
   "completed_chapters": [
     "time-value",
     "stock-nature",
@@ -15,7 +15,8 @@
     "financial-statements",
     "valuation-multiples",
     "margin-of-safety",
-    "risk-math"
+    "risk-math",
+    "diversification"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -25,6 +26,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "09-risk-math"
+    "id": "10-diversification"
   }
 }
