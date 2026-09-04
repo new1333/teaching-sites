@@ -72,6 +72,14 @@
       "target": "divergence",
       "what": "股债组合数据为固定种子合成序列，「债券」以低波动合成资产代替真实债券指数；组合口径为每月末拨回各半（一种不动手的再平衡），买入持有所口径差异一并登记",
       "status": "open"
+    },
+    {
+      "id": "prom-position-sizing-fractional-shares",
+      "from": "position-sizing",
+      "from_n": 11,
+      "target": "divergence",
+      "what": "定投表按金额确认份额、允许碎股（不按手取整）；定投两条行情为固定输入合成数据；仓位上限与天花板公式为粗尺口径；佣金示例值沿用第3章",
+      "status": "open"
     }
   ]
 }

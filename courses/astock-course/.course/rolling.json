@@ -331,6 +331,42 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 11,
+      "slug": "position-sizing",
+      "file": "docs/11-position-sizing.md",
+      "status": "complete",
+      "summary": "第11章（worksheet）建立4块积木：仓位、仓位管理、单笔风险预算、定投。验证物：position.ts（预算÷每股风险反推+定投逐期成本）+fixtures（反推2道+定投12期×2条：V形+26.50% vs 一次性+10.00%、下行仍亏34.01%）+18条新测试全书183条互锁。先定输多少→再算买多少；满仓/定投双误区算术证伪。评审阻断2处（反推题缺输入、碎股口径未声明）已修。",
+      "artifacts": [
+        "companion/src/position.ts",
+        "companion/fixtures/position.json",
+        "companion/tests/position.test.ts",
+        "docs/11-position-sizing.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（183条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 11-position-sizing.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }
