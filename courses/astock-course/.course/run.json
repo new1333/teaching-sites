@@ -5,7 +5,7 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 12,
+  "next_chapter": 13,
   "completed_chapters": [
     "time-value",
     "stock-nature",
@@ -17,7 +17,8 @@
     "margin-of-safety",
     "risk-math",
     "diversification",
-    "position-sizing"
+    "position-sizing",
+    "behavior-traps"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -27,6 +28,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "11-position-sizing"
+    "id": "12-behavior-traps"
   }
 }

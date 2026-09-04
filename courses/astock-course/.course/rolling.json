@@ -367,6 +367,31 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 12,
+      "slug": "behavior-traps",
+      "file": "docs/12-behavior-traps.md",
+      "status": "complete",
+      "summary": "第12章（principle/none）建立4块积木：损失厌恶（系数约2，文献口径）、处置效应（成本价坐上决策席）、锚定效应（分母错误）、从众效应（拥挤造顶）。四条机械防御规则（预算单/季度去留日/止损进持仓单/日历再平衡）组装自第10/11章积木；老周合成账本连锁与重放；钩子2021年1月爆款基金（定性口径+authority登记）。评审零阻断6建议已修（收束撞款、Q5骨架第4次、毫秒裸数字、乙票先行词、工具箱承诺对齐、authority补登）。",
+      "artifacts": [
+        "docs/12-behavior-traps.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（183条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 12-behavior-traps.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }
