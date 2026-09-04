@@ -5,7 +5,7 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 16,
+  "next_chapter": null,
   "completed_chapters": [
     "time-value",
     "stock-nature",
@@ -21,7 +21,8 @@
     "behavior-traps",
     "index-etf",
     "stock-checklist",
-    "your-system"
+    "your-system",
+    "expert-roadmap"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -31,6 +32,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "15-your-system"
+    "id": "16-expert-roadmap"
   }
 }

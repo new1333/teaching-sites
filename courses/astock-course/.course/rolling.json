@@ -480,6 +480,31 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 16,
+      "slug": "expert-roadmap",
+      "file": "docs/16-expert-roadmap.md",
+      "status": "complete",
+      "summary": "第16章（principle/none压缩视野章，length_exempt）新增积木0块：主线已在第15章收口，本章答「下一步去哪」。三份合成持仓点名10块缺口积木各配修法；12个月三条示例路径（行业深研/估值深研/工具化执行）各3个查产出物的里程碑；书单限公开经典+官方投教渠道；末段driving question回望收束全书。评审零阻断4建议已修（点名矛盾+定投闭环、收束句式、公司癸能力锚、核心仓换日常词）。",
+      "artifacts": [
+        "docs/16-expert-roadmap.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 16-expert-roadmap.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }
