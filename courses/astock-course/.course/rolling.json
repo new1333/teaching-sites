@@ -455,6 +455,31 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 15,
+      "slug": "your-system",
+      "file": "docs/15-your-system.md",
+      "status": "complete",
+      "summary": "第15章（review/none终章）建立2块积木：投资体系、投资计划书（一页纸六槽：目标/配置/买入/卖出/红线/复盘，各带可判定填写标准）。对账：前14章64块积木按五组收拢，五组接口稳定各举一例（评审抽查8处全真）；重考第1章存款场景，driving question原文收口；能力清单与final_milestone对齐；合规声明收尾。评审零阻断2建议已修（百分点措辞、损失厌恶工具箱行）。",
+      "artifacts": [
+        "docs/15-your-system.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 15-your-system.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

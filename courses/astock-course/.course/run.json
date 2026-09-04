@@ -5,7 +5,7 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 0,
-  "next_chapter": 15,
+  "next_chapter": 16,
   "completed_chapters": [
     "time-value",
     "stock-nature",
@@ -20,7 +20,8 @@
     "position-sizing",
     "behavior-traps",
     "index-etf",
-    "stock-checklist"
+    "stock-checklist",
+    "your-system"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -30,6 +31,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "14-stock-checklist"
+    "id": "15-your-system"
   }
 }
