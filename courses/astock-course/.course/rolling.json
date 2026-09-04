@@ -430,6 +430,31 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 14,
+      "slug": "stock-checklist",
+      "file": "docs/14-stock-checklist.md",
+      "status": "complete",
+      "summary": "第14章（observation组装章）建立2块积木：商业模式（一句话说清钱从哪来）、研究清单（每步带通过标准与不通过出口）。验证物：七步清单表+茅台七步走查台账（约+长期公开特征口径，易变数字转读者自查，三处不荐股声明）+12条免登录observation任务。13块旧积木按「公司→价格→自己」串成带出口流程，与第8章四道闸首尾相接。评审阻断2处（凑手数算术、失实引注）与6建议已修（②步任务补齐、Q4换输入、②③次序口径、合同负债注、千元量级限定）。",
+      "artifacts": [
+        "docs/14-stock-checklist.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 14-stock-checklist.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }
