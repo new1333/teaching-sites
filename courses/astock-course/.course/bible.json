@@ -142,18 +142,6 @@
       "interface": "买卖双向都算：成交金额 × 0.001%，很小但每笔都有。"
     },
     {
-      "term": "限价单",
-      "en": "limit order",
-      "definition": "指定成交价格上限或下限的委托，达不到就不成交。",
-      "interface": "新手默认用它：买时封顶、卖时保底，代价是可能不成交。"
-    },
-    {
-      "term": "市价单",
-      "en": "market order",
-      "definition": "不指定价格、按当前盘口立即成交的委托，保证成交不保证价格。",
-      "interface": "流动性差的票慎用；理解「保证成交≠保证价格」再用。"
-    },
-    {
       "term": "手",
       "en": "lot",
       "definition": "A股主板与创业板的最小交易单位，1手 = 100股。",
@@ -164,12 +152,6 @@
       "en": "trading day",
       "definition": "交易所开市的日子，非节假日周一至周五；T 日、T+1 的「日」都指它。",
       "interface": "判断归属交易日只看收盘线 15:00：之前算当天，之后算下一个交易日。"
-    },
-    {
-      "term": "盘口",
-      "en": "quote board",
-      "definition": "行情软件里实时挂单价格与数量的显示区，含买一卖一等五档。",
-      "interface": "看盘先看买卖五档的价差与挂单量，感受流动性强弱。"
     },
     {
       "term": "K线",
@@ -484,19 +466,9 @@
       "interface": "写完贴在看得见的地方：任何一笔操作前对照，冲突就不做。"
     },
     {
-      "term": "牛市",
-      "en": "bull market",
-      "definition": "市场整体长期上涨的阶段。"
-    },
-    {
       "term": "熊市",
       "en": "bear market",
       "definition": "市场整体长期下跌的阶段。"
-    },
-    {
-      "term": "除权除息",
-      "en": "ex-dividend / ex-rights",
-      "definition": "分红送股后对股价做相应扣减，使持有人总资产不因操作本身变化。"
     }
   ],
   "verification_conventions": {
@@ -522,7 +494,7 @@
       "commission_rate": 0.00025,
       "commission_min": 5,
       "stamp_tax_rate": 0.0005,
-      "transfer_fee_rate": 1e-05,
+      "transfer_fee_rate": 0.00001,
       "as_of": "2026-09"
     },
     "rate_anchor": {
