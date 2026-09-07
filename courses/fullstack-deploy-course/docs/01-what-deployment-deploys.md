@@ -58,7 +58,7 @@ pnpm build
 
 三件事值得盯住。
 
-第一，一次构建同时产出「两端」：public/ 是给浏览器的静态资源，server/ 是在服务器上运行的代码。第二，server/node_modules 不是你装的那 640 个包，而是构建器从实际代码里追踪（trace）出来的最小集合，顶层只有 12 个包。版本也被逐个钉死：.output/server/package.json 里写的是精确版本，一个 ^ 都没有。第三，入口 index.mjs 的第一行 import 的是 node:http：它不需要 Vite、不需要任何命令行工具，就是一段「在 Node 里创建 HTTP 服务器」的普通代码。
+第一，一次构建同时产出「两端」：public/ 是给浏览器的静态资源，server/ 是在服务器上运行的代码。第二，server/node_modules 不是你装的那 640 个包，而是构建器从实际代码里追踪（trace）出来的最小集合。到底多小：顶层 12 个条目（含 @babel、@vue 两个 scope 目录），展开共 19 个包。这个数对得上账：.output/server/package.json 里恰好登记 19 个依赖，版本个个精确，一个 ^ 都没有。第三，入口 index.mjs 的第一行 import 的是 node:http：它不需要 Vite、不需要任何命令行工具，就是一段「在 Node 里创建 HTTP 服务器」的普通代码。
 
 这份产物是自包含的：把它整个拷到工程之外、只装有 Node 的目录，直接 node server/index.mjs，照常监听、照常出页面。这一点不用我担保，验证一节你会亲手拷一次。**部署交付的是 .output 这个整体，不是源代码仓库。**
 
@@ -85,6 +85,9 @@ node .output/server/index.mjs
 HTTP/1.1 200 OK
 content-type: text/html;charset=utf-8
 x-powered-by: Nuxt
+Date: Mon, 07 Sep 2026 06:39:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
 Content-Length: 1794
 ```
 
@@ -136,20 +139,22 @@ Node.js v22.22.2
 
 退出码 1。node 只是个程序运行器：交给它一个文件路径，它加载执行；路径不存在时它不会替你构建工程，只报 MODULE_NOT_FOUND。这条红守住的直觉是：部署前得先有「可部署的东西」，而它不是源代码。
 
-红二：产物存在，内容不对。这个工程配了一个 e2e 脚本（scripts/e2e-ch1.mjs，马上看它），package.json 里登记为门槛命令。首页还是占位页时的第一次运行，真实记录如下：
+红二：产物存在，内容不对。这个工程配了一个 e2e 脚本（scripts/e2e-ch1.mjs，马上看它），package.json 里登记为门槛命令。首页还是占位页时的第一次运行，就红在这条内容断言上——内容断言失败时的真实输出如下（实验三会复现同款红）：
 
 ```text
-# 占位页时代的第一次 e2e（真实记录）
+# e2e 内容断言亮红时的真实输出
 $ pnpm e2e:ch1
 [e2e:ch1] 启动生产进程: node .output/server/index.mjs (PORT=4171)
-[e2e:ch1] 进程就绪 (耗时 359ms)
+[e2e:ch1] 进程就绪 (耗时 368ms)
 [e2e:ch1] GET / → 200
 [e2e:ch1] HTML 含 SSR 数据文本 "9f3c2ab" → FAIL
 [e2e:ch1] FAIL: 裸 HTML（未执行任何 JS）中找不到 "9f3c2ab" —— 页面数据不是服务端渲染出来的。
+[e2e:ch1] 生产进程已退出 (pid 25796, code=null, signal=SIGTERM)
+[e2e:ch1] 端口 4171 不再监听 → PASS
  ELIFECYCLE  Command failed with exit code 1.
 ```
 
-注意它红的方式：进程起得来，GET / 拿到 200，服务是活的；红在内容断言——裸 HTML 里找不到页面本该有的数据。这种安静的红比崩溃危险得多：没有这条断言，你会拿着一个返回 200 的空壳宣布部署成功。脚本把它变成响亮的退出码 1。
+注意它红的方式：进程起得来，GET / 拿到 200，服务是活的；红在内容断言——裸 HTML 里找不到页面本该有的数据。这种安静的红比崩溃危险得多：没有这条断言，你会拿着一个返回 200 的空壳宣布部署成功。脚本把它变成响亮的退出码 1。还有两行值得盯：断言亮红之后，「生产进程已退出」「端口 4171 不再监听」照样打印——失败的运行也把收尾走完，不留一个占着端口的孤儿进程。这是怎么做到的，马上看脚本的控制流。
 
 最小实现：一页真实数据。Nuxt 的页面放在 app/pages/ 下，文件名对应路由，把首页从占位换成一张部署日志表。
 
@@ -198,37 +203,44 @@ const deploys: DeployRecord[] = [
 
 ```js
 // companion/scripts/e2e-ch1.mjs · 片段一：用 node 起产物进程，端口写进环境变量
-const child = spawn(process.execPath, [SERVER], {
-  cwd: ROOT,
-  env: { ...process.env, PORT: String(PORT), HOST: '127.0.0.1' },
-  stdio: ['ignore', 'pipe', 'pipe'],
-})
+  child = spawn(process.execPath, [SERVER], {
+    cwd: ROOT,
+    env: { ...process.env, PORT: String(PORT), HOST: '127.0.0.1' },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
 ```
 
 ```js
 // companion/scripts/e2e-ch1.mjs · 片段二：断言分两层——服务活着，页面也对
-  const html = await res.text()
-  for (const marker of SSR_MARKERS) {
-    const hit = html.includes(marker)
-    console.log(`[e2e:ch1] HTML 含 SSR 数据文本 "${marker}" → ${hit ? 'PASS' : 'FAIL'}`)
-    if (!hit) {
-      fail(`裸 HTML（未执行任何 JS）中找不到 "${marker}" —— 页面数据不是服务端渲染出来的。`)
+    const html = await res.text()
+    for (const marker of SSR_MARKERS) {
+      const hit = html.includes(marker)
+      console.log(`[e2e:ch1] HTML 含 SSR 数据文本 "${marker}" → ${hit ? 'PASS' : 'FAIL'}`)
+      if (!hit) {
+        fail(`裸 HTML（未执行任何 JS）中找不到 "${marker}" —— 页面数据不是服务端渲染出来的。`)
+      }
+      passed++
     }
-    passed++
-  }
 ```
 
 ```js
-// companion/scripts/e2e-ch1.mjs · 片段三：端口用完必须释放
-} finally {
-  // 端口用完必须释放：无论断言成败都杀掉进程并等它退出
-  child.kill()
-  const gone = await exited
-  console.log(`[e2e:ch1] 生产进程已退出 (pid ${child.pid}, code=${gone.code}, signal=${gone.signal ?? '无'})`)
-}
+// companion/scripts/e2e-ch1.mjs · 片段三：统一收尾——进程必杀、端口必查
+  } finally {
+    // 统一收尾：无论断言成败，都杀掉进程、等退出事件落地，并确认端口不再监听
+    killChild()
+    const gone = await exited
+    console.log(`[e2e:ch1] 生产进程已退出 (pid ${child.pid}, code=${gone.code}, signal=${gone.signal ?? '无'})`)
+    if (await portReleased(10_000)) {
+      console.log(`[e2e:ch1] 端口 ${PORT} 不再监听 → PASS`)
+    } else {
+      console.error(`[e2e:ch1] FAIL: 进程退出后 ${BASE} 仍可访问 —— 端口未释放`)
+      process.exitCode = 1
+      failed = true
+    }
+  }
 ```
 
-片段一用 node 直接运行产物入口，PORT 指到 4171（本课约定：应用测试统一用 4100 段端口，用完释放），HOST 绑回环地址，不打扰局域网。片段二的两层断言：GET / 必须 200；且 fetch（与 curl 同款，不执行 JS）拿到的裸 HTML 里必须出现数据文本 9f3c2ab 与 77aa01f——文本在，SSR 渲染的证据就在。片段三在 finally 里杀进程并等退出事件落地，无论断言成败都执行；脚本最后还会再访问一次端口，确认连不上了才算收尾。package.json 里新增的门槛命令就一行：
+片段一用 node 直接运行产物入口，PORT 指到 4171（本课约定：应用测试统一用 4100 段端口，用完释放），HOST 绑回环地址，不打扰局域网。片段二的两层断言：GET / 必须 200；且 fetch（与 curl 同款，不执行 JS）拿到的裸 HTML 里必须出现数据文本 9f3c2ab 与 77aa01f——文本在，SSR 渲染的证据就在。片段三的 finally 是统一收尾：杀进程、等退出事件落地、再探一次端口，断言成败都走这一段。它能「必然执行」，靠的是失败路径的设计。断言失败时 fail() 不直接 process.exit——那样会跳过 finally，留下占着 4171 的孤儿进程。下次再跑，4171 还被孤儿进程占着，直接 EADDRINUSE。失败改走另一条路：抛出专用错误，由 catch 打印并把 process.exitCode 置 1，进程带着失败码走完收尾再自然结束。spawn 之后脚本还挂了一个进程退出兜底钩子（process.on('exit') 里再杀一次子进程），从任何路径离开都不留孤儿。package.json 里新增的门槛命令就一行：
 
 ```jsonc
 // companion/package.json · scripts 节选
@@ -246,11 +258,11 @@ pnpm build && pnpm e2e:ch1
 ```text
 # pnpm e2e:ch1 终态输出
 [e2e:ch1] 启动生产进程: node .output/server/index.mjs (PORT=4171)
-[e2e:ch1] 进程就绪 (耗时 352ms)
+[e2e:ch1] 进程就绪 (耗时 361ms)
 [e2e:ch1] GET / → 200
 [e2e:ch1] HTML 含 SSR 数据文本 "9f3c2ab" → PASS
 [e2e:ch1] HTML 含 SSR 数据文本 "77aa01f" → PASS
-[e2e:ch1] 生产进程已退出 (pid 36416, code=null, signal=SIGTERM)
+[e2e:ch1] 生产进程已退出 (pid 20348, code=null, signal=SIGTERM)
 [e2e:ch1] 端口 4171 不再监听 → PASS
 [e2e:ch1] 全部断言通过 (4/4)
 ```
@@ -286,13 +298,13 @@ PORT=4171 node .output/server/index.mjs
 1. 不重新构建，重启产物进程后 curl——HTML 里的 sha 是 9f3c2ab 还是 deadbee？二选一。
 2. 跑 pnpm build && pnpm e2e:ch1——退出码是 0 还是 1？
 
-对照：第一问，仍是 9f3c2ab。源码的改动进不了已经构建出来的产物：**.output 是构建那一刻的冻结快照**，这也是部署单元「整体替换」的另一面——改了源码不重新构建、不重新部署，线上跑的就还是旧版本。第二问，退出码 1：e2e 在 HTML 里找不到 9f3c2ab，断言亮红。注意此时 GET / → 200 依然通过，它守「服务活着」，内容断言守「页面对不对」，两层守卫各管各的。复原：把 sha 改回 9f3c2ab，pnpm build && pnpm e2e:ch1，确认全绿如初。
+对照：第一问，仍是 9f3c2ab。源码的改动进不了已经构建出来的产物：**.output 是构建那一刻的冻结快照**，这也是部署单元「整体替换」的另一面——改了源码不重新构建、不重新部署，线上跑的就还是旧版本。第二问，退出码 1：e2e 在 HTML 里找不到 9f3c2ab，断言亮红；亮红之后收尾两行（进程已退出、端口不再监听）照样出现，失败的运行也把端口还了回去。注意此时 GET / → 200 依然通过，它守「服务活着」，内容断言守「页面对不对」，两层守卫各管各的。复原：把 sha 改回 9f3c2ab，pnpm build && pnpm e2e:ch1，确认全绿如初。
 
 顺手加一个自包含实验：把 .output 整个目录拷到工程外的临时目录，在那里执行 node server/index.mjs（默认 3000 被占用就带上 PORT=4179）。先猜能不能起来，再对照——它能起来，页面分毫不变。产物不认识你的工程目录，它只认识自己肚子里的东西。
 
 ## 收束：那堵墙的名字
 
-开篇的问题现在可以整段回答。SSH 一断网站就没了，直接原因是 npm run dev 起的进程绑定在登录会话上，会话结束，内核发出挂断信号，进程随之退出。更深一层：dev 服务器本来就是开发工具——按需编译、热更新、依赖完整源码树，三样都不是为服务用户准备的。部署交付的从来不是源代码，而是生产构建出的部署单元：一个自包含的 .output，在任何装了 Node 的机器上一条命令启动。页面由常驻的 Nitro 进程做 SSR 渲染——curl 拿到的 HTML 里，就躺着渲染好的数据。还剩两个问题——进程由谁守护、入口由谁把关——属于第二部分的课题。
+开篇的问题现在可以整段回答。SSH 一断网站就没了，直接原因是 npm run dev 起的进程绑定在登录会话上，会话结束，内核发出挂断信号，进程随之退出。更深一层：dev 服务器本来就是开发工具——按需编译、热更新、依赖完整源码树，三样都不是为服务用户准备的。部署交付的从来不是源代码，而是生产构建出的部署单元：一个自包含的 .output，在任何装了 Node 的机器上一条命令启动。页面由常驻的 Nitro 进程做 SSR 渲染——curl 拿到的 HTML 里，就躺着渲染好的数据。
 
 这一章拿到的积木，后面每一章都在用：
 
@@ -301,7 +313,7 @@ PORT=4171 node .output/server/index.mjs
 - SSR——HTML 由服务端进程渲染，「curl 不执行 JS，HTML 里有什么，服务端就渲染了什么」；
 - 部署单元——一次部署交付的整体，整体替换、整体回滚。
 
-最后一行只做导航：Nitro 装的不止页面渲染，server/ 目录就是这个工程的后端，同一份产物里会长出 API（第 2 章）。
+最后一行只做导航：Nitro 装的不止页面渲染，server/ 目录就是这个工程的后端，同一份产物里会长出 API（第 2 章）；进程由谁守护、入口由谁把关，交给容器与反向代理（第 6 章）。
 
 ## 自查
 
