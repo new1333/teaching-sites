@@ -1,4 +1,22 @@
 {
   "schema_version": 2,
-  "chapters": []
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "what-deployment-deploys",
+      "file": "docs/01-what-deployment-deploys.md",
+      "status": "complete",
+      "summary": "建立生产构建、Nitro、SSR、部署单元四块积木。首页换成内联数据的 SSR 部署日志表；新增 scripts/e2e-ch1.mjs（登记为 pnpm e2e:ch1）与 pnpm build 组成双门槛：起产物进程→断言 200 与 SSR 文本→finally 统一杀进程并验端口释放（失败路径实测不漏孤儿进程）。读者能用 node 直接运行 .output、用 curl 判定服务端渲染，理解部署交付的是部署单元而非源码。",
+      "artifacts": [
+        "companion/app/pages/index.vue",
+        "companion/scripts/e2e-ch1.mjs",
+        "companion/package.json"
+      ],
+      "gates": [
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" }
+      ],
+      "review_blockers": 0
+    }
+  ]
 }

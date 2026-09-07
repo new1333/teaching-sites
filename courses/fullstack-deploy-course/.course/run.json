@@ -5,8 +5,10 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 1,
-  "completed_chapters": [],
+  "next_chapter": 2,
+  "completed_chapters": [
+    "what-deployment-deploys"
+  ],
   "degraded_chapters": [],
   "blocked_chapters": [],
   "skipped_interactions": [

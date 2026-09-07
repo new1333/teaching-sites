@@ -1,4 +1,13 @@
 {
   "schema_version": 2,
-  "promises": []
+  "promises": [
+    {
+      "id": "ch1-nitro-carries-backend",
+      "from": "01-what-deployment-deploys",
+      "from_n": 1,
+      "target": "02-nuxt-server-api",
+      "what": "Nitro 承载的不只是页面 SSR——server/ 目录即 TS 后端",
+      "status": "open"
+    }
+  ]
 }
