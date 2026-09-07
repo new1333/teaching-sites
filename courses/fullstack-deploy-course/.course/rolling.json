@@ -43,6 +43,31 @@
         { "command": "pnpm e2e:ch2", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "env-and-config",
+      "file": "docs/03-env-and-config.md",
+      "status": "complete",
+      "summary": "建立 runtimeConfig、构建期与运行期配置、环境变量注入、fail-fast 配置校验、.env 与密钥管理五块积木。nuxt.config.ts 登记私有 dbUrl 与公有 appEnv（空默认）；loadAppConfig（zod）缺失/非法一次报全、绝不部分返回（7 条行为测试）；Nitro 启动插件缺配置退出码 1；.env 不入库有 check-ignore 证据，.env.example 为模板；e2e:ch3 两幕（变量在产物生效、缺配置自退非 0）。读者能让同一构建产物零重建适配任意环境。",
+      "artifacts": [
+        "companion/nuxt.config.ts",
+        "companion/server/utils/config.ts",
+        "companion/server/plugins/config.ts",
+        "companion/tests/config.test.ts",
+        "companion/scripts/e2e-ch3.mjs",
+        "companion/.env.example",
+        "companion/package.json"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" },
+        { "command": "pnpm e2e:ch2", "result": "passed" },
+        { "command": "pnpm e2e:ch3", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

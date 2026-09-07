@@ -17,6 +17,14 @@
       "target": "04-database-layer",
       "what": "/api/deploys 的数据源从内存数组换成 PostgreSQL（域逻辑与 handler 不变，resetDeploys 测试缝随之替换）",
       "status": "open"
+    },
+    {
+      "id": "ch3-dburl-first-consumer",
+      "from": "03-env-and-config",
+      "from_n": 3,
+      "target": "04-database-layer",
+      "what": "数据库连接串经 runtimeConfig 注入而非写死——dbUrl 的首个真实消费者",
+      "status": "open"
     }
   ]
 }
