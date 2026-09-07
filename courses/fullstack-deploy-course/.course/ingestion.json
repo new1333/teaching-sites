@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "kind": "topic",
+  "label": "前后端项目部署最佳实践：Nuxt + TS 后端 + 数据库的开发、部署与自动化部署",
+  "description": "以一个 Nuxt 全栈应用（TS 后端 + PostgreSQL）为主线，从生产构建、环境配置、数据库迁移，到容器化、反向代理与 HTTPS、备份恢复，再到 CI/CD 自动化部署与生产加固，最终交付 push 即部署、失败可回滚的完整链路。",
+  "features": [
+    {
+      "id": "dev-prod-gap",
+      "name": "部署到底部署什么",
+      "summary": "区分 nuxt dev 开发服务器与生产构建产物，认识 Nitro 服务端进程、SSR 渲染模式与部署单元，建立一次请求在生产环境经过哪些层的模型。",
+      "reader_can": "构建一个最小 Nuxt 应用，用 node 直接运行生产产物，并画出浏览器请求到 Node 进程的完整路径。"
+    },
+    {
+      "id": "nuxt-fullstack-app",
+      "name": "Nuxt 全栈工程：server API 与类型共享",
+      "summary": "用 server/ 目录写 TS 后端接口，前后端共享类型，在边界做请求校验，把业务逻辑放进可独立测试的纯函数层。",
+      "reader_can": "实现页面 + server API + 共享类型 + 请求校验的全栈骨架，并为纯函数域逻辑写出单元测试。"
+    },
+    {
+      "id": "env-secrets",
+      "name": "环境变量与运行时配置",
+      "summary": "区分构建期与运行期配置，用 runtimeConfig 与 NUXT_ 前缀注入环境变量，密钥不进仓库与镜像，缺失配置在启动时 fail-fast。",
+      "reader_can": "让同一构建产物只靠环境变量切换环境，缺失必需变量时进程带清晰报错退出。"
+    },
+    {
+      "id": "db-layer",
+      "name": "数据库层：schema、迁移与类型安全访问",
+      "summary": "接入 PostgreSQL，用 Drizzle 定义 schema、生成并执行迁移，通过连接池访问数据库，为集成测试准备一次性数据库。",
+      "reader_can": "建立带迁移历史的数据库层，server API 落库读写，集成测试在隔离数据库上运行。"
+    },
+    {
+      "id": "dockerize",
+      "name": "容器化：多阶段构建与 Compose 应用栈",
+      "summary": "写多阶段 Dockerfile（依赖、构建、运行分离），利用镜像层缓存，非 root 运行；用 Compose 编排应用 + PostgreSQL + 数据卷 + 健康检查。",
+      "reader_can": "一条命令构建镜像并拉起完整应用栈，容器内只靠环境变量完成配置，应用重启数据不丢。"
+    },
+    {
+      "id": "server-runtime",
+      "name": "服务器运行时：反向代理、TLS 与进程守护",
+      "summary": "用 Nginx 做反向代理与 TLS 终止，理解自签名证书与真实证书差异，配置进程守护与重启策略；真实 VPS 步骤以 runbook 交付。",
+      "reader_can": "在本地模拟拓扑上让应用经 Nginx + HTTPS 反代可访问，容器崩溃后自动恢复，并按 runbook 迁移到真实服务器。"
+    },
+    {
+      "id": "db-ops",
+      "name": "生产数据库运维：备份、恢复与迁移时机",
+      "summary": "用 pg_dump/pg_restore 做逻辑备份与恢复演练，确定迁移在部署流程中的执行时机与失败处理。",
+      "reader_can": "执行一次完整备份→破坏→恢复→对账演练，并说明迁移前置执行与启动时执行的取舍。"
+    },
+    {
+      "id": "ci-pipeline",
+      "name": "CI：push 即检查",
+      "summary": "用 GitHub Actions 搭建 lint/typecheck/test/build 工作流，配置依赖缓存与 PostgreSQL 服务容器，让坏提交在合并前被拦截。",
+      "reader_can": "写出结构正确、与本地命令一致的 CI 工作流，并用本地验证器证明其覆盖完整检查链。"
+    },
+    {
+      "id": "cd-pipeline",
+      "name": "CD：自动部署与回滚",
+      "summary": "CI 通过后构建镜像推送到 GHCR，服务器拉取新版本、执行迁移、健康门禁通过才切流，失败自动回滚到上一版本。",
+      "reader_can": "实现 push → 构建 → 部署 → 健康门禁 → 失败自动回滚的完整流水线，并在本地演练坏版本回退。"
+    },
+    {
+      "id": "prod-hardening",
+      "name": "生产加固：健康分级、结构化日志与故障排查",
+      "summary": "区分 liveness 与 readiness，接入结构化日志与资源限制，建立 502、迁移卡死、连接耗尽、OOM 的排查路径。",
+      "reader_can": "证明数据库故障时 readiness 变红而 liveness 保持绿，并用日志与资源指标定位一次模拟故障。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "dev-prod-gap", "to": "nuxt-fullstack-app" },
+      { "from": "nuxt-fullstack-app", "to": "env-secrets" },
+      { "from": "env-secrets", "to": "db-layer" },
+      { "from": "db-layer", "to": "dockerize" },
+      { "from": "env-secrets", "to": "dockerize" },
+      { "from": "dockerize", "to": "server-runtime" },
+      { "from": "db-layer", "to": "db-ops" },
+      { "from": "dockerize", "to": "db-ops" },
+      { "from": "env-secrets", "to": "ci-pipeline" },
+      { "from": "db-layer", "to": "ci-pipeline" },
+      { "from": "ci-pipeline", "to": "cd-pipeline" },
+      { "from": "server-runtime", "to": "cd-pipeline" },
+      { "from": "db-ops", "to": "cd-pipeline" },
+      { "from": "cd-pipeline", "to": "prod-hardening" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "skill-training",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "reason": "用户要求详解开发与部署全链路；每章能力都能落成本地可运行、可断言的工程产物（构建、容器、流水线配置、备份恢复演练），code-lab 门槛可在本机真实执行。"
+  },
+  "issues": [
+    "课程环境无法操作真实 VPS：服务器侧以本地 Docker 拓扑模拟并真实验证，真实服务器步骤以 runbook 形式交付并在差异附录登记。",
+    "镜像与依赖版本随时间变化：版本号以 companion 实际 lockfile 为准，正文不写即时性表述。"
+  ]
+}

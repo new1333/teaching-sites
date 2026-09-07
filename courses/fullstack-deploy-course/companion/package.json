@@ -1,0 +1,27 @@
+{
+  "name": "ship-log",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "db:up": "node scripts/compose-db.mjs up",
+    "db:down": "node scripts/compose-db.mjs down"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "nuxt": "^4.5.2",
+    "pino": "^10.3.1",
+    "postgres": "^3.4.9",
+    "vue": "^3.5.42",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0",
+    "vue-tsc": "^3.3.11"
+  }
+}

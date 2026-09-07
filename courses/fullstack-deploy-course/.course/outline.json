@@ -1,0 +1,348 @@
+{
+  "schema_version": 2,
+  "title": "前后端项目部署最佳实践：Nuxt + TypeScript + PostgreSQL",
+  "audience": "会 TS 与 Vue 前端、想把全栈项目部署上线的开发者",
+  "driving_question": "从 git push 到线上可访问，每一层发生了什么？如何让这条路自动、可验证、可回滚？",
+  "input": { "kind": "topic", "ref": "topic://fullstack-deploy-best-practices" },
+  "profile": {
+    "archetype": "skill-training",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "code_density": "collapsed",
+    "obligations": [
+      {
+        "kind": "timeliness",
+        "note": "Nuxt、Drizzle、Docker、GitHub Actions 的版本号与界面路径随时间变化；课程版本以 companion lockfile 为准，正文用相对表述。",
+        "surfaces": ["docs/about.md", "docs/01-what-deployment-deploys.md", "docs/08-ci-pipeline.md"]
+      }
+    ],
+    "presentation": { "visual": "none" },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "Nuxt 全栈应用 ship-log（部署日志）+ 基础设施脚本（Dockerfile、compose、备份恢复、部署与演练）+ GitHub Actions 工作流与本地结构验证器",
+    "language": "TypeScript",
+    "scope": "教学用最小可部署全栈应用：页面 + server API + PostgreSQL；不含认证、多租户、水平扩展等生产外围",
+    "commands": {
+      "typecheck": "pnpm typecheck",
+      "test": "pnpm test",
+      "build": "pnpm build",
+      "db:up": "pnpm db:up",
+      "db:down": "pnpm db:down",
+      "compose:sim": "pnpm compose:sim",
+      "sim:prod": "pnpm sim:prod",
+      "drill:backup-restore": "pnpm drill:backup-restore",
+      "drill:deploy-rollback": "pnpm drill:deploy-rollback",
+      "drill:health-split": "pnpm drill:health-split",
+      "validate:ci": "node scripts/validate-workflow.mjs"
+    }
+  },
+  "parts": [
+    {
+      "title": "第一部分 开发侧：写出可部署的全栈应用",
+      "chapters": [
+        {
+          "slug": "what-deployment-deploys",
+          "title": "部署到底部署什么：从 nuxt dev 到生产进程",
+          "goal": "会构建并直接运行 Nuxt 生产产物，说清一次请求在生产环境经过的层",
+          "type": "build",
+          "feature_id": "dev-prod-gap",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "本地 nuxt dev 一切正常；把源代码拷到服务器上跑 npm run dev，SSH 一断网站就没了",
+            "phenomena": ["npm run dev", "SSH 一断就挂"]
+          },
+          "new_concepts": ["生产构建", "Nitro", "SSR", "部署单元"],
+          "misconceptions": ["部署就是把源代码拷到服务器上跑 npm run dev", "Nuxt 只是前端框架，后端必须另起一个项目"],
+          "milestone": "最小 Nuxt 应用（一页 + 一份内联数据）：pnpm build 产出 .output，node 直接启动生产进程，e2e 断言页面 200 且含 SSR 渲染内容",
+          "milestone_verify": "不开 nuxt dev，仅用 node .output/server/index.mjs 起服务，curl 页面返回 200 且 HTML 含服务端渲染的数据；停掉进程后端口不再监听",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "02-nuxt-server-api", "what": "Nitro 承载的不只是页面 SSR——server/ 目录即 TS 后端" }
+          ],
+          "depends_on": [],
+          "uses": [],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm build 与第 1 章 e2e 脚本（起产物进程→断言 200/内容→收尾退出）退出码 0" },
+            { "kind": "prose", "criterion": "读者能复述 .output 里有什么、SSR 由谁渲染、为什么 dev 服务器不能当生产服务" },
+            { "kind": "source", "criterion": "不引用外部仓库源码；构建行为表述与 Nuxt 官方文档口径一致" }
+          ]
+        },
+        {
+          "slug": "nuxt-server-api",
+          "title": "server/ 目录：把 TS 后端写进同一个工程",
+          "goal": "会写 server API、共享类型与边界校验，业务逻辑放进可独立测试的纯函数层",
+          "type": "build",
+          "feature_id": "nuxt-fullstack-app",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "能力缺口",
+            "point": "前端调 /api 总是 500，打开 Network 才发现 body 是手拼的字符串；any 从接口返回一路传染到组件",
+            "phenomena": ["500", "any 满天飞"]
+          },
+          "new_concepts": ["server API", "共享类型", "请求校验"],
+          "misconceptions": ["接口类型前后端各写一份对齐就行", "输入校验是前端的事"],
+          "milestone": "首页读 GET /api/deploys（内存数据源、纯函数域逻辑含 vitest 单测）；POST /api/deploys 带 schema 校验：合法 201、缺字段 400 的行为测试全绿",
+          "milestone_verify": "vitest 输出域逻辑与 API 行为测试全绿；发一个缺字段请求先猜结果再对照 400 与错误信息",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "04-database-layer", "what": "/api/deploys 的数据源从内存数组换成 PostgreSQL" }
+          ],
+          "depends_on": ["what-deployment-deploys"],
+          "uses": ["Nitro"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm typecheck 与 pnpm test（含 API 行为测试）退出码 0" },
+            { "kind": "prose", "criterion": "共享类型如何让两侧编译期对账、瘦 handler + 纯函数域逻辑的分层被教会并演练" },
+            { "kind": "source", "criterion": "zero-trace：无外部仓库源码引用；h3/Nitro 行为表述与官方文档一致" }
+          ]
+        },
+        {
+          "slug": "env-and-config",
+          "title": "环境变量与运行时配置：同一份产物跑任何环境",
+          "goal": "会用 runtimeConfig + 环境变量切换环境，密钥不进仓库，缺配置启动即失败",
+          "type": "build",
+          "feature_id": "env-secrets",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "同一构建在测试环境能跑、换个环境就连不上数据库；翻代码发现连接串被写死进了构建产物",
+            "phenomena": ["换个环境连不上", "连接串写死"]
+          },
+          "new_concepts": ["runtimeConfig", "构建期与运行期配置", "环境变量注入", "fail-fast 配置校验", ".env 与密钥管理"],
+          "misconceptions": ["把 .env 提交进仓库最方便", "环境变量在构建时打进产物效果一样"],
+          "milestone": "loadAppConfig(env) 校验必需变量：齐全返回配置；缺失时 ConfigError 列出全部缺失项、进程非 0 退出；.env 已被 .gitignore 覆盖并附 .env.example 模板",
+          "milestone_verify": "清空一个必需变量再启动：先猜退出码与报错内容，再对照含缺失清单的 ConfigError；补回后正常启动",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "04-database-layer", "what": "数据库连接串经 runtimeConfig 注入而非写死" }
+          ],
+          "depends_on": ["nuxt-server-api"],
+          "uses": ["Nitro", "server API"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm test 含 ConfigError 行为测试；git check-ignore 证明 .env 不会入库" },
+            { "kind": "prose", "criterion": "构建期/运行期区别通过『换环境要不要重新构建』的反事实验证" },
+            { "kind": "source", "criterion": "NUXT_ 覆盖规则表述与 Nuxt 官方文档一致" }
+          ]
+        },
+        {
+          "slug": "database-layer",
+          "title": "数据库层：schema、迁移与类型安全的落库",
+          "goal": "会用 Drizzle + PostgreSQL 管理表结构与迁移，API 真实落库，集成测试跑在隔离数据库上",
+          "type": "build",
+          "feature_id": "db-layer",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "在服务器上手动改过的表让下一次部署直接炸；dev 库和生产库 schema 不一致，同一个 bug 只在一边复现",
+            "phenomena": ["手动改表", "schema 不一致"]
+          },
+          "new_concepts": ["Drizzle schema", "schema 迁移", "连接池", "集成测试数据库"],
+          "misconceptions": ["改了 schema 代码就等于改了数据库", "开发库直接当生产库用"],
+          "milestone": "Compose 起开发库；deploys 表经 drizzle-kit 生成迁移并执行；GET/POST /api/deploys 真实落库；集成测试连一次性数据库（globalSetup 自动迁移）",
+          "milestone_verify": "POST 写入后 GET 读回同一条；打开生成的迁移文件能看到可审查的 SQL；删库重跑迁移后结构复现",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "07-database-ops", "what": "迁移在部署流程中的执行时机与失败处理" }
+          ],
+          "depends_on": ["nuxt-server-api", "env-and-config"],
+          "uses": ["server API", "runtimeConfig", "请求校验"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm db:up && pnpm test（含集成测试） && pnpm db:down 退出码 0" },
+            { "kind": "prose", "criterion": "迁移为什么替代手改表，通过『不迁移会发生什么』的反事实证明" },
+            { "kind": "source", "criterion": "drizzle-kit 命令语义与 Drizzle 官方文档一致" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 打包与上线：单机手动部署",
+      "chapters": [
+        {
+          "slug": "dockerize-app",
+          "title": "容器化：多阶段构建与一键应用栈",
+          "goal": "会写多阶段 Dockerfile 与 Compose 应用栈：镜像可复现、配置全走环境变量、数据持久",
+          "type": "build",
+          "feature_id": "dockerize",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "疑问",
+            "point": "『我这能跑』——node_modules 拷到服务器就缺原生依赖；每次部署在服务器 npm install 半小时，还动不动端口冲突",
+            "phenomena": ["在我机器上能跑", "装依赖半小时"]
+          },
+          "new_concepts": ["多阶段构建", "镜像层缓存", "非 root 运行", "容器健康检查", "Compose 应用栈"],
+          "misconceptions": ["镜像里带上源代码和 devDependencies 才能跑", "容器删了重建数据还在"],
+          "milestone": "多阶段 Dockerfile（层缓存顺序正确、非 root、带 HEALTHCHECK）+ compose.yaml（app + db + 数据卷 + depends_on 健康等待）+ 一键 up --wait 后 e2e 断言通过",
+          "milestone_verify": "docker compose up -d --wait 全部健康后 curl 应用 200；只改一行源码重建，依赖层显示 CACHED；删容器重建后卷中数据仍在",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "06-reverse-proxy-tls", "what": "Compose 栈前方加入 Nginx 反代与 TLS" },
+            { "target": "08-ci-pipeline", "what": "镜像构建步骤进入 CI 工作流" }
+          ],
+          "depends_on": ["database-layer", "env-and-config"],
+          "uses": ["部署单元", "构建期与运行期配置", "环境变量注入", "fail-fast 配置校验"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm compose:sim（build + up --wait + e2e + down）退出码 0" },
+            { "kind": "prose", "criterion": "层缓存顺序与非 root 的理由通过反事实（顺序颠倒/用 root 会怎样）证明" },
+            { "kind": "source", "criterion": "多阶段构建与 HEALTHCHECK 语义与 Docker 官方文档一致" }
+          ]
+        },
+        {
+          "slug": "reverse-proxy-tls",
+          "title": "反向代理与 HTTPS：给应用一个正式入口",
+          "goal": "会配 Nginx 反向代理 + TLS 终止，容器崩溃自动恢复，并按 runbook 迁移到真实服务器",
+          "type": "build",
+          "feature_id": "server-runtime",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "应用在 3000 端口裸奔：IP:3000 能访问，换域名加 HTTPS 就 502 或证书告警；服务器一重启，网站就没了",
+            "phenomena": ["502", "https 打不开", "重启后没了"]
+          },
+          "new_concepts": ["反向代理", "TLS 终止", "自签名证书", "进程守护与重启策略"],
+          "misconceptions": ["Nginx 只是用来提速的", "HTTPS 证书要配在应用里"],
+          "milestone": "compose.prod.yaml（app + db + nginx，restart 约定）+ nginx.conf（80 跳 443、proxy_pass、标准代理头）+ 自签证书生成脚本；经 https 反代访问应用的 e2e 断言通过",
+          "milestone_verify": "curl -k https://localhost 返回页面；kill 应用容器后自动重启恢复服务；真实 VPS runbook（DNS、防火墙、Let's Encrypt、systemd 思路）作为移交清单",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "09-cd-pipeline", "what": "部署脚本以这套生产拓扑为更新目标" },
+            { "target": "divergence", "what": "登记自签证书 vs CA 证书、本地模拟拓扑 vs 真实 VPS 的差异" }
+          ],
+          "depends_on": ["dockerize-app"],
+          "uses": ["部署单元", "Compose 应用栈", "容器健康检查"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm sim:prod（起栈 → https e2e → kill 容器 → 断言自动恢复 → down）退出码 0" },
+            { "kind": "prose", "criterion": "TLS 终止在哪一层、一次请求经过的每一跳读者能画出来" },
+            { "kind": "source", "criterion": "runbook 与差异附录如实登记本地模拟与真实服务器的边界" }
+          ]
+        },
+        {
+          "slug": "database-ops",
+          "title": "生产数据库：备份要能恢复，迁移要看时机",
+          "goal": "会做备份→破坏→恢复→对账演练，并能论证迁移在部署流程中的执行时机",
+          "type": "build",
+          "feature_id": "db-ops",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "疑问",
+            "point": "出事了翻备份，发现是三个月前的；恢复时才发现格式对不上；上线跑迁移把表锁死，页面卡死半天",
+            "phenomena": ["备份是旧的", "恢复报错", "迁移锁表"]
+          },
+          "new_concepts": ["逻辑备份", "恢复演练", "迁移执行时机"],
+          "misconceptions": ["有迁移文件等于迁移执行了", "备份做了没恢复过也算数"],
+          "milestone": "scripts/backup.mjs 与 scripts/restore.mjs（pg_dump -Fc / pg_restore --clean）+ 完整演练：写入数据 → 备份 → drop 表 → 恢复 → 行数与校验和对账通过",
+          "milestone_verify": "演练输出备份前后行数与 checksum 一致；先猜『跳过 --clean 会怎样』再对空库/脏库各恢复一次对照",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "09-cd-pipeline", "what": "部署脚本内嵌迁移前置步骤与健康门禁" }
+          ],
+          "depends_on": ["dockerize-app", "database-layer"],
+          "uses": ["schema 迁移", "Compose 应用栈"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm drill:backup-restore 退出码 0（含对账断言）" },
+            { "kind": "prose", "criterion": "迁移前置 vs 应用启动时执行的取舍用失败窗口分析证明" },
+            { "kind": "source", "criterion": "pg_dump/pg_restore 参数语义与 PostgreSQL 官方文档一致" }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 自动化与加固：CI/CD 流水线",
+      "chapters": [
+        {
+          "slug": "ci-pipeline",
+          "title": "CI：让每个 push 自己证明能跑",
+          "goal": "会写完整 CI 工作流：检查链 + PostgreSQL 服务容器 + 依赖缓存 + PR 门禁",
+          "type": "build",
+          "feature_id": "ci-pipeline",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "周五合的代码，周一才发现 typecheck 已经红了三天；『我本地是好的』在别人机器上从来不算数",
+            "phenomena": ["typecheck 红了三天"]
+          },
+          "new_concepts": ["CI 工作流", "服务容器", "依赖缓存", "PR 门禁"],
+          "misconceptions": ["CI 是装饰，本地跑过就行", "CI 里的命令可以和本地不一样"],
+          "milestone": ".github/workflows/ci.yml（lint + typecheck + test（PG 服务容器）+ build）+ scripts/validate-workflow.mjs：断言触发器、步骤与 package.json scripts 一致、缓存与服务容器配置存在",
+          "milestone_verify": "node scripts/validate-workflow.mjs 逐条输出断言通过；对照本地命令链与工作流步骤一一对应；删掉缓存配置后验证器先红后复原",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "09-cd-pipeline", "what": "deploy 工作流在 CI 通过后接力构建与部署" }
+          ],
+          "depends_on": ["database-layer", "env-and-config"],
+          "uses": ["集成测试数据库", "构建期与运行期配置"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "node scripts/validate-workflow.mjs 退出码 0" },
+            { "kind": "prose", "criterion": "服务容器与依赖缓存各自解决什么问题、何时会失效讲清" },
+            { "kind": "source", "criterion": "workflow 语法与 GitHub Actions 官方文档一致" }
+          ]
+        },
+        {
+          "slug": "cd-pipeline",
+          "title": "CD：push 即部署，失败自动回滚",
+          "goal": "会搭『构建镜像→推 GHCR→拉取→迁移→健康门禁→失败回滚』的自动部署流水线",
+          "type": "build",
+          "feature_id": "cd-pipeline",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "事故",
+            "point": "部署到一半挂了：新版本起不来，旧版本已经被换掉，线上白屏半小时，没人敢动，也没人说得清该回到哪个版本",
+            "phenomena": ["部署一半挂", "不知道回到哪"]
+          },
+          "new_concepts": ["镜像 registry", "部署脚本与健康门禁", "回滚"],
+          "misconceptions": ["容器起来了就是部署成功", "回滚靠记得上一个版本号"],
+          "milestone": ".github/workflows/deploy.yml（构建并推 GHCR + 触发部署）+ scripts/deploy.mjs（pull → migrate → up --wait → 健康门禁 → 失败自动回退上一 tag）+ 本地演练：好版本部署全绿、坏版本触发自动回滚",
+          "milestone_verify": "本地 deploy.mjs 部署好版本后端点 200；再部署一个健康检查必挂的坏 tag：先猜脚本行为，对照『门禁失败→回退→旧版本仍在服务』的完整输出",
+          "relevant_files": [],
+          "promises_out": [
+            { "target": "10-production-hardening", "what": "部署健康门禁升级为 liveness/readiness 分级" },
+            { "target": "divergence", "what": "登记部署流水线本地演练模式与真实 SSH 目标的差异" }
+          ],
+          "depends_on": ["ci-pipeline", "reverse-proxy-tls", "database-ops"],
+          "uses": ["CI 工作流", "容器健康检查", "迁移执行时机"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm drill:deploy-rollback 退出码 0（好版本部署 + 坏版本回滚两幕断言）" },
+            { "kind": "prose", "criterion": "回滚安全性依赖『迁移向前兼容』的纪律被论证" },
+            { "kind": "source", "criterion": "GHCR 与 workflow 语法与官方文档一致；本地演练与真实服务器差异在附录登记" }
+          ]
+        },
+        {
+          "slug": "production-hardening",
+          "title": "生产加固：健康分级、结构化日志与排障",
+          "goal": "会分离 liveness/readiness、接结构化日志与资源限制，按排查树定位常见故障",
+          "type": "build",
+          "feature_id": "prod-hardening",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "数据库早就挂了，/api/health 还是 200，流量照常打进来变成一堆 500；容器半夜内存超限被杀，事后在日志里什么都找不到",
+            "phenomena": ["/health 仍 200", "OOM"]
+          },
+          "new_concepts": ["liveness 与 readiness", "结构化日志", "资源限制", "故障排查树"],
+          "misconceptions": ["一个 /ping 走天下", "console.log 打出来 grep 就算日志"],
+          "milestone": "/api/health/live（不查依赖）与 /api/health/ready（查数据库）分离 + JSON 请求日志（含请求 id 与耗时）+ compose 资源限制 + 演练：停 db 后 readiness 503 而 liveness 200，恢复后双双转绿",
+          "milestone_verify": "compose stop db 后轮询两个端点断言状态分化（先猜再跑）；日志为单行 JSON 且含 requestId；docker inspect 确认资源限制已生效",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": ["cd-pipeline"],
+          "uses": ["容器健康检查", "Compose 应用栈", "回滚"],
+          "acceptance": [
+            { "kind": "gate", "criterion": "pnpm drill:health-split 退出码 0（停库/恢复两幕断言）" },
+            { "kind": "prose", "criterion": "两级健康的职责划分与混用造成的故障模式被证明；全书能力对账与主线问题在此收口" },
+            { "kind": "source", "criterion": "零外部源码引用；正文引用的端点、日志与限制值与 companion 终态一致" }
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
+    { "slug": "cheatsheet", "title": "命令与速查表", "kind": "reference-table" },
+    { "slug": "divergence", "title": "简化与差异登记", "kind": "divergence" },
+    { "slug": "exercises", "title": "毕业任务", "kind": "exercises" }
+  ],
+  "final_milestone": {
+    "what_reader_built": "Nuxt+TS+Postgres 全栈应用与 push 即部署、失败自动回滚的流水线",
+    "verify": "本地三幕演练全绿：一键应用栈经 HTTPS 反代可访问；备份-破坏-恢复对账通过；坏版本部署被门禁拦下并自动回退"
+  }
+}

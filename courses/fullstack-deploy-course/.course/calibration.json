@@ -1,0 +1,42 @@
+{
+  "schema_version": 2,
+  "status": "defaulted",
+  "audience": "会 TypeScript 与 Vue 前端、按文档装过工具，但没有独立完成过服务器部署的开发者",
+  "known": [
+    "能读写 TypeScript 函数、类型与 async/await",
+    "写过 Vue/Nuxt 组件与页面（入门级即可）",
+    "用 npm/pnpm 安装过依赖、跑过 package.json scripts",
+    "按文档完成过基础安装与配置，遇到报错会检索",
+    "知道 HTTP 请求响应、常见状态码与 JSON"
+  ],
+  "unfamiliar": [
+    "生产构建产物与 Nitro 服务端进程",
+    "Linux 服务器、进程守护与 Nginx 反向代理",
+    "Docker 镜像、容器与 Compose 编排",
+    "CI/CD 工作流与镜像 registry",
+    "数据库服务器运维：迁移执行、备份与恢复",
+    "生产日志、健康检查与故障排查"
+  ],
+  "anchors": [
+    {
+      "concept": "生产构建",
+      "known_anchor": "像把源码编译成一个拷走就能直接运行的程序包，而不是把编辑器搬去服务器"
+    },
+    {
+      "concept": "容器",
+      "known_anchor": "像一个把 node_modules 和运行环境一起打包的行李箱，到哪台机器都原样打开"
+    },
+    {
+      "concept": "CI/CD",
+      "known_anchor": "像给每次 git push 自动安排的一条流水考官：检查全过才准上车（部署）"
+    }
+  ],
+  "decisions": [
+    "主线工程用 Nuxt 一体化全栈（server/ 目录即 TS 后端），独立 Node 后端形态在差异附录做对照，不另立主线",
+    "部署目标以自有 VPS + Docker Compose + GitHub Actions 为主线，Vercel/Railway 类托管平台在附录对照",
+    "数据库主线选 PostgreSQL，SQLite 与 MySQL 差异在附录说明",
+    "教学顺序先手动跑通每一层，再串成自动化流水线，终点里程碑是 push 即部署且失败可回滚",
+    "所有门槛命令经仓库脚本以 Node 跨平台执行，Windows/macOS/Linux 读者均可复现"
+  ],
+  "default_reason": "发起四维度批量读者校准后用户未应答；按 skill-training 保守准入下限（按文档完成过基础安装与配置；遇到报错会检索；不假设命令行肌肉记忆）定画像，并因用户点名 TS 与 Nuxt 上浮『能读写 TypeScript 与 Vue 基础代码』。后端形态、目标环境与数据库选型依据请求措辞与最可验证主线定为 Nuxt 一体化 + VPS/Docker + PostgreSQL，差异在附录对照。"
+}

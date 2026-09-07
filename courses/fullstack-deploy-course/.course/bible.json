@@ -1,0 +1,81 @@
+{
+  "schema_version": 2,
+  "reader_model": {
+    "known": [
+      "能读写 TypeScript 函数、类型与 async/await",
+      "写过 Vue/Nuxt 组件与页面（入门级即可）",
+      "用 npm/pnpm 安装过依赖、跑过 package.json scripts",
+      "按文档完成过基础安装与配置，遇到报错会检索",
+      "知道 HTTP 请求响应、常见状态码与 JSON"
+    ],
+    "unfamiliar": [
+      { "concept": "生产构建产物与 Nitro 服务端进程", "why": "开发期 nuxt dev 掩盖了构建与运行分层，读者从未直接运行过产物", "anchor": "像把源码编译成拷走就能运行的程序包" },
+      { "concept": "Linux 服务器、进程守护与反向代理", "why": "平时在本机开发，没有 SSH 到服务器长期运行服务的经验", "anchor": "进程守护像给服务配一个自动拉起它的保姆" },
+      { "concept": "Docker 镜像、容器与 Compose 编排", "why": "没写过 Dockerfile，对镜像分层无概念", "anchor": "容器像把 node_modules 和运行环境一起打包的行李箱" },
+      { "concept": "CI/CD 工作流与镜像 registry", "why": "没写过 workflow 文件，没推过镜像", "anchor": "CI 像每次 push 自动安排的流水考官" },
+      { "concept": "数据库服务器运维（迁移执行、备份恢复）", "why": "只在应用层用过数据库，没管过数据库本身", "anchor": "备份没恢复过就像灭火器没试过喷射" },
+      { "concept": "生产日志、健康检查与故障排查", "why": "没有生产环境可观察与排障的实操经验", "anchor": "健康分级像门诊分诊：活着和能接活是两件事" }
+    ]
+  },
+  "glossary": [
+    { "term": "生产构建", "en": "production build", "definition": "把 Nuxt 工程编译成不依赖开发服务器、可独立运行的产物：前端资源、SSR 入口与 server/ 代码被打包进 .output 目录。", "interface": "pnpm build 产出 .output；node .output/server/index.mjs 启动生产服务。" },
+    { "term": "Nitro", "definition": "Nuxt 的服务端引擎与编译器：开发时托管 SSR 和 server/ 目录，生产时把它们编译成一个自包含的 Node HTTP 服务器。", "interface": "不用直接调用；理解 server/ 代码与页面 SSR 都由它承载即可。" },
+    { "term": "SSR", "en": "server-side rendering", "definition": "服务端渲染：页面 HTML 由服务器上的 Vue 组件渲染后发给浏览器，浏览器再接手交互（水合）。", "interface": "Nuxt 默认开启；部署时意味着必须有常驻 Node 进程在渲染。" },
+    { "term": "部署单元", "definition": "一次部署交付的最小整体。对本课程的应用是一个自包含的 .output（或包含它的容器镜像）：代码、依赖与运行时一起换版本。", "interface": "谈『部署了什么』时指它，而不是指源代码仓库。" },
+    { "term": "server API", "definition": "server/api/ 目录下的 h3 事件处理器，即 Nuxt 内置的 TS 后端：文件路径即路由，开发与生产由同一套代码编译。", "interface": "export default defineEventHandler(...) 导出；/api/deploys 对应 server/api/deploys.get.ts。" },
+    { "term": "共享类型", "definition": "前端与 server/ 复用同一份 TS 类型定义，接口形状只写一次，两侧编译期同时对账。", "interface": "类型放 shared/（或任意共享目录）双方 import，改一处两侧立刻报错。" },
+    { "term": "请求校验", "definition": "在系统边界用 schema 验证外部输入（如 readValidatedBody + zod），不合法请求在进业务逻辑前被拒绝。", "interface": "处理函数里 await readValidatedBody(event, schema.parse)，失败自动 400。" },
+    { "term": "runtimeConfig", "definition": "Nuxt 的运行时配置面：构建时给默认值，运行时可用 NUXT_ 前缀环境变量覆盖，让同一产物适配不同环境。", "interface": "defineRuntimeConfig() 声明；代码里 useRuntimeConfig().dbUrl 读取。" },
+    { "term": "构建期与运行期配置", "definition": "构建期配置被打进产物、构建后不可变；运行期配置在进程启动时注入。环境差异必须走运行期，否则一个环境就要一个构建。", "interface": "判断一个值放哪：换环境会不会变？会变就走运行期。" },
+    { "term": "环境变量注入", "definition": "Nuxt 用 NUXT_ 前缀把环境变量映射进 runtimeConfig：NUXT_DB_URL 覆盖 dbUrl，嵌套用双下划线。", "interface": "容器/CI/服务器上只设环境变量，不重建产物。" },
+    { "term": "fail-fast 配置校验", "definition": "进程启动时校验必需配置，缺失或非法就带清晰清单退出，而不是等到第一次请求才在深处崩掉。", "interface": "loadAppConfig(env) 抛 ConfigError 并列出全部缺失项。" },
+    { "term": ".env 与密钥管理", "definition": ".env 只放本机默认值且永不入库（.gitignore + .env.example 模板）；生产密钥经环境变量或托管密钥注入。", "interface": "新环境照 .env.example 填值；仓库里永远只有模板。" },
+    { "term": "Drizzle schema", "definition": "用 TS 声明数据库表结构的单一事实源（drizzle-orm 的 sqliteTable/pgTable 等），类型由此流向应用代码。", "interface": "server/db/schema.ts 里定义表，drizzle() 实例绑定 schema 后获得类型安全查询。" },
+    { "term": "schema 迁移", "definition": "把 schema 变更生成为有序、可审查、可重放的 SQL 迁移文件，让数据库结构与代码版本对齐，而不是手改线上表。", "interface": "drizzle-kit generate 生成 diff，drizzle-kit migrate 按序执行。" },
+    { "term": "连接池", "definition": "复用一组数据库连接的机制：避免每请求建连的握手开销，并给并发设上限，防止把数据库压垮。", "interface": "postgres 驱动的 new Pool({max})；应用全生命周期共享一个池。" },
+    { "term": "集成测试数据库", "definition": "与开发库隔离的一次性数据库：测试前确保迁移就绪，测试间清理数据，断言到真实 SQL 行为。", "interface": "vitest globalSetup 拉起迁移，测试连接独立连接串。" },
+    { "term": "多阶段构建", "definition": "Dockerfile 分阶段执行：安装/构建阶段带完整工具链，运行阶段只拷产物与生产依赖，最终镜像小且不含源码与构建工具。", "interface": "FROM node:22-alpine AS build … FROM node:22-alpine 运行，只 COPY --from=build 需要的目录。" },
+    { "term": "镜像层缓存", "definition": "Docker 按指令缓存镜像层：指令与输入不变就复用。把稳定的依赖清单拷贝/安装放在多变源码之前，重建时跳过重装依赖。", "interface": "先 COPY package.json pnpm-lock.yaml 再 pnpm install，最后 COPY 源码。" },
+    { "term": "非 root 运行", "definition": "容器内进程用低权限用户运行，容器被攻破时攻击者拿不到 root 权限，降低横向破坏面。", "interface": "Dockerfile 里 USER node 或显式建用户后再 ENTRYPOINT。" },
+    { "term": "容器健康检查", "definition": "对容器周期性探测健康状态（HTTP 端点或命令）， unhealthy 容器可被编排器标记、等待或重启。", "interface": "compose 服务配 test: ["CMD", "node", "healthcheck.mjs"] 或应用暴露 HTTP /api/health。" },
+    { "term": "Compose 应用栈", "definition": "用 compose.yaml 声明多服务应用（应用、数据库、反代）及网络、卷、依赖关系与健康等待，一条命令拉起整套拓扑。", "interface": "docker compose up -d --wait 拉起并等待健康；down 拆除。" },
+    { "term": "数据卷", "definition": "把数据库文件等持久数据挂在容器生命周期之外的卷里：容器销毁重建，数据仍在。", "interface": "compose 服务 volumes: - db-data:/var/lib/postgresql/data，卷在顶层声明。" },
+    { "term": "反向代理", "definition": "挡在应用前面的服务器（如 Nginx）：统一接收 80/443 流量，按规则转发给后端进程，顺带做 TLS、压缩、限速与静态文件。", "interface": "proxy_pass http://app:3000；应用只监听内网端口。" },
+    { "term": "TLS 终止", "definition": "HTTPS 加解密在反向代理层终结，代理到后端走内网 HTTP；证书只配在代理一处，应用不感知 TLS。", "interface": "Nginx 配 listen 443 ssl + 证书路径；后端仍是 HTTP。" },
+    { "term": "自签名证书", "definition": "自己签发、不在浏览器信任链里的证书，用于本地/内部环境演练 HTTPS 流程；生产用 CA 签发（如 Let's Encrypt）。", "interface": "openssl 一条命令生成；客户端需 --cacert 或 -k 信任。" },
+    { "term": "进程守护与重启策略", "definition": "让服务在崩溃、服务器重启后自动恢复的机制：容器场景是 restart 约定（unless-stopped），裸机场景是 systemd 单元。", "interface": "compose 服务 restart: unless-stopped；systemd 用 Restart=always 的 unit 文件。" },
+    { "term": "逻辑备份", "definition": "用 pg_dump 把数据库导出为可审查的 SQL/归档文件，恢复用 pg_restore/psql 导回；与直接拷数据文件的物理备份相对。", "interface": "pg_dump -Fc -f backup.dump <db>；pg_restore --clean --if-exists 回灌。" },
+    { "term": "恢复演练", "definition": "把备份真的导入一个目标库并对账，证明备份可恢复、数据完整；没恢复过的备份不算备份。", "interface": "恢复到临时库 → 行数/校验和对比原库 → 丢弃临时库。" },
+    { "term": "迁移执行时机", "definition": "部署流程中执行迁移的位置：新版本上线前跑（前置）或应用启动时自动跑（内嵌），决定失败窗口与回滚方式。", "interface": "deploy 脚本在换镜像前执行 migrate（课程主线）；内嵌式交给框架启动钩子。" },
+    { "term": "CI 工作流", "definition": "仓库里声明式的检查流水线（GitHub Actions 的 YAML）：push/PR 触发 lint、typecheck、test、build，红灯拦截合并。", "interface": ".github/workflows/ci.yml 定义 job/step，失败提交不允许合并。" },
+    { "term": "服务容器", "definition": "CI job 里随流水线一起拉起的依赖服务（如 PostgreSQL），为集成测试提供真实数据库，跑完即销毁。", "interface": "jobs.xxx.services.postgres 配镜像与健康参数，通过环境变量连接。" },
+    { "term": "依赖缓存", "definition": "把包管理器存储缓存在 CI 缓存里，命中时跳过下载安装，让流水线从几分钟降到几十秒。", "interface": "setup-node 的 cache: pnpm（配 lockfile key）。" },
+    { "term": "镜像 registry", "definition": "集中存放容器镜像的仓库（如 GitHub Container Registry）：CI 推送带版本标签的镜像，服务器按标签拉取。", "interface": "docker push ghcr.io/<owner>/<app>:<tag>；服务器 docker pull 同名标签。" },
+    { "term": "部署脚本与健康门禁", "definition": "把『拉镜像→跑迁移→换版本→验证』固化成脚本；健康门禁在宣布部署成功前探测真实端点，不通过即触发回滚。", "interface": "scripts/deploy.mjs <tag>：up --wait 后轮询 /api/health，失败自动回退上一标签。" },
+    { "term": "回滚", "definition": "把线上版本退回上一个已知良好版本的动作；依赖版本化镜像标签与『迁移向前兼容』的纪律才能安全执行。", "interface": "deploy 脚本失败分支自动 pull 旧 tag 并 up；平时不手改线上状态。" },
+    { "term": "liveness 与 readiness", "definition": "两类健康信号：liveness 回答『进程活着吗』（挂了该重启）；readiness 回答『现在能接活吗』（不能该暂时摘出流量）。混用一个端点会造成数据库故障时误杀或漏摘。", "interface": "/api/health/live 不查依赖；/api/health/ready 查数据库连接。" },
+    { "term": "结构化日志", "definition": "以 JSON 等机器可解析格式输出带上下文（级别、请求 id、耗时）的日志，供检索、聚合与告警，替代散落的 console.log。", "interface": "统一 logger（如 pino）输出 JSON；docker logs 收集。" },
+    { "term": "资源限制", "definition": "给容器设内存/CPU 上限，防止失控进程吃光宿主机并把邻居全部拖死（OOM 连坐）。", "interface": "compose 服务 mem_limit/cpus（或 deploy.resources）。" },
+    { "term": "故障排查树", "definition": "按症状（502、健康检查失败、迁移卡死、OOM）组织的分层排查清单：先定位层（代理/应用/数据库/资源），再逐层取证。", "interface": "从症状查表 → 得到首个取证命令 → 按结果走分支。" }
+  ],
+  "verification_conventions": {
+    "runtime": "Node 22 + pnpm；所有门槛命令通过 package.json scripts / scripts/*.mjs 跨平台执行（Windows/macOS/Linux 一致）",
+    "container": "Docker + Compose v2；数据库固定 postgres:16-alpine，应用镜像基于 node:22-alpine；端口使用 41xx 段避免与常用服务冲突",
+    "tests": "vitest；每章新增自己的测试文件，旧测试只读；集成测试连一次性数据库，端口与开发库隔离",
+    "red_green": "每个能力章节先呈现预期失败（缺实现的红测试或报错原文），再最小实现转绿",
+    "provenance": "正文引用的版本号、文件路径、命令输出取自 companion 当前终态；网络镜像 tag 固定"
+  },
+  "api_contract": [
+    { "name": "loadAppConfig", "introduced_in": "03-env-and-config", "contract": "(env) => { dbUrl, …required keys }；缺失/非法时抛 ConfigError，message 列出全部问题项；绝不部分返回" },
+    { "name": "app db", "introduced_in": "04-database-layer", "contract": "drizzle 实例绑定 server/db/schema.ts 的表（deploys 等）；迁移由 drizzle-kit 管理，测试用独立连接串" },
+    { "name": "HTTP API", "introduced_in": "02-nuxt-server-api", "contract": "GET/POST /api/deploys 返回与共享类型一致的 JSON；POST 对非法输入 400；后续新增 /api/health/live 与 /api/health/ready（第 10 章），既有端点行为不回退" }
+  ],
+  "factual_claims": true,
+  "authority_docs": [
+    { "title": "Nuxt 官方文档（deployment / server / runtimeConfig）", "url": "https://nuxt.com/docs", "why": "生产构建产物、Nitro 行为、runtimeConfig 覆盖规则的权威口径", "as_of": "2026-09" },
+    { "title": "Drizzle ORM 文档（migrations / drizzle-kit）", "url": "https://orm.drizzle.team/docs/overview", "why": "schema 定义、迁移生成与执行的命令语义", "as_of": "2026-09" },
+    { "title": "PostgreSQL 官方文档（pg_dump / pg_restore）", "url": "https://www.postgresql.org/docs/", "why": "逻辑备份与恢复的行为与参数", "as_of": "2026-09" },
+    { "title": "Docker 文档（multi-stage builds / compose）", "url": "https://docs.docker.com/build/building/multi-stage/", "why": "多阶段构建、层缓存与 compose 健康检查语义", "as_of": "2026-09" },
+    { "title": "GitHub Actions 文档（workflows / service containers / GHCR）", "url": "https://docs.github.com/actions", "why": "工作流语法、服务容器、缓存与镜像推送的权威口径", "as_of": "2026-09" }
+  ]
+}
