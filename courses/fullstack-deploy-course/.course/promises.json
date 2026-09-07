@@ -7,6 +7,15 @@
       "from_n": 1,
       "target": "02-nuxt-server-api",
       "what": "Nitro 承载的不只是页面 SSR——server/ 目录即 TS 后端",
+      "status": "fulfilled",
+      "resolution": "第 2 章工具箱收录 Nitro 接口行，原理节以反事实论证后端与页面同编译进同一 .output，e2e:ch2 第 4 条断言（POST 写入记录出现在首页裸 HTML）作为同进程证据，收束以『一个进程的两只手』收口。"
+    },
+    {
+      "id": "ch2-db-replaces-memory",
+      "from": "02-nuxt-server-api",
+      "from_n": 2,
+      "target": "04-database-layer",
+      "what": "/api/deploys 的数据源从内存数组换成 PostgreSQL（域逻辑与 handler 不变，resetDeploys 测试缝随之替换）",
       "status": "open"
     }
   ]

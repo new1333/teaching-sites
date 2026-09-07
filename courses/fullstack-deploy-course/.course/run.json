@@ -4,10 +4,11 @@
   "status": "generating",
   "phase": "chapters",
   "language": "zh",
-  "outline_revision": 1,
-  "next_chapter": 2,
+  "outline_revision": 2,
+  "next_chapter": 3,
   "completed_chapters": [
-    "what-deployment-deploys"
+    "what-deployment-deploys",
+    "nuxt-server-api"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],

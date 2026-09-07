@@ -17,6 +17,32 @@
         { "command": "pnpm e2e:ch1", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "nuxt-server-api",
+      "file": "docs/02-nuxt-server-api.md",
+      "status": "complete",
+      "summary": "建立 server API、共享类型、请求校验三块积木。shared/types.ts 一份定义两端 import；server/domain 纯函数 + 内存数据源配 vitest 单测；GET/POST /api/deploys（POST zod 校验：合法 201、缺字段 400 带结构化清单）；首页改 useFetch，SSR 断言不回退；新增 e2e:ch2（端口 4172）；补 tsconfig + golar 工具链使 pnpm typecheck 真正检查 app/server/shared 三侧。读者能在同一工程写出编译期对账、边界校验、可独立测试的 TS 后端。",
+      "artifacts": [
+        "companion/shared/types.ts",
+        "companion/server/domain/deploys.ts",
+        "companion/server/api/deploys.get.ts",
+        "companion/server/api/deploys.post.ts",
+        "companion/tests/deploys.test.ts",
+        "companion/scripts/e2e-ch2.mjs",
+        "companion/tsconfig.json",
+        "companion/golar.config.ts",
+        "companion/package.json"
+      ],
+      "gates": [
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" },
+        { "command": "pnpm e2e:ch2", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

@@ -84,7 +84,7 @@
           "new_concepts": ["server API", "共享类型", "请求校验"],
           "misconceptions": ["接口类型前后端各写一份对齐就行", "输入校验是前端的事"],
           "milestone": "首页读 GET /api/deploys（内存数据源、纯函数域逻辑含 vitest 单测）；POST /api/deploys 带 schema 校验：合法 201、缺字段 400 的行为测试全绿",
-          "milestone_verify": "vitest 输出域逻辑与 API 行为测试全绿；发一个缺字段请求先猜结果再对照 400 与错误信息",
+          "milestone_verify": "vitest 域逻辑单测全绿；e2e:ch2 起产物进程断言 GET 与 POST 201/400（缺字段请求先猜结果再对照）",
           "relevant_files": [],
           "promises_out": [
             { "target": "04-database-layer", "what": "/api/deploys 的数据源从内存数组换成 PostgreSQL" }
@@ -92,7 +92,7 @@
           "depends_on": ["what-deployment-deploys"],
           "uses": ["Nitro"],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm typecheck 与 pnpm test（含 API 行为测试）退出码 0" },
+            { "kind": "gate", "criterion": "pnpm typecheck 与 pnpm test（域逻辑单测）退出码 0；API 行为测试由 pnpm e2e:ch2 承载并退出码 0" },
             { "kind": "prose", "criterion": "共享类型如何让两侧编译期对账、瘦 handler + 纯函数域逻辑的分层被教会并演练" },
             { "kind": "source", "criterion": "zero-trace：无外部仓库源码引用；h3/Nitro 行为表述与官方文档一致" }
           ]
