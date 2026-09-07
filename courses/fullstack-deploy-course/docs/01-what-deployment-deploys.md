@@ -247,7 +247,7 @@ const deploys: DeployRecord[] = [
 // companion/package.json · scripts 节选
 "build": "nuxt build",
 "test": "vitest run",
-"e2e:ch1": "node scripts/e2e-ch1.mjs"
+"e2e:ch1": "node --env-file-if-exists=.env scripts/e2e-ch1.mjs" // 前缀为第 3 章补的环境装载，脚本本体未变
 ```
 
 转绿。先构建，再跑门槛：

@@ -14,7 +14,7 @@ export class ConfigError extends Error {
 
 // 必需环境变量的守门 schema（键名与 nuxt.config.ts 的 runtimeConfig 注入规则一一对应）：
 //   NUXT_DB_URL        → 私有键 dbUrl（数据库连接串，第 4 章起真正使用；密钥只在服务端存在）
-//   NUXT_PUBLIC_APP_ENV → 公有键 public.appEnv（运行环境名；NUXT_PUBLIC_ 前缀 + 双下划线定位嵌套键）
+//   NUXT_PUBLIC_APP_ENV → 公有键 public.appEnv（运行环境名；NUXT_PUBLIC_ 前缀 + 下划线分隔键与大小写转折）
 const requiredEnvSchema = z.object({
   NUXT_DB_URL: z.string().refine(
     (v) => v.length > 0 && (v.startsWith('postgres://') || v.startsWith('postgresql://')),

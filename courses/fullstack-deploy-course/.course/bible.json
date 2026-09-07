@@ -25,7 +25,7 @@
     { "term": "server API", "definition": "server/api/ 目录下的 h3 事件处理器，即 Nuxt 内置的 TS 后端：文件路径即路由，开发与生产由同一套代码编译。", "interface": "export default defineEventHandler(...) 导出；/api/deploys 对应 server/api/deploys.get.ts。" },
     { "term": "共享类型", "definition": "前端与 server/ 复用同一份 TS 类型定义，接口形状只写一次，两侧编译期同时对账。", "interface": "类型放 shared/（或任意共享目录）双方 import，改一处两侧立刻报错。" },
     { "term": "请求校验", "definition": "在系统边界用 schema 验证外部输入（如 readValidatedBody + zod），不合法请求在进业务逻辑前被拒绝。", "interface": "处理函数里 await readValidatedBody(event, schema.parse)，失败自动 400。" },
-    { "term": "runtimeConfig", "definition": "Nuxt 的运行时配置面：构建时给默认值，运行时可用 NUXT_ 前缀环境变量覆盖，让同一产物适配不同环境。", "interface": "defineRuntimeConfig() 声明；代码里 useRuntimeConfig().dbUrl 读取。" },
+    { "term": "runtimeConfig", "definition": "Nuxt 的运行时配置面：构建时给默认值，运行时可用 NUXT_ 前缀环境变量覆盖，让同一产物适配不同环境。", "interface": "在 nuxt.config.ts 的 runtimeConfig 登记键名与默认值；代码用 useRuntimeConfig() 读取，环境变量以 NUXT_ 前缀在运行时覆盖。" },
     { "term": "构建期与运行期配置", "definition": "构建期配置被打进产物、构建后不可变；运行期配置在进程启动时注入。环境差异必须走运行期，否则一个环境就要一个构建。", "interface": "判断一个值放哪：换环境会不会变？会变就走运行期。" },
     { "term": "环境变量注入", "definition": "Nuxt 用 NUXT_ 前缀把环境变量映射进 runtimeConfig：NUXT_DB_URL 覆盖 dbUrl，嵌套用双下划线。", "interface": "容器/CI/服务器上只设环境变量，不重建产物。" },
     { "term": "fail-fast 配置校验", "definition": "进程启动时校验必需配置，缺失或非法就带清晰清单退出，而不是等到第一次请求才在深处崩掉。", "interface": "loadAppConfig(env) 抛 ConfigError 并列出全部缺失项。" },

@@ -33,13 +33,16 @@ runtimeConfig——Nuxt 的运行期配置面：在 nuxt.config.ts 里登记键�
 本章在 nuxt.config.ts 里登记两个键，全文如下。
 
 ```ts
-// companion/nuxt.config.ts · 运行期配置面：只登记键名与「空默认」，值由环境变量在进程启动时注入
+// companion/nuxt.config.ts · 全文
 export default defineNuxtConfig({
   compatibilityDate: '2026-09-01',
   devtools: { enabled: false },
+  // 运行期配置面：这里只登记键名与「空默认」——必需项刻意不给安全默认值，
+  // 漏配必须在进程启动时暴露（server/plugins/config.ts 的 fail-fast 校验），而不是带病上岗。
+  // 真正的值由进程启动时的 NUXT_ 前缀环境变量注入；.env 只承载本机默认值，不进仓库。
   runtimeConfig: {
     // 私有键：只在服务端可见。连接串属于密钥，永不进浏览器。
-    dbUrl: '', // 注入变量：NUXT_DB_URL（第 4 章起真正连库使用）
+    dbUrl: '', // 注入变量：NUXT_DB_URL（第 4 章起真正使用）
     public: {
       // 公有键：会随页面序列化进浏览器，只放可展示的非敏感信息。
       appEnv: '', // 注入变量：NUXT_PUBLIC_APP_ENV（公有键在变量名里多一段 PUBLIC_）
@@ -97,7 +100,7 @@ Listening on http://[::]:4191
 
 零重建。产物里 appEnv 的默认值是空串，staging 这三个字母只能来自进程环境——同一个 .output，换一组变量就是另一个环境。再做一条反向验证：整个页面 HTML 里 grep 不到连接串。私有键没有公有面，密钥到浏览器为止一步都不多走。
 
-还有一个事实必须现在钉死：**生产产物不读 .env 文件。**产物入口 index.mjs 全文三十余行，逐行可查——它只从 process.env 读端口等少数变量，没有任何加载 .env 的逻辑；官方文档同样直白：Nuxt CLI 在开发与构建时内建读取 .env，而运行构建出的服务器时 .env 不会被读。所以生产环境的值只能来自真正的环境变量，由谁来注入？服务器上的进程管理器、容器编排或 CI——本课后半程会把这件事逐层做实（容器化第 5 章、部署脚本第 9 章）。
+还有一个事实必须现在钉死：**生产产物不读 .env 文件。**产物入口 index.mjs 共 40 行，逐行可查——它只从 process.env 读端口等少数变量，没有任何加载 .env 的逻辑；官方文档同样直白：Nuxt CLI 在开发与构建时内建读取 .env，而运行构建出的服务器时 .env 不会被读。所以生产环境的值只能来自真正的环境变量，由谁来注入？服务器上的进程管理器、容器编排或 CI——本课后半程会把这件事逐层做实（容器化第 5 章、部署脚本第 9 章）。
 
 ## fail-fast 配置校验：缺配置的进程不配上岗
 
@@ -105,7 +108,7 @@ Listening on http://[::]:4191
 
 fail-fast 配置校验——进程启动时校验必需配置，缺失或非法就带着清晰清单退出，而不是等到第一次请求才在深处崩掉。它由三个零件组装：loadAppConfig(env) 校验函数、ConfigError 错误类型、Nitro 启动插件挂点。契约一句话：**齐全返回完整配置；有问题抛 ConfigError 并列出全部问题项；绝不部分返回。**
 
-校验函数全文如下（zod 沿用既有依赖，零新增——同一块守门的库，在系统边界拦请求，在进程边界拦配置）。
+校验函数核心如下（节选；完整 50 行见 companion/server/utils/config.ts。zod 沿用既有依赖，零新增——同一块守门的库，在系统边界拦请求，在进程边界拦配置）。
 
 ```ts
 // companion/server/utils/config.ts · 启动期配置门卫：必需环境变量一次校验、一次报全，绝不部分返回
@@ -160,7 +163,7 @@ export function loadAppConfig(env: Record<string, string | undefined>): AppConfi
 
 「一次报全」不是打印风格的偏好，是运维成本：两个变量都缺时一次列两项，补一轮就能上岗；缺一个报一个的校验，逼着运维跑三遍才能凑齐配置。「绝不部分返回」同理——返回一半配置的函数，等于邀请调用方在半配置状态下继续跑。
 
-挂点是 Nitro 启动插件，全文九行：
+挂点是 Nitro 启动插件，全文 19 行：
 
 ```ts
 // companion/server/plugins/config.ts · Nitro 启动插件：进程起跳前校验必需配置，缺项带清单退出
@@ -210,12 +213,12 @@ NUXT_PUBLIC_APP_ENV=local
 .env 内容相同但注释更短。哪个文件进了版本库，不用背规则，让 git 回答：
 
 ```text
-# git check-ignore -v .env .env.example（在 companion 目录执行）
+# git check-ignore -v --no-index .env .env.example（在 companion 目录执行）
 .gitignore:35:.env	.env
 .gitignore:37:!.env.example	.env.example
 ```
 
-第一行：.env 命中仓库根 .gitignore 第 35 行的 .env 规则——被忽略。第二行命中的是带感叹号的反向规则——模板被豁免，照常入库。旁证在 git status 里：新文件列表看得到 .env.example，永远看不到 .env。
+第一行：.env 命中仓库根 .gitignore 第 35 行的 .env 规则——被忽略。第二行命中的是带感叹号的反向规则——模板被豁免，照常入库。（--no-index 是因为 check-ignore 默认跳过已入库文件，模板已在库里，不加它第二行不会出现；这里纯查规则本身。）旁证在 git status 里：新文件列表看得到 .env.example，永远看不到 .env。
 
 对「把 .env 提交进仓库最方便」说句公道话：单人短项目里它确实省事，克隆即能跑，谁也没吃亏。边界在时间和人数：.env 里迟早会躺进真实密钥，一旦入库，它就进入每一份克隆、每一次 fork、每一条 CI 日志；Git 历史里的密钥即使事后删除也仍可翻出，唯一可靠的补救是把密钥本身全部换掉。所以纪律定死：仓库里只有模板，值永远经环境注入。
 
@@ -314,7 +317,7 @@ describe('loadAppConfig（缺失与非法）', () => {
 # pnpm test 红跑（节选）
 Error: Cannot find module '../server/utils/config' imported from
 D:/.../companion/tests/config.test.ts
-Test Files  1 failed (1)
+Test Files  1 failed | 1 passed (2)
 ```
 
 红得其所：测试要的是「配置门卫存在且行为正确」，而它还不存在。补上前文已全文给出的 server/utils/config.ts 与 server/plugins/config.ts，nuxt.config.ts 登记键名，.env 与 .env.example 就位，再跑一次。
