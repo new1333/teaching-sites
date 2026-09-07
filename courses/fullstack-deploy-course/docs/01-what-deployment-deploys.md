@@ -159,8 +159,9 @@ $ pnpm e2e:ch1
 最小实现：一页真实数据。Nuxt 的页面放在 app/pages/ 下，文件名对应路由，把首页从占位换成一张部署日志表。
 
 ```vue
+// companion/app/pages/index.vue · 第 1 章形态（教学示意）：数据内联在本页；
+// 第 2 章起首页改由 GET /api/deploys 提供数据（终态见 docs/02-nuxt-server-api.md）
 <script setup lang="ts">
-// companion/app/pages/index.vue · 首页：部署日志（数据暂内联在本页，后续改由 server API 提供）
 interface DeployRecord {
   id: number
   env: 'production' | 'staging'

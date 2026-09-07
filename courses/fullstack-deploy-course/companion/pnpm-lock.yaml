@@ -27,9 +27,15 @@ importers:
         specifier: ^4.5.4
         version: 4.5.4
     devDependencies:
+      '@golar/vue':
+        specifier: 0.1.10
+        version: 0.1.10
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      golar:
+        specifier: 0.1.10
+        version: 0.1.10
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
@@ -647,6 +653,64 @@ packages:
   '@esbuild/win32-x64@0.28.2':
     resolution: {integrity: sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g==}
     engines: {node: '>=18'}
+    cpu: [x64]
+    os: [win32]
+
+  '@golar/darwin-arm64@0.1.10':
+    resolution: {integrity: sha512-r4Iz1g2izi4cEskMsgL71uVY70o9/iZCBeCzO1z01EH1Z8Bp/Bp0q2+Rbtk0Hq1Gy9cKX5GG22BphqdhK4ltWQ==}
+    engines: {node: '>=22.12.0'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@golar/darwin-x64@0.1.10':
+    resolution: {integrity: sha512-6L7sOIkZembBTQOBzxrJ970Nlxzoz61r6AgddY0wsQkapunS5jUKXTpTCtihBstY7YKlqWM13/XMZf1rzfJP9Q==}
+    engines: {node: '>=22.12.0'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@golar/linux-arm64-musl@0.1.10':
+    resolution: {integrity: sha512-+65btt8PPs99YjzT6EqIWhBoZW0opH+lyuvyrGz4o7+mjhzy54hjNvco1TNosKvufHCBYi1ilrXaBbmcg8pXTg==}
+    engines: {node: '>=22.12.0'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@golar/linux-arm64@0.1.10':
+    resolution: {integrity: sha512-SaS8qaT5TerpbnVmDCZ0SuymygTWZZKHh0f50QcLYjkkz6s3N49iTMl6RVeBP0cIhYnuGSIpwGx9XaPVMsf+Cw==}
+    engines: {node: '>=22.12.0'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@golar/linux-x64-musl@0.1.10':
+    resolution: {integrity: sha512-lVqikRcGq3YU5A0BsNbdJnOJiEWXcAo291fT0p/Di8iSk3yiIXqCdasegFqaIP7shIQzdDePFumG4YFDGORO3A==}
+    engines: {node: '>=22.12.0'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@golar/linux-x64@0.1.10':
+    resolution: {integrity: sha512-wfejGw0F+2vDcTYcZJwN7do3eiXsJEbadFRcP8Ev68odZwQBknREojdGAPF3xMKX4heQQK6E/vwRulOnpZO9Dg==}
+    engines: {node: '>=22.12.0'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@golar/util@0.1.10':
+    resolution: {integrity: sha512-KmJ7NneNAgoV/FbBoeU9HY2kJVgPUZwd8fjEnSYKCYW6LW4+AfbGlmFQbnyqIMr/X+Ziyhuhi8k8WWTidn/Img==}
+    engines: {node: '>=22.12.0'}
+
+  '@golar/volar@0.1.10':
+    resolution: {integrity: sha512-7kWDXqwOfW/oGXDzPbBdCYz0vls9xDaA8Bt3dvD3fa+XIIl9WBm0I2V52MQvQUWOHd3my6nLmTj2Cql14IMODA==}
+    engines: {node: '>=22.12.0'}
+
+  '@golar/vue@0.1.10':
+    resolution: {integrity: sha512-PmqlK0foHHr5tOJK+PMLm82t2pzyaspMeak7vlbL0mk1QZZDbQZ6Fkey84L70CMVBJa7tQpHa4/KWyBHtZNlww==}
+    engines: {node: '>=22.12.0'}
+
+  '@golar/win32-x64@0.1.10':
+    resolution: {integrity: sha512-6ujLlonw1X4r14cQWghU1bF8nhFbWH3E4YfqH4oQKCNY7AdkIOz+JCvz3SodICDs1JlJS+J43WUk14d054VUpg==}
+    engines: {node: '>=22.12.0'}
     cpu: [x64]
     os: [win32]
 
@@ -1416,6 +1480,9 @@ packages:
 
   '@vue/language-core@3.3.11':
     resolution: {integrity: sha512-QJmpliwAVpC/OxubIByPAhNzsQPRc8/gxlN2qnVzVfIMjMDz/9RnXRFoetjz5yEgXVXyp4LqhXq3V53PjmNzFw==}
+
+  '@vue/language-core@3.3.5':
+    resolution: {integrity: sha512-UkKu5nhX89fg4VhlG/FOeI10G3cj/7radKT/cy9BT4Q9qJmJlSTAc/dP63Xqs29aypN4f39xUV6PsLNk/dcD6g==}
 
   '@vue/reactivity@3.5.42':
     resolution: {integrity: sha512-TzNNfKpb7hDxbQltwAut8VDQA5YP+BuRlxntHUuRjyKwlMvmAPbs3unhCvieijifY6vFfVBwsS7wG/C7uq+bEQ==}
@@ -2202,6 +2269,11 @@ packages:
   globby@16.2.4:
     resolution: {integrity: sha512-c8B/VNLmxRcmqqenRA9t+9IyOjf9+V6lTxPaUJLqOCONdQkWZ0ETYgX0qbtJqPsgCNusT9MZ5Jeidw8Eb9tn2g==}
     engines: {node: '>=20'}
+
+  golar@0.1.10:
+    resolution: {integrity: sha512-imhjiWyS0abCZB6Cpc0ZvRTwWXVbwFidIp9oI7QAVJ+1+9wDhtl8rZcWdGCPIRgMsLAODdkZ4K46e+ESuDSLgQ==}
+    engines: {node: '>=22.12.0'}
+    hasBin: true
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
@@ -4271,6 +4343,41 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
+  '@golar/darwin-arm64@0.1.10':
+    optional: true
+
+  '@golar/darwin-x64@0.1.10':
+    optional: true
+
+  '@golar/linux-arm64-musl@0.1.10':
+    optional: true
+
+  '@golar/linux-arm64@0.1.10':
+    optional: true
+
+  '@golar/linux-x64-musl@0.1.10':
+    optional: true
+
+  '@golar/linux-x64@0.1.10':
+    optional: true
+
+  '@golar/util@0.1.10': {}
+
+  '@golar/volar@0.1.10':
+    dependencies:
+      '@volar/language-core': 2.4.28
+      golar: 0.1.10
+
+  '@golar/vue@0.1.10':
+    dependencies:
+      '@golar/util': 0.1.10
+      '@golar/volar': 0.1.10
+      '@vue/compiler-dom': 3.5.42
+      '@vue/language-core': 3.3.5
+
+  '@golar/win32-x64@0.1.10':
+    optional: true
+
   '@ioredis/commands@1.10.0': {}
 
   '@isaacs/cliui@8.0.2':
@@ -5165,6 +5272,16 @@ snapshots:
       path-browserify: 1.0.1
       picomatch: 4.0.7
 
+  '@vue/language-core@3.3.5':
+    dependencies:
+      '@volar/language-core': 2.4.28
+      '@vue/compiler-dom': 3.5.42
+      '@vue/shared': 3.5.42
+      alien-signals: 3.2.1
+      muggle-string: 0.4.1
+      path-browserify: 1.0.1
+      picomatch: 4.0.7
+
   '@vue/reactivity@3.5.42':
     dependencies:
       '@vue/shared': 3.5.42
@@ -5869,6 +5986,20 @@ snapshots:
       micromatch: 4.0.8
       slash: 5.1.0
       unicorn-magic: 0.4.0
+
+  golar@0.1.10:
+    dependencies:
+      '@golar/util': 0.1.10
+      detect-libc: 2.1.2
+      tinyglobby: 0.2.17
+    optionalDependencies:
+      '@golar/darwin-arm64': 0.1.10
+      '@golar/darwin-x64': 0.1.10
+      '@golar/linux-arm64': 0.1.10
+      '@golar/linux-arm64-musl': 0.1.10
+      '@golar/linux-x64': 0.1.10
+      '@golar/linux-x64-musl': 0.1.10
+      '@golar/win32-x64': 0.1.10
 
   graceful-fs@4.2.11: {}
 

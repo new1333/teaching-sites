@@ -8,6 +8,7 @@
     "typecheck": "nuxt typecheck",
     "test": "vitest run",
     "e2e:ch1": "node scripts/e2e-ch1.mjs",
+    "e2e:ch2": "node scripts/e2e-ch2.mjs",
     "db:up": "node scripts/compose-db.mjs up",
     "db:down": "node scripts/compose-db.mjs down"
   },
@@ -20,7 +21,9 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@golar/vue": "0.1.10",
     "drizzle-kit": "^0.31.10",
+    "golar": "0.1.10",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0",
     "vue-tsc": "^3.3.11"
