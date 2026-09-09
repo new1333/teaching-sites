@@ -1,8 +1,8 @@
 {
   "command": "pnpm gate:ch3（node scripts/e2e-ch3.mjs）",
-  "generatedAt": "2026-09-09T04:02:35.313Z",
+  "generatedAt": "2026-09-09T04:26:01.931Z",
   "base": "http://127.0.0.1:4311",
-  "build": "built",
+  "build": "skipped",
   "summary": {
     "passed": 15,
     "failed": 0,
@@ -11,7 +11,7 @@
   "failed": [],
   "detail": {
     "status": 200,
-    "ttfbMs": 541.3,
+    "ttfbMs": 568,
     "htmlBytes": 48533,
     "payloadBytes": 419,
     "firstLoadJs": {

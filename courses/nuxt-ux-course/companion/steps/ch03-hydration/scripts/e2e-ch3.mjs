@@ -19,12 +19,12 @@ const round1 = (n) => Math.round(n * 10) / 10
 const PROBE = '云朵雨伞' // 只可能来自商品数据，不可能来自模板文案
 
 // ---- 写死的对照数字（两处口径，来源都在伴生仓存档里）----
-// 1) 同步引入实测：演练第一步把价格走势图同步 import 进详情页后，存档
+// 1) 同步引入实测：演练第二步把价格走势图同步 import 进详情页后，存档
 //    reports/measure-sync-chart.json 里 /products/1 的 firstLoadJs——「变胖」的账。
 const SYNC_DETAIL_FIRSTLOAD_JS = 211_299
 // 显著下降线：Lazy 分割后至少比同步记录低 8 KiB（搬出的是整个图表分块）。
 const LAZY_MAX_DETAIL_FIRSTLOAD_JS = SYNC_DETAIL_FIRSTLOAD_JS - 8 * 1024
-// 2) 存档对照：reports/measure.json（第 2 章末态）里各页面 firstLoadJs。
+// 2) 存档对照：steps/ch02-ssr-dataflow/reports/measure.json（第 2 章末态快照）里各页面 firstLoadJs。
 //    「不回退」允许 2 KiB 容差：注册新组件 + 延迟水合运行时让共享分块每页约 +1.3 KiB（正文有账），
 //    量级回退（整块图表代码混进别的页面首屏）仍然会被拦下。
 const OTHER_PAGES_CEILING = {
@@ -127,7 +127,7 @@ try {
     `直出不回退：一次详情渲染恰触发 1 次 /api/products/:id（实际 ${hits['/api/products/:id'] ?? 0}）`,
   )
 
-  // ---- D. 全站不回退：其他页面首屏 JS 不超过存档 + 1 KiB 注册容差 ----
+  // ---- D. 全站不回退：其他页面首屏 JS 不超过存档 + 2 KiB 注册容差 ----
   for (const [label, ceiling] of Object.entries(OTHER_PAGES_CEILING)) {
     const path = { home: '/', products: '/products', search: '/search?q=%E9%9B%A8', favorites: '/favorites' }[label]
     const r = await requestPage(srv.base, path)

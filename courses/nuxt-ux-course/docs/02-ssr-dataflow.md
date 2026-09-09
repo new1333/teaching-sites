@@ -268,7 +268,7 @@ gate:ch1 —— 110/110 项通过；报告：reports/gate-ch1.json
 gate:ch1 通过
 ```
 
-109 变 110：被改变的 2 条断言各改写为 1 条（反例页 present=false、命中恰为 SSR 渲染数），另加反例页存活检查 1 条。口径完整、数值合理、基线事实、重复稳定四类意图一条没少；「测量仪能判定已知坏页」这件事由 `/demo/client-fetch` 接棒。
+109 变 110：被改变的 2 条断言各改写为 1 条（反例页 present=false、命中恰为 SSR 渲染数），另加反例页存活检查 1 条。口径完整、数值合理、基线事实、重复稳定四类意图一条没少；「测量仪能判定已知坏页」这件事由 `/demo/client-fetch` 接棒。（终态注：详情页随后在水合章毕业为直出好页，上图反例循环如今只剩 search 与 favorites，`/api/products/:id` 的命中断言也改为「恰为两遍 SSR 渲染数」——测量意图未变（第 3 章）。）
 
 ### 守住探针：payload 判定的纯逻辑测试
 
@@ -373,7 +373,7 @@ hood), so the fully populated result is always sent to the browser."
 
 ## 自查
 
-1. gate:ch1 至今断言「detail 数据不在 HTML 里（present=false）」。如果你照本章的写法把详情页也改成 `useAsyncData`，哪条断言会先红？据此说明门槛脚本断言的对象是站点的当前形态，还是测量意图？
+1. 若把详情页也照本章写法改成 `useAsyncData`，gate:ch1 里哪条断言会先红？据此说明门槛脚本断言的对象是站点的当前形态，还是测量意图。（终态：详情页已在水合章毕业、断言锚点随之迁移而意图未变（第 3 章）。）
 2. 直出后 `/products` 的 TTFB 从约 8 毫秒涨到约 830 毫秒。构造一个情境，使「TTFB 变大但体验更好」成立；再构造一个使它不成立。（提示：数据对首屏是否必需、接口延迟的量级。）
 3. 在浏览器里打开 `/demo/client-fetch` 并等它加载完成：`/api/_hits` 里 `/api/products` 的计数会 +1 吗？`pnpm measure` 的 node 口径能看到这次请求吗？
 4. 本章页面在 handler 里用了 `$fetch`，官方却警告「只用 `$fetch` 不行」。这两处 `$fetch` 的差别在哪？

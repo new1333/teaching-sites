@@ -15,7 +15,8 @@
       "from_n": 1,
       "target": "hydration",
       "what": "首屏 JS 字节口径将在水合章继续作为优化对账对象",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "第 3 章以 firstLoadJs 口径全程对账：同步引入 211,299 B、半吊子 Lazy 211,806 B、终态 200,812 B 均以存档为锚进入正文与 gate:ch3 断言（写死对照数字）"
     },
     {
       "id": "p3-lazy-to-loading-states",
@@ -23,6 +24,14 @@
       "from_n": 2,
       "target": "loading-states",
       "what": "useAsyncData 的 lazy 参数将在加载状态章展开为两种导航形态（等数据再切换 vs 先切页再出骨架）",
+      "status": "open"
+    },
+    {
+      "id": "p4-jsbytes-to-asset-budget",
+      "from": "hydration",
+      "from_n": 3,
+      "target": "asset-budget",
+      "what": "首屏 JS 字节口径移交资产预算章纳入预算表 enforcement",
       "status": "open"
     }
   ]

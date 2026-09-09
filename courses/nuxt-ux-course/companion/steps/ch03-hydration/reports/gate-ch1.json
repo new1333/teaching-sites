@@ -1,8 +1,8 @@
 {
   "command": "pnpm gate:ch1（node scripts/e2e-ch1.mjs）",
-  "generatedAt": "2026-09-09T04:02:51.692Z",
+  "generatedAt": "2026-09-09T04:09:52.220Z",
   "base": "http://127.0.0.1:4311",
-  "build": "built",
+  "build": "skipped",
   "summary": {
     "passed": 110,
     "failed": 0,
@@ -15,8 +15,8 @@
       "path": "/",
       "status": 200,
       "ttfbMs": {
-        "run1": 13.4,
-        "run2": 4.3
+        "run1": 10.9,
+        "run2": 3.9
       },
       "htmlBytes": 2859,
       "payloadBytes": 184,
@@ -63,8 +63,8 @@
       "path": "/products",
       "status": 200,
       "ttfbMs": {
-        "run1": 830,
-        "run2": 824.4
+        "run1": 821.8,
+        "run2": 820.3
       },
       "htmlBytes": 20467,
       "payloadBytes": 4528,
@@ -119,8 +119,8 @@
       "path": "/products/1",
       "status": 200,
       "ttfbMs": {
-        "run1": 534.3,
-        "run2": 526.2
+        "run1": 534.5,
+        "run2": 513.7
       },
       "htmlBytes": 48533,
       "payloadBytes": 419,
@@ -170,8 +170,8 @@
       "path": "/search?q=%E9%9B%A8",
       "status": 200,
       "ttfbMs": {
-        "run1": 10.1,
-        "run2": 6.8
+        "run1": 12.3,
+        "run2": 7.5
       },
       "htmlBytes": 2376,
       "payloadBytes": 202,
@@ -221,8 +221,8 @@
       "path": "/favorites",
       "status": 200,
       "ttfbMs": {
-        "run1": 6.8,
-        "run2": 2.8
+        "run1": 7.2,
+        "run2": 5.6
       },
       "htmlBytes": 2263,
       "payloadBytes": 193,
@@ -273,7 +273,7 @@
       "label": "api-products",
       "path": "/api/products",
       "status": 200,
-      "ttfbMs": 810.7
+      "ttfbMs": 814.1
     }
   ],
   "apiHits": {

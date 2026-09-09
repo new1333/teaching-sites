@@ -49,6 +49,31 @@
         { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/02-ssr-dataflow.md ...（及第 1 章复验）", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "hydration",
+      "file": "docs/03-hydration.md",
+      "status": "complete",
+      "summary": "建立三块积木：水合（JS 接管 SSR HTML、重建响应式与监听）、可交互延迟（可见→可用的三段成本：下载/解析执行/接管）、代码分割（路由级默认 + Lazy 前缀 + hydrate-on-interaction 延迟水合）。companion：详情页 useAsyncData 直出 + 手写 SVG 走势图；同步引入存档 211,299 B → Lazy+延迟水合 200,812 B（关键发现：仅 Lazy 前缀不减首屏，SSR 渲染过的分块仍被 modulepreload，需叠加 hydrate-on-interaction）；gate:ch3 15 项先红后绿、ch1 锚点手术 detail 毕业 110 项、vitest 33 例；steps/ch03 快照。读者能诊断可见不可点并完成同类瘦身。",
+      "artifacts": [
+        "companion/app/utils/price-trend.ts（341 行纯逻辑）",
+        "companion/app/components/PriceTrendChart.vue（677 行手写 SVG 图表）",
+        "companion/app/pages/products/[id].vue（Lazy + hydrate-on-interaction）",
+        "companion/scripts/e2e-ch3.mjs + gate:ch3（写死对照数字 211,299/四页基线+2KiB 容差）",
+        "companion/scripts/e2e-ch1.mjs（detail 毕业锚点手术，保持 110 项）",
+        "companion/tests/price-trend.test.ts（18 例）",
+        "companion/reports/{measure-sync-chart,measure,gate-ch3}.json",
+        "companion/steps/ch03-hydration/",
+        "docs/03-hydration.md + docs/01、02 终态回写（detail 毕业）"
+      ],
+      "gates": [
+        { "command": "pnpm gate:ch3", "result": "passed" },
+        { "command": "pnpm gate:ch1 / gate:ch2", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/01-03（全参数）", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }
