@@ -1,16 +1,12 @@
+// companion: apps/api/src/app.test.ts · 端点 e2e（第 4 章起经 createAuthedApp 拿登录态）
 import { afterAll, describe, expect, it } from 'vitest'
-import { serve } from '@hono/node-server'
-import { createApp } from './app'
+import { createAuthedApp } from '../test/helpers'
 
-const server = serve({ fetch: createApp().fetch, port: 0 })
-const address = server.address()
-if (!address || typeof address === 'string') {
-  throw new Error('expected the test server to listen on an ephemeral port')
-}
-const base = `http://127.0.0.1:${address.port}`
+const app = await createAuthedApp()
+const base = app.base
 
 afterAll(async () => {
-  await new Promise<void>((resolve) => server.close(() => resolve()))
+  await app.shutdown()
 })
 
 // res.json() 的类型是 unknown，测试里按需收窄成宽松的 JSON 形状
@@ -25,6 +21,7 @@ describe('GET /healthz', () => {
 })
 
 describe('POST /api/links', () => {
+  // 不带 Cookie 的裸 POST：校验是无状态纯检查，先于身份——缺 url 依然 422
   const postLink = (body: unknown) =>
     fetch(`${base}/api/links`, {
       method: 'POST',
@@ -32,8 +29,8 @@ describe('POST /api/links', () => {
       body: JSON.stringify(body),
     })
 
-  it('合法请求返回 201，body 含 slug/url/createdAt', async () => {
-    const res = await postLink({ url: 'https://example.com/very-long-path' })
+  it('登录后合法请求返回 201，body 含 slug/url/createdAt', async () => {
+    const res = await app.postLink({ url: 'https://example.com/very-long-path' })
     expect(res.status).toBe(201)
     const body = await json(res)
     expect(body.url).toBe('https://example.com/very-long-path')
@@ -61,11 +58,7 @@ describe('POST /api/links', () => {
 
 describe('GET /:slug', () => {
   it('命中返回 302 且 Location 指向原网址', async () => {
-    const created = await fetch(`${base}/api/links`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url: 'https://example.com/target' }),
-    })
+    const created = await app.postLink({ url: 'https://example.com/target' })
     const { slug } = await json(created)
     const res = await fetch(`${base}/${slug}`, { redirect: 'manual' })
     expect(res.status).toBe(302)

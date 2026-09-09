@@ -193,6 +193,7 @@ $ pnpm --filter @shortlink/api add -D drizzle-kit@^0.31.0
 
 ```ts
 // companion: apps/api/src/db/schema.ts · links 表——短链在数据库里的形状
+// （本章形态：还没有归属列；登录接入后 links 加可空的 user_id 外键，终态见第 4 章演练）
 import { index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
 export const links = pgTable(
@@ -281,6 +282,7 @@ export function requireDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string
 
 ```ts
 // companion: apps/api/src/db/store.pg.ts · PgStore——住在 PostgreSQL 里的存储实现
+// （本章形态：put 还不带 ownerId；接入登录后写入归属列，终态见第 4 章演练）
 import postgres from 'postgres'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/postgres-js'
@@ -329,7 +331,7 @@ export function createPgStore(databaseUrl: string): PgStore {
 启动入口换成新心脏，这是本章唯一动到的旧文件：
 
 ```ts
-// companion: apps/api/src/main.ts
+// companion: apps/api/src/main.ts（本章形态：只注入 store；接入登录后再注入 auth 依赖，终态见第 4 章演练）
 import { serve } from '@hono/node-server'
 import { createApp } from './app'
 import { requireDatabaseUrl } from './config'
@@ -350,7 +352,9 @@ serve({ fetch: createApp(store).fetch, port }, (info) => {
 新测试 file 写一个「重启剧本」：第一代进程（独立 store + 独立 HTTP 服务）创建一条短链后整体丢弃；第二代进程用全新的 store 与 app 查同一条短链。两代之间没有任何共享引用——数据若还能找到，它只能住在进程之外。
 
 ```ts
-// companion: apps/api/test/persistence.test.ts · 重启剧本与两代进程（红阶段形态·教学示意，终态为参数化 boot 与工厂表，见第八步）
+// companion: apps/api/test/persistence.test.ts · 重启剧本与两代进程
+// （红阶段形态·教学示意，终态为参数化工厂表，见第八步；接入登录后，剧本里的 POST
+//   改经 test/helpers.ts 的 createAuthedApp 发送，终态见第 4 章演练）
 import { serve } from '@hono/node-server'
 import { createApp } from '../src/app'
 import { createMemoryStore } from '../src/store'
@@ -418,7 +422,7 @@ Tests  1 failed (1)
 ```ts
 // companion: apps/api/test/persistence.test.ts · 转绿后的工厂与就绪步骤（节选）
 import { createPgStore } from '../src/db/store.pg'
-import { databaseUrl, ensurePg, migrateToLatest } from './helpers'
+import { createAuthedApp, databaseUrl, ensurePg, migrateToLatest, type AuthedApp } from './helpers'
 
 await ensurePg()
 
@@ -449,6 +453,7 @@ describe('持久化：重启之后数据还在', () => {
 
 ```ts
 // companion: apps/api/test/helpers.ts · pg 就绪检查与迁移执行
+// （本章形态；接入登录后，同文件追加 createAuthedApp——已登录测试应用的工厂，终态见第 4 章）
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'

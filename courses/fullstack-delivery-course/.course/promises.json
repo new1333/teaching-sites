@@ -24,7 +24,8 @@
       "from_n": 2,
       "target": "auth-session",
       "what": "创建端点的归属检查（谁建的链归谁）在第 4 章接入登录后补上；POST /api/links 届时加 401",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "未登录合法 body 401、缺 url 仍 422；links.user_id 归属写入者（e2e 含 user_id===me.id 探针）"
     },
     {
       "id": "ch3-env-vars",
@@ -32,6 +33,14 @@
       "from_n": 3,
       "target": "containerize",
       "what": "环境变量本章只教单个 DATABASE_URL 读入（dev 默认+生产 fail-fast）；.env 分层与密钥边界第 7 章统一收口（收束已留一行括注导航）",
+      "status": "open"
+    },
+    {
+      "id": "ch4-session-audit",
+      "from": "auth-session",
+      "from_n": 4,
+      "target": "ops-observability",
+      "what": "会话排查（谁在何时登录）在第 10 章作为日志关联场景复用（收束一行括注导航已留）",
       "status": "open"
     }
   ]

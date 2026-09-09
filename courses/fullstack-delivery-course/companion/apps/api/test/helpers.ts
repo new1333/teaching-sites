@@ -1,9 +1,14 @@
-// companion: apps/api/test/helpers.ts · 测试共用的 pg 就绪检查与迁移执行
+// companion: apps/api/test/helpers.ts · 测试共用的 pg 就绪检查、迁移执行与已登录应用
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import { serve } from '@hono/node-server'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { createApp } from '../src/app'
+import { createAuthStore } from '../src/auth/session'
+import { createPgStore } from '../src/db/store.pg'
+import type { LinkStore } from '../src/store'
 import { requireDatabaseUrl } from '../src/config'
 
 export const databaseUrl = requireDatabaseUrl()
@@ -44,5 +49,61 @@ export async function migrateToLatest(url: string = databaseUrl): Promise<void> 
     await migrate(drizzle(client), { migrationsFolder })
   } finally {
     await client.end({ timeout: 3 })
+  }
+}
+
+/** 一个「已登录的应用」：真实 HTTP 服务 + 一个注册好的账号 + 它的会话 Cookie */
+export interface AuthedApp {
+  base: string
+  cookie: string
+  postLink(body: unknown): Promise<Response>
+  shutdown(): Promise<void>
+}
+
+/**
+ * 起一个真实服务并用随机邮箱注册一个账号：
+ * 返回它的 Cookie 串（形如 "sid=..."）与带 Cookie 的 postLink。
+ * 第 4 章起创建短链需要登录——旧章测试都从这里拿「已登录的手」。
+ */
+export async function createAuthedApp(store?: LinkStore): Promise<AuthedApp> {
+  const linkStore = store ?? createPgStore(databaseUrl)
+  const auth = createAuthStore(databaseUrl)
+  const server = serve({ fetch: createApp(linkStore, auth).fetch, port: 0 })
+  const address = server.address()
+  if (!address || typeof address === 'string') {
+    await auth.end()
+    throw new Error('expected the test server to listen on an ephemeral port')
+  }
+  const base = `http://127.0.0.1:${address.port}`
+
+  const email = `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`
+  const register = await fetch(`${base}/api/auth/register`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password: 'test-password-123' }),
+  })
+  if (register.status !== 201) {
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+    await auth.end()
+    throw new Error(`注册测试账号失败：expected 201, got ${register.status}`)
+  }
+  const setCookie = register.headers.get('set-cookie') ?? ''
+  const cookie = setCookie.split(';')[0]?.trim() ?? ''
+
+  return {
+    base,
+    cookie,
+    postLink: (body: unknown) =>
+      fetch(`${base}/api/links`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie },
+        body: JSON.stringify(body),
+      }),
+    shutdown: async () => {
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+      const maybeEnd = (linkStore as { end?: () => Promise<void> }).end
+      if (maybeEnd) await maybeEnd()
+      await auth.end()
+    },
   }
 }

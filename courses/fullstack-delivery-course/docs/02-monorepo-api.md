@@ -292,6 +292,8 @@ e2e 测试不走 mock：用 @hono/node-server 起一个真实 HTTP 服务，端�
 
 ```ts
 // companion: apps/api/src/app.test.ts · 起服务与收尾
+// （本章形态：创建短链尚不需要登录；接入登录后，本文件改经 test/helpers.ts 的
+//   createAuthedApp 起服务并携带会话 Cookie，终态见第 4 章演练）
 import { afterAll, describe, expect, it } from 'vitest'
 import { serve } from '@hono/node-server'
 import { createApp } from './app'
@@ -315,6 +317,8 @@ const json = (res: Response) => res.json() as Promise<Record<string, any>>
 
 ```ts
 // companion: apps/api/src/app.test.ts · POST /api/links 的三条断言
+// （本章形态；接入登录后：201 那条改经已登录的 postLink 发送，两条 422 照旧匿名——
+//   校验先于身份的设计让它们在终态依然成立，见第 4 章）
 describe('POST /api/links', () => {
   const postLink = (body: unknown) =>
     fetch(`${base}/api/links`, {
@@ -368,7 +372,8 @@ Tests  5 failed | 1 passed (6)
 ### 第五步：实现三个端点
 
 ```ts
-// companion: apps/api/src/app.ts · createApp
+// companion: apps/api/src/app.ts · createApp（本章形态：校验与创建在同一个 handler 里；
+// 接入登录后，POST /api/links 拆成「校验 → 守卫 → 业务」三段并要求登录，终态见第 4 章演练）
 import { Hono } from 'hono'
 import { nanoid } from 'nanoid'
 import { createLinkSchema, type LinkResponse } from '@shortlink/shared'
@@ -421,6 +426,7 @@ export function createApp(store: LinkStore = createMemoryStore()) {
 
 ```ts
 // companion: apps/api/src/store.ts · LinkStore 与 createMemoryStore
+// （本章形态：put 还只有一个参数；接入登录后 put 加 ownerId 记归属，终态见第 4 章演练）
 import type { LinkResponse } from '@shortlink/shared'
 
 /**

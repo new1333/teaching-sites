@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { createLinkSchema, linkResponseSchema, validationErrorSchema } from './index'
+import {
+  createLinkSchema,
+  linkResponseSchema,
+  loginSchema,
+  registerSchema,
+  validationErrorSchema,
+} from './index'
 
 describe('createLinkSchema', () => {
   it('接受 https 网址', () => {
@@ -58,5 +64,32 @@ describe('validationErrorSchema', () => {
 
   it('缺 message 拒绝', () => {
     expect(validationErrorSchema.safeParse({ error: { field: 'url' } }).success).toBe(false)
+  })
+})
+
+describe('registerSchema / loginSchema', () => {
+  it('接受合法邮箱与 8 位以上密码', () => {
+    const result = registerSchema.safeParse({ email: 'reader@example.com', password: '12345678' })
+    expect(result.success).toBe(true)
+  })
+
+  it('缺 email 拒绝，错误定位在 email 字段', () => {
+    const result = registerSchema.safeParse({ password: '12345678' })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.path[0]).toBe('email')
+    }
+  })
+
+  it('密码不足 8 位拒绝，错误定位在 password 字段', () => {
+    const result = loginSchema.safeParse({ email: 'reader@example.com', password: '1234567' })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.path[0]).toBe('password')
+    }
+  })
+
+  it('非法邮箱拒绝', () => {
+    expect(registerSchema.safeParse({ email: 'not-an-email', password: '12345678' }).success).toBe(false)
   })
 })

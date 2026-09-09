@@ -15,6 +15,20 @@
       "when": 1788923432059,
       "tag": "0001_links_url_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788927037756,
+      "tag": "0002_auth_users_sessions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788927049862,
+      "tag": "0003_links_owner",
+      "breakpoints": true
     }
   ]
 }

@@ -5,11 +5,12 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 4,
+  "next_chapter": 5,
   "completed_chapters": [
     "request-journey",
     "monorepo-api",
-    "persistence"
+    "persistence",
+    "auth-session"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -19,6 +20,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "ch3-persistence"
+    "id": "ch4-auth-session"
   }
 }

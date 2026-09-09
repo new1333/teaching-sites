@@ -6,7 +6,7 @@ import type { LinkResponse } from '@shortlink/shared'
 import { links } from './schema'
 
 export interface PgStore {
-  put(link: LinkResponse): Promise<LinkResponse>
+  put(link: LinkResponse, ownerId: string): Promise<LinkResponse>
   get(slug: string): Promise<LinkResponse | undefined>
   /** 关掉连接池：进程退出前调用，把连接还给数据库 */
   end(): Promise<void>
@@ -21,11 +21,11 @@ export function createPgStore(databaseUrl: string): PgStore {
   const db = drizzle(pool, { schema: { links } })
 
   return {
-    async put(link) {
-      // id 不传：让数据库自己生成随机 uuid
+    async put(link, ownerId) {
+      // id 不传：让数据库自己生成随机 uuid；user_id 记归属——这条短链是谁建的
       await db
         .insert(links)
-        .values({ slug: link.slug, url: link.url, createdAt: new Date(link.createdAt) })
+        .values({ slug: link.slug, url: link.url, userId: ownerId, createdAt: new Date(link.createdAt) })
       return link
     },
     async get(slug) {

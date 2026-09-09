@@ -90,6 +90,44 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "auth-session",
+      "file": "docs/04-auth-session.md",
+      "status": "complete",
+      "summary": "登录会话落地：0002/0003 迁移建 users/sessions 与 links 归属；scrypt 加盐哈希（timingSafeEqual）；会话存 SHA-256 指纹、7 天过期读取清理；sid Cookie（HttpOnly; SameSite=Lax; Path=/; Max-Age 7d，dev 不加 Secure）；注册/登录/登出/me 四端点；POST /api/links 三段式（校验 422→守卫 401→业务 201）并归属 user_id。旧测试经 createAuthedApp 回写、断言强度不降（匿名 422 保留=校验先于身份的锁定）。首教：密码哈希（加盐）、会话、httpOnly Cookie、路由守护、CSRF 与 SameSite。39 条测试全绿。",
+      "artifacts": [
+        "companion/apps/api/src/auth/*",
+        "companion/apps/api/drizzle/0002*",
+        "companion/apps/api/drizzle/0003*",
+        "companion/apps/api/test/auth.test.ts",
+        "companion/packages/shared/src/index.ts",
+        "companion/apps/web/src/*"
+      ],
+      "gates": [
+        {
+          "command": "cd companion && node scripts/compose-infra.mjs up",
+          "result": "passed"
+        },
+        {
+          "command": "cd companion && pnpm test",
+          "result": "passed（shared 12 + api 27 = 39 条）"
+        },
+        {
+          "command": "cd companion && pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/04-auth-session.md --new 密码哈希（加盐） 会话 httpOnly Cookie 路由守护 CSRF 与 SameSite",
+          "result": "passed"
+        },
+        {
+          "command": "回写闸门：course-lint 复跑 docs/02 与 docs/03",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }
