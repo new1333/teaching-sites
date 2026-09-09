@@ -20,7 +20,7 @@ title: 容器化：多阶段构建与一键应用栈
 
 环境变量注入——NUXT_ 前缀的环境变量在进程启动时覆盖 runtimeConfig 的键（第 3 章）。本章的注入方从 shell 换成容器编排，变量名一个字母都不用改。
 
-fail-fast 配置校验——缺配置的进程带清单退出非 0，不带病上岗（第 3 章）。本章它的观众多了一个：容器编排器看得见退出码。
+fail-fast 配置校验——缺配置的进程带清单退出非 0，不带病上岗（第 3 章）。本章它的观众多了一个：容器编排器——负责拉起并看管容器的工具（本章就是 Docker Compose）——看得见退出码。
 
 ## 镜像：把凑齐条件的那台机器铸成文件
 
@@ -171,7 +171,7 @@ Dockerfile  app  compose.db.yaml  compose.yaml  node_modules  ...
 
 锁文件变了，清单那层失效，install 连同其后所有层重建。尽管依赖关系其实一个没动——install 自己也报了 Lockfile is up to date, resolution step is skipped。三种输入、三种命运，钉在同一根钉子上：**层的输入变没变，决定它重跑还是复用；顺序决定谁是输入**。
 
-反过来就能诊断「顺序颠倒」的 Dockerfile：如果 `COPY . .` 排在 install 之前，源码就成了依赖层的输入——改任何一行代码，install 必然重跑。开篇那句「装依赖半小时」在容器世界的翻版，多半就是这么写出来的。顺带一提，`docker compose build` 一次构建两个目标（应用镜像与工具镜像）时，它们共享 deps/build 段。第二个目标的共享段全部 CACHED，只多花十几秒导出层——阶段共享本身就是缓存的又一次兑现。
+反过来就能诊断「顺序颠倒」的 Dockerfile：如果 `COPY . .` 排在 install 之前，源码就成了依赖层的输入——改任何一行代码，install 必然重跑。开篇那句「装依赖半小时」在容器世界的翻版，多半就是这么写出来的。顺带一提，`docker compose build --profile tools` 一次构建两个目标（应用镜像与工具镜像）。migrate 服务声明了 profiles: [tools]，不带 profile 的 build 会跳过它——它实际在首次 `--profile tools run --rm migrate` 时隐式构建。两个目标共享 deps/build 段：第二个目标的共享段全部 CACHED，只多花十几秒导出层。阶段共享本身就是缓存的又一次兑现。
 
 ## 非 root 运行：一行换一个攻击面
 
@@ -411,7 +411,7 @@ docker build --target build -t leak-demo:tmp .
 docker run --rm leak-demo:tmp sh -c 'cat /app/.env'
 ```
 
-先猜：cat 打印「No such file or directory」还是打印出文件内容？二选一，再跑。对照：三行内容原样打印——注释、连接串、环境名（本课是教学假凭据；换成一串生产密钥，同样的命令就是泄漏现场）。哪条没变也值得看：最终应用镜像（run 段）仍然不含 .env——多阶段把密钥挡在了最终交付物之外。所以这是两道门各守一段：.dockerignore 守「进不进上下文与中间层」，多阶段守「进不进最终镜像」。而 builder 段的中间镜像就躺在本机镜像缓存里，任何能跑 docker 的人都能 cat——第一道门不能省。复原：去掉注释，重新 `docker build --target build -t leak-demo:tmp .` 再 cat——No such file or directory；`docker rmi leak-demo:tmp` 清掉演示镜像。
+先猜：cat 打印「No such file or directory」还是打印出文件内容？二选一，再跑。对照：.env 的全部内容原样打印——注释、连接串、环境名都在（本课是教学假凭据；换成一串生产密钥，同样的命令就是泄漏现场）。哪条没变也值得看：最终应用镜像（run 段）仍然不含 .env——多阶段把密钥挡在了最终交付物之外。所以这是两道门各守一段：.dockerignore 守「进不进上下文与中间层」，多阶段守「进不进最终镜像」。而 builder 段的中间镜像就躺在本机镜像缓存里，任何能跑 docker 的人都能 cat——第一道门不能省。复原：去掉注释，重新 `docker build --target build -t leak-demo:tmp .` 再 cat——No such file or directory；`docker rmi leak-demo:tmp` 清掉演示镜像。
 
 实验三（定向破坏）：抽走容器的连接串。把 compose.yaml 里 app 服务的 `NUXT_DB_URL:` 一行注释掉（只这一行；migrate 服务那行别动），然后：
 
