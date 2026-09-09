@@ -5,11 +5,12 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 2,
-  "next_chapter": 4,
+  "next_chapter": 5,
   "completed_chapters": [
     "what-deployment-deploys",
     "nuxt-server-api",
-    "env-and-config"
+    "env-and-config",
+    "database-layer"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],

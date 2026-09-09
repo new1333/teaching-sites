@@ -68,6 +68,42 @@
         { "command": "pnpm e2e:ch3", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "database-layer",
+      "file": "docs/04-database-layer.md",
+      "status": "complete",
+      "summary": "建立 Drizzle schema、schema 迁移、连接池、集成测试数据库四块积木。compose.db.yaml 起 postgres:16-alpine（宿主 54329）；deploys 表经 drizzle-kit 迁移账本建表；/api/deploys 真实落库（DeploysRepo 注入，域规则与 HTTP 行为不变）；vitest 分 unit/integration，globalSetup 一次性库；e2e:ch4 两幕（进程死亡数据幸存）。实验二复原走『卷重置→账本重放→复种』并实测。读者能建立带迁移历史、测试隔离的数据库层。",
+      "artifacts": [
+        "companion/compose.db.yaml",
+        "companion/scripts/compose-db.mjs",
+        "companion/drizzle.config.ts",
+        "companion/server/db/",
+        "companion/server/utils/db.ts",
+        "companion/server/domain/deploys.ts",
+        "companion/server/api/deploys.get.ts",
+        "companion/server/api/deploys.post.ts",
+        "companion/tests/",
+        "companion/vitest.config.ts",
+        "companion/scripts/seed.mjs",
+        "companion/scripts/e2e-ch4.mjs",
+        "companion/package.json",
+        "companion/.env.example"
+      ],
+      "gates": [
+        { "command": "pnpm db:up", "result": "passed" },
+        { "command": "pnpm db:migrate", "result": "passed" },
+        { "command": "pnpm db:seed", "result": "passed" },
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" },
+        { "command": "pnpm e2e:ch2", "result": "passed" },
+        { "command": "pnpm e2e:ch3", "result": "passed" },
+        { "command": "pnpm e2e:ch4", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

@@ -16,7 +16,8 @@
       "from_n": 2,
       "target": "04-database-layer",
       "what": "/api/deploys 的数据源从内存数组换成 PostgreSQL（域逻辑与 handler 不变，resetDeploys 测试缝随之替换）",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "server/db/deploys.ts 的 pgDeploysRepo + server/utils/db.ts 装配；域规则与 HTTP 行为不变（签名显式化为全工程唯一改动，正文手术清单如实交代）；resetDeploys 缝由 InMemoryDeploysRepo（单测）与 TRUNCATE（集成）接岗；e2e:ch4 幕二为产物级证据。"
     },
     {
       "id": "ch3-dburl-first-consumer",
@@ -24,6 +25,23 @@
       "from_n": 3,
       "target": "04-database-layer",
       "what": "数据库连接串经 runtimeConfig 注入而非写死——dbUrl 的首个真实消费者",
+      "status": "fulfilled",
+      "resolution": "server/utils/db.ts 的 useDb() 用 useRuntimeConfig().dbUrl 建 createDb 连接池；正文专设『dbUrl 的第一个消费者』小节，并诚实标注 fail-fast 只守格式不守可达性。"
+    },
+    {
+      "id": "ch4-migration-timing",
+      "from": "04-database-layer",
+      "from_n": 4,
+      "target": "07-database-ops",
+      "what": "迁移在部署流程中的执行时机与失败处理",
+      "status": "open"
+    },
+    {
+      "id": "pino-teaching-home",
+      "from": "04-database-layer",
+      "from_n": 4,
+      "target": "10-production-hardening",
+      "what": "pino 依赖随骨架预装（companion 初始化时装入），教学来历在第 10 章结构化日志首次使用时补齐（第 4 章评审建议 6 登记）",
       "status": "open"
     }
   ]
