@@ -1,0 +1,33 @@
+{
+  "command": "pnpm gate:ch2（node scripts/e2e-ch2.mjs）",
+  "generatedAt": "2026-09-09T02:55:00.617Z",
+  "base": "http://127.0.0.1:4311",
+  "build": "built",
+  "summary": {
+    "passed": 13,
+    "failed": 0,
+    "total": 13
+  },
+  "failed": [],
+  "products": {
+    "status": 200,
+    "ttfbMs": 837.5,
+    "htmlBytes": 20239,
+    "payloadBytes": 4528,
+    "probesInHtml": {
+      "云朵雨伞": true,
+      "慢炖陶锅": true
+    },
+    "probesInPayload": {
+      "云朵雨伞": true,
+      "慢炖陶锅": true
+    }
+  },
+  "demo": {
+    "status": 200,
+    "presentFalse": true
+  },
+  "apiHits": {
+    "/api/products": 1
+  }
+}

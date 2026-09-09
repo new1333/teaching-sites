@@ -1,22 +1,17 @@
 {
-  "command": "pnpm gate:ch1（node scripts/e2e-ch1.mjs）",
-  "generatedAt": "2026-09-09T02:54:49.700Z",
+  "tool": "scripts/measure.mjs（node 代理指标口径：不跑浏览器 JS，浏览器口径见正文）",
+  "generatedAt": "2026-09-09T02:55:14.215Z",
   "base": "http://127.0.0.1:4311",
-  "build": "built",
-  "summary": {
-    "passed": 110,
-    "failed": 0,
-    "total": 110
-  },
-  "failed": [],
+  "build": "skipped",
+  "node": "v22.22.2",
   "routes": [
     {
       "label": "home",
       "path": "/",
       "status": 200,
       "ttfbMs": {
-        "run1": 6.7,
-        "run2": 2.9
+        "run1": 8.4,
+        "run2": 3.1
       },
       "htmlBytes": 2707,
       "payloadBytes": 184,
@@ -48,6 +43,13 @@
             "bytes": 1145
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -55,8 +57,8 @@
       "path": "/products",
       "status": 200,
       "ttfbMs": {
-        "run1": 825.1,
-        "run2": 823.7
+        "run1": 835.5,
+        "run2": 823.2
       },
       "htmlBytes": 20239,
       "payloadBytes": 4528,
@@ -92,6 +94,13 @@
             "bytes": 1161
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -99,8 +108,8 @@
       "path": "/products/1",
       "status": 200,
       "ttfbMs": {
-        "run1": 6.1,
-        "run2": 8.3
+        "run1": 6.5,
+        "run2": 6.2
       },
       "htmlBytes": 1957,
       "payloadBytes": 199,
@@ -131,6 +140,13 @@
             "bytes": 1191
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -138,8 +154,8 @@
       "path": "/search?q=%E9%9B%A8",
       "status": 200,
       "ttfbMs": {
-        "run1": 4.8,
-        "run2": 4.7
+        "run1": 9,
+        "run2": 3.5
       },
       "htmlBytes": 2224,
       "payloadBytes": 202,
@@ -174,6 +190,13 @@
             "bytes": 1161
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -181,8 +204,8 @@
       "path": "/favorites",
       "status": 200,
       "ttfbMs": {
-        "run1": 4.8,
-        "run2": 2.5
+        "run1": 5.9,
+        "run2": 2.3
       },
       "htmlBytes": 2111,
       "payloadBytes": 193,
@@ -217,6 +240,13 @@
             "bytes": 815
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     }
   ],
@@ -225,7 +255,7 @@
       "label": "api-products",
       "path": "/api/products",
       "status": 200,
-      "ttfbMs": 803.1
+      "ttfbMs": 808.4
     }
   ],
   "apiHits": {
