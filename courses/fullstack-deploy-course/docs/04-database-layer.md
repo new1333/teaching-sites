@@ -6,7 +6,7 @@ title: 数据库层：schema、迁移与类型安全的落库
 
 生产环境的 /api/deploys 一夜之间全是 500，dev 这边却怎么都复现不出来——同一个 commit，同样的配置，一边炸一边好。最后定位问题的人没去读代码，而是把两边的表结构各导出一份做 diff：生产库的 deploys 表多出一列，上个月有人登上服务器用 psql 手工加的，救完急就没人记得。手动改表，改掉的不只是一列：表结构从此脱离代码的版本历史，dev 库与生产库的 schema 不一致，同一个 bug 于是只在一边复现；而那列没人认领的结构，正安安静静躺在下一次部署的必经之路上。
 
-病根是一件缺席的东西：表结构没有单一事实源。接口的形状早就享受过这份纪律——一份共享类型、两侧编译期对账；本章把同样的纪律搬进数据库。四块新积木：声明表结构的 Drizzle schema、把声明变成可审查可重放 SQL 的 schema 迁移、管连接预算的连接池、断言真实落库的集成测试数据库。两件主线变化随之合流：/api/deploys 的数据源从内存数组换成 PostgreSQL，域规则与 HTTP 行为一行不动；runtimeConfig 里登记的 dbUrl 迎来第一个真实消费者——连接串由环境变量流进连接池，代码里没有一处写死的地址。收尾的门槛里，你会亲手删一次表再靠迁移原样长回来，也会亲手复刻一次开篇的「手改表」然后看两个工具都对此沉默。
+病根是一件缺席的东西：表结构没有单一事实源。接口的形状早就享受过这份纪律——一份共享类型、两侧编译期对账；本章把同样的纪律搬进数据库。四块新积木：声明表结构的 Drizzle schema、把声明变成可审查可重放 SQL 的 schema 迁移、管连接预算的连接池、断言真实落库的集成测试数据库。两件主线变化随之合流：/api/deploys 的数据源从内存数组换成 PostgreSQL，域规则与 HTTP 行为一行不动；runtimeConfig 里登记的 dbUrl 迎来第一个真实消费者——连接串由环境变量流进连接池，代码里没有一处写死的地址。收尾的门槛里，你会亲手删一次表、再靠迁移账本的重放把它长回来，也会亲手复刻一次开篇的「手改表」然后看两个工具都对此沉默。
 
 ## 工具箱
 
@@ -22,7 +22,7 @@ runtimeConfig——nuxt.config.ts 登记键名与默认值，NUXT_ 前缀环境�
 
 换库之前先回答一个问题：为什么开发与测试需要一座真的 PostgreSQL，而不是继续用内存数组「模拟」？因为本章要证明的事，内存里装不下：枚举在数据库层的兜底、id 由数据库分配、写入的数据活过进程死亡——这些行为的主语都是数据库本身，模拟不出「真的做到了」。测试要断言的是 SQL 的行为，就得有一座真的发 SQL 的库。
 
-本地的这座库由 Compose 编排——一条声明式文件描述容器怎么跑，一条命令拉起。文件全文如下（数据卷与容器健康检查的完整讨论在容器化一章展开，这里先照抄用起来）：
+本地的这座库由 Compose 编排——一条声明式文件描述容器怎么跑，一条命令拉起。文件如下（注释略有精简；数据卷与容器健康检查的完整讨论在容器化一章展开，这里先照抄用起来）：
 
 ```yaml
 # companion/compose.db.yaml · 开发数据库编排（只含 db 一个服务；完整应用栈在容器化一章）
@@ -129,7 +129,7 @@ export const deploys = pgTable('deploys', {
 
 schema 迁移——把 schema 的变更生成为有序、可审查、可重放的 SQL 迁移文件，让数据库结构与代码版本对齐，而不是手改线上表。两个命令各管一半：drizzle-kit generate 对比「schema 声明」与「上一次迁移」，产出编号的 SQL 文件；drizzle-kit migrate 把账本里还没执行的条目按序执行。
 
-配置 15 行，两件事各归其位：
+配置 14 行，两件事各归其位：
 
 ```ts
 // companion/drizzle.config.ts · drizzle-kit 的配置：generate 看哪儿 diff、migrate 连哪个库
@@ -202,7 +202,7 @@ No schema changes, nothing to migrate 😴
 
 成功、无变化、无警告——尽管此刻 \d deploys 里躺着一列 schema.ts 根本不认识的 note。两个工具的沉默各有原因：migrate 只对账本负责，journal 里记着第 0 条已应用、没有新条目，无事可做；generate 对比的是 schema.ts 与迁移文件夹，两边一致，也谈不上变化。没有一台机器在对比「声明」与「现实的库」——手改发生在通道之外，差异没有任何哨兵。这就是开篇事故的完整机理：手动改表不会当场炸，它埋进两座库的差异里，等下一次部署、下一个消费者撞上来。恢复一致只有两条正路：手工把改动的逆向补回去，或者把库交给账本从头重放。由此定下纪律：凡是迁移管着的表，不手改；急修也走迁移。
 
-顺带把分工钉死：结构归迁移管（可无限重放），数据归种子脚本管。scripts/seed.mjs 把开发库重置回 3 条演示记录——TRUNCATE 清空并归零 identity 计数，再按序插入；e2e 门槛每次运行前都靠它从同一状态出发。迁移不造数据，种子不建结构，谁也不越界。
+顺带把分工钉死：结构归迁移管（可无限重放），数据归种子脚本管。scripts/seed.mjs 把开发库重置回 3 条演示记录——TRUNCATE 清空并归零 identity 计数，再按序插入；依赖精确计数的 e2e 门槛（如 e2e:ch2）靠它从同一状态出发。迁移不造数据，种子不建结构，谁也不越界。
 
 ## 连接池：连接是预算，不是自来水
 
@@ -236,7 +236,7 @@ max 为什么是 5 这么小？因为 postgres 默认的 max_connections=100 不
 ### dbUrl 的第一个消费者
 
 ```ts
-// companion/server/utils/db.ts · 请求一侧的数据库出口：runtimeConfig.dbUrl 的第一个真实消费者
+// companion/server/utils/db.ts · 节选：请求一侧的数据库出口，runtimeConfig.dbUrl 的第一个真实消费者
 import { createDb, type Db } from '../db/client'
 import { pgDeploysRepo } from '../db/deploys'
 import type { DeploysRepo } from '../domain/deploys'
@@ -267,7 +267,7 @@ dbUrl 在 nuxt.config.ts 的 runtimeConfig 里登记以来，一直只是被校�
 为什么单测不够？内存仓库守得住域规则（新记录在前、id 递增），但「PostgreSQL 实现真的做到」这件事它证明不了：枚举兜底、identity 分配、数据活在库里而非进程里——主语全是数据库。答案不是把单测改造成连库（那会拖慢快车道），而是加一层：单测守规则，集成测试连真库守实现。vitest 把两个项目分进一份配置：
 
 ```ts
-// companion/vitest.config.ts · 测试分两个项目：unit 不碰数据库，integration 由 globalSetup 拉起一次性库
+// companion/vitest.config.ts · 节选：测试分两个项目，unit 不碰数据库，integration 由 globalSetup 拉起一次性库
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -472,8 +472,8 @@ select 显式挑列是有意的：将来表加列（比如 created_at），接�
 
 - 一行未改：请求校验的 schema 与 400 行为、配置门卫与 fail-fast 清单、首页模板。
 - 动签名一处：listDeploys 与 createDeploy 从读写模块级状态改为收一个 DeploysRepo 入参——全工程唯一动到的函数签名，行为等价。
-- 换隔离缝：单测从 resetDeploys() 换成 new InMemoryDeploysRepo(seed)，断言意图不变；e2e:ch2、e2e:ch3 各加一段起进程前的库准备（重置种子、探库可达），断言本体未动。
-- 新增：server/db/ 四个文件与迁移账本、server/utils/db.ts、compose.db.yaml 与起停脚本；再补 drizzle.config.ts、scripts/seed.mjs、tests/integration/ 与 vitest 分项目，以及 e2e:ch4。
+- 换隔离缝：单测从 resetDeploys() 换成 new InMemoryDeploysRepo(seed)，断言意图不变；e2e:ch2 加了种子重置、e2e:ch3 加了库可达探针，断言本体未动。
+- 新增：server/db/ 的三个文件与迁移账本、server/utils/db.ts、compose.db.yaml 与起停脚本；再补 drizzle.config.ts、scripts/seed.mjs、tests/integration/ 与 vitest 分项目，以及 e2e:ch4。
 
 门槛命令十件：起库三件（db:up、db:migrate、db:seed）与检查三件（typecheck、test、build），再加 e2e:ch1 到 e2e:ch4。都在 companion 目录执行，跨平台。
 
@@ -597,7 +597,16 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4186/api/deploys
 curl -s http://127.0.0.1:4186/
 ```
 
-对照：500（42P01，本章红的那一幕）；首页居然还是 200，但表格空了零行——useFetch 的失败被页面吞掉，只剩一张空表。这个安静的半死比崩溃危险：健康检查若只探页面，库没了都发现不了。接着 pnpm db:migrate——表回来了；先猜现在 GET 返回几条？对照：0 条（空数组）——迁移只重放结构，不生产数据，这正是它可无限重放的原因。最后 pnpm db:seed，GET 回到 3 条种子。删表、重生、复种：结构与数据两条线各归其位。
+对照：500（42P01，本章红的那一幕）；首页居然还是 200，但表格空了零行——useFetch 的失败被页面吞掉，只剩一张空表。这个安静的半死比崩溃危险：健康检查若只探页面，库没了都发现不了。怎么把表找回来？先猜一步：跑 pnpm db:migrate 有用吗？对照：没用——它照常打印成功，表却没有回来。账本还在：journal 里那条「已应用」的记录没丢，migrate 只认账本，无事可做（和实验三将看到的沉默是同一个机制）。真正的复原路是连账本一起重置——开发库的数据本来就是种子给的，重置没有代价：
+
+```bash
+# 用法示例 · 终端二（数据卷一起清零重来）
+pnpm db:down --volumes
+pnpm db:up
+pnpm db:migrate
+```
+
+这次是全新库、账本为空，全套迁移按序重放，表回来了；先猜现在 GET 返回几条？对照：0 条（空数组）——迁移只重放结构，不生产数据，这正是它可无限重放的原因。最后 pnpm db:seed，GET 回到 3 条种子。删表、重放账本、复种：结构与数据两条线各归其位。
 
 实验三（定向破坏 B）：绕过账本手改表。在一切正常的库上执行：
 
@@ -610,7 +619,7 @@ docker exec shiplog-db psql -U ship_log -d ship_log -c 'ALTER TABLE deploys ADD 
 
 ## 收束：两座库重归一致
 
-开篇那两座「一模一样」的库，现在能说清差在哪了：代码确实一字未差，差的是结构的历史。有人绕过版本控制手改了其中一边，表结构从此有了两份事实——bug 自然只在一边复现，下一次部署撞上那列孤儿结构才炸。本章给表结构立了单一事实源，并修了一条单向通道：schema.ts（声明）→ generate（可审查的 SQL 账本）→ migrate（按序执行、库里记账）。新库从账本一路重放出同一张表——本章你删过一次、亲眼看它长回来；手改发生在通道之外，账本不认、工具不报——所以纪律是：迁移管着的表不手改，急修也走迁移。两座库都从同一份账本建起来，「哪边是对的」这个问题失去意义，差异无处藏身。
+开篇那两座「一模一样」的库，现在能说清差在哪了：代码确实一字未差，差的是结构的历史。有人绕过版本控制手改了其中一边，表结构从此有了两份事实——bug 自然只在一边复现，下一次部署撞上那列孤儿结构才炸。本章给表结构立了单一事实源，并修了一条单向通道：schema.ts（声明）→ generate（可审查的 SQL 账本）→ migrate（按序执行、库里记账）。新库从账本一路重放出同一张表——本章你删过一次表、连账本一起清零后亲眼看它重放回来；手改发生在通道之外，账本不认、工具不报——所以纪律是：迁移管着的表不手改，急修也走迁移。两座库都从同一份账本建起来，「哪边是对的」这个问题失去意义，差异无处藏身。
 
 组装式一句话：**server API（路由与序列化）+ 请求校验（边界守门）+ runtimeConfig（dbUrl 注入）+ 本章四块新积木 ⇒ 数据真实落库、活过进程死亡的全栈应用**。域规则与 HTTP 行为一行未动——当初把数据源挡在域逻辑之外，买的就是这次换心脏不用开颅。
 

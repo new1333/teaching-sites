@@ -78,6 +78,8 @@ node .output/server/index.mjs
 # Listening on http://[::]:3000
 ```
 
+（一个括注：走到第 3 章之后，产物进程还会校验两个必需环境变量，届时裸跑会以退出码 1 打印缺失清单；改用 `node --env-file=.env .output/server/index.mjs` 即可（第 3 章）。本章阶段照上面裸跑。）
+
 另开一个终端，用 curl 取页面。curl 不执行任何 JS，拿到的就是服务端发出的原始字节。
 
 ```text
@@ -274,7 +276,7 @@ pnpm build && pnpm e2e:ch1
 
 下面的实验都是你亲手做。每一步先把预测写在纸上——离散的、能判对错的预测，再执行对照。
 
-实验一：默认端口与「杀进程」。启动 node .output/server/index.mjs，另开终端执行下面的命令，然后把服务进程 Ctrl+C 杀掉，再执行一次：
+实验一：默认端口与「杀进程」。启动 node .output/server/index.mjs（第 3 章之后的工程带 --env-file=.env，见上面括注），另开终端执行下面的命令，然后把服务进程 Ctrl+C 杀掉，再执行一次：
 
 ```bash
 # 用法示例 · 第二个终端
@@ -292,7 +294,7 @@ PORT=4171 node .output/server/index.mjs
 # Listening on http://[::]:4171
 ```
 
-对照：日志变成 [::]:4171，3000 不再有人监听。端口是进程启动时读取的环境变量——同一份产物，零重建，换端口。日志里的 [::] 表示绑定所有网卡，回环地址与局域网 IP 都能到达。
+对照：日志变成 [::]:4171，3000 不再有人监听。端口是进程启动时读取的环境变量——同一份产物，零重建，换端口。日志里的 [::] 表示绑定所有网卡，回环地址与局域网 IP 都能到达。（第 3 章之后的工程上重跑，命令里要再带上 --env-file=.env。）
 
 实验三：定向破坏——产物是冻结的快照。把 app/pages/index.vue 里 commit: '9f3c2ab' 那一行的 sha 改成 deadbee（只改这一个词）。先写下两个预测，再动手：
 
@@ -301,7 +303,7 @@ PORT=4171 node .output/server/index.mjs
 
 对照：第一问，仍是 9f3c2ab。源码的改动进不了已经构建出来的产物：**.output 是构建那一刻的冻结快照**，这也是部署单元「整体替换」的另一面——改了源码不重新构建、不重新部署，线上跑的就还是旧版本。第二问，退出码 1：e2e 在 HTML 里找不到 9f3c2ab，断言亮红；亮红之后收尾两行（进程已退出、端口不再监听）照样出现，失败的运行也把端口还了回去。注意此时 GET / → 200 依然通过，它守「服务活着」，内容断言守「页面对不对」，两层守卫各管各的。复原：把 sha 改回 9f3c2ab，pnpm build && pnpm e2e:ch1，确认全绿如初。
 
-顺手加一个自包含实验：把 .output 整个目录拷到工程外的临时目录，在那里执行 node server/index.mjs（默认 3000 被占用就带上 PORT=4179）。先猜能不能起来，再对照——它能起来，页面分毫不变。产物不认识你的工程目录，它只认识自己肚子里的东西。
+顺手加一个自包含实验：把 .output 整个目录拷到工程外的临时目录，在那里执行 node server/index.mjs（默认 3000 被占用就带上 PORT=4179；第 3 章之后的工程还需 --env-file 指向一份 .env，否则启动即被拦下（第 3 章））。先猜能不能起来，再对照——它能起来，页面分毫不变。产物不认识你的工程目录，它只认识自己肚子里的东西。
 
 ## 收束：那堵墙的名字
 
@@ -323,7 +325,7 @@ PORT=4171 node .output/server/index.mjs
 <details>
 <summary>1. 把 companion 目录（不含 node_modules）拷到只装 Node 的服务器，执行 node .output/server/index.mjs。能起来吗，依据是什么？删掉 .output 只留源码再跑同一条命令呢？</summary>
 
-能起来：.output/server/node_modules 自带追踪出的运行期依赖，产物自包含，既不需要工程的 node_modules，也不需要源码。删掉 .output 后再跑，会得到 MODULE_NOT_FOUND：node 只运行交给它的文件，不会替你构建。回查「生产构建」一节。
+能起来：.output/server/node_modules 自带追踪出的运行期依赖，产物自包含，既不需要工程的 node_modules，也不需要源码。第 3 章起的工程还会先校验两个环境变量，缺了会带清单退出（第 3 章）。删掉 .output 后再跑，会得到 MODULE_NOT_FOUND：node 只运行交给它的文件，不会替你构建。回查「生产构建」一节。
 </details>
 
 <details>
