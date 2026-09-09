@@ -1,0 +1,111 @@
+{
+  "schema_version": 2,
+  "kind": "topic",
+  "label": "丝滑前端体验：以 Nuxt 为例",
+  "description": "以 Nuxt 为载体，把一个现代前端网站做到页面秒开、加载有形状、错误有去处、缓存可复用、交互连续不断崖：覆盖性能基线与度量、SSR 数据流与 payload、水合与可交互、预取与资源提示、预渲染与缓存、加载状态、错误处理、乐观更新与过渡、首屏资产预算、弱网离线韧性，最终综合装配并量化验收。",
+  "features": [
+    {
+      "id": "perf-baseline",
+      "name": "丝滑的度量口径",
+      "summary": "把『丝滑/秒开』翻译成可复现的指标：TTFB、HTML 到达、数据是否随 HTML 到达、客户端重复请求数、可交互延迟。先有一个能跑出基线数字的测量脚本，再谈优化。",
+      "reader_can": "对任意本地页面跑测量脚本，拿到一组前后可比的基线指标，并指出最慢的一段在哪。"
+    },
+    {
+      "id": "ssr-dataflow",
+      "name": "SSR 数据流与 payload",
+      "summary": "秒开的根基：useAsyncData/useFetch 在服务端执行、结果以 payload 随 HTML 注入、客户端水合时直接复用而不重复请求。",
+      "reader_can": "让首屏数据随 HTML 一起到达，并用脚本断言客户端没有重复请求同一接口。"
+    },
+    {
+      "id": "hydration",
+      "name": "水合与可交互延迟",
+      "summary": "为什么页面『看得见但点不动』：水合成本、payload 体积对可交互时间的影响、组件级延迟加载与水合瘦身手段。",
+      "reader_can": "诊断一段可见但不可交互的页面，说出水合发生在哪、贵在哪，并给出瘦身后的可度量改善。"
+    },
+    {
+      "id": "prefetch-nav",
+      "name": "导航预取与资源提示",
+      "summary": "点击下一页时零白屏：NuxtLink 视口预取、preload/prefetch 资源提示、payload提取，把导航成本移到用户犹豫的时间窗里。",
+      "reader_can": "配置站内导航预取，并用脚本断言预取确实在点击之前发生、点击后无数据白屏。"
+    },
+    {
+      "id": "route-cache",
+      "name": "预渲染与缓存复用",
+      "summary": "routeRules 分而治之：纯内容页 prerender 成静态文件、动态页用 swr/isr 语义在边缘复用、Cache-Control 头决定 CDN 与浏览器各自能缓存什么。",
+      "reader_can": "给不同路由配不同缓存策略，用脚本验证二次命中、过期再验证与缓存头语义。"
+    },
+    {
+      "id": "loading-states",
+      "name": "加载状态与感知性能",
+      "summary": "等待本身不是问题，无法解释的等待才是：status 生命周期、Suspense 边界、骨架屏与 spinner 的适用场景、慢请求下的中间态设计。",
+      "reader_can": "为一个数据页实现有解释力的加载态：每个等待都有形状，数据到达后无布局跳动。"
+    },
+    {
+      "id": "error-handling",
+      "name": "错误处理体系",
+      "summary": "任何失败都有去处：createError 与状态码语义、error.vue 全局兜底、服务端 fail-fast 与客户端兜底的分工、组件级错误边界。",
+      "reader_can": "让 API 500、参数非法、组件抛错三类失败分别落到有语义的状态码与可恢复的错误页。"
+    },
+    {
+      "id": "optimistic-continuity",
+      "name": "乐观更新与交互连续性",
+      "summary": "操作即时反馈：乐观 UI 的写入-确认-回滚三段式，失败回滚与错误处理的衔接，页面过渡与 View Transitions 让导航在视觉上连续。",
+      "reader_can": "实现一次『点击即生效、失败即回滚』的交互，并说明回滚路径与全局错误处理如何衔接。"
+    },
+    {
+      "id": "asset-budget",
+      "name": "首屏资产预算",
+      "summary": "秒开的另一半是字节：路由级代码分割、图片体积与懒加载、字体加载策略（swap/preload/子集化），并给站点定一份用构建产物就能审计的资产预算。",
+      "reader_can": "给站点定首屏资产预算，用构建产物清单证明各页不超预算。"
+    },
+    {
+      "id": "offline-resilience",
+      "name": "弱网与离线韧性",
+      "summary": "网络是最不可控的变量：超时与重试策略、service worker 的离线兜底页、可离线复用的静态壳，让断网从白屏降级成可解释的兜底体验。",
+      "reader_can": "让站点断网后仍给出离线兜底页与可用的静态导航，而不是浏览器默认断网页。"
+    },
+    {
+      "id": "capstone",
+      "name": "综合装配与量化验收",
+      "summary": "把全部手段装回同一个站点：从基线站出发逐层装配，每层留下指标变化，最终产出优化前后的对比报告与一份可复用的丝滑检查清单。",
+      "reader_can": "从基线指标出发装配全部手段，跑出优化前后对比报告，并解释每个数字变化来自哪一层。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "ssr-dataflow", "to": "perf-baseline" },
+      { "from": "hydration", "to": "ssr-dataflow" },
+      { "from": "prefetch-nav", "to": "ssr-dataflow" },
+      { "from": "route-cache", "to": "ssr-dataflow" },
+      { "from": "loading-states", "to": "ssr-dataflow" },
+      { "from": "error-handling", "to": "ssr-dataflow" },
+      { "from": "error-handling", "to": "loading-states" },
+      { "from": "optimistic-continuity", "to": "loading-states" },
+      { "from": "optimistic-continuity", "to": "error-handling" },
+      { "from": "asset-budget", "to": "perf-baseline" },
+      { "from": "asset-budget", "to": "hydration" },
+      { "from": "offline-resilience", "to": "error-handling" },
+      { "from": "offline-resilience", "to": "route-cache" },
+      { "from": "capstone", "to": "perf-baseline" },
+      { "from": "capstone", "to": "ssr-dataflow" },
+      { "from": "capstone", "to": "hydration" },
+      { "from": "capstone", "to": "prefetch-nav" },
+      { "from": "capstone", "to": "route-cache" },
+      { "from": "capstone", "to": "loading-states" },
+      { "from": "capstone", "to": "error-handling" },
+      { "from": "capstone", "to": "optimistic-continuity" },
+      { "from": "capstone", "to": "asset-budget" },
+      { "from": "capstone", "to": "offline-resilience" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "skill-training",
+    "verification": "code-lab",
+    "source_policy": "zero-trace",
+    "reason": "topic 输入，无外部源码引用面；终点是读者亲手用 Nuxt 装配出可度量改善的站点，companion 为逐章生长的 Nuxt 应用 + 可运行脚本门（fetch 断言 + vitest），每章 milestone 另附读者可感知的浏览器观察信号。"
+  },
+  "issues": [
+    "Nuxt 主版本与 API 行为需锁定权威事实源（官方文档），避免正文出现版本漂移断言。",
+    "加载/过渡/骨架屏等感知体验章节的机械断言只能证明状态机正确，可感知信号需在 milestone_verify 中显式给出人工观察步骤。"
+  ]
+}
