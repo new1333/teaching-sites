@@ -229,7 +229,7 @@ export function favorites(): Product[] {
 目录一旦不确定，两次测量之间的任何差异都说不清是优化还是噪声。所以第一块验证物不是测量仪，而是目录的确定性测试。先写测试、后写实现，让它真实地红一次。
 
 ```ts
-// companion/tests/catalog.test.ts · 商品目录的确定性（先红后绿：目录生成器尚未实现）
+// companion/tests/catalog.test.ts · 商品目录的确定性（节选 2/6 例，先红后绿：目录生成器尚未实现；另 4 例覆盖 getProduct 越界、搜索命中与收藏子集，见伴生仓终态）
 import { describe, expect, it } from 'vitest'
 import {
   CATALOG_SIZE,
@@ -438,7 +438,7 @@ API 命中计数：{}
 | TTFB | 8.2 / 2.7 ms | 快得离谱——SSR 只渲染了壳，没等任何数据 |
 | HTML 字节 | 2,110 B | 壳很小，因为里面没有商品 |
 | payload 字节 | 192 B | 服务端没取数，payload 只剩视图状态 |
-| 首屏 JS 字节 | 190,089 B（5 块） | 其中三块共享运行时约 188 KiB，页面自身分块不足 2 KiB |
+| 首屏 JS 字节 | 190,089 B（5 块） | 其中三块共享运行时约 184 KiB，页面自身分块不足 2 KiB |
 | 数据随 HTML | false | 「云朵雨伞」们不在 HTML 里，全靠浏览器二次请求 |
 | `/api/products` TTFB | 810.1 ms | 注入的 800 ms 延迟几乎原样出现在端点口径里 |
 | API 命中计数 | 0 | node 直取页面时一个数据接口都没响——请求是页面 JS 发的 |

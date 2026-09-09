@@ -13,7 +13,9 @@
     "source_policy": "zero-trace",
     "code_density": "full",
     "obligations": [],
-    "presentation": { "visual": "none" },
+    "presentation": {
+      "visual": "none"
+    },
     "scale": "standard"
   },
   "companion": {
@@ -48,7 +50,7 @@
       "chapters": [
         {
           "slug": "perf-baseline",
-          "title": "第 1 章 把『丝滑』变成数字：基线与指标组",
+          "title": "把『丝滑』变成数字：基线与指标组",
           "goal": "建立可复现的测量口径，给参考站跑出优化前的基线报告",
           "type": "build",
           "feature_id": "perf-baseline",
@@ -56,24 +58,50 @@
           "hook": {
             "kind": "现象观察",
             "point": "同一个站，有人说快有人说慢；优化完也说不清到底快了多少",
-            "phenomena": ["基线", "指标"]
+            "phenomena": [
+              "基线",
+              "指标"
+            ]
           },
-          "new_concepts": ["性能基线", "TTFB", "首屏指标组", "Core Web Vitals"],
-          "misconceptions": ["体感快就等于优化成功，不需要统一口径", "指标是运维的事，前端只管改代码"],
+          "new_concepts": [
+            "性能基线",
+            "TTFB",
+            "首屏指标组",
+            "Core Web Vitals"
+          ],
+          "misconceptions": [
+            "体感快就等于优化成功，不需要统一口径",
+            "指标是运维的事，前端只管改代码"
+          ],
           "structure": "白屏现场 → 四阶段指标口径（到达/可见/可交互/稳定）→ node 代理指标与浏览器指标的分工 → measure 脚本与基线报告",
           "milestone": "measure.mjs + 基线报告 reports/baseline.json：状态/TTFB/HTML/payload/首屏 JS 字节、数据是否随 HTML 到达、API 命中计数",
           "milestone_verify": "对蜗牛商店跑 pnpm measure 得到整组数字；再跑一次确认口径可重复（数字稳定或差异可解释）",
           "relevant_files": [],
           "promises_out": [
-            { "target": "capstone", "what": "baseline.json 将在终章作为优化前对照组复用" },
-            { "target": "hydration", "what": "首屏 JS 字节口径将在水合章继续作为优化对账对象" }
+            {
+              "target": "capstone",
+              "what": "baseline.json 将在终章作为优化前对照组复用"
+            },
+            {
+              "target": "hydration",
+              "what": "首屏 JS 字节口径将在水合章继续作为优化对账对象"
+            }
           ],
           "depends_on": [],
           "uses": [],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch1 对构建产物输出完整指标组 JSON 且全部字段可判定、退出码 0" },
-            { "kind": "prose", "criterion": "读者能说出到达—可见—可交互—稳定四阶段各由哪些指标代理、哪些必须进浏览器才能测" },
-            { "kind": "source", "criterion": "LCP/INP/CLS 阈值与 75 分位口径标注 web.dev 来源；脚本代理指标与浏览器指标的分层在正文显式声明" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch1 对构建产物输出完整指标组 JSON 且全部字段可判定、退出码 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能说出到达—可见—可交互—稳定四阶段各由哪些指标代理、哪些必须进浏览器才能测"
+            },
+            {
+              "kind": "source",
+              "criterion": "LCP/INP/CLS 阈值与 75 分位口径标注 web.dev 来源；脚本代理指标与浏览器指标的分层在正文显式声明"
+            }
           ]
         }
       ]
@@ -83,7 +111,7 @@
       "chapters": [
         {
           "slug": "ssr-dataflow",
-          "title": "第 2 章 数据随 HTML 到达：SSR 数据流与 payload",
+          "title": "数据随 HTML 到达：SSR 数据流与 payload",
           "goal": "让首屏数据在服务端获取并渲染进 HTML，客户端零重复请求",
           "type": "build",
           "feature_id": "ssr-dataflow",
@@ -91,28 +119,55 @@
           "hook": {
             "kind": "现象观察",
             "point": "SPA 首屏一片白等 JS 拉数据；有的站一上来内容就在",
-            "phenomena": ["白屏", "直出"]
+            "phenomena": [
+              "白屏",
+              "直出"
+            ]
           },
-          "new_concepts": ["SSR 数据流", "payload", "useAsyncData 契约"],
-          "misconceptions": ["SSR 只是服务端拼 HTML，数据到浏览器后还是会再请求一次", "useFetch 和浏览器里直接 fetch 差不多"],
+          "new_concepts": [
+            "SSR 数据流",
+            "payload",
+            "useAsyncData 契约"
+          ],
+          "misconceptions": [
+            "SSR 只是服务端拼 HTML，数据到浏览器后还是会再请求一次",
+            "useFetch 和浏览器里直接 fetch 差不多"
+          ],
           "structure": "两种首屏路径对照 → useAsyncData 四步链路（服务端执行→渲染进 HTML→序列化 payload→水合复用）→ 反例：onMounted 里 $fetch 的白屏路径 → 指标组复测",
           "milestone": "商品列表页改用 useAsyncData；gate 断言商品名已在 HTML 与 payload 中、首屏该接口命中数恰为 1",
           "milestone_verify": "curl 商品页源码看到商品名；浏览器 Network 面板确认没有第二次 /api/products 请求",
           "relevant_files": [],
           "promises_out": [
-            { "target": "loading-states", "what": "useAsyncData 的 lazy 参数将在加载状态章展开为两种导航形态" }
+            {
+              "target": "loading-states",
+              "what": "useAsyncData 的 lazy 参数将在加载状态章展开为两种导航形态"
+            }
           ],
-          "depends_on": ["perf-baseline"],
-          "uses": ["性能基线", "首屏指标组"],
+          "depends_on": [
+            "perf-baseline"
+          ],
+          "uses": [
+            "性能基线",
+            "首屏指标组"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch2 断言 HTML 含首屏数据、payload 含同源数据、API 命中计数=1" },
-            { "kind": "prose", "criterion": "用反例页证明 onMounted+$fetch 与 useAsyncData 的首屏路径差异，四步链路每步可指认" },
-            { "kind": "source", "criterion": "useAsyncData/payload 行为引用 nuxt.com/docs/4.x 并标注核实日期" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch2 断言 HTML 含首屏数据、payload 含同源数据、API 命中计数=1"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用反例页证明 onMounted+$fetch 与 useAsyncData 的首屏路径差异，四步链路每步可指认"
+            },
+            {
+              "kind": "source",
+              "criterion": "useAsyncData/payload 行为引用 nuxt.com/docs/4.x 并标注核实日期"
+            }
           ]
         },
         {
           "slug": "hydration",
-          "title": "第 3 章 看得见点不动：水合成本与瘦身",
+          "title": "看得见点不动：水合成本与瘦身",
           "goal": "诊断可交互延迟，用代码分割与延迟加载把水合成本移出首屏",
           "type": "build",
           "feature_id": "hydration",
@@ -120,28 +175,56 @@
           "hook": {
             "kind": "现象观察",
             "point": "页面早就画出来了，点按钮却要等半秒才有反应",
-            "phenomena": ["可见不可点", "水合"]
+            "phenomena": [
+              "可见不可点",
+              "水合"
+            ]
           },
-          "new_concepts": ["水合", "可交互延迟", "代码分割"],
-          "misconceptions": ["页面显示出来就等于可以交互", "JS 多只是下载慢，不影响点击响应"],
+          "new_concepts": [
+            "水合",
+            "可交互延迟",
+            "代码分割"
+          ],
+          "misconceptions": [
+            "页面显示出来就等于可以交互",
+            "JS 多只是下载慢，不影响点击响应"
+          ],
           "structure": "可见≠可用的现场 → 水合在做什么（接管 HTML、重建响应式与监听）→ 成本构成（下载/解析/执行）→ 路由级分割回顾与 Lazy 组件 → 字节对账",
           "milestone": "重型图表组件改 Lazy 分割；gate 断言首屏 JS 字节较第 2 章下降、图表分块不在首屏加载清单",
           "milestone_verify": "构建前后产物清单对比首屏分块字节；浏览器 Performance 面板观察脚本执行段缩短、按钮更早可点",
           "relevant_files": [],
           "promises_out": [
-            { "target": "asset-budget", "what": "首屏 JS 字节口径移交资产预算章纳入预算表 enforcement" }
+            {
+              "target": "asset-budget",
+              "what": "首屏 JS 字节口径移交资产预算章纳入预算表 enforcement"
+            }
           ],
-          "depends_on": ["ssr-dataflow"],
-          "uses": ["SSR 数据流", "payload", "性能基线"],
+          "depends_on": [
+            "ssr-dataflow"
+          ],
+          "uses": [
+            "SSR 数据流",
+            "payload",
+            "性能基线"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch3 断言首屏 JS 字节低于第 2 章记录值、图表组件分块标记为动态导入" },
-            { "kind": "prose", "criterion": "解释水合三段成本与瘦身三抓手（分割/延迟/去重），并用字节数字复测验证" },
-            { "kind": "source", "criterion": "Lazy 组件与路由分割行为以 Nuxt 4.x 文档口径表述，无跨版本断言" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch3 断言首屏 JS 字节低于第 2 章记录值、图表组件分块标记为动态导入"
+            },
+            {
+              "kind": "prose",
+              "criterion": "解释水合三段成本与瘦身三抓手（分割/延迟/去重），并用字节数字复测验证"
+            },
+            {
+              "kind": "source",
+              "criterion": "Lazy 组件与路由分割行为以 Nuxt 4.x 文档口径表述，无跨版本断言"
+            }
           ]
         },
         {
           "slug": "prefetch-nav",
-          "title": "第 4 章 点击之前先加载：预取与资源提示",
+          "title": "点击之前先加载：预取与资源提示",
           "goal": "把导航成本移进用户犹豫的时间窗，站内切换零数据白屏",
           "type": "build",
           "feature_id": "prefetch-nav",
@@ -149,28 +232,54 @@
           "hook": {
             "kind": "现象观察",
             "point": "首页里点来点去很顺，第一次进『设置』却要盯着白屏等",
-            "phenomena": ["预取", "白屏"]
+            "phenomena": [
+              "预取",
+              "白屏"
+            ]
           },
-          "new_concepts": ["视口预取", "资源提示"],
-          "misconceptions": ["预取就是把所有页面都提前下载", "preload 和 prefetch 是一回事，随便加就行"],
+          "new_concepts": [
+            "视口预取",
+            "资源提示"
+          ],
+          "misconceptions": [
+            "预取就是把所有页面都提前下载",
+            "preload 和 prefetch 是一回事，随便加就行"
+          ],
           "structure": "犹豫时间窗的洞察 → NuxtLink 视口预取默认行为 → 裁剪策略（关哪条、为何关）→ preload/prefetch 语义分工 → 真资源与假提示的反例",
           "milestone": "导航预取策略 + 关键字体 preload；gate 断言 HTML 含视口内路由的预取标记、关键资源有 preload、被裁剪路由无预取",
           "milestone_verify": "DevTools Network 的 prefetch 过滤器里观察滚动触发预取；点击预取过的链接无白屏",
           "relevant_files": [],
           "promises_out": [
-            { "target": "route-cache", "what": "预取与 payload 复用的叠加效果将在缓存章与 _payload.json 一起对账" }
+            {
+              "target": "route-cache",
+              "what": "预取与 payload 复用的叠加效果将在缓存章与 _payload.json 一起对账"
+            }
           ],
-          "depends_on": ["ssr-dataflow"],
-          "uses": ["SSR 数据流", "payload"],
+          "depends_on": [
+            "ssr-dataflow"
+          ],
+          "uses": [
+            "SSR 数据流",
+            "payload"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch4 断言预取标记与 preload 提示就位、被裁剪路由无预取" },
-            { "kind": "prose", "criterion": "讲清预取把成本移到哪个时间窗、2G/空闲判断为何存在、无脑全预取的反例" },
-            { "kind": "source", "criterion": "视口预取默认行为与 prefetchOn 配置以 Nuxt 4.x 文档口径表述" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch4 断言预取标记与 preload 提示就位、被裁剪路由无预取"
+            },
+            {
+              "kind": "prose",
+              "criterion": "讲清预取把成本移到哪个时间窗、2G/空闲判断为何存在、无脑全预取的反例"
+            },
+            {
+              "kind": "source",
+              "criterion": "视口预取默认行为与 prefetchOn 配置以 Nuxt 4.x 文档口径表述"
+            }
           ]
         },
         {
           "slug": "route-cache",
-          "title": "第 5 章 一次渲染多次复用：预渲染与缓存头",
+          "title": "一次渲染多次复用：预渲染与缓存头",
           "goal": "按路由分级配置 prerender/swr/headers，让二次访问命中缓存",
           "type": "build",
           "feature_id": "route-cache",
@@ -178,28 +287,56 @@
           "hook": {
             "kind": "现象观察",
             "point": "每次刷新，服务器都把同一个页面从头渲染一遍，流量翻倍也不见快",
-            "phenomena": ["缓存", "预渲染"]
+            "phenomena": [
+              "缓存",
+              "预渲染"
+            ]
           },
-          "new_concepts": ["路由规则", "预渲染", "SWR 缓存复用", "Cache-Control 语义"],
-          "misconceptions": ["缓存是运维的事，前端代码管不了", "prerender 只适合纯博客，带数据的页面不行"],
+          "new_concepts": [
+            "路由规则",
+            "预渲染",
+            "SWR 缓存复用",
+            "Cache-Control 语义"
+          ],
+          "misconceptions": [
+            "缓存是运维的事，前端代码管不了",
+            "prerender 只适合纯博客，带数据的页面不行"
+          ],
           "structure": "一次渲染 vs 多次复用 → routeRules 总览 → 内容页 prerender（含 _payload.json）→ 动态接口 swr → Cache-Control 指令语义 → 隐私与失效边界",
           "milestone": "内容页 prerender、商品接口 swr、静态资产长缓存；gate 断言静态 HTML 文件存在、二次请求命中缓存（耗时骤降/命中头）、缓存头与设计一致",
           "milestone_verify": "连刷两次看第二次 TTFB 骤降；响应头 Cache-Control 与 routeRules 设计逐条对上",
           "relevant_files": [],
           "promises_out": [
-            { "target": "offline-resilience", "what": "预渲染静态壳与缓存头语义将在离线章被 service worker 复用" }
+            {
+              "target": "offline-resilience",
+              "what": "预渲染静态壳与缓存头语义将在离线章被 service worker 复用"
+            }
           ],
-          "depends_on": ["ssr-dataflow"],
-          "uses": ["SSR 数据流", "首屏指标组"],
+          "depends_on": [
+            "ssr-dataflow"
+          ],
+          "uses": [
+            "SSR 数据流",
+            "首屏指标组"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch5 断言预渲染文件存在、swr 二次命中、三类路由缓存头正确" },
-            { "kind": "prose", "criterion": "读者能给任意路由选对策略并说出该页新鲜度 tolerates 多旧（prerender 构建期/swr 秒级/isr 带过期键）" },
-            { "kind": "source", "criterion": "routeRules 与 _payload.json 行为引用 Nuxt 4.x 渲染文档，Cache-Control 指令语义标注 MDN" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch5 断言预渲染文件存在、swr 二次命中、三类路由缓存头正确"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能给任意路由选对策略并说出该页新鲜度 tolerates 多旧（prerender 构建期/swr 秒级/isr 带过期键）"
+            },
+            {
+              "kind": "source",
+              "criterion": "routeRules 与 _payload.json 行为引用 Nuxt 4.x 渲染文档，Cache-Control 指令语义标注 MDN"
+            }
           ]
         },
         {
           "slug": "asset-budget",
-          "title": "第 6 章 首屏字节预算：图片、字体与产物审计",
+          "title": "首屏字节预算：图片、字体与产物审计",
           "goal": "给首屏资产定预算并用构建产物审计 enforcement",
           "type": "build",
           "feature_id": "asset-budget",
@@ -207,23 +344,51 @@
           "hook": {
             "kind": "现象观察",
             "point": "功能没加多少，Network 里一坨 JS 和一张 3MB 大图把首屏拖垮",
-            "phenomena": ["预算", "字节"]
+            "phenomena": [
+              "预算",
+              "字节"
+            ]
           },
-          "new_concepts": ["资产预算", "字体加载策略"],
-          "misconceptions": ["框架自动分割了就不用再管体积", "图片压缩是设计师的事"],
+          "new_concepts": [
+            "资产预算",
+            "字体加载策略"
+          ],
+          "misconceptions": [
+            "框架自动分割了就不用再管体积",
+            "图片压缩是设计师的事"
+          ],
           "structure": "无预算的优化是感觉 → 预算表设计（JS/CSS/图/字体分列）→ 大图治理（尺寸/懒加载/现代格式思路）→ 字体 swap 与子集化 → audit 脚本进 gate",
           "milestone": "budget.json + audit-assets.mjs 进 gate；首屏大图压缩与懒加载、字体 swap",
           "milestone_verify": "构建后跑 pnpm audit:assets 预算表全绿；Lighthouse 对比 LCP 改善",
           "relevant_files": [],
           "promises_out": [
-            { "target": "capstone", "what": "预算表将纳入终章丝滑清单的『可见层』判定项" }
+            {
+              "target": "capstone",
+              "what": "预算表将纳入终章丝滑清单的『可见层』判定项"
+            }
           ],
-          "depends_on": ["perf-baseline", "hydration"],
-          "uses": ["性能基线", "代码分割", "Core Web Vitals"],
+          "depends_on": [
+            "perf-baseline",
+            "hydration"
+          ],
+          "uses": [
+            "性能基线",
+            "代码分割",
+            "Core Web Vitals"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch6 断言预算表全绿：超限即失败，并列出超限项与字节数" },
-            { "kind": "prose", "criterion": "讲清字体加载三策略对文本可见时间与布局跳动的影响，用预算前后数字对照" },
-            { "kind": "source", "criterion": "LCP 优化方向与 web.dev 口径一致；图片/字体手段不依赖未核实的第三方库行为" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch6 断言预算表全绿：超限即失败，并列出超限项与字节数"
+            },
+            {
+              "kind": "prose",
+              "criterion": "讲清字体加载三策略对文本可见时间与布局跳动的影响，用预算前后数字对照"
+            },
+            {
+              "kind": "source",
+              "criterion": "LCP 优化方向与 web.dev 口径一致；图片/字体手段不依赖未核实的第三方库行为"
+            }
           ]
         }
       ]
@@ -233,7 +398,7 @@
       "chapters": [
         {
           "slug": "loading-states",
-          "title": "第 7 章 有形状的等待：加载状态机与骨架屏",
+          "title": "有形状的等待：加载状态机与骨架屏",
           "goal": "为数据页实现显式状态机与骨架，等待可解释、无布局跳动",
           "type": "build",
           "feature_id": "loading-states",
@@ -241,29 +406,60 @@
           "hook": {
             "kind": "现象观察",
             "point": "点了搜索，页面死一样安静，用户以为没点上又连点三下",
-            "phenomena": ["等待", "骨架"]
+            "phenomena": [
+              "等待",
+              "骨架"
+            ]
           },
-          "new_concepts": ["加载状态机", "Suspense 边界", "骨架屏", "感知性能"],
-          "misconceptions": ["加个转圈就算处理了 loading", "加载态越花哨越好"],
+          "new_concepts": [
+            "加载状态机",
+            "Suspense 边界",
+            "骨架屏",
+            "感知性能"
+          ],
+          "misconceptions": [
+            "加个转圈就算处理了 loading",
+            "加载态越花哨越好"
+          ],
           "structure": "无解释等待的代价 → 状态机建模（idle/pending/success/error）→ 默认导航等数据 vs lazy 先切页 → 骨架的形状契约（尺寸对齐防跳动）→ 感知性能总纲",
           "milestone": "搜索页 lazy 数据流 + 同形骨架组件；vitest 断言 pending→success/error 渲染分支；gate 断言导航立即出骨架",
           "milestone_verify": "DevTools 节流 Slow 3G 搜索：先出同形骨架、数据到位无跳动；对比 spinner 版的盲等体验",
           "relevant_files": [],
           "promises_out": [
-            { "target": "error-handling", "what": "状态机的 error 分支将在错误处理章升级为完整三层兜底" },
-            { "target": "optimistic-continuity", "what": "感知性能与状态机将作为乐观更新章的底座" }
+            {
+              "target": "error-handling",
+              "what": "状态机的 error 分支将在错误处理章升级为完整三层兜底"
+            },
+            {
+              "target": "optimistic-continuity",
+              "what": "感知性能与状态机将作为乐观更新章的底座"
+            }
           ],
-          "depends_on": ["ssr-dataflow"],
-          "uses": ["useAsyncData 契约", "payload"],
+          "depends_on": [
+            "ssr-dataflow"
+          ],
+          "uses": [
+            "useAsyncData 契约",
+            "payload"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch7 断言搜索导航响应含骨架标记、数据到达后骨架被内容替换" },
-            { "kind": "prose", "criterion": "讲清等待为何要被解释、骨架与 spinner 的信息量差异、形状契约如何防 CLS" },
-            { "kind": "source", "criterion": "lazy/Suspense 行为以 Nuxt 4.x 文档口径表述；CLS 阈值标注 web.dev" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch7 断言搜索导航响应含骨架标记、数据到达后骨架被内容替换"
+            },
+            {
+              "kind": "prose",
+              "criterion": "讲清等待为何要被解释、骨架与 spinner 的信息量差异、形状契约如何防 CLS"
+            },
+            {
+              "kind": "source",
+              "criterion": "lazy/Suspense 行为以 Nuxt 4.x 文档口径表述；CLS 阈值标注 web.dev"
+            }
           ]
         },
         {
           "slug": "error-handling",
-          "title": "第 8 章 任何失败都有去处：错误体系与状态码语义",
+          "title": "任何失败都有去处：错误体系与状态码语义",
           "goal": "搭起三层兜底：页面 fail-fast、全局 error.vue、组件错误边界，状态码语义正确",
           "type": "build",
           "feature_id": "error-handling",
@@ -271,29 +467,61 @@
           "hook": {
             "kind": "现象观察",
             "point": "接口一 500，用户只看到浏览器默认错误页甚至白屏，回来的路也没有",
-            "phenomena": ["500", "兜底"]
+            "phenomena": [
+              "500",
+              "兜底"
+            ]
           },
-          "new_concepts": ["createError", "error.vue 兜底", "错误边界", "状态码语义"],
-          "misconceptions": ["错误处理就是到处 try/catch", "错误页返回什么状态码无所谓"],
+          "new_concepts": [
+            "createError",
+            "error.vue 兜底",
+            "错误边界",
+            "状态码语义"
+          ],
+          "misconceptions": [
+            "错误处理就是到处 try/catch",
+            "错误页返回什么状态码无所谓"
+          ],
           "structure": "三类失败现场（数据 500/参数 404/组件抛错）→ createError 与状态码映射 → error.vue 全局兜底与 clearError 恢复 → NuxtErrorBoundary 局部降级 → 分层原则：能局部不全局",
           "milestone": "error.vue + NuxtErrorBoundary + 故障注入开关；gate 断言 404/500/局部错误分别落到正确状态码与对应 UI 层",
           "milestone_verify": "访问不存在商品得 404 页且能返回；故障开关注入 500 得兜底页；组件异常只让区块降级、页面其余部分仍可用",
           "relevant_files": [],
           "promises_out": [
-            { "target": "optimistic-continuity", "what": "乐观更新失败路径将复用本章错误提示与回滚衔接" },
-            { "target": "offline-resilience", "what": "离线兜底页将复用本章兜底设计语言与恢复路径" }
+            {
+              "target": "optimistic-continuity",
+              "what": "乐观更新失败路径将复用本章错误提示与回滚衔接"
+            },
+            {
+              "target": "offline-resilience",
+              "what": "离线兜底页将复用本章兜底设计语言与恢复路径"
+            }
           ],
-          "depends_on": ["ssr-dataflow", "loading-states"],
-          "uses": ["useAsyncData 契约", "加载状态机"],
+          "depends_on": [
+            "ssr-dataflow",
+            "loading-states"
+          ],
+          "uses": [
+            "useAsyncData 契约",
+            "加载状态机"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch8 断言三类故障的 HTTP 状态码与兜底层级一一对应，错误页不返回 200" },
-            { "kind": "prose", "criterion": "讲清三层兜底各自兜什么、状态码的机器与人双重语义、『错误页 200』的危害" },
-            { "kind": "source", "criterion": "createError/showError/error.vue/NuxtErrorBoundary 行为引用 Nuxt 4.x 错误处理文档" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch8 断言三类故障的 HTTP 状态码与兜底层级一一对应，错误页不返回 200"
+            },
+            {
+              "kind": "prose",
+              "criterion": "讲清三层兜底各自兜什么、状态码的机器与人双重语义、『错误页 200』的危害"
+            },
+            {
+              "kind": "source",
+              "criterion": "createError/showError/error.vue/NuxtErrorBoundary 行为引用 Nuxt 4.x 错误处理文档"
+            }
           ]
         },
         {
           "slug": "optimistic-continuity",
-          "title": "第 9 章 点击即生效：乐观更新、回滚与 View Transitions",
+          "title": "点击即生效：乐观更新、回滚与 View Transitions",
           "goal": "实现写入-确认-回滚三段式交互，导航过渡在视觉上连续",
           "type": "build",
           "feature_id": "optimistic-continuity",
@@ -301,23 +529,52 @@
           "hook": {
             "kind": "现象观察",
             "point": "点赞后转圈一秒才变红；失败后界面数字还停在错的状态",
-            "phenomena": ["乐观更新", "回滚"]
+            "phenomena": [
+              "乐观更新",
+              "回滚"
+            ]
           },
-          "new_concepts": ["乐观更新", "回滚", "View Transitions"],
-          "misconceptions": ["乐观更新就是先把界面改了", "过渡动画是装饰，跟体验工程无关"],
+          "new_concepts": [
+            "乐观更新",
+            "回滚",
+            "View Transitions"
+          ],
+          "misconceptions": [
+            "乐观更新就是先把界面改了",
+            "过渡动画是装饰，跟体验工程无关"
+          ],
           "structure": "等待移开眼前 → 三段式（乐观写入→后台确认→失败回滚）→ 哪些操作适合乐观（幂等/可解释）→ 回滚的用户可见性 → 页面过渡与 View Transitions 的连续性收尾",
           "milestone": "收藏按钮乐观三段式 + 页面过渡；vitest 断言确认与回滚两条路径都收敛；gate 断言过渡配置就位",
           "milestone_verify": "节流下点收藏立刻变红；用故障开关构造失败，看到回滚与错误提示；列表↔详情切换有连续过渡",
           "relevant_files": [],
           "promises_out": [
-            { "target": "capstone", "what": "三段式交互将进入终章演示脚本与检查清单『反馈层』" }
+            {
+              "target": "capstone",
+              "what": "三段式交互将进入终章演示脚本与检查清单『反馈层』"
+            }
           ],
-          "depends_on": ["loading-states", "error-handling"],
-          "uses": ["加载状态机", "感知性能", "createError"],
+          "depends_on": [
+            "loading-states",
+            "error-handling"
+          ],
+          "uses": [
+            "加载状态机",
+            "感知性能",
+            "createError"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch9 断言乐观组件状态机两路径收敛、失败触发错误提示、过渡配置在构建产物中生效" },
-            { "kind": "prose", "criterion": "讲清三段式各段职责、非幂等操作为何不适合乐观、回滚必须让用户看见" },
-            { "kind": "source", "criterion": "View Transitions 集成以 Nuxt 4.x 实验配置口径表述并标注实验性边界" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch9 断言乐观组件状态机两路径收敛、失败触发错误提示、过渡配置在构建产物中生效"
+            },
+            {
+              "kind": "prose",
+              "criterion": "讲清三段式各段职责、非幂等操作为何不适合乐观、回滚必须让用户看见"
+            },
+            {
+              "kind": "source",
+              "criterion": "View Transitions 集成以 Nuxt 4.x 实验配置口径表述并标注实验性边界"
+            }
           ]
         }
       ]
@@ -327,7 +584,7 @@
       "chapters": [
         {
           "slug": "offline-resilience",
-          "title": "第 10 章 进隧道不断崖：超时重试与离线兜底",
+          "title": "进隧道不断崖：超时重试与离线兜底",
           "goal": "请求有超时与重试策略，断网时 service worker 给出站内离线兜底页",
           "type": "build",
           "feature_id": "offline-resilience",
@@ -335,28 +592,57 @@
           "hook": {
             "kind": "现象观察",
             "point": "地铁一进隧道整站白屏，出隧道了页面还卡死在那",
-            "phenomena": ["断网", "离线"]
+            "phenomena": [
+              "断网",
+              "离线"
+            ]
           },
-          "new_concepts": ["超时与重试", "service worker", "离线兜底页"],
-          "misconceptions": ["PWA 就是加个 manifest 能安装", "离线兜底是原生 App 才有的事"],
+          "new_concepts": [
+            "超时与重试",
+            "service worker",
+            "离线兜底页"
+          ],
+          "misconceptions": [
+            "PWA 就是加个 manifest 能安装",
+            "离线兜底是原生 App 才有的事"
+          ],
           "structure": "网络是最不可控变量 → 超时与退避重试（先问幂等）→ SW 的可编程缓存角色 → 预缓存静态壳 → fetch 兜底：离线页的降级设计 → 与错误体系的衔接",
           "milestone": "手写最小 SW（预缓存壳+离线兜底路由）+ $fetch 超时包装；vitest 断言拦截策略与退避序列；gate 断言 sw.js 可服务且注册就位",
           "milestone_verify": "DevTools Offline 后刷新得到站内离线页（非浏览器默认断网页）；恢复联网刷新即恢复",
           "relevant_files": [],
           "promises_out": [
-            { "target": "capstone", "what": "离线演示步骤将进入终章检查清单『弱网层』" }
+            {
+              "target": "capstone",
+              "what": "离线演示步骤将进入终章检查清单『弱网层』"
+            }
           ],
-          "depends_on": ["error-handling", "route-cache"],
-          "uses": ["error.vue 兜底", "Cache-Control 语义", "预渲染"],
+          "depends_on": [
+            "error-handling",
+            "route-cache"
+          ],
+          "uses": [
+            "error.vue 兜底",
+            "Cache-Control 语义",
+            "预渲染"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch10 断言 sw.js 200 可服务、注册脚本注入、拦截逻辑单测全绿" },
-            { "kind": "prose", "criterion": "讲清超时为何必要、重试前为何先问幂等、SW 兜底与全局错误页的分工" },
-            { "kind": "source", "criterion": "SW 生命周期与缓存行为按 MDN/规范口径表述，不用第三方 PWA 插件未核实行为" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch10 断言 sw.js 200 可服务、注册脚本注入、拦截逻辑单测全绿"
+            },
+            {
+              "kind": "prose",
+              "criterion": "讲清超时为何必要、重试前为何先问幂等、SW 兜底与全局错误页的分工"
+            },
+            {
+              "kind": "source",
+              "criterion": "SW 生命周期与缓存行为按 MDN/规范口径表述，不用第三方 PWA 插件未核实行为"
+            }
           ]
         },
         {
           "slug": "capstone",
-          "title": "第 11 章 综合装配：优化前后对比报告与丝滑清单",
+          "title": "综合装配：优化前后对比报告与丝滑清单",
           "goal": "从基线站逐层装配全部手段，产出量化对比与可复用检查清单",
           "type": "build",
           "feature_id": "capstone",
@@ -364,31 +650,87 @@
           "hook": {
             "kind": "能力缺口",
             "point": "手段都学过了，装到同一个站上到底快了多少、还差什么，谁能说清",
-            "phenomena": ["对比", "清单"]
+            "phenomena": [
+              "对比",
+              "清单"
+            ]
           },
-          "new_concepts": ["丝滑检查清单", "分层归因"],
-          "misconceptions": ["优化手段叠加必然更快，不用再度量", "报告好看就行，口径一致性不重要"],
+          "new_concepts": [
+            "丝滑检查清单",
+            "分层归因"
+          ],
+          "misconceptions": [
+            "优化手段叠加必然更快，不用再度量",
+            "报告好看就行，口径一致性不重要"
+          ],
           "structure": "回到第 1 章的基线站 → 逐层装配（每层复测一组）→ 分层归因报告 → 六层检查清单（到达/可见/可交互/等待/失败/弱网）→ 带走什么",
           "milestone": "完整丝滑版蜗牛商店 + reports/before-after.json（每个数字标注来自哪层）+ 检查清单附录页；gate:ch11 汇总复跑全部章门",
           "milestone_verify": "pnpm report 输出前后对照表；按检查清单六层在浏览器逐项演示通过",
           "relevant_files": [],
           "promises_out": [],
-          "depends_on": ["perf-baseline", "ssr-dataflow", "hydration", "prefetch-nav", "route-cache", "asset-budget", "loading-states", "error-handling", "optimistic-continuity", "offline-resilience"],
-          "uses": ["性能基线", "SSR 数据流", "水合", "视口预取", "SWR 缓存复用", "资产预算", "骨架屏", "createError", "乐观更新", "service worker"],
+          "depends_on": [
+            "perf-baseline",
+            "ssr-dataflow",
+            "hydration",
+            "prefetch-nav",
+            "route-cache",
+            "asset-budget",
+            "loading-states",
+            "error-handling",
+            "optimistic-continuity",
+            "offline-resilience"
+          ],
+          "uses": [
+            "性能基线",
+            "SSR 数据流",
+            "水合",
+            "视口预取",
+            "SWR 缓存复用",
+            "资产预算",
+            "骨架屏",
+            "createError",
+            "乐观更新",
+            "service worker"
+          ],
           "acceptance": [
-            { "kind": "gate", "criterion": "pnpm gate:ch11 复跑第 1–10 章全部脚本门均通过，并断言报告数字与各层 gate 输出一致" },
-            { "kind": "prose", "criterion": "报告每个指标变化旁标注对应层与手段，无『不知道为什么变快』的数字" },
-            { "kind": "source", "criterion": "清单六层的判定信号全部来自前章已核实口径，不引入新的事实断言" }
+            {
+              "kind": "gate",
+              "criterion": "pnpm gate:ch11 复跑第 1–10 章全部脚本门均通过，并断言报告数字与各层 gate 输出一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "报告每个指标变化旁标注对应层与手段，无『不知道为什么变快』的数字"
+            },
+            {
+              "kind": "source",
+              "criterion": "清单六层的判定信号全部来自前章已核实口径，不引入新的事实断言"
+            }
           ]
         }
       ]
     }
   ],
   "appendices": [
-    { "slug": "glossary", "title": "术语表", "kind": "glossary" },
-    { "slug": "metrics-rules-cheatsheet", "title": "指标口径与 routeRules 速查", "kind": "reference-table" },
-    { "slug": "exercises", "title": "练习：把你的项目过一遍", "kind": "exercises" },
-    { "slug": "divergence", "title": "简化与差异登记", "kind": "divergence" }
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "metrics-rules-cheatsheet",
+      "title": "指标口径与 routeRules 速查",
+      "kind": "reference-table"
+    },
+    {
+      "slug": "exercises",
+      "title": "练习：把你的项目过一遍",
+      "kind": "exercises"
+    },
+    {
+      "slug": "divergence",
+      "title": "简化与差异登记",
+      "kind": "divergence"
+    }
   ],
   "final_milestone": {
     "what_reader_built": "一个秒开、错误有兜底、可离线的 Nuxt 丝滑站，附优化前后对比报告",

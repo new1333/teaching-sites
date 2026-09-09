@@ -1,0 +1,28 @@
+{
+  "schema_version": 2,
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "perf-baseline",
+      "file": "docs/01-perf-baseline.md",
+      "status": "complete",
+      "summary": "建立四块积木：性能基线（存档对照数字）、TTFB（到达段计时）、首屏指标组（到达/可见/可交互/稳定×node 代理指标）、Core Web Vitals（LCP/INP/CLS 阈值与 75 分位，浏览器侧人工信号）。companion 从零成为可运行慢站+测量仪：measure 输出整组 JSON、gate:ch1 109 项断言、baseline.json 存档、steps/ch01 快照。读者能跑基线、判读四段、区分 node 与浏览器口径。",
+      "artifacts": [
+        "companion/app/**（5 页面族 + 组件，列表/详情/收藏为 onMounted+$fetch 反例写法）",
+        "companion/server/api/**（products/[id]/search/favorites/_hits/_chaos）+ server/utils/{catalog,chaos}.ts",
+        "companion/shared/types.ts",
+        "companion/scripts/lib/{server,measure-core}.mjs、scripts/{measure,e2e-ch1,snapshot}.mjs",
+        "companion/tests/{catalog,chaos}.test.ts（11 例）",
+        "companion/reports/{baseline,gate-ch1}.json",
+        "companion/steps/ch01-perf-baseline/",
+        "docs/01-perf-baseline.md"
+      ],
+      "gates": [
+        { "command": "pnpm gate:ch1", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/01-perf-baseline.md ...", "result": "passed" }
+      ],
+      "review_blockers": 0
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 2,
+  "promises": [
+    {
+      "id": "p1-baseline-to-capstone",
+      "from": "perf-baseline",
+      "from_n": 1,
+      "target": "capstone",
+      "what": "baseline.json 将在终章作为优化前对照组复用",
+      "status": "open"
+    },
+    {
+      "id": "p2-jsbytes-to-hydration",
+      "from": "perf-baseline",
+      "from_n": 1,
+      "target": "hydration",
+      "what": "首屏 JS 字节口径将在水合章继续作为优化对账对象",
+      "status": "open"
+    }
+  ]
+}
