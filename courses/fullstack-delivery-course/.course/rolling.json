@@ -128,6 +128,43 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 5,
+      "slug": "cache-redis",
+      "file": "docs/05-cache-redis.md",
+      "status": "complete",
+      "summary": "缓存与限流接入：compose-infra 起 pg+redis（redis 6639、无卷——丢了能重建）；ioredis 6 封装（LinkCache get/setEx + incr/expire 同客户端）；GET /:slug cache-aside（60s TTL、10s null 标记挡穿透）；POST /api/links 四段式（422→429→401→201，每 IP 每分钟 5 次，Retry-After 回整窗）。可选注入 opts——旧 39 条零改动全绿（组装证据），新增 6 条共 45 条。首教五积木：缓存、TTL、缓存穿透、限流、Redis。简化已显式声明：雪崩抖动/击穿互斥/滑动窗口/写后失效等未实现（差异附录登记）。",
+      "artifacts": [
+        "companion/apps/api/src/cache/redis-cache.ts",
+        "companion/apps/api/src/cache/rate-limit.ts",
+        "companion/apps/api/test/cache.test.ts",
+        "companion/docker/compose.infra.yml",
+        "companion/scripts/compose-infra.mjs"
+      ],
+      "gates": [
+        {
+          "command": "cd companion && node scripts/compose-infra.mjs up",
+          "result": "passed（pg+redis 双 Healthy）"
+        },
+        {
+          "command": "cd companion && pnpm test",
+          "result": "passed（shared 12 + api 33 = 45 条；旧 39 零改动）"
+        },
+        {
+          "command": "cd companion && pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/05-cache-redis.md --new 缓存 TTL 缓存穿透 限流 Redis",
+          "result": "passed"
+        },
+        {
+          "command": "回写闸门：course-lint 复跑 docs/02/03/04",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

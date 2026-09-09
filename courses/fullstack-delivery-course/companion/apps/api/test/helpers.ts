@@ -1,17 +1,19 @@
-// companion: apps/api/test/helpers.ts · 测试共用的 pg 就绪检查、迁移执行与已登录应用
+// companion: apps/api/test/helpers.ts · 测试共用的 pg/redis 就绪检查、迁移执行与已登录应用
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { serve } from '@hono/node-server'
 import postgres from 'postgres'
+import Redis from 'ioredis'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import { createApp } from '../src/app'
 import { createAuthStore } from '../src/auth/session'
 import { createPgStore } from '../src/db/store.pg'
 import type { LinkStore } from '../src/store'
-import { requireDatabaseUrl } from '../src/config'
+import { requireDatabaseUrl, requireRedisUrl } from '../src/config'
 
 export const databaseUrl = requireDatabaseUrl()
+export const redisUrl = requireRedisUrl()
 
 /**
  * 教学基础设施就绪检查：pg 没起时给出「先跑哪个命令」的可读提示，
@@ -33,6 +35,32 @@ export async function ensurePg(url: string = databaseUrl): Promise<void> {
 }
 
 export const migrationsFolder = fileURLToPath(new URL('../drizzle', import.meta.url))
+
+/**
+ * 教学基础设施就绪检查（Redis 侧）：连不上时给出「先跑哪个命令」的可读提示。
+ * 专用客户端不重试、连不上立刻失败——测试要的是快速明确的红，不是挂着的等。
+ */
+export async function ensureRedis(url: string = redisUrl): Promise<void> {
+  const redis = new Redis(url, {
+    lazyConnect: true,
+    retryStrategy: () => null,
+    maxRetriesPerRequest: 1,
+    connectTimeout: 2_000,
+  })
+  try {
+    await redis.connect()
+    const pong = await redis.ping()
+    if (pong !== 'PONG') throw new Error(`unexpected PING reply: ${String(pong)}`)
+  } catch (err) {
+    throw new Error(
+      `连不上教学 Redis（${url}）。\n` +
+        '先在 companion 目录执行：node scripts/compose-infra.mjs up\n' +
+        `原始错误：${err instanceof Error ? err.message : String(err)}`,
+    )
+  } finally {
+    redis.disconnect()
+  }
+}
 
 /**
  * 把迁移跑到最新：幂等（已应用的自动跳过），空库也能一键就绪。

@@ -457,6 +457,7 @@ app.ts 现在收两份注入，createApp 的签名多一个参数：
 
 ```ts
 // companion: apps/api/src/app.ts · createApp 的签名与上下文类型（节选）
+// （本章形态：两份注入；缓存章起签名加第三个可选参数 opts——缓存与限流住那里，终态见第 5 章演练）
 type AppEnv = AuthEnv & {
   Variables: AuthEnv['Variables'] & {
     linkInput: CreateLinkInput
@@ -522,6 +523,7 @@ logout、me 与改造后的 POST /api/links 在同一文件里鱼贯而下。三
 
 ```ts
 // companion: apps/api/src/app.ts · 登出、me 与三段式的创建端点（节选）
+// （本章形态：创建端点是三段式；缓存章起在守卫前多插一道限流闸，终态见第 5 章演练）
   app.post('/api/auth/logout', async (c) => {
     const token = getCookie(c, SESSION_COOKIE)
     if (token) {
@@ -723,7 +725,7 @@ apps/api typecheck: Done
 apps/web typecheck: Done
 ```
 
-退出码 0，39 条全绿。api 的 27 条里：六条端点 e2e（经登录重写，形状断言未动）、两条重启剧本、三条索引实验（一行未改照绿——索引不关心来客是谁）、16 条本章新增。
+退出码 0，39 条全绿。api 的 27 条里：六条端点 e2e（经登录重写，形状断言未动）、两条重启剧本、三条索引实验（一行未改照绿——索引不关心来客是谁）、16 条本章新增。（本章形态的门槛输出；下一章起 up 还会拉起教学 Redis、测试再添新的一组。）
 
 ## 验证：让身份说话
 

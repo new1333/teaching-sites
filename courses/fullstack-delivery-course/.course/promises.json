@@ -42,6 +42,14 @@
       "target": "ops-observability",
       "what": "会话排查（谁在何时登录）在第 10 章作为日志关联场景复用（收束一行括注导航已留）",
       "status": "open"
+    },
+    {
+      "id": "ch5-redis-mailbox",
+      "from": "cache-redis",
+      "from_n": 5,
+      "target": "queue-mq",
+      "what": "Redis 在第 5 章是缓存与计数器，第 6 章再兼一职——队列信箱（收束一行括注导航已留）",
+      "status": "open"
     }
   ]
 }

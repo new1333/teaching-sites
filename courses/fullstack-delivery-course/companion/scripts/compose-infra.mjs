@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// companion: scripts/compose-infra.mjs —— 教学基础设施的跨平台开关（Windows / macOS / Linux 通用）
+// companion: scripts/compose-infra.mjs —— 教学基础设施（pg + redis）的跨平台开关（Windows / macOS / Linux 通用）
 // 用法（在 companion 目录）：
-//   node scripts/compose-infra.mjs up       拉起教学 Postgres 并等它健康
-//   node scripts/compose-infra.mjs down     停掉容器（具名卷保留，数据不丢）
+//   node scripts/compose-infra.mjs up       拉起教学 Postgres 与 Redis 并等它们健康
+//   node scripts/compose-infra.mjs down     停掉容器（具名卷保留，pg 数据不丢）
 //   node scripts/compose-infra.mjs status   看容器状态
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
@@ -27,6 +27,7 @@ function compose(args) {
 if (command === 'up') {
   compose(['up', '-d', '--wait'])
   console.log('教学 Postgres 已就绪：postgres://postgres:postgres@localhost:5544/shortlink')
+  console.log('教学 Redis 已就绪：redis://localhost:6639')
 } else if (command === 'down') {
   compose(['down'])
   console.log('教学基础设施已停止（具名卷保留：再次 up 后数据仍在）。')

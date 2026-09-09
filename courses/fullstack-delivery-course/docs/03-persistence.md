@@ -128,6 +128,7 @@ volumes:
 
 ```js
 // companion: scripts/compose-infra.mjs —— 教学基础设施的开关
+// （本章形态：只编排 pg；缓存章起同一脚本扩成 pg+redis 双服务，终态见第 5 章演练）
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -171,7 +172,7 @@ Container shortlink-pg Healthy
 教学 Postgres 已就绪：postgres://postgres:postgres@localhost:5544/shortlink
 ```
 
-`--wait` 会一直等到 healthcheck 转绿才返回，所以这条命令结束，数据库就真能用了。down 停容器不删卷；status 看状态。这套脚本以后每章共用。
+`--wait` 会一直等到 healthcheck 转绿才返回，所以这条命令结束，数据库就真能用了。down 停容器不删卷；status 看状态。这套脚本以后每章共用。（本章形态：此刻它只管 pg；缓存章起同一命令会一并拉起教学 Redis，多一行就绪提示——见[第 5 章](./05-cache-redis)。）
 
 ### 第二步：依赖与版本
 
@@ -257,6 +258,7 @@ CREATE TABLE "links" (
 
 ```ts
 // companion: apps/api/src/config.ts · 数据库连接串的读法
+// （本章形态：只有数据库连接串；缓存章起同文件加 Redis 连接串的读法，终态见第 5 章演练）
 const DEV_DATABASE_URL = 'postgres://postgres:postgres@localhost:5544/shortlink'
 
 /**
@@ -607,7 +609,7 @@ apps/api typecheck: Done
 apps/web typecheck: Done
 ```
 
-退出码 0。8 条旧契约测试加 11 条 api 测试（六条端点 e2e 原样、两条重启剧本、三条索引实验），从本章起，数据库在跑是测试门槛的一部分。
+退出码 0。8 条旧契约测试加 11 条 api 测试（六条端点 e2e 原样、两条重启剧本、三条索引实验），从本章起，数据库在跑是测试门槛的一部分。（本章形态的门槛输出；后续章节起 up 多拉起一个 Redis 容器、测试计数随之增长，当前数字见各章自己的门槛。）
 
 ## 验证：让数据死而复生
 
@@ -662,7 +664,7 @@ HTTP/1.1 302 Found
 location: https://example.com/container-restart-proof
 ```
 
-先猜再跑：第二条 curl 是 302 还是 500？——302。api 进程没死，只是它背后的数据库死过一次；重连由连接池自动完成，数据躺在具名卷的磁盘文件里，容器的生死与它无关。开篇那批 404 的短链，换成这套结构，一条都不会丢。
+先猜再跑：第二条 curl 是 302 还是 500？——302。api 进程没死，只是它背后的数据库死过一次；重连由连接池自动完成，数据躺在具名卷的磁盘文件里，容器的生死与它无关。开篇那批 404 的短链，换成这套结构，一条都不会丢。（本章形态：up 此刻只报 pg 就绪；缓存章起多一行 Redis 就绪提示，不影响这场对照。）
 
 ### 四、把结果讲给自己听
 

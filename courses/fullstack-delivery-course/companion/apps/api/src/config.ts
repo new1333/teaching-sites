@@ -1,5 +1,6 @@
-// companion: apps/api/src/config.ts · 数据库连接串的读法
+// companion: apps/api/src/config.ts · 连接串的读法：数据库与 Redis 同一套纪律
 const DEV_DATABASE_URL = 'postgres://postgres:postgres@localhost:5544/shortlink'
+const DEV_REDIS_URL = 'redis://localhost:6639'
 
 /**
  * 读取 DATABASE_URL。
@@ -15,4 +16,18 @@ export function requireDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string
     )
   }
   return DEV_DATABASE_URL
+}
+
+/**
+ * 读取 REDIS_URL，纪律与 DATABASE_URL 相同：开发默认指向教学 Redis（6639），生产缺失即报错。
+ */
+export function requireRedisUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const url = env.REDIS_URL?.trim()
+  if (url) return url
+  if (env.NODE_ENV === 'production') {
+    throw new Error(
+      'REDIS_URL 未设置：生产环境必须显式提供 Redis 连接串（开发默认值只在开发环境生效）',
+    )
+  }
+  return DEV_REDIS_URL
 }
