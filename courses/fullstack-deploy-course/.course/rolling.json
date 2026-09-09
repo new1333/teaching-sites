@@ -104,6 +104,32 @@
         { "command": "pnpm e2e:ch4", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 5,
+      "slug": "dockerize-app",
+      "file": "docs/05-dockerize-app.md",
+      "status": "complete",
+      "summary": "建立多阶段构建、镜像层缓存、非 root 运行、容器健康检查、Compose 应用栈五块积木。Dockerfile 三段（run 段仅产物、USER node、HEALTHCHECK 探新增 /api/health）；compose.yaml 应用栈（app 4180 + db 卷 + service_healthy 依赖；migrate 借 build 段 tools profile 起前跑账本，简化已声明）；compose:sim 门槛 build→起库→迁移→up --wait→8 断言→卷持久化→down -v。镜像 235MB vs 工具镜像 707MB、层缓存三输入实测入文。读者能把整套应用栈一键拉起并验证。",
+      "artifacts": [
+        "companion/Dockerfile",
+        "companion/.dockerignore",
+        "companion/compose.yaml",
+        "companion/server/api/health.get.ts",
+        "companion/scripts/compose-sim.mjs",
+        "companion/package.json"
+      ],
+      "gates": [
+        { "command": "pnpm compose:sim", "result": "passed" },
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" },
+        { "command": "pnpm e2e:ch2", "result": "passed" },
+        { "command": "pnpm e2e:ch3", "result": "passed" },
+        { "command": "pnpm e2e:ch4", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }
