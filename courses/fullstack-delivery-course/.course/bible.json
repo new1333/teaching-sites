@@ -84,7 +84,7 @@
     { "name": "GET /:slug", "introduced_in": "monorepo-api", "contract": "存在→302 Location=原 URL 并计数（第 6 章起改异步入队）；不存在→404；第 5 章起先查缓存" },
     { "name": "GET /api/links/:slug/stats", "introduced_in": "queue-mq", "contract": "登录且属于本人→200 {slug, total, byDay:[{day,count}]}；否则 401/404" },
     { "name": "POST /api/auth/register|login|logout, GET /api/auth/me", "introduced_in": "auth-session", "contract": "注册 201 建用户；登录 200 Set-Cookie: sid（HttpOnly; SameSite=Lax; Path=/）+ 7 天过期；登出 204 删会话；me 200 {id,email} 或 401" },
-    { "name": "GET /healthz, GET /readyz", "introduced_in": "ops-observability", "contract": "healthz 恒 200 {status:'ok'}（进程活）；readyz 依赖全通 200 {db:'ok',redis:'ok'}，任一不通 503 {db:'…',redis:'…'}" },
+    { "name": "GET /healthz, GET /readyz", "introduced_in": "monorepo-api（healthz 浅检查）→ ops-observability（readyz 与深浅分工）", "contract": "healthz 恒 200 {status:'ok'}（进程活，第 2 章引入）；readyz 依赖全通 200 {db:'ok',redis:'ok'}，任一不通 503 {db:'…',redis:'…'}（第 10 章引入）" },
     { "name": "packages/shared 契约面", "introduced_in": "monorepo-api", "contract": "createLinkSchema/linkResponseSchema/loginSchema 等为前后端唯一契约源；字段改名必须两侧同编译错误（测试断言推导类型一致）" }
   ],
   "factual_claims": true,

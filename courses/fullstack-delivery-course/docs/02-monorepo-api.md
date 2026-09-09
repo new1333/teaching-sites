@@ -358,12 +358,12 @@ describe('POST /api/links', () => {
 × 合法请求返回 201                 expected 404 to be 201
 × 缺 url 返回 422                  expected 404 to be 422
 × http 网址（非 https）返回 422    expected 404 to be 422
-× 命中返回 302 且 Location 指向原网址    expected 404 to be 302
+× 命中返回 302 且 Location 指向原网址    SyntaxError: Unexpected non-whitespace character after JSON at position 4
 ✓ 未知 slug 返回 404
 Tests  5 failed | 1 passed (6)
 ```
 
-五条红全是同一个原因：端点不存在，Hono 对未匹配的路径回默认 404。有一条居然绿了——「未知 slug 返回 404」：空应用对一切路径都 404，恰好喂饱它。这不是测试写错，而是提醒：绿要有绿的理由。实现补上之后，这条断言守的才是「查过表、确实没有」的 404。
+五条红全是同一个原因：端点不存在，Hono 对未匹配的路径回默认 404。最后一条红的报错看起来最吓人（SyntaxError），其实根因相同：这条测试先 `await json(res)` 再断言 302，而 404 的响应体是一段纯文本，JSON 解析先炸了——错误身份不同，病灶仍是端点缺失。有一条居然绿了——「未知 slug 返回 404」：空应用对一切路径都 404，恰好喂饱它。这不是测试写错，而是提醒：绿要有绿的理由。实现补上之后，这条断言守的才是「查过表、确实没有」的 404。
 
 ### 第五步：实现三个端点
 
@@ -401,7 +401,7 @@ export function createApp(store: MemoryStore = createMemoryStore()) {
   })
 ```
 
-逐处看关键行。`c.req.json().catch(() => null)`：body 不是合法 JSON 时也得走校验，而不是抛 500。safeParse 失败时取第一个 issue，`path`（出错位置，如 `['url']`）拼成字段名，`message` 原样透传——这就是 422 里 `error.field` 的出处。`const link: LinkResponse` 的类型标注是契约在 api 侧的落点：shared 改名，这一行立刻编译红。nanoid(7) 生成七位短码（大小写字母与数字）。
+逐处看关键行。`c.req.json().catch(() => null)`：body 不是合法 JSON 时也得走校验，而不是抛 500。safeParse 失败时取第一个 issue，`path`（出错位置，如 `['url']`）拼成字段名，`message` 原样透传——这就是 422 里 `error.field` 的出处。`const link: LinkResponse` 的类型标注是契约在 api 侧的落点：shared 改名，这一行立刻编译红。nanoid(7) 生成七位短码（大小写字母、数字，外加 `-` 和 `_`，共 64 个候选字符）。
 
 ```ts
 // companion: apps/api/src/app.ts · createApp（续）

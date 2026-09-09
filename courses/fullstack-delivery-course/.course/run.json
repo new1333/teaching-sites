@@ -5,9 +5,10 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 2,
+  "next_chapter": 3,
   "completed_chapters": [
-    "request-journey"
+    "request-journey",
+    "monorepo-api"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],
@@ -17,6 +18,6 @@
   ],
   "last_commit": {
     "kind": "chapter",
-    "id": "ch1-request-journey"
+    "id": "ch2-monorepo-api"
   }
 }

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-// companion: apps/web/src/App.vue
 import { ref } from 'vue'
 import type { LinkResponse } from '@shortlink/shared'
 import { createLink, shortUrlOf } from './api'

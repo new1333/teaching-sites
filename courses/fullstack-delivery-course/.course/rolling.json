@@ -9,7 +9,45 @@
       "summary": "建立全书地图：请求旅程六站（DNS、入口、应用进程、缓存、数据库、异步队列）+ 无状态横切纪律。首教三块积木——请求旅程（排障归属地图，锚 Network 面板两端视角）、反向代理（成因=证书/端口/公网防护三笔反事实账，锚 Vite server.proxy）、无状态服务（成因=进程崩/重启/复制，判据=「进程重启后该不该还在」）。读者能对「打不开/转圈」类故障判定归属层，8 道场景题先猜后对全部离散可核对。无验证物增量。",
       "artifacts": [],
       "gates": [
-        { "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/01-request-journey.md --new 请求旅程 反向代理 无状态服务", "result": "passed" }
+        {
+          "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/01-request-journey.md --new 请求旅程 反向代理 无状态服务",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "monorepo-api",
+      "file": "docs/02-monorepo-api.md",
+      "status": "complete",
+      "summary": "从零建 companion：pnpm workspace 三包（shared zod 契约、api Hono 端点、web Vite+Vue 页面）。首教四块积木——端点（前后端函数签名，healthz/创建/跳转三端点）、请求校验（safeParse→422 点名字段）、共享契约（一份 schema 两侧 import，改名两包同红）、CORS（同源策略+授权头，开发期 vite 代理回同源）。内存 Map 存储与浅 healthz 为已声明权宜（第 3/10 章深化）。读者能搭工作区并实现带校验的 JSON API；14 条测试先红后绿，typecheck/test/build/lint 全绿。",
+      "artifacts": [
+        "companion/package.json",
+        "companion/pnpm-workspace.yaml",
+        "companion/pnpm-lock.yaml",
+        "companion/tsconfig.base.json",
+        "companion/packages/shared/*",
+        "companion/apps/api/*",
+        "companion/apps/web/*"
+      ],
+      "gates": [
+        {
+          "command": "cd companion && pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "cd companion && pnpm test",
+          "result": "passed（shared 8 + api 6 = 14 条）"
+        },
+        {
+          "command": "cd companion && pnpm build",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/02-monorepo-api.md --new 端点 请求校验 共享契约 CORS",
+          "result": "passed"
+        }
       ],
       "review_blockers": 0
     }
