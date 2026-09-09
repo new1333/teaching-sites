@@ -37,6 +37,22 @@
       "status": "open"
     },
     {
+      "id": "ch6-deploy-target-topology",
+      "from": "06-reverse-proxy-tls",
+      "from_n": 6,
+      "target": "09-cd-pipeline",
+      "what": "部署脚本以这套生产拓扑（compose.prod.yaml）为更新目标",
+      "status": "open"
+    },
+    {
+      "id": "ch6-divergence-items",
+      "from": "06-reverse-proxy-tls",
+      "from_n": 6,
+      "target": "divergence",
+      "what": "登记三组差异：自签证书 vs CA 证书；本地模拟拓扑 vs 真实 VPS（DNS/防火墙/certbot/ufw）；本地 https 走 8443 非标准端口且 301 跳转目标不带端口",
+      "status": "open"
+    },
+    {
       "id": "pino-teaching-home",
       "from": "04-database-layer",
       "from_n": 4,

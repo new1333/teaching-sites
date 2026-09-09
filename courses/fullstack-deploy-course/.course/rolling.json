@@ -130,6 +130,33 @@
         { "command": "pnpm e2e:ch4", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 6,
+      "slug": "reverse-proxy-tls",
+      "file": "docs/06-reverse-proxy-tls.md",
+      "status": "complete",
+      "summary": "建立反向代理、TLS 终止、自签名证书、进程守护与重启策略四块积木。compose.prod.yaml 生产拓扑（app 无宿主端口，nginx 4181/8443 唯一入口，全栈 unless-stopped）；nginx.conf（301 跳转、TLS 终止、四代理头、Upgrade）；gen-cert 自产自销不入库；sim:prod 七断言含进程内 SIGTERM 崩溃自愈（502→200，RestartCount 0→1）。VPS runbook 标注本地未验证边界。读者能配正式入口、画请求七跳、按四层定位法排查 502。",
+      "artifacts": [
+        "companion/nginx/nginx.conf",
+        "companion/compose.prod.yaml",
+        "companion/scripts/gen-cert.mjs",
+        "companion/scripts/sim-prod.mjs",
+        "companion/.gitignore",
+        "companion/package.json"
+      ],
+      "gates": [
+        { "command": "pnpm sim:prod", "result": "passed" },
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" },
+        { "command": "pnpm e2e:ch2", "result": "passed" },
+        { "command": "pnpm e2e:ch3", "result": "passed" },
+        { "command": "pnpm e2e:ch4", "result": "passed" },
+        { "command": "pnpm compose:sim", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }
