@@ -82,6 +82,8 @@ type Appendix = {
 
 ## 大纲算法
 
+大纲从本课 ingestion 的特性与依赖重新推导；其他已有课程的章表、粒度或 part 划分不是参照物，主题重叠时也不例外。
+
 1. 从 ingestion 的 feature DAG 做拓扑排序。
 2. 每个教学 feature 映射到一个 principle/build/walkthrough 章；需要跨 feature 对账时才增加 review 章。
 3. 按学习阶段分 part，不改变拓扑顺序。

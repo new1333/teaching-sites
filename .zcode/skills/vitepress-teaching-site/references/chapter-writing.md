@@ -2,6 +2,10 @@
 
 本文是写作角色与评审角色共享的唯一正文标准。每章再读取 [`verification-and-gates.md`](verification-and-gates.md) 解析出的单一模式文件。
 
+## 生成来源
+
+每章的正文、companion 改动与验证物都从本课状态全新生成：素材边界是 ingestion 证据、校准读者边界、bible 术语与事实、outline 本章 spec；示例、场景、命名、代码与验证物形态凭对主题本身的理解重新推导，不找现成产物照抄。其他 `courses/*-course` 不是模板或范文：生成期间不读取其 docs、companion 或 `.course/`，不移植其章节划分、钩子、比喻、示例、代码与门槛形态；主题与其他课程重叠时重走特性拆解与大纲算法，结构相似只能来自主题自身的依赖图。课程内部按「章间能力衔接」调用前章积木与验证物是本课设计，不属于复用；仓库级运行时脚本（course-lint、final-check、portal-sync）与聚合站契约照常使用。
+
 ## 默认结构
 
 未在 outline 声明 `structure` 时使用：

@@ -15,6 +15,7 @@ description: Build or revise a VitePress course from a topic or repository. Use 
 4. **判据先于配额。** 图、代码、比喻、练习与篇幅都由承重概念和验证信号决定。只保留有独立机理的防御阈值。
 5. **能力先于叙事。** 章间衔接只走能力积木：每章开篇以工具箱声明所用积木（一句接口 + 回查链接），正文按调用方式使用既有能力。跨章情节回顾与欠账式前向引用一律不写；复盘章的跨章对账除外。
 6. **一个事实一个家。** 本文件只编排；schema、角色、验证形态和组装规则各有唯一正本。进入某阶段时只读取路由表指定的文件。
+7. **原创先于复用。** 每门课的全部产物——ingestion、大纲、bible、正文、companion 与验证物——只从本课输入和对主题本身的理解重新生成；其他已有课程不是模板、范文或素材库，生成期间不读取、不仿写、不移植其任何产物。本课内部的积木衔接是课程设计，不在此列。
 
 ## 开始或续跑
 
@@ -34,7 +35,7 @@ description: Build or revise a VitePress course from a topic or repository. Use 
 | 1 · 课程圣经 | 固定读者模型、术语、事实源与验证约定 | `state-contracts.md` 的 `BibleState` | `bible.json` 完整；有客观事实断言时存在权威来源 |
 | 2 · profile + 大纲 | 选择课程形态并生成能力路径 | [`course-profiles.md`](references/course-profiles.md) + [`outline-schema.md`](references/outline-schema.md) | profile、章级验证解析与依赖 DAG 有效；用户确认或已记录“直接生成” |
 | 3 · 逐章 | 验证物 → 正文 → 新鲜眼评审 → 记账 | [`chapter-writing.md`](references/chapter-writing.md) + [`verification-and-gates.md`](references/verification-and-gates.md) + 解析出的单一验证分支；角色契约（[`roles/chapter-writer.md`](references/roles/chapter-writer.md)、[`roles/reviewer.md`](references/roles/reviewer.md)）与正文范式（[`prose-patterns.md`](references/prose-patterns.md)）按需回查 | 本章 gate、lint、review 均通过；rolling 与 promises 已提交 |
-| 3.5 · 全书 | 查跨章概念链、能力账与终态漂移 | `roles/reviewer.md` 的全书分支 | 无阻断 finding；所有承诺核销；无来历不明的验证物能力 |
+| 3.5 · 全书 | 查跨章概念链、能力账与终态漂移 | `roles/reviewer.md` 的全书分支 | 无阻断 finding；所有承诺核销；无来历不明的内容或验证物能力 |
 | 4 · 组装 | 从 outline/bible 渲染站点并构建 | [`vitepress-assembly.md`](references/vitepress-assembly.md)；需要课程中心时再读 [`portal.md`](references/portal.md) | final-check、单课 build、聚合 build 全部通过 |
 
 子智能体的调度、写权与修订路由只在需要委派时读取 [`subagents.md`](references/subagents.md)。并行生成仅在用户明确要求且通过资格检查时，再读取 [`parallel-mode.md`](references/parallel-mode.md)。

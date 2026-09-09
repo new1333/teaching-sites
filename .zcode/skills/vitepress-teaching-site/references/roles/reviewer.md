@@ -47,6 +47,7 @@ fix 建议需要正例支撑时才回查 `{skill_dir}/references/prose-patterns.
 - final milestone、README 与终章能力清单是否有教学来历；
 - promises 全部 fulfilled；
 - companion 无超纲/无教学来历的产物；
+- 正文示例、代码与验证物的来历都能落到本课输入（ingestion 特性、bible、outline spec、校准边界）；来历不明按契约违背产出阻断，不得以“沿用既有课程做法”辩护；
 - 正文引用、数字、资产与终态全量一致；
 - obligations、appendices、内部链接和主线问题闭环；
 - 文风与章结构是否批量模板化：开篇/收束句式重复、自查与验证收尾同款、工具箱行文逐字同款、事故叙事复用；对照 chapter-writing.md「书级节奏与反疲劳」逐条判（句式配额、重音预算、章末分工、密度预算）。
