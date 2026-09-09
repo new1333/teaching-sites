@@ -5,14 +5,15 @@
   "phase": "chapters",
   "language": "zh",
   "outline_revision": 2,
-  "next_chapter": 7,
+  "next_chapter": 8,
   "completed_chapters": [
     "what-deployment-deploys",
     "nuxt-server-api",
     "env-and-config",
     "database-layer",
     "dockerize-app",
-    "reverse-proxy-tls"
+    "reverse-proxy-tls",
+    "database-ops"
   ],
   "degraded_chapters": [],
   "blocked_chapters": [],

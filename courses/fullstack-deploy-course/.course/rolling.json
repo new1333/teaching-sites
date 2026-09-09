@@ -157,6 +157,33 @@
         { "command": "pnpm compose:sim", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 7,
+      "slug": "database-ops",
+      "file": "docs/07-database-ops.md",
+      "status": "complete",
+      "summary": "建立逻辑备份、恢复演练、迁移执行时机三块积木。backup/restore.mjs 走容器内 pg_dump -Fc / pg_restore --clean --if-exists（空库脏库通吃）；drill:backup-restore 七幕主门槛（造数→备份→指纹→破坏→恢复→三项对账相等→脏库重放）；迁移时机经三组受控实验论证前置优于内嵌（循环重启/锁等待黑洞/timeout 124），第 5 章 tools profile 方案获得论证支撑。读者能证明备份可恢复、论证迁移执行位置。",
+      "artifacts": [
+        "companion/scripts/backup.mjs",
+        "companion/scripts/restore.mjs",
+        "companion/scripts/drill-backup-restore.mjs",
+        "companion/package.json",
+        "companion/.gitignore"
+      ],
+      "gates": [
+        { "command": "pnpm drill:backup-restore", "result": "passed" },
+        { "command": "pnpm typecheck", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "pnpm build", "result": "passed" },
+        { "command": "pnpm e2e:ch1", "result": "passed" },
+        { "command": "pnpm e2e:ch2", "result": "passed" },
+        { "command": "pnpm e2e:ch3", "result": "passed" },
+        { "command": "pnpm e2e:ch4", "result": "passed" },
+        { "command": "pnpm compose:sim", "result": "passed" },
+        { "command": "pnpm sim:prod", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

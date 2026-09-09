@@ -34,6 +34,15 @@
       "from_n": 4,
       "target": "07-database-ops",
       "what": "迁移在部署流程中的执行时机与失败处理",
+      "status": "fulfilled",
+      "resolution": "第 7 章『迁移执行时机』整节：前置/内嵌按失败、卡住、慢三轴对照失败窗口，三组受控实验取证（循环重启、锁等待黑洞、前置 timeout），并声明两条边界；第 5 章 tools profile 前置方案由此升级为有实验支撑的选择。"
+    },
+    {
+      "id": "ch7-deploy-embeds-migration",
+      "from": "07-database-ops",
+      "from_n": 7,
+      "target": "09-cd-pipeline",
+      "what": "部署脚本内嵌迁移前置步骤与健康门禁",
       "status": "open"
     },
     {
