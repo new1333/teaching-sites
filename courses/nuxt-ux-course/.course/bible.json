@@ -1,0 +1,82 @@
+{
+  "schema_version": 2,
+  "reader_model": {
+    "known": [
+      "Vue 3 组合式 API 与 Vite 工程日常使用",
+      "Nuxt 目录约定（pages/、components/、server/api/），独立搭过含接口的全栈应用",
+      "SSR 与 CSR 的概念区别",
+      "pnpm/npm 命令行、package.json scripts",
+      "浏览器 DevTools Network 面板基本阅读"
+    ],
+    "unfamiliar": [
+      { "concept": "payload 机制", "why": "没追踪过数据如何随 HTML 注入、水合时如何复用", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "水合与可交互延迟", "why": "没诊断过页面可见但点不动的成因", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "routeRules 缓存语义与 Cache-Control", "why": "没配过 prerender/swr，缓存头只当运维知识", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "createError/error.vue 错误体系", "why": "没搭过全局兜底与组件错误边界", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "预取与资源提示", "why": "没配置或断言过点击前的加载", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "乐观更新与回滚", "why": "没实现过写入-确认-回滚三段式", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "service worker 与离线兜底", "why": "没写过 SW 拦截逻辑", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "资产预算与构建产物审计", "why": "没给首屏字节定过上限并对账", "anchor": "熟练度问答：见过但不熟" },
+      { "concept": "性能指标度量口径", "why": "Lighthouse 报告读不到能指导改动的程度", "anchor": "熟练度问答：Lighthouse 分数怎么读未到能独立做档" }
+    ]
+  },
+  "glossary": [
+    { "term": "性能基线", "en": "performance baseline", "definition": "优化前用固定口径测得的一组数字；一切『变快了』的断言都以它为对照面，口径变了的对比无效。", "interface": "跑一次测量脚本、把报告存档，之后每次优化与它对账。" },
+    { "term": "TTFB", "en": "time to first byte", "definition": "从发起请求到收到响应第一个字节的时间，包含服务器计算与网络往返；SSR 站的第一道门。", "interface": "脚本或浏览器计时读数，秒开诊断从它开始。" },
+    { "term": "首屏指标组", "definition": "覆盖『到达—可见—可交互—稳定』四个阶段的一组指标搭配：node 侧代理指标（TTFB、HTML/payload/首屏 JS 字节、数据是否随 HTML 到达、重复请求计数）＋需要浏览器的 Core Web Vitals；单看任何一个都可能优化错方向。", "interface": "测量脚本一次输出整组 JSON，逐层定位最慢一段。" },
+    { "term": "Core Web Vitals", "definition": "Google 定义的三项核心体验指标：加载 LCP（≤2.5s）、交互 INP（≤200ms）、视觉稳定 CLS（≤0.1），按 75 分位判定；它们是实验室测不出全貌、需真实用户的现场指标。", "interface": "Lighthouse/DevTools 读取，课程内作为人工观察信号与优化方向锚点。" },
+    { "term": "SSR 数据流", "definition": "数据在服务端渲染期间被获取、直接渲染进 HTML、同时序列化进 payload 的整条链路；客户端不需要第二次请求就能拿到首屏数据。", "interface": "由 useAsyncData/useFetch 驱动，是秒开篇章的底座。" },
+    { "term": "payload", "definition": "Nuxt 把服务端获取的数据序列化成 JSON 注入 HTML 的载体；水合时客户端直接从 payload 取数，不重复请求。", "interface": "查看源码可见内联数据；脚本可提取其体积与内容做断言。" },
+    { "term": "useAsyncData 契约", "definition": "Nuxt 的服务端数据获取组合式函数：同 key 去重、服务端执行 handler、结果进 payload、客户端复用；lazy 参数决定导航时等待还是先切页。", "interface": "useAsyncData(key, handler, { lazy })，页面首屏数据的唯一推荐入口。" },
+    { "term": "水合", "en": "hydration", "definition": "客户端 JS 接管服务端渲染的 HTML、重建响应式状态与事件监听的过程；水合完成前页面可见但不可交互，成本与 JS/payload 体积正相关。", "interface": "把水合理解为『给静态 HTML 装上神经』；诊断卡顿时先问它贵在哪。" },
+    { "term": "可交互延迟", "definition": "从页面可见到能响应输入的时间差，主要由 JS 下载、解析与水合构成；它解释了『看得见却点不动』。", "interface": "人工点击观察 + INP 口径；瘦身后用指标组复测。" },
+    { "term": "视口预取", "en": "viewport prefetch", "definition": "NuxtLink 在链接进入视口且浏览器空闲时预取目标页资源，把导航成本移到用户犹豫的时间窗里；2G/离线自动跳过。", "interface": "默认开启；no-prefetch/:prefetch 关闭，prefetchOn 调整触发时机。" },
+    { "term": "资源提示", "en": "resource hints", "definition": "用 <link rel> 告诉浏览器资源优先级：preload＝本页马上要用，prefetch＝下次可能用；用错优先级反而伤害首屏。", "interface": "useHead/link 注入，配合构建产物审计。" },
+    { "term": "预渲染", "en": "prerender", "definition": "构建期把路由渲染成静态 HTML 文件，请求时直接回文件、不再跑渲染器；swr/isr 路由还会生成 _payload.json 供客户端复用。", "interface": "routeRules: { '/path': { prerender: true } }。" },
+    { "term": "路由规则", "en": "routeRules", "definition": "nuxt.config 里按路由前缀声明渲染模式与缓存策略的表（prerender/swr/isr/ssr/headers/redirect 等），混合渲染的总开关。", "interface": "一条路由一条规则，前缀匹配。" },
+    { "term": "SWR 缓存复用", "en": "stale-while-revalidate", "definition": "先立刻回可能过期的缓存、同时后台再验证更新的策略；Nuxt 的 swr: 60 表示缓存 60 秒内直接复用，过期后台刷新。", "interface": "routeRules: { '/api/**': { swr: 60 } }，二次命中可从耗时与头观测。" },
+    { "term": "Cache-Control 语义", "definition": "HTTP 响应头声明浏览器与共享缓存（CDN）各自能缓存什么、缓存多久、过期后怎么办（max-age/s-maxage/no-store/stale-while-revalidate 等指令）。", "interface": "headers 规则或服务器配置下发；脚本断言响应头即验证。" },
+    { "term": "代码分割", "en": "code splitting", "definition": "构建把代码按路由/组件切成独立分块、按需加载；Nuxt 路由级默认分割，重组件用 Lazy 前缀进一步移出首屏。", "interface": "构建产物清单里按分块对账首屏字节。" },
+    { "term": "资产预算", "en": "asset budget", "definition": "给首屏各资产（JS/CSS/图片/字体）定的字节上限，用构建产物审计 enforcement；没有预算的『优化』无法判定是否达标。", "interface": "预算表 + 构建后脚本对账，超限即 gate 失败。" },
+    { "term": "字体加载策略", "definition": "字体文件的获取时机与渲染策略：font-display 决定字体未到时显示什么，preload/子集化决定它何时到、要多少字节；直接决定文本可见时间与布局跳动。", "interface": "useHead/字体配置；与 CLS 指标联动观察。" },
+    { "term": "加载状态机", "definition": "把加载过程显式建模为 idle→pending→success/error 的状态迁移，UI 按状态渲染，而不是用布尔值拼凑；错误是状态机的终点之一，不是意外。", "interface": "useAsyncData 的 status 字段驱动 UI 分支。" },
+    { "term": "Suspense 边界", "definition": "Vue/Nuxt 在异步依赖就绪前挂起渲染的机制：SSR 下服务端等数据渲染完再发 HTML，导航时默认等新页数据就绪再切换（lazy 可绕过）。", "interface": "页面级内建；用 lazy: true 换成『先切页再出数据』的骨架形态。" },
+    { "term": "骨架屏", "en": "skeleton screen", "definition": "用最终布局的灰色占位表达『正在加载且结果长这样』：传递进度、预留尺寸避免布局跳动，比 spinner 信息量大。", "interface": "状态机 pending 分支的渲染组件，尺寸与真实内容对齐。" },
+    { "term": "感知性能", "en": "perceived performance", "definition": "用户主观觉得快不快：取决于等待是否被解释、进度是否可见、操作是否有即时反馈，而非仅客观耗时。", "interface": "加载态、过渡、乐观更新的统称性目标函数。" },
+    { "term": "createError", "definition": "构造带 statusCode/fatal/data 的 Nuxt 错误对象：服务端抛出会映射为 HTTP 状态码，客户端抛出或 showError 触发会进入错误页。", "interface": "throw createError({ statusCode, statusMessage, fatal })。" },
+    { "term": "error.vue 兜底", "definition": "全应用级错误页：渲染 showError 传入的错误，提供 clearError({ redirect }) 恢复路径；它是最后一片安全网，不是第一个错误处理器。", "interface": "app/error.vue 单文件，读 useError() 展示。" },
+    { "term": "错误边界", "en": "error boundary", "definition": "组件树局部捕获渲染期错误的机制（NuxtErrorBoundary/onErrorCaptured），把失败限制在页面一块而非整页崩溃，并可局部降级重试。", "interface": "<NuxtErrorBoundary> 包住易碎区块，error 插槽局部兜底。" },
+    { "term": "状态码语义", "definition": "404/500 等 HTTP 状态码同时服务机器（CDN 缓存、搜索引擎索引）与人（发生了什么类别的事、该不该重试）；错误页返回 200 是语义污染。", "interface": "createError 的 statusCode 必须与错误类别一致，脚本断言之。" },
+    { "term": "乐观更新", "en": "optimistic update", "definition": "操作先本地生效（乐观假设会成功）、后台确认、失败回滚的三段式；把等待从用户眼前移走。", "interface": "pending 队列 + 确认回调 + 回滚函数，和全局错误处理衔接。" },
+    { "term": "回滚", "en": "rollback", "definition": "确认失败时把 UI 恢复到操作前状态并给出可见解释（哪里失败、怎么办）；没有回滚路径的乐观更新是埋雷。", "interface": "catch 分支里恢复状态并触发错误提示。" },
+    { "term": "View Transitions", "definition": "浏览器原生 API：在旧状态截图与新状态之间做动画；Nuxt 以实验配置集成到页面导航，尊重 prefers-reduced-motion。", "interface": "experimental.viewTransition 开启，definePageMeta 按页调。" },
+    { "term": "service worker", "en": "SW", "definition": "常驻浏览器的独立脚本线程，可拦截全部请求、充当可编程缓存；离线兜底与弱网复用的执行者。", "interface": "public/sw.js + 注册插件；拦截逻辑可用单测验证。" },
+    { "term": "离线兜底页", "en": "offline fallback", "definition": "SW 在请求全部失败时返回的本地兜底页面，把断网从『浏览器默认断网页』降级为站内可解释体验。", "interface": "fetch handler 的 catch 分支返回缓存的兜底 HTML。" },
+    { "term": "超时与重试", "definition": "给每个请求定放弃时限与带退避的重试策略：超时保护用户不被无限等待，重试只用于幂等操作且有上限。", "interface": "AbortSignal.timeout + 指数退避；重试前先问幂等。" },
+    { "term": "丝滑检查清单", "definition": "按『到达—可见—可交互—等待—失败—弱网』六层组织的验收清单：每层一个可判定信号，装完任何手段后逐层过一遍。", "interface": "课程终点产物之一，可直接用于真实项目评审。" },
+    { "term": "分层归因", "definition": "把每个指标变化对应回某一层手段的归因方法：一次只动一层、复测一组指标，避免『叠加一堆优化说不清谁有效』。", "interface": "对比报告里每个数字旁边写明来自哪一层的改动。" }
+  ],
+  "verification_conventions": {
+    "companion_form": "Nuxt 4 应用（app/ 目录结构），逐章生长；每章验证物是 companion 增量 + 一个可重复执行的脚本门",
+    "gate_kinds": [
+      "HTTP 断言：对运行中的构建产物服务器 fetch，断言状态码、响应头（Cache-Control 等）、HTML 内容与 payload 内联数据",
+      "构建产物断言：读取 .output/public 分块清单，断言字节预算与预渲染文件存在",
+      "vitest 单测：状态机（加载/错误/乐观回滚/SW 拦截逻辑）与纯函数"
+    ],
+    "perceptual_signals": "骨架屏出现、过渡动画、离线兜底等可感知信号的机械断言只证明状态机与资源就位；每章 milestone_verify 必须另给人工浏览器观察步骤（DevTools 节流/断网/Performance 面板）",
+    "repeatability": "所有门在重建、重启服务器后可重复通过；服务端命中计数通过 companion 自带 /api/_hits 计数端点对账",
+    "metric_oracle": "node 侧代理指标做机械断言；LCP/INP/CLS 阈值以 web.dev Vitals（75 分位口径）为唯一事实源，仅作为人工信号出现",
+    "version_policy": "Nuxt 事实源统一为 nuxt.com/docs/4.x（2026-09 核实）；companion 锁定 Nuxt 4 minor，正文断言不得跨大版本"
+  },
+  "factual_claims": true,
+  "authority_docs": [
+    { "title": "Nuxt 4.x · useAsyncData API", "url": "https://nuxt.com/docs/4.x/api/composables/use-async-data", "why": "服务端执行、同 key 去重、结果进 payload 的契约事实源", "as_of": "2026-09-09" },
+    { "title": "Nuxt 4.x · Data Fetching", "url": "https://nuxt.com/docs/4.x/getting-started/data-fetching", "why": "useFetch/useAsyncData/$fetch 分工与 SSR 数据流行为", "as_of": "2026-09-09" },
+    { "title": "Nuxt 4.x · Rendering & Route Rules", "url": "https://nuxt.com/docs/4.x/guide/concepts/rendering", "why": "混合渲染与 routeRules（prerender/swr/isr/headers）语义；swr/isr 生成 _payload.json 的行为", "as_of": "2026-09-09" },
+    { "title": "Nuxt 4.x · Error Handling", "url": "https://nuxt.com/docs/4.x/getting-started/error-handling", "why": "createError/showError/clearError/error.vue/NuxtErrorBoundary 的分工事实源", "as_of": "2026-09-09" },
+    { "title": "Nuxt 4.x · NuxtLink", "url": "https://nuxt.com/docs/4.x/api/components/nuxt-link", "why": "视口预取默认行为、prefetch/no-prefetch/prefetchOn 配置", "as_of": "2026-09-09" },
+    { "title": "Nuxt 4.x · Transitions", "url": "https://nuxt.com/docs/4.x/getting-started/transitions", "why": "pageTransition 与 experimental.viewTransition 集成方式", "as_of": "2026-09-09" },
+    { "title": "web.dev · Web Vitals", "url": "https://web.dev/articles/vitals", "why": "LCP≤2.5s / INP≤200ms / CLS≤0.1 阈值与 75 分位判定口径（页内更新于 2024-10）", "as_of": "2026-09-09" },
+    { "title": "MDN · Cache-Control", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control", "why": "缓存指令语义（max-age/s-maxage/stale-while-revalidate/no-store 等，RFC 9111/5861）", "as_of": "2026-09-09" }
+  ]
+}

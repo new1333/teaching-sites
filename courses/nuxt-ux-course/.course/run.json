@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
-  "status": "planning",
-  "phase": "bible",
+  "status": "generating",
+  "phase": "outline",
   "language": "zh",
   "outline_revision": 0,
   "next_chapter": null,
