@@ -136,7 +136,8 @@ PORT=4172 HOST=127.0.0.1 node .output/server/index.mjs
 测试先行。tests/deploys.test.ts 断言三件事：种子数据可读、创建时 id 服务端自增、读取返回副本。
 
 ```ts
-// companion/tests/deploys.test.ts · 部署日志域逻辑单测（数据源暂为内存数组，无需起服务器）
+// companion/tests/deploys.test.ts · 第 2 章形态（教学示意）：内存数组数据源 + resetDeploys 测试缝
+// 第 4 章起数据源改为注入式仓库，隔离缝换成 new InMemoryDeploysRepo(seed)（终态见 docs/04-database-layer.md）
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createDeploy, listDeploys, resetDeploys } from '../server/domain/deploys'
 
@@ -197,7 +198,8 @@ Test Files  1 failed (1)
 最小实现两步。第一步 shared/types.ts（上一节已全文给出）。第二步 server/domain/deploys.ts：
 
 ```ts
-// companion/server/domain/deploys.ts · 部署日志域逻辑：纯函数 + 内存数据源
+// companion/server/domain/deploys.ts · 第 2 章形态（教学示意）：纯函数 + 内存数据源
+// 第 4 章起数据源成为显式入参（DeploysRepo 接口），终态见 docs/04-database-layer.md
 // 刻意不 import 任何 HTTP 概念（h3 的事件、请求、响应都不进这一层）——因此无需起服务器即可单测
 import type { CreateDeployInput, DeployRecord } from '#shared/types'
 
@@ -241,7 +243,7 @@ export function createDeploy(input: CreateDeployInput): DeployRecord {
 路由层薄到只剩适配：
 
 ```ts
-// companion/server/api/deploys.get.ts · GET /api/deploys：文件路径即路由，.get 后缀限定 HTTP 方法
+// companion/server/api/deploys.get.ts · 第 2 章形态（教学示意）：第 4 章起入参变为 useDeploysRepo()（终态见 docs/04-database-layer.md）
 import { listDeploys } from '../domain/deploys'
 
 export default defineEventHandler(() => {
@@ -322,10 +324,10 @@ status: 201
 
 201。脏数据照单全收：summary 缺了没人管，commit 是不是哈希也没人管。第二条脏记录随后就出现在首页的裸 HTML 里——fetch 不执行 JS，出现即服务端渲染，脏数据一路流到了用户眼前。更扎心的是另一行事实：pnpm typecheck 对这一版是绿的——readBody 的返回类型是 any，编译器对它失明。开篇的第二种死法（脏数据）与第三种死法（any 传染）在这一版里同时上演。
 
-修复：门口装上 schema。终版全文：
+修复：门口装上 schema。本章终版全文（教学示意：第 4 章起 createDeploy 多一个仓库入参，终态见 docs/04-database-layer.md）：
 
 ```ts
-// companion/server/api/deploys.post.ts · POST /api/deploys：请求校验在边界完成（readValidatedBody + zod）
+// companion/server/api/deploys.post.ts · 第 2 章终版：请求校验在边界完成（readValidatedBody + zod）
 import { z } from 'zod'
 import { createDeploy } from '../domain/deploys'
 
@@ -389,7 +391,8 @@ export default defineEventHandler(async (event) => {
 package.json 登记 e2e:ch2，跑门槛，输出如下。
 
 ```text
-# pnpm build && pnpm e2e:ch2 终态输出
+# companion 门槛 pnpm build && pnpm e2e:ch2 终态输出（第 4 章起首行多一步库重置）
+[e2e:ch2] 开发库已重置为 3 条种子记录
 [e2e:ch2] GET /api/deploys → 200
 [e2e:ch2] 种子记录含 "9f3c2ab" → PASS
 [e2e:ch2] 种子记录含 "77aa01f" → PASS
@@ -416,7 +419,7 @@ curl -s -w '\n%{http_code}\n' -X POST http://127.0.0.1:4172/api/deploys \
   -d '{"env":"production","status":"success","commit":"a1b2c3d","summary":"手工验证"}'
 ```
 
-对照：201（响应体带 id: 4）、400、400。把第三个请求的 commit 换成 zzzzzzz 再发一次，观察 400 响应体里 path 指向 commit、message 是 schema 里写的那句人话。接着做两件小事：pnpm dev 起开发服务器，curl http://localhost:3000/api/deploys——同样的 JSON，开发与生产同一套代码的口径当场兑现；把生产进程 Ctrl+C 杀掉再启动，GET /api/deploys——先猜新记录还在不在，对照：只剩 3 条种子。内存数组随进程生死，它守的是「域逻辑可测」，不守「数据持久」；持不持久是数据源层的职责（内存数组换成数据库的去向见第 4 章）。
+对照：201（响应体带 id: 4）、400、400。把第三个请求的 commit 换成 zzzzzzz 再发一次，观察 400 响应体里 path 指向 commit、message 是 schema 里写的那句人话。接着做两件小事：pnpm dev 起开发服务器，curl http://localhost:3000/api/deploys——同样的 JSON，开发与生产同一套代码的口径当场兑现；把生产进程 Ctrl+C 杀掉再启动，GET /api/deploys——先猜新记录还在不在。本章内存数据源时点的对照是只剩 3 条种子：数组随进程生死，它守的是「域逻辑可测」，不守「数据持久」（教学示意；数据源换成 PostgreSQL 后这道题的答案翻转——新记录活过进程死亡，终态见 docs/04-database-layer.md）。
 
 实验二（定向破坏 A）：共享类型的双向哨。把 shared/types.ts 里两处 `summary: string`（DeployRecord 与 CreateDeployInput 各一处）都改成 `note: string`。先写两个预测：pnpm typecheck 会在几个文件报错？pnpm build 与两条 e2e 各是什么结局？
 
@@ -469,5 +472,5 @@ curl -s -w '\n%{http_code}\n' -X POST http://127.0.0.1:4172/api/deploys \
 <details>
 <summary>4. POST 成功后重启生产进程，新记录消失了。这是 bug 吗？哪一层负责这件事，换实现时其余层要改吗？</summary>
 
-不是 bug，是内存数据源的生命周期：随进程生死。数据怎么存、存多久是数据源层的职责；域逻辑与 handler 依赖的是它的接口行为，换实现时这两层不动。回查「演练」红二一节与验证实验一。
+不是 bug，是内存数据源的生命周期：随进程生死（教学示意：数据源换成 PostgreSQL 后，重启不再丢记录——数据活过进程死亡，终态见 docs/04-database-layer.md）。数据怎么存、存多久是数据源层的职责；域逻辑与 handler 依赖的是它的接口行为，换实现时这两层不动。回查「演练」红二一节与验证实验一。
 </details>

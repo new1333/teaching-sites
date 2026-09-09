@@ -1,0 +1,29 @@
+# companion/compose.db.yaml · 开发数据库编排（只含 db 一个服务；完整应用栈在第 5 章）
+# 端口约定：宿主 54329 → 容器 5432（41xx/5xxxx 段避开常用服务，容器名带 shiplog 前缀防撞名）
+# 镜像 tag 固定 postgres:16-alpine：版本锁死，复现时不猜「latest 里装的是什么」。
+# name: shiplog 是 compose 项目名——容器、网络、卷的实际名都以它为前缀（如卷 shiplog_db-data）。
+name: shiplog
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: shiplog-db
+    environment:
+      # 引导超级用户与初始库：POSTGRES_USER 是超级用户，因此开发机上它能自建测试库（shiplog_test）
+      POSTGRES_USER: ship_log
+      POSTGRES_PASSWORD: ship_log
+      POSTGRES_DB: ship_log
+    ports:
+      - "54329:5432"
+    volumes:
+      # 数据放卷里：容器删了重建，数据仍在（第 5 章展开的数据卷概念，这里先用起来）
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready 探活：--wait 等的就是这个探针转绿（健康检查的完整讨论在第 5 章）
+      test: ["CMD-SHELL", "pg_isready -U ship_log -d ship_log"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  db-data:

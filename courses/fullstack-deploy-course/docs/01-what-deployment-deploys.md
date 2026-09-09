@@ -58,7 +58,7 @@ pnpm build
 
 三件事值得盯住。
 
-第一，一次构建同时产出「两端」：public/ 是给浏览器的静态资源，server/ 是在服务器上运行的代码。第二，server/node_modules 不是你装的那几百个开发依赖，而是构建器从实际代码里追踪（trace）出来的最小集合。到底多小：本工程此刻顶层 12 个条目（含 @babel、@vue 两个 scope 目录），展开共 19 个包，.output/server/package.json 里登记的依赖与之恰好对账，版本个个精确，一个 ^ 都没有。这个数不是常量：server/ 引入新库它就涨（第 2 章用上 zod 后就是 20）。按需追踪，正是这个数的成因。第三，入口 index.mjs 的第一行 import 的是 node:http：它不需要 Vite、不需要任何命令行工具，就是一段「在 Node 里创建 HTTP 服务器」的普通代码。
+第一，一次构建同时产出「两端」：public/ 是给浏览器的静态资源，server/ 是在服务器上运行的代码。第二，server/node_modules 不是你装的那几百个开发依赖，而是构建器从实际代码里追踪（trace）出来的最小集合。到底多小：本工程此刻顶层 12 个条目（含 @babel、@vue 两个 scope 目录），展开共 19 个包，.output/server/package.json 里登记的依赖与之恰好对账，版本个个精确，一个 ^ 都没有。这个数不是常量：server/ 引入新库它就涨（第 2 章用上 zod 后是 20，第 4 章数据库驱动与 ORM 进来后继续涨）。按需追踪，正是这个数的成因。第三，入口 index.mjs 的第一行 import 的是 node:http：它不需要 Vite、不需要任何命令行工具，就是一段「在 Node 里创建 HTTP 服务器」的普通代码。
 
 这份产物是自包含的：把它整个拷到工程之外、只装有 Node 的目录，直接 node server/index.mjs，照常监听、照常出页面。这一点不用我担保，验证一节你会亲手拷一次。**部署交付的是 .output 这个整体，不是源代码仓库。**
 

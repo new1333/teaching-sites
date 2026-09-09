@@ -10,8 +10,12 @@
     "e2e:ch1": "node --env-file-if-exists=.env scripts/e2e-ch1.mjs",
     "e2e:ch2": "node --env-file-if-exists=.env scripts/e2e-ch2.mjs",
     "e2e:ch3": "node scripts/e2e-ch3.mjs",
+    "e2e:ch4": "node --env-file-if-exists=.env scripts/e2e-ch4.mjs",
     "db:up": "node scripts/compose-db.mjs up",
-    "db:down": "node scripts/compose-db.mjs down"
+    "db:down": "node scripts/compose-db.mjs down",
+    "db:generate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs migrate",
+    "db:seed": "node --env-file-if-exists=.env scripts/seed.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

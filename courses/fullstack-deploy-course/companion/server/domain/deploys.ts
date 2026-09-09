@@ -1,28 +1,44 @@
-// companion/server/domain/deploys.ts · 部署日志域逻辑：纯函数 + 内存数据源
+// companion/server/domain/deploys.ts · 部署日志域逻辑：纯函数 + 注入式数据源
 // 刻意不 import 任何 HTTP 概念（h3 的事件、请求、响应都不进这一层）——因此无需起服务器即可单测
+// 数据源同样不进这一层：域逻辑只认下面的 DeploysRepo 接口——生产连 PostgreSQL（server/db/deploys.ts），
+// 单测用内存实现。换数据源时这一层不动，这正是它存在的意义
 import type { CreateDeployInput, DeployRecord } from '#shared/types'
 
-// 数据源暂为模块级内存数组：进程启动时是种子数据，重启即归零（后续章节换成数据库）
-const seed: DeployRecord[] = [
-  { id: 3, env: 'production', status: 'success', commit: '77aa01f', summary: '备份脚本改用 pg_dump 归档格式' },
-  { id: 2, env: 'production', status: 'success', commit: 'd41e8c7', summary: '健康检查超时从 3s 调到 10s' },
-  { id: 1, env: 'staging', status: 'failed', commit: '9f3c2ab', summary: '首次部署：迁移失败，已回滚' },
-]
-
-let records: DeployRecord[] = [...seed]
-
-// 测试隔离缝：重置回种子状态（内存数据源时期的测试专用入口）
-export function resetDeploys(): void {
-  records = [...seed]
+// 部署日志仓库：域逻辑对数据源的全部要求。
+// id 分配与「新记录在前」的排序规则由各实现自己承担——数据库里是 identity 列 + ORDER BY id DESC
+export interface DeploysRepo {
+  list(): Promise<DeployRecord[]>
+  create(input: CreateDeployInput): Promise<DeployRecord>
 }
 
-export function listDeploys(): DeployRecord[] {
-  return [...records]
+// 对外接口保持原名：调用方从 listDeploys() / createDeploy(input) 变为
+// listDeploys(repo) / createDeploy(repo, input)——数据源从此是显式入参，不再是隐藏的模块级状态
+export async function listDeploys(repo: DeploysRepo): Promise<DeployRecord[]> {
+  return repo.list()
 }
 
-export function createDeploy(input: CreateDeployInput): DeployRecord {
-  const nextId = records.reduce((max, r) => Math.max(max, r.id), 0) + 1
-  const record: DeployRecord = { id: nextId, ...input }
-  records = [record, ...records]
-  return record
+export async function createDeploy(repo: DeploysRepo, input: CreateDeployInput): Promise<DeployRecord> {
+  return repo.create(input)
+}
+
+// 内存实现：单测的快车道（毫秒级、无需数据库），规则与 PostgreSQL 实现一致。
+// 测试隔离缝从 resetDeploys() 换成了它：每个测试 new 一个全新仓库，状态永远不串
+export class InMemoryDeploysRepo implements DeploysRepo {
+  #records: DeployRecord[]
+
+  constructor(initial: readonly DeployRecord[] = []) {
+    this.#records = [...initial]
+  }
+
+  async list(): Promise<DeployRecord[]> {
+    // 新记录在前（按 id 倒序）；返回副本，改动结果不影响下一次读取
+    return [...this.#records].sort((a, b) => b.id - a.id)
+  }
+
+  async create(input: CreateDeployInput): Promise<DeployRecord> {
+    const nextId = this.#records.reduce((max, r) => Math.max(max, r.id), 0) + 1
+    const record: DeployRecord = { id: nextId, ...input }
+    this.#records = [...this.#records, record]
+    return record
+  }
 }

@@ -1,6 +1,8 @@
 // scripts/e2e-ch2.mjs · 第 2 章 e2e：起生产进程 → 断言 /api/deploys 行为 → 收尾退出
 //
-// 前置：pnpm build 已产出 .output（缺产物时本脚本会以「先构建」的明确理由失败）。
+// 前置：pnpm build 已产出 .output（缺产物时本脚本会以「先构建」的明确理由失败）；
+//       开发数据库在跑且表已建（第 4 章起数据源是 PostgreSQL——本脚本起进程前会把
+//       deploys 表重置回 3 条种子，让「恰好 3 条 + 下一条 id 是 4」每次运行都成立）。
 // 断言六件事：
 //   1) GET /api/deploys 返回 200，且是含 3 条种子记录的 JSON 数组（形状与共享类型一致）；
 //   2) POST 合法输入返回 201，id 由服务端分配（4 = 种子最大 id + 1）；
@@ -14,6 +16,7 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { seedDeploys } from './seed.mjs'
 
 const ROOT = join(import.meta.dirname, '..')
 const SERVER = join(ROOT, '.output', 'server', 'index.mjs')
@@ -21,7 +24,7 @@ const PORT = 4172
 const BASE = `http://127.0.0.1:${PORT}`
 const API = `${BASE}/api/deploys`
 
-// 种子数据里的两个 commit（与 server/domain/deploys.ts 的种子一致）：出现在 GET 结果里 = 数据源就位
+// 种子数据里的两个 commit（与 scripts/seed.mjs 的种子一致）：出现在 GET 结果里 = 数据源就位
 const SEED_COMMITS = ['9f3c2ab', '77aa01f']
 // 本章 POST 的测试记录：出现在首页裸 HTML 里 = API 写入的数据被 SSR 渲染
 const POSTED_COMMIT = 'a1b2c3d'
@@ -51,6 +54,17 @@ process.on('exit', killChild)
 try {
   if (!existsSync(SERVER)) {
     fail(`未找到 ${SERVER} —— 生产产物不存在。先运行 pnpm build，再用 node 直接启动产物。`)
+  }
+
+  // 数据源是 PostgreSQL 后，断言一的「恰好 3 条种子」要求每次运行从同一状态出发：
+  // 起进程前重置开发库的 deploys 表（当年 resetDeploys 测试缝的门槛版）
+  const dbUrl = process.env.NUXT_DB_URL
+  if (!dbUrl) fail('缺少 NUXT_DB_URL —— 复制 .env.example 为 .env（开发库地址），或先 pnpm db:up。')
+  try {
+    const seeded = await seedDeploys(dbUrl)
+    console.log(`[e2e:ch2] 开发库已重置为 ${seeded} 条种子记录`)
+  } catch (err) {
+    fail(`重置开发库失败（${err.message}）—— 先 pnpm db:up 起库、pnpm db:migrate 建表，再跑本章门槛。`)
   }
 
   console.log(`[e2e:ch2] 启动生产进程: node .output/server/index.mjs (PORT=${PORT})`)

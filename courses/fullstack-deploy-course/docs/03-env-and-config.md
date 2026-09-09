@@ -203,7 +203,8 @@ process.exit(1) 把「启动失败」变成一个机器可判定的信号：进�
 
 # 数据库连接串（第 4 章起真正使用；值只在服务端存在，属于密钥）
 # 必需：缺失或为空时进程启动即失败（fail-fast）
-NUXT_DB_URL=postgres://ship_log:ship_log@127.0.0.1:5432/ship_log
+# 54329 是开发库的宿主端口（compose.db.yaml 的映射），刻意避开本机可能已有的 5432
+NUXT_DB_URL=postgres://ship_log:ship_log@127.0.0.1:54329/ship_log
 
 # 运行环境名（显示在首页；公有配置，会随页面进浏览器——只放非敏感信息）
 # 必需：只允许 local、staging、production
@@ -387,7 +388,7 @@ const outcome = await waitUntilExit(act2.exited, 30_000)
 
 ```bash
 # 用法示例 · Git Bash，companion 目录内
-NUXT_DB_URL='postgres://ship_log:ship_log@127.0.0.1:5432/ship_log' NUXT_PUBLIC_APP_ENV=local PORT=4181 node .output/server/index.mjs
+NUXT_DB_URL='postgres://ship_log:ship_log@127.0.0.1:54329/ship_log' NUXT_PUBLIC_APP_ENV=local PORT=4181 node .output/server/index.mjs
 curl -s http://127.0.0.1:4181/ | grep -o '当前环境：<code>.*</code>'
 # Ctrl+C 停掉，换 production 再起一次，重发同一条 curl
 ```

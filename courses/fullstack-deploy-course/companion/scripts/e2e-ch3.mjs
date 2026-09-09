@@ -1,6 +1,7 @@
 // scripts/e2e-ch3.mjs · 第 3 章 e2e：环境变量在生产产物上生效 + 缺配置启动即失败
 //
-// 前置：pnpm build 已产出 .output（缺产物时本脚本会以「先构建」的明确理由失败）。
+// 前置：pnpm build 已产出 .output（缺产物时本脚本会以「先构建」的明确理由失败）；
+//       幕一需要真实可达的数据库（第 4 章起 dbUrl 被 API 真正消费：GET /api/deploys 要连库）。
 // 两幕断言：
 //   幕一（注入生效）：不重建、不读 .env，仅靠环境变量以 NUXT_PUBLIC_APP_ENV=staging 启动同一产物：
 //     1) GET / 返回 200，且裸 HTML 含 <code>staging</code>（公有运行期配置注入并被 SSR 渲染）；
@@ -17,14 +18,17 @@
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
+import postgres from 'postgres'
 
 const ROOT = join(import.meta.dirname, '..')
 const SERVER = join(ROOT, '.output', 'server', 'index.mjs')
 const PORT = 4173
 const BASE = `http://127.0.0.1:${PORT}`
 
-// 幕一专用连接串：只验证「值到达服务端」，不真连库（第 4 章起才真正使用）
-const ACT1_DB_URL = 'postgres://e2e_ch3:e2e_ch3@127.0.0.1:5432/e2e_ch3'
+// 幕一专用连接串：不读 .env（值必须来自进程环境本身）——shell 已设 NUXT_DB_URL 就用它，
+// 否则用开发库默认地址（compose.db.yaml 映射的 127.0.0.1:54329）。dbUrl 是真实消费者，
+// 这个值会被 /api/deploys 真正用来建连接
+const ACT1_DB_URL = process.env.NUXT_DB_URL ?? 'postgres://ship_log:ship_log@127.0.0.1:54329/ship_log'
 
 class E2eFailure extends Error {}
 
@@ -105,6 +109,17 @@ try {
   }
 
   // ── 幕一：同一产物 + NUXT_PUBLIC_APP_ENV=staging，零重建 ──────────────────────
+  // 库可达性先行：dbUrl 是真实消费者，库起不来时先说人话，不让断言三独自背锅
+  {
+    const probe = postgres(ACT1_DB_URL, { max: 1, connect_timeout: 3 })
+    try {
+      await probe`select 1`
+    } catch (err) {
+      fail(`幕一需要真实可达的数据库（${ACT1_DB_URL.replace(/\/\/[^@]*@/, '//***@')}）：${err.message} —— 先 pnpm db:up && pnpm db:migrate。`)
+    } finally {
+      await probe.end({ timeout: 1 })
+    }
+  }
   console.log(`[e2e:ch3] 幕一：以 NUXT_PUBLIC_APP_ENV=staging 启动同一产物（不重建、不读 .env）`)
   const act1 = startServer({ NUXT_DB_URL: ACT1_DB_URL, NUXT_PUBLIC_APP_ENV: 'staging' })
   child = act1.spawned
