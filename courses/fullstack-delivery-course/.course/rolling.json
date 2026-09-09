@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "request-journey",
+      "file": "docs/01-request-journey.md",
+      "status": "complete",
+      "summary": "建立全书地图：请求旅程六站（DNS、入口、应用进程、缓存、数据库、异步队列）+ 无状态横切纪律。首教三块积木——请求旅程（排障归属地图，锚 Network 面板两端视角）、反向代理（成因=证书/端口/公网防护三笔反事实账，锚 Vite server.proxy）、无状态服务（成因=进程崩/重启/复制，判据=「进程重启后该不该还在」）。读者能对「打不开/转圈」类故障判定归属层，8 道场景题先猜后对全部离散可核对。无验证物增量。",
+      "artifacts": [],
+      "gates": [
+        { "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/01-request-journey.md --new 请求旅程 反向代理 无状态服务", "result": "passed" }
+      ],
+      "review_blockers": 0
+    }
+  ]
+}

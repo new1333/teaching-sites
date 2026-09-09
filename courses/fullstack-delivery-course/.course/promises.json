@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "promises": [
+    {
+      "id": "ch1-caddy-landing",
+      "from": "request-journey",
+      "from_n": 1,
+      "target": "deploy-https",
+      "what": "反向代理在第 1 章只到「为什么存在」；Caddy 落地在第 9 章（读者侧仅收束处一行括注导航，不写成欠账）",
+      "status": "open"
+    }
+  ]
+}
