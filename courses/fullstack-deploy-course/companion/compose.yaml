@@ -1,0 +1,60 @@
+# companion/compose.yaml · 应用栈：app + db 一键拉起（pnpm compose:sim 走这里）
+#
+# 与 compose.db.yaml 的分工（正文第 5 章「两份编排文件」）：
+#   compose.db.yaml —— 开发库：宿主端口 54329，给 pnpm dev / vitest / psql 用；
+#   compose.yaml    —— 应用栈：app + db 整套拓扑，db 不映射宿主端口（只有栈内网络可达）。
+# 项目名刻意不同（shiplog vs shiplog-stack）：两套容器、两个卷互不干扰，可同时运行。
+name: shiplog-stack
+
+services:
+  app:
+    build:
+      context: .
+      target: run # 用 Dockerfile 的 run 段作为最终镜像（多阶段构建的出口）
+    container_name: shiplog-stack-app
+    environment:
+      # 同一变量、不同值：宿主开发走 127.0.0.1:54329，容器内走服务名 db:5432——
+      # db 是 compose 网络里的服务名主机名，只有栈内解析得到
+      NUXT_DB_URL: postgres://ship_log:ship_log@db:5432/ship_log
+      # 演一套「非本机」的环境名：页面上会显示 staging，证明变量真的注入了容器
+      NUXT_PUBLIC_APP_ENV: staging
+    ports:
+      - "4180:3000" # 宿主 4180 → 容器 3000（41xx 段避开常用端口）
+    depends_on:
+      db:
+        condition: service_healthy # db 健康检查转绿之前，app 不起
+
+  db:
+    image: postgres:16-alpine # 与开发库同版本：同一家 PostgreSQL，两处编排
+    container_name: shiplog-stack-db
+    environment:
+      POSTGRES_USER: ship_log
+      POSTGRES_PASSWORD: ship_log
+      POSTGRES_DB: ship_log
+    # 注意没有 ports：这座库不暴露给宿主机，只在栈内网络提供服务
+    volumes:
+      - db-data:/var/lib/postgresql/data # 数据放卷里：容器删了重建，数据仍在
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ship_log -d ship_log"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # 一次性迁移执行器：借用 Dockerfile 的 build 段（那里有完整工具链与迁移账本），
+  # 在栈内网络跑与宿主机同一条 drizzle-kit migrate。profiles 让它不随 up 启动，
+  # 只被 docker compose run --rm migrate 显式调用。
+  # 简化声明：迁移时机（起前跑 vs 启动时跑）的完整讨论在数据库运维一章；本章先给最简可行。
+  migrate:
+    build:
+      context: .
+      target: build
+    profiles: [tools]
+    environment:
+      NUXT_DB_URL: postgres://ship_log:ship_log@db:5432/ship_log
+    command: node node_modules/drizzle-kit/bin.cjs migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

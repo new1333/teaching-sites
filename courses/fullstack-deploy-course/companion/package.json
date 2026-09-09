@@ -2,6 +2,7 @@
   "name": "ship-log",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.29.2",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
@@ -15,7 +16,8 @@
     "db:down": "node scripts/compose-db.mjs down",
     "db:generate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs migrate",
-    "db:seed": "node --env-file-if-exists=.env scripts/seed.mjs"
+    "db:seed": "node --env-file-if-exists=.env scripts/seed.mjs",
+    "compose:sim": "node scripts/compose-sim.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

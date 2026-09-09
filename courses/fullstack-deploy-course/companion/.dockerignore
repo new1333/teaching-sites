@@ -1,0 +1,14 @@
+# companion/.dockerignore · 构建上下文的门卫：列在里面的东西不进上下文，也就不进任何镜像层
+# （上下文是发送给 docker build 的文件集合——COPY . . 拷的是「上下文里的 . 」，不是磁盘上的 . ）
+
+# 宿主机的安装与构建结果：换环境要重算，拷进去还会污染层缓存、撑大上下文
+node_modules
+.output
+.nuxt
+
+# 密钥：.env 不进上下文——进了就会随 COPY . . 躺进 builder 段的镜像层（正文有泄漏演示）
+.env
+
+# 与镜像无关的本机资产：测试与脚本不参与 nuxt build
+tests
+scripts
