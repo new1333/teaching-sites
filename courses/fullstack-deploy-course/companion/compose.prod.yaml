@@ -1,0 +1,75 @@
+# companion/compose.prod.yaml · 生产拓扑：app + db + nginx（pnpm sim:prod 走这里）
+#
+# 与 compose.yaml 的分工（正文「两份编排文件的取舍」）：
+#   compose.yaml      —— 应用栈：app 映射宿主 4180，开发调试直接打应用；
+#   compose.prod.yaml —— 生产拓扑：宿主入口只剩 nginx 的 80/443（本地演练映射 4181/8443），
+#                        app 与 db 都不映射宿主端口，只在栈内网络可达。
+# 项目名 shiplog-prod 与前两者错开：三套容器、各自的网络与卷，互不干扰。
+name: shiplog-prod
+
+services:
+  app:
+    build:
+      context: .
+      target: run
+    container_name: shiplog-prod-app
+    environment:
+      NUXT_DB_URL: postgres://ship_log:ship_log@db:5432/ship_log
+      NUXT_PUBLIC_APP_ENV: production # 配置门卫的枚举只认 local/staging/production——写成 prod 会被启动期校验拦下（正文有真实现场）
+    # 注意没有 ports：应用不再有宿主入口，流量一律经 nginx 的 443 进来——
+    # 「绕过反代直连应用」这条路在生产拓扑里不存在
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped # 崩溃自动拉起；手动 docker stop 之后的「停」被尊重
+
+  db:
+    image: postgres:16-alpine
+    container_name: shiplog-prod-db
+    environment:
+      POSTGRES_USER: ship_log
+      POSTGRES_PASSWORD: ship_log
+      POSTGRES_DB: ship_log
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ship_log -d ship_log"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27-alpine # 固定 tag：与 postgres:16-alpine 同一条「不漂移」纪律
+    container_name: shiplog-prod-nginx
+    # 生产拓扑唯一的宿主入口：本地演练用 4181/8443，真实服务器换成 80/443（runbook 有对照表）
+    ports:
+      - "4181:80" # 明文入口：nginx 只做一件事——301 跳 https
+      - "8443:443" # TLS 入口：证书在这里终止，转发明文 HTTP 给 app:3000
+    volumes:
+      # 整份配置挂为容器的 /etc/nginx/nginx.conf（nginx 容器启动时读的就是这个路径）
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # 证书目录只读挂载：nginx 只需要读，不需要改
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      app:
+        condition: service_healthy # app 的健康探针没绿之前，入口不起——避免「入口在、后端死」的 502 窗口
+    restart: unless-stopped
+
+  # 一次性迁移执行器：与 compose.yaml 的 migrate 同构（借 build 段工具镜像 + tools profile）。
+  # 刻意不写 restart：它跑完就退出，而 unless-stopped 连「正常退出」也会拉起重跑——
+  # 一次性容器配重启策略等于无限循环。守护是常驻服务的事。
+  migrate:
+    build:
+      context: .
+      target: build
+    profiles: [tools]
+    environment:
+      NUXT_DB_URL: postgres://ship_log:ship_log@db:5432/ship_log
+    command: node node_modules/drizzle-kit/bin.cjs migrate
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
