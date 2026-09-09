@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "status": "answered",
+  "audience": "写过 Nuxt 3/4 全栈应用（含 server/api 与目录约定）、Vue 3 组合式 API 熟练的前端开发者；体验工程层（payload、水合、缓存语义、错误体系、乐观更新）见过但不熟，未系统动手调优过",
+  "known": [
+    "Vue 3 组合式 API 与 Vite 工程日常使用",
+    "Nuxt 目录约定：pages/、components/、server/api/，能独立搭含接口的全栈应用",
+    "SSR 与 CSR 的概念区别，知道 Nuxt 默认服务端渲染",
+    "pnpm/npm 命令行按步骤执行、读 package.json scripts",
+    "浏览器 DevTools 基本使用（Network 面板看得懂请求列表）"
+  ],
+  "unfamiliar": [
+    "payload 机制：数据如何随 HTML 注入、客户端水合时如何复用而不重复请求",
+    "水合成本与可交互延迟：页面可见但点不动的原因与瘦身手段",
+    "routeRules 各路由规则的缓存语义（prerender/swr/isr）与 Cache-Control 语义",
+    "createError/showError 与 error.vue 的分工、组件级错误边界",
+    "导航预取策略与 preload/prefetch 资源提示",
+    "乐观更新的写入-确认-回滚三段式与 View Transitions",
+    "service worker 离线兜底与超时重试策略",
+    "首屏资产预算与构建产物审计",
+    "性能指标的度量口径（TTFB/FCP/LCP/INP 各测什么、哪些需要浏览器）"
+  ],
+  "anchors": [
+    { "concept": "Nuxt 基础与目录约定", "known_anchor": "相邻知识问答：选『写过 Nuxt 全栈应用』" },
+    { "concept": "SSR/CSR 概念区别", "known_anchor": "熟练度问答：『知道 SSR/CSR 区别』属于见过档的已知部分" },
+    { "concept": "payload/水合/缓存语义/错误体系/资产审计", "known_anchor": "熟练度问答：选『见过但不熟』——听过但没动手调过，按首现即外行处理" },
+    { "concept": "性能指标口径", "known_anchor": "熟练度问答：『Lighthouse 分数怎么读』未到能独立做档" },
+    { "concept": "终点为从零搭建并量化", "known_anchor": "终点问答：选『从零搭出并量化』" }
+  ],
+  "decisions": [
+    "本次校准为单次批量交互（本环境单批问题数上限 4），四维度各 1 问；相邻知识与熟练度两问均用具体任务判别式（三选一），不使用抽象自评，区分度由选项档位承担。",
+    "读者已具备 Nuxt 全栈基础，故正文不教 Vue 组合式 API 与 Nuxt 目录入门，直接从度量与数据流层进入；Nuxt 基础只作工具箱引用。",
+    "终点选『从零搭出并量化』，验证形态定为 code-lab：companion 逐章生长为可运行 Nuxt 应用，每章脚本门可重复执行，感知信号另给人工观察步骤。",
+    "使用场景为系统性补齐能力：章节覆盖按 ingestion 全量 11 特性执行，不裁剪为单点速查。"
+  ]
+}
