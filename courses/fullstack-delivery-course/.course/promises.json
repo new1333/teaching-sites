@@ -15,7 +15,8 @@
       "from_n": 2,
       "target": "persistence",
       "what": "内存 Map 的「重启即丢」在第 3 章作为开场现象回收；store 已收窄为 put/get 注入接口，换持久化时端点代码一行不改",
-      "status": "open"
+      "status": "fulfilled",
+      "resolution": "开场即「昨晚短链今早全 404、内存蒸发」回收；收束以容器级重启实测 302 收口；组装证据=第 2 章测试文件哈希前后一致且全绿"
     },
     {
       "id": "ch2-ownership-guard",
@@ -23,6 +24,14 @@
       "from_n": 2,
       "target": "auth-session",
       "what": "创建端点的归属检查（谁建的链归谁）在第 4 章接入登录后补上；POST /api/links 届时加 401",
+      "status": "open"
+    },
+    {
+      "id": "ch3-env-vars",
+      "from": "persistence",
+      "from_n": 3,
+      "target": "containerize",
+      "what": "环境变量本章只教单个 DATABASE_URL 读入（dev 默认+生产 fail-fast）；.env 分层与密钥边界第 7 章统一收口（收束已留一行括注导航）",
       "status": "open"
     }
   ]

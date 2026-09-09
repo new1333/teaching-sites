@@ -7,15 +7,20 @@
     "dev": "tsx watch src/main.ts",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@shortlink/shared": "workspace:*",
+    "drizzle-orm": "^0.45.0",
     "hono": "^4.13.7",
-    "nanoid": "^6.0.1"
+    "nanoid": "^6.0.1",
+    "postgres": "^3.4.5"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "drizzle-kit": "^0.31.0"
   }
 }

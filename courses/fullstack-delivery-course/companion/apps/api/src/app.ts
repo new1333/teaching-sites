@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { nanoid } from 'nanoid'
 import { createLinkSchema, type LinkResponse } from '@shortlink/shared'
-import { createMemoryStore, type MemoryStore } from './store'
+import { createMemoryStore, type LinkStore } from './store'
 
-export function createApp(store: MemoryStore = createMemoryStore()) {
+export function createApp(store: LinkStore = createMemoryStore()) {
   const app = new Hono()
 
   // 浅检查：进程活着就答 ok
@@ -25,12 +25,12 @@ export function createApp(store: MemoryStore = createMemoryStore()) {
       url: parsed.data.url,
       createdAt: new Date().toISOString(),
     }
-    store.put(link)
+    await store.put(link)
     return c.json(link, 201)
   })
 
-  app.get('/:slug', (c) => {
-    const link = store.get(c.req.param('slug'))
+  app.get('/:slug', async (c) => {
+    const link = await store.get(c.req.param('slug'))
     if (!link) {
       return c.json({ error: 'not found' }, 404)
     }

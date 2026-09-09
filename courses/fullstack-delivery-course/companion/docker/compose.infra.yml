@@ -1,0 +1,23 @@
+# companion: docker/compose.infra.yml —— 教学基础设施（本章只有 pg；第 5 章在同一文件加 redis）
+services:
+  pg:
+    image: postgres:16-alpine
+    container_name: shortlink-pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: shortlink
+    ports:
+      # 宿主 5544 -> 容器 5432：避开本机可能已装的 Postgres
+      - "5544:5432"
+    volumes:
+      # 具名卷：docker compose down 不删数据，up 回来数据仍在
+      - shortlink_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shortlink"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  shortlink_pgdata:

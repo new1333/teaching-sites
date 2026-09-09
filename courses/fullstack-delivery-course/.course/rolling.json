@@ -50,6 +50,46 @@
         }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "persistence",
+      "file": "docs/03-persistence.md",
+      "status": "complete",
+      "summary": "接入 PostgreSQL 持久化：compose-infra 起 pg:16（宿主 5544，具名卷）、links 表 schema 与 0000/0001 迁移、PgStore 实现 put/get（第 2 章 6 条 e2e 一字不改全绿=组装证据，app.test.ts/contract.test-d.ts 哈希对账）、DATABASE_URL 读取（dev 默认+生产 fail-fast）。首教五积木：持久化、表与行、索引（30000 行 EXPLAIN：Seq 746→Index 8.43，空间账索引≈表八成）、迁移、连接池（懒建连、默认 10 条）。重启剧本内存红→pg 绿、容器级重启实测 302。",
+      "artifacts": [
+        "companion/docker/compose.infra.yml",
+        "companion/scripts/compose-infra.mjs",
+        "companion/apps/api/src/db/schema.ts",
+        "companion/apps/api/src/db/store.pg.ts",
+        "companion/apps/api/src/config.ts",
+        "companion/apps/api/drizzle/*",
+        "companion/apps/api/test/*",
+        "companion/apps/api/vitest.config.ts"
+      ],
+      "gates": [
+        {
+          "command": "cd companion && node scripts/compose-infra.mjs up",
+          "result": "passed"
+        },
+        {
+          "command": "cd companion && pnpm test",
+          "result": "passed（shared 8 + api 11 = 19 条）"
+        },
+        {
+          "command": "cd companion && pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/03-persistence.md --new 持久化 表与行 索引 迁移 连接池",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs courses/fullstack-delivery-course docs/02-monorepo-api.md --new 端点 请求校验 共享契约 CORS",
+          "result": "passed（回写后复跑）"
+        }
+      ],
+      "review_blockers": 0
     }
   ]
 }

@@ -372,9 +372,9 @@ Tests  5 failed | 1 passed (6)
 import { Hono } from 'hono'
 import { nanoid } from 'nanoid'
 import { createLinkSchema, type LinkResponse } from '@shortlink/shared'
-import { createMemoryStore, type MemoryStore } from './store'
+import { createMemoryStore, type LinkStore } from './store'
 
-export function createApp(store: MemoryStore = createMemoryStore()) {
+export function createApp(store: LinkStore = createMemoryStore()) {
   const app = new Hono()
 
   // 浅检查：进程活着就答 ok
@@ -396,7 +396,7 @@ export function createApp(store: MemoryStore = createMemoryStore()) {
       url: parsed.data.url,
       createdAt: new Date().toISOString(),
     }
-    store.put(link)
+    await store.put(link)
     return c.json(link, 201)
   })
 ```
@@ -405,8 +405,8 @@ export function createApp(store: MemoryStore = createMemoryStore()) {
 
 ```ts
 // companion: apps/api/src/app.ts · createApp（续）
-  app.get('/:slug', (c) => {
-    const link = store.get(c.req.param('slug'))
+  app.get('/:slug', async (c) => {
+    const link = await store.get(c.req.param('slug'))
     if (!link) {
       return c.json({ error: 'not found' }, 404)
     }
@@ -420,8 +420,18 @@ export function createApp(store: MemoryStore = createMemoryStore()) {
 注册顺序在这里是承重细节：`/healthz` 必须先注册——`/:slug` 是单段通配，写在前面会把 healthz 当短码吃掉。`c.redirect(url, 302)` 回跳转响应，Location 头指向原网址。
 
 ```ts
-// companion: apps/api/src/store.ts · createMemoryStore
+// companion: apps/api/src/store.ts · LinkStore 与 createMemoryStore
 import type { LinkResponse } from '@shortlink/shared'
+
+/**
+ * 注入缝：端点只依赖这两个方法。
+ * 返回值同时放行同步值与 Promise——存储住在进程内时同步（内存 Map），
+ * 搬到进程外时异步（数据库）。await 一个普通值会原样通过，两种实现共用同一份端点代码。
+ */
+export interface LinkStore {
+  put(link: LinkResponse): LinkResponse | Promise<LinkResponse>
+  get(slug: string): LinkResponse | undefined | Promise<LinkResponse | undefined>
+}
 
 export interface MemoryStore {
   put(link: LinkResponse): LinkResponse
@@ -442,12 +452,13 @@ export function createMemoryStore(): MemoryStore {
 }
 ```
 
-存储收窄成 put 与 get 两个方法、由 createApp 的参数注入——之后把 Map 换成数据库时，端点代码一行不改，换的只是这个工厂。跑 `pnpm test`：shared 8 条、api 6 条，全绿。
+存储收窄成 put 与 get 两个方法、由 createApp 的参数注入，接口就是上面那道 LinkStore 缝。它的返回值同时放行同步与 Promise，端点处一个 await 通吃。将来把 Map 换成数据库时，端点的行为契约一行不改，换的只是这个工厂（[第 3 章](./03-persistence)）。跑 `pnpm test`：shared 8 条、api 6 条，全绿。
 
 ### 第六步：起服务，curl 打一遍
 
 ```ts
-// companion: apps/api/src/main.ts
+// companion: apps/api/src/main.ts · 启动入口（本章形态：内存版——教学示意；
+// 第 3 章接入 PostgreSQL 后，此处改为注入 PgStore，终态见彼章演练）
 import { serve } from '@hono/node-server'
 import { createApp } from './app'
 
