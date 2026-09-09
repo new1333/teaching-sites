@@ -26,7 +26,7 @@
       "install": "pnpm install",
       "dev": "nuxt dev",
       "build": "nuxt build",
-      "start": "node .output/server/index.mjs",
+      "start": "node scripts/start.mjs（未设 PORT 时默认注入 4311）",
       "test": "vitest run",
       "measure": "node scripts/measure.mjs",
       "report": "node scripts/report.mjs",

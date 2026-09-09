@@ -16,6 +16,14 @@
       "target": "hydration",
       "what": "首屏 JS 字节口径将在水合章继续作为优化对账对象",
       "status": "open"
+    },
+    {
+      "id": "p3-lazy-to-loading-states",
+      "from": "ssr-dataflow",
+      "from_n": 2,
+      "target": "loading-states",
+      "what": "useAsyncData 的 lazy 参数将在加载状态章展开为两种导航形态（等数据再切换 vs 先切页再出骨架）",
+      "status": "open"
     }
   ]
 }

@@ -23,6 +23,32 @@
         { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/01-perf-baseline.md ...", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "ssr-dataflow",
+      "file": "docs/02-ssr-dataflow.md",
+      "status": "complete",
+      "summary": "建立三块积木：SSR 数据流（服务端取数→渲染进 HTML→序列化 payload→水合复用）、payload（__NUXT_DATA__ 内联数据行李，可查源码可断言）、useAsyncData 契约（key 去重+服务端执行+进 payload+复用）。companion：/products 改 useAsyncData（HTML 20.2KiB 直出、命中恰 1、首屏 JS +8.9KiB 如实记账）；旧形态保留 /demo/client-fetch；gate:ch1 锚点手术 110 项、gate:ch2 13 项先红后绿、payload 探针测试 4 例、pnpm start 固定 4311；steps/ch02 快照。读者能判定任意页面数据路径并完成同类改造。",
+      "artifacts": [
+        "companion/app/pages/products/index.vue（useAsyncData 改造）",
+        "companion/app/pages/demo/client-fetch.vue（永久反例路由）",
+        "companion/scripts/e2e-ch2.mjs + gate:ch2",
+        "companion/scripts/e2e-ch1.mjs（锚点手术：110 项）",
+        "companion/scripts/start.mjs + package.json/README（start 固定 4311）",
+        "companion/scripts/lib/measure-core.mjs（extractPayloadText）",
+        "companion/tests/payload.test.ts（4 例）",
+        "companion/reports/{measure,gate-ch1,gate-ch2}.json",
+        "companion/steps/ch02-ssr-dataflow/",
+        "docs/02-ssr-dataflow.md（含手术清单开场）+ docs/01-perf-baseline.md（4 处终态回写）"
+      ],
+      "gates": [
+        { "command": "pnpm gate:ch2", "result": "passed" },
+        { "command": "pnpm gate:ch1", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/02-ssr-dataflow.md ...（及第 1 章复验）", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

@@ -6,7 +6,7 @@
     "postinstall": "nuxt prepare",
     "dev": "nuxt dev",
     "build": "nuxt build",
-    "start": "node .output/server/index.mjs",
+    "start": "node scripts/start.mjs",
     "test": "vitest run",
     "measure": "node scripts/measure.mjs",
     "gate:ch1": "node scripts/e2e-ch1.mjs",

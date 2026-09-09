@@ -498,11 +498,11 @@ gate:ch1 通过
 
 ## 验证：亲手跑出你的第一份基线
 
-现在轮到你。进入伴生仓根目录（或 `steps/ch01-perf-baseline/` 快照，两者当前一致），先完成安装与全量门槛。
+现在轮到你。进入伴生仓根目录（`steps/ch01-perf-baseline/` 快照冻结的是本章终态；根目录随各章前进，此后每章末都有对应快照）。
 
 ```bash
 pnpm install        # postinstall 会自动执行 nuxt prepare 生成类型
-pnpm gate:ch1       # 构建 + 起服 + 109 项断言，应输出「gate:ch1 通过」
+pnpm gate:ch1       # 构建 + 起服 + 109 项断言，应输出「gate:ch1 通过」（第 2 章锚点手术后根目录为 110 项）
 ```
 
 **先猜后跑**：在跑下面这条命令之前，拿纸笔对 `/products` 页面写下三个离散答案。
@@ -519,7 +519,7 @@ pnpm gate:ch1       # 构建 + 起服 + 109 项断言，应输出「gate:ch1 通
   '/api/products': 800,
 ```
 
-把它改成 `'/api/products': 0,`。先写下预言再动手：重跑 `pnpm measure` 后，`/api/products` 的 TTFB 应从 810 ms 一档跌进个位数毫秒；而五个页面的 TTFB、HTML 字节、payload 字节、首屏 JS 字节、数据随 HTML 判定——一个都不该动。注意必须让 measure 重新构建（生产服务器跑的是构建产物，别用 `SKIP_BUILD=1`）。跑完对照：预言全中。解释也直白：这个开关守的只有「到达段·接口视角」的等待时间，页面 HTML 从来没等过它。把 800 改回去，再跑一次 measure，确认 810 ms 一档的 TTFB 复原。
+把它改成 `'/api/products': 0,`。先写下预言再动手：重跑 `pnpm measure` 后，`/api/products` 的 TTFB 应从 810 ms 一档跌进个位数毫秒；而五个页面的 TTFB、HTML 字节、payload 字节、首屏 JS 字节、数据随 HTML 判定——一个都不该动。注意：这是基线形态的预言。商品页改为服务端取数后（见「数据随 HTML 到达」章），SSR 渲染期会开始等这个接口，届时该实验请在 `steps/ch01-perf-baseline/` 快照里做，或预期该页 TTFB 随延迟联动跌落。实验必须让 measure 重新构建——生产服务器跑的是构建产物，别用 `SKIP_BUILD=1`。跑完对照：预言全中。解释也直白：这个开关守的只有「到达段·接口视角」的等待时间，基线形态的页面 HTML 从来没等过它。把 800 改回去，再跑一次 measure，确认 810 ms 一档的 TTFB 复原。
 
 **定向破坏二：污染探针，看口径怎么坏**。打开 `scripts/lib/measure-core.mjs`，把 `ROUTES` 里 products 行的探针 `'云朵雨伞'` 改成 `'商品加载中'`。预言：`SKIP_BUILD=1 node scripts/measure.mjs` 重跑后，products 的「数据随 HTML」翻成 true——而站点一行代码都没动。跑，中。这一变体守的是口径本身：探针必须是只可能来自数据的特征串，拿壳文案当探针，测到的不是数据而是模板。「可见段」的判据坏了，不吵大架，但从此每个数字都可疑。改回 `'云朵雨伞'`，确认回到 false。
 

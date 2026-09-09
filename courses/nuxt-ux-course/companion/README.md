@@ -11,7 +11,7 @@ pnpm measure     # 构建 → 起服务器 → 输出指标组报告（默认 re
 pnpm gate:ch1    # 第 1 章门槛：口径完整 / 数值合理 / 重复稳定 / 基线事实
 pnpm gate:ch2    # 第 2 章门槛：/products 直出事实 / 单次命中 / 反例页仍在
 pnpm dev         # 本地开发（默认 3000 端口）
-pnpm build && pnpm start   # 构建并以生产模式起服（PORT 环境变量可改端口，默认脚本用 4311）
+pnpm build && pnpm start   # 构建并以生产模式起服（默认 4311 端口，PORT 环境变量可覆盖）
 ```
 
 环境变量：`SKIP_BUILD=1` 让 measure / gate 跳过构建（要求 `.output` 已存在）；`PORT` 改服务器端口。
