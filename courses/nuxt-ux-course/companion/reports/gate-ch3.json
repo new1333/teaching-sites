@@ -1,0 +1,63 @@
+{
+  "command": "pnpm gate:ch3（node scripts/e2e-ch3.mjs）",
+  "generatedAt": "2026-09-09T04:02:35.313Z",
+  "base": "http://127.0.0.1:4311",
+  "build": "built",
+  "summary": {
+    "passed": 15,
+    "failed": 0,
+    "total": 15
+  },
+  "failed": [],
+  "detail": {
+    "status": 200,
+    "ttfbMs": 541.3,
+    "htmlBytes": 48533,
+    "payloadBytes": 419,
+    "firstLoadJs": {
+      "bytes": 200812,
+      "count": 7,
+      "chunks": [
+        {
+          "file": "_nuxt/CoYyRrSE.js",
+          "bytes": 74973
+        },
+        {
+          "file": "_nuxt/7RH9FnDd.js",
+          "bytes": 61451
+        },
+        {
+          "file": "_nuxt/jjKjlfcb.js",
+          "bytes": 24180
+        },
+        {
+          "file": "_nuxt/BH5RqoQ_.js",
+          "bytes": 17765
+        },
+        {
+          "file": "_nuxt/BjCj8P1q.js",
+          "bytes": 11663
+        },
+        {
+          "file": "_nuxt/DME2W7hh.js",
+          "bytes": 8632
+        },
+        {
+          "file": "_nuxt/gE8Ss9Yn.js",
+          "bytes": 2148
+        }
+      ],
+      "syncRecord": 211299,
+      "saved": 10487
+    }
+  },
+  "chartChunks": [
+    {
+      "file": "DuAKCHgz.js",
+      "bytes": 12447
+    }
+  ],
+  "apiHits": {
+    "/api/products/:id": 1
+  }
+}
