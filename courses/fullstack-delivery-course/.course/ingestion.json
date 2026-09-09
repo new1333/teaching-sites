@@ -1,0 +1,92 @@
+{
+  "schema_version": 2,
+  "kind": "topic",
+  "label": "前后端从开发到部署上线运维全流程（2026 现代 TypeScript 技术栈）",
+  "description": "面向前端开发者：从一个空目录出发，做出并上线一个真实的短链接服务。读者沿「请求旅程 → HTTP API → 数据库 → 登录会话 → 缓存/Redis → 消息队列 → 容器 → CI → 部署/HTTPS → 运维排障」的能力阶梯，逐层回答「这一层技术为什么存在、没有它会坏在哪、坏了我怎么看见」。栈选型为 2026 年主流的 TS 全家桶：pnpm monorepo、Hono、zod、Drizzle ORM、PostgreSQL、Redis、BullMQ、Vite+Vue3、Docker Compose、GitHub Actions、Caddy。",
+  "features": [
+    {
+      "id": "request-journey",
+      "name": "请求旅程与全栈地图",
+      "summary": "把「点一个短链到看到跳转」拆解成 DNS、反向代理、应用进程、数据库、缓存、异步队列各层；给出每层的存在理由（反事实：没有它会坏在哪）与技术栈选型判据。",
+      "reader_can": "拿到一个具体场景（首页慢、登录态丢失、统计少一条、证书过期），能判定它属于哪一层的职责，并说出这一层用什么技术承担。"
+    },
+    {
+      "id": "monorepo-api",
+      "name": "工程骨架与第一个 HTTP API",
+      "summary": "pnpm workspace 搭 api/web/shared 三包 monorepo；Hono 起后端、zod 定义请求校验、shared 包让前后端共享同一份契约类型；CORS 与开发代理；vitest 从第一行代码就跑起来。",
+      "reader_can": "从空目录搭起可一键启动的前后端工作区，实现带校验的 JSON 端点（创建短链、302 跳转，内存存储），并解释前后端交互的本质是 HTTP + JSON + 一份双方都认的契约。"
+    },
+    {
+      "id": "persistence",
+      "name": "持久化：PostgreSQL 与 Drizzle ORM",
+      "summary": "为什么进程内存存不住数据（重启即丢）；关系库的表/行/索引直觉；用 Drizzle 写 schema、生成迁移、接 postgres.js 连接池实现 CRUD；用真实查询计划见证索引如何救全表扫描；连接串从环境变量读入。",
+      "reader_can": "把内存版短链服务换成 Postgres 持久化，写迁移、跑 CRUD 端点，读 EXPLAIN 输出分辨全表扫描与索引扫描，并解释连接池为什么存在。"
+    },
+    {
+      "id": "auth-session",
+      "name": "登录与会话：密码、Session、Cookie",
+      "summary": "注册登录的完整链路：密码为什么必须加盐哈希（scrypt）而不是明文/可逆加密；会话的两条路线（服务端 session 表 + httpOnly Cookie vs 前端存 token）；中间件守护受保护路由；CSRF 与 SameSite 的直觉。",
+      "reader_can": "实现注册/登录/登出/当前用户四个端点，用 httpOnly Cookie 会话守护创建短链路由，并解释为什么 localStorage 存 token 更容易被打走、密码泄露时哈希挡住了什么。"
+    },
+    {
+      "id": "cache-redis",
+      "name": "缓存与 Redis",
+      "summary": "热读路径为什么先问内存再问数据库（延迟数量级差）；Redis 是什么、凭什么快；cache-aside 模式与 TTL；穿透的 null 缓存；Redis 第二用途——INCR+EXPIRE 实现每 IP 限流。",
+      "reader_can": "给短链跳转加 cache-aside 缓存并用测试证明第二次读不再查库，实现每 IP 创建限流（429），并解释缓存穿透/雪崩各自的坏法与对策。"
+    },
+    {
+      "id": "queue-mq",
+      "name": "消息队列与异步任务",
+      "summary": "同步写统计为什么拖垮跳转延迟（写放大与失败耦合）；BullMQ 用 Redis 当信箱实现生产者/消费者解耦；worker 独立进程消费；重试与幂等（唯一约束 + ON CONFLICT 挡住重复计数）。",
+      "reader_can": "把点击统计从跳转请求里挪进队列，worker 异步批量落库；用重复 jobId 验证幂等；解释削峰、解耦、重试三个词分别挡住哪种坏法。"
+    },
+    {
+      "id": "containerize",
+      "name": "容器化：Docker 与 Compose",
+      "summary": "「我这能跑」的根因是环境差异；镜像=应用+依赖+运行时的快照，分层带来缓存与复用；多阶段 Dockerfile 给 TS 应用瘦身；compose 一条命令拉起 api+worker+web+pg+redis 全家桶；配置统一走环境变量（12-factor）。",
+      "reader_can": "为前后端各写一个多阶段 Dockerfile，用 compose 把整套服务一键拉起并通过冒烟验证，解释镜像分层与 .env 分环境配置的用法。"
+    },
+    {
+      "id": "ci-pipeline",
+      "name": "CI 质量门禁",
+      "summary": "为什么合并前的把关要交给机器（人审看不住回归）；GitHub Actions workflow：装依赖→typecheck→test→build，与本地 ci-local 脚本同一张门禁清单；依赖缓存加速。",
+      "reader_can": "写出与本地门禁逐条对齐的 CI workflow，用 ci-local 在本地复现 CI 的每一步，并解释「门禁在 CI 和本地是同一份清单」为什么重要。"
+    },
+    {
+      "id": "deploy-https",
+      "name": "部署上线：反向代理与 HTTPS",
+      "summary": "反向代理挡在应用前面干什么（TLS 终止、压缩、路由多应用）；Caddy 的自动 HTTPS 与 Let's Encrypt；域名与 DNS 解析的生产事实；部署=换镜像+重启，演练「上线→验证→回滚」完整回路；restart 策略与资源上限。",
+      "reader_can": "在本地以 Caddy 反代整套 compose 服务并通过代理完成冒烟验证，执行一次「新版本上线→验证失败→回滚」演练，并说明真实域名签证书需要哪些条件。"
+    },
+    {
+      "id": "ops-observability",
+      "name": "运维：日志、健康检查与排障",
+      "summary": "结构化日志（pino）与请求级 requestId 把一次故障串成一条线；浅健康检查（进程活着）与深健康检查（依赖可用）分工；pg_dump 备份→销毁→恢复演练；五类常见故障的排查剧本（DB 拒连、Redis 挂、磁盘满、慢查询、内存涨）；什么时候该加缓存/队列/副本的扩容直觉。",
+      "reader_can": "给 API 加结构化日志与深浅健康检查，亲手跑通一次备份→删库→恢复的数据回环，并按剧本对五类故障各给出第一步排查动作。"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "request-journey", "to": "monorepo-api" },
+      { "from": "monorepo-api", "to": "persistence" },
+      { "from": "persistence", "to": "auth-session" },
+      { "from": "persistence", "to": "cache-redis" },
+      { "from": "cache-redis", "to": "queue-mq" },
+      { "from": "persistence", "to": "queue-mq" },
+      { "from": "queue-mq", "to": "containerize" },
+      { "from": "persistence", "to": "containerize" },
+      { "from": "cache-redis", "to": "containerize" },
+      { "from": "containerize", "to": "ci-pipeline" },
+      { "from": "containerize", "to": "deploy-https" },
+      { "from": "ci-pipeline", "to": "deploy-https" },
+      { "from": "deploy-https", "to": "ops-observability" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "skill-training",
+    "verification": "mixed",
+    "source_policy": "zero-trace",
+    "reason": "终点是读者独立完成操作（搭工程、写后端、上线、排障），证据是 companion 里逐章累积的可运行验证物与门槛；代码章用行为测试（code-lab），操作章用任务清单加可对照现象（observation）。topic 输入无外部源码引用面，走 zero-trace。"
+  },
+  "issues": []
+}

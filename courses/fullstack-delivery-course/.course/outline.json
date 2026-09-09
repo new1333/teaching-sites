@@ -1,0 +1,765 @@
+{
+  "schema_version": 2,
+  "title": "从零到上线：TypeScript 全栈交付实战",
+  "audience": "想补齐后端与部署运维的前端开发者",
+  "driving_question": "从你在浏览器敲下一个网址，到它变成一个坏得起、修得回的线上服务，中间每一层凭什么存在？",
+  "input": {
+    "kind": "topic",
+    "ref": ""
+  },
+  "profile": {
+    "archetype": "skill-training",
+    "verification": "mixed",
+    "source_policy": "zero-trace",
+    "code_density": "full",
+    "obligations": [
+      {
+        "kind": "timeliness",
+        "note": "版本与政策事实（Node LTS 状态、依赖版本、Let's Encrypt 证书时长与速率）随时间过期；正文标注「2026-09 时点」相对表述，不写即时性措辞，核对入口统一指向 bible 的权威来源。",
+        "surfaces": [
+          "docs/about.md",
+          "docs/01-request-journey.md",
+          "companion/README.md"
+        ]
+      },
+      {
+        "kind": "ethics",
+        "note": "认证、限流、排障等安全相关实现仅用于读者自有项目与本地实验环境；不得对未授权的系统做扫描、压测或攻击性验证。",
+        "surfaces": [
+          "docs/about.md",
+          "docs/04-auth-session.md",
+          "docs/05-cache-redis.md"
+        ]
+      }
+    ],
+    "presentation": {
+      "visual": "none"
+    },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "pnpm workspace monorepo：packages/shared（zod 契约）、apps/api（Hono）、apps/worker（BullMQ 消费者）、apps/web（Vite+Vue3 SPA）；docker/（Dockerfile、compose、Caddyfile）；scripts/（infra 门禁、ci-local、备份与部署演练）；.github/workflows/（CI）",
+    "language": "TypeScript",
+    "scope": "短链接服务：创建短链、302 跳转、注册登录会话、缓存与限流、点击统计异步落库、容器化、CI 门禁、Caddy 反代部署、结构化日志与健康检查、备份恢复",
+    "commands": {
+      "install": "pnpm install",
+      "infra_up": "node scripts/compose-infra.mjs up",
+      "infra_down": "node scripts/compose-infra.mjs down",
+      "typecheck": "pnpm typecheck",
+      "test": "pnpm test",
+      "build": "pnpm build",
+      "ci_local": "node scripts/ci-local.mjs",
+      "compose_config": "docker compose -f docker/compose.prod.yml config -q",
+      "backup_selftest": "node scripts/backup.mjs --selftest"
+    }
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 从浏览器到服务器",
+      "chapters": [
+        {
+          "slug": "request-journey",
+          "title": "第 1 章 一条请求的旅程：全栈地图",
+          "goal": "把「点一个短链到看到跳转」拆成有名字的层，能对任一故障/需求场景判定它归哪一层负责",
+          "type": "principle",
+          "feature_id": "request-journey",
+          "verification": "none",
+          "hook": {
+            "kind": "现象观察",
+            "point": "同一个「网站打不开」，可能是 DNS 没解析、证书过期、反代挂了、应用崩了、数据库满载——前端视角只看到转圈，说不出坏在哪一层",
+            "phenomena": [
+              "打不开",
+              "转圈",
+              "哪一层"
+            ]
+          },
+          "new_concepts": [
+            "请求旅程",
+            "反向代理",
+            "无状态服务"
+          ],
+          "misconceptions": [
+            "「后端」是一个东西——它其实是一串分工不同的层",
+            "服务器记住登录态靠的是服务器自己的内存"
+          ],
+          "structure": "证据包：旅程解剖图 + 逐层反事实（没有它会坏在哪）+ 8 个场景判定题（先猜后对答案）",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "deploy-https",
+              "what": "反向代理在本章只到「为什么存在」；Caddy 落地在第 9 章"
+            }
+          ],
+          "depends_on": [],
+          "uses": [],
+          "acceptance": [
+            {
+              "kind": "experience",
+              "criterion": "8 个场景判定题各有唯一可对照答案（归属层 + 一句理由），读者先猜再核对"
+            },
+            {
+              "kind": "prose",
+              "criterion": "反向代理与无状态服务各自给出反事实：删掉它会具体坏什么，且理由可从机制推出"
+            },
+            {
+              "kind": "source",
+              "criterion": "版本时点事实（Node LTS 等）标注 2026-09 并指向 bible 权威来源；不引用外部仓库源码"
+            }
+          ]
+        },
+        {
+          "slug": "monorepo-api",
+          "title": "第 2 章 工程骨架：monorepo 与第一个 HTTP API",
+          "goal": "从空目录搭起 api/web/shared 三包工作区，实现带校验的创建短链与 302 跳转端点（内存存储），前后端共享一份契约",
+          "type": "build",
+          "feature_id": "monorepo-api",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "能力缺口",
+            "point": "前端天天 fetch，但从没接过电话：请求到了服务端，是谁在读 body、校验参数、决定 302？",
+            "phenomena": [
+              "fetch",
+              "302",
+              "校验"
+            ]
+          },
+          "new_concepts": [
+            "端点",
+            "请求校验",
+            "共享契约",
+            "CORS"
+          ],
+          "misconceptions": [
+            "校验是前端表单的事，后端可以信任请求体",
+            "前后端各写一份一样的 interface 就叫共享类型"
+          ],
+          "milestone": "pnpm workspace 三包骨架 + Hono API（POST /api/links 创建、GET /:slug 302 跳转，内存 Map 存储）+ zod 校验 422 + shared 包契约类型测试 + Vite 页面调用 API；vitest 先红后绿",
+          "milestone_verify": "pnpm test 全绿（端点行为 + 契约类型两侧一致断言）；pnpm dev 同时起前后端，页面上创建短链后访问短链 URL，浏览器地址栏看到 302 跳到原网址",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "persistence",
+              "what": "内存 Map 存储的「重启即丢」在第 3 章作为开场现象回收"
+            },
+            {
+              "target": "auth-session",
+              "what": "创建端点的归属检查（谁建的链归谁）在第 4 章接入登录后补上"
+            }
+          ],
+          "depends_on": [
+            "request-journey"
+          ],
+          "uses": [],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm typecheck 与 pnpm test 退出码 0；本章新增测试先因端点缺失而红"
+            },
+            {
+              "kind": "prose",
+              "criterion": "用反事实讲清请求校验与共享契约各自挡住什么坏法（脏数据入库 / 两份类型漂移）"
+            },
+            {
+              "kind": "experience",
+              "criterion": "读者先猜后跑：POST 一个缺 url 的 body 应看到 422 与具体字段名；浏览器直连跨源应看到 CORS 报错的原文"
+            },
+            {
+              "kind": "source",
+              "criterion": "正文代码块标注 companion 真实路径且与终态一致；无外部源码引用"
+            }
+          ]
+        },
+        {
+          "slug": "persistence",
+          "title": "第 3 章 数据要活得比进程久：PostgreSQL 与 Drizzle",
+          "goal": "把内存版短链换成 Postgres 持久化：schema、迁移、连接池、索引，并用查询计划亲眼看到索引救回全表扫描",
+          "type": "build",
+          "feature_id": "persistence",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "昨天创建的短链今天全变 404——进程一重启，内存 Map 里的数据整个蒸发",
+            "phenomena": [
+              "重启",
+              "404",
+              "蒸发"
+            ]
+          },
+          "new_concepts": [
+            "持久化",
+            "表与行",
+            "索引",
+            "迁移",
+            "连接池"
+          ],
+          "misconceptions": [
+            "数据库是「更大的变量」，存取没有代价结构",
+            "加索引没有成本，全加上就好"
+          ],
+          "milestone": "links 表 Drizzle schema + 迁移文件 + postgres.js 连接池接入 + CRUD 端点换持久化（旧端点测试不改一字仍绿）+ 30k 行 EXPLAIN 索引实验测试 + DATABASE_URL 环境变量读取",
+          "milestone_verify": "重启持久化测试：进程重启后旧 slug 仍 302；EXPLAIN 测试断言无索引时 Seq Scan、加唯一索引后 Index Scan，两种计划原文可见",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "containerize",
+              "what": "环境变量在此只教单个 DATABASE_URL 的读入与 fail-fast；.env 分层与密钥边界在第 7 章统一收口"
+            }
+          ],
+          "depends_on": [
+            "monorepo-api"
+          ],
+          "uses": [
+            "无状态服务"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "node scripts/compose-infra.mjs up 起教学 pg 后 pnpm test 全绿（含旧章端点测试与重启持久化测试）"
+            },
+            {
+              "kind": "prose",
+              "criterion": "索引的成本账（写放大/空间）与收益账（O(n)→按值定位）都在正文算过；连接池给出「没有它会怎样」的反事实"
+            },
+            {
+              "kind": "experience",
+              "criterion": "读者先猜后跑：删掉 slug 索引（迁移回退或注释）后 EXPLAIN 应回到 Seq Scan，再恢复确认 Index Scan 回来"
+            },
+            {
+              "kind": "source",
+              "criterion": "EXPLAIN 输出、迁移 SQL 均取自 companion 真实运行结果；索引行为口径对齐 PostgreSQL 官方文档"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 后端三大件：登录、缓存、队列",
+      "chapters": [
+        {
+          "slug": "auth-session",
+          "title": "第 4 章 登录是怎么发生的：密码、会话与 Cookie",
+          "goal": "实现注册/登录/登出/当前用户与 httpOnly Cookie 会话，用中间件守护创建端点，讲清每一步为什么非这样不可",
+          "type": "build",
+          "feature_id": "auth-session",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "疑问",
+            "point": "HTTP 根本不记得你是谁——那「记住登录」到底记在哪？localStorage 里那个 token 又为什么危险？",
+            "phenomena": [
+              "记住登录",
+              "token",
+              "危险"
+            ]
+          },
+          "new_concepts": [
+            "密码哈希（加盐）",
+            "会话",
+            "httpOnly Cookie",
+            "路由守护",
+            "CSRF 与 SameSite"
+          ],
+          "misconceptions": [
+            "密码「加密」存起来就行（可逆=泄露即明文）",
+            "token 放 localStorage 和放 Cookie 差不多",
+            "登录了就安全了，改状态的接口不用再防跨站"
+          ],
+          "milestone": "users/sessions 表迁移 + scrypt 加盐哈希工具（verify 常数时间比对）+ 注册/登录/登出/me 四端点 + Set-Cookie（HttpOnly; SameSite=Lax）+ authGuard 守护 POST /api/links + links 归属 user_id；全部走 e2e 测试",
+          "milestone_verify": "未登录创建→401；登录响应的 Set-Cookie 原文可见 HttpOnly 与 SameSite=Lax；带 Cookie 创建→201 且 me 可见；定向破坏——去掉 HttpOnly 后 document.cookie 能读到 sid（演示脚本），恢复后再读为空",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "ops-observability",
+              "what": "会话排查（谁在何时登录）在第 10 章作为日志关联场景复用"
+            }
+          ],
+          "depends_on": [
+            "persistence"
+          ],
+          "uses": [
+            "无状态服务",
+            "表与行"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm test 全绿：哈希工具单测（同密码两次哈希不同串、verify 通过、错密码失败）+ 四端点与会话守护 e2e"
+            },
+            {
+              "kind": "prose",
+              "criterion": "密码哈希与 httpOnly 各给出反事实（拖库后明文/可逆会怎样；XSS 偷 localStorage token 会怎样）；会话放数据库而不是进程内存与无状态服务对账"
+            },
+            {
+              "kind": "experience",
+              "criterion": "读者先猜后跑：两个破坏各预言一个可判定症状（去 HttpOnly→JS 可读；登出后再建→401）"
+            },
+            {
+              "kind": "source",
+              "criterion": "Cookie 属性与会话 token 口径对齐 OWASP Session Management Cheat Sheet；scrypt 参数含义对齐 RFC 7914"
+            }
+          ]
+        },
+        {
+          "slug": "cache-redis",
+          "title": "第 5 章 把数据库从热路径上搬开：Redis 与缓存",
+          "goal": "给跳转端点加 cache-aside 缓存并用测试证明数据库被绕开，给创建端点加每 IP 限流，理解穿透/雪崩/击穿各自的坏法",
+          "type": "build",
+          "feature_id": "cache-redis",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "数字",
+            "point": "一次内存读约 0.1ms 级、一次磁盘查库约 10ms 级——短链跳转是全场最热的路径，每个访客都要连查一次库",
+            "phenomena": [
+              "热路径",
+              "查一次库",
+              "延迟"
+            ]
+          },
+          "new_concepts": [
+            "缓存",
+            "TTL",
+            "缓存穿透",
+            "限流",
+            "Redis"
+          ],
+          "misconceptions": [
+            "缓存=更快的数据库，可以只加不改架构",
+            "缓存加小了怕丢数据、加大了怕不新鲜——其实 TTL 就是在买新鲜度",
+            "限流是运维的事，应用管不着"
+          ],
+          "milestone": "compose-infra 增加 redis + ioredis 客户端 + GET /:slug cache-aside（TTL 注入化）+ 不存在 slug 的 null 缓存 + 查库计数探针测试 + POST /api/links 每 IP 每分钟 5 次限流（INCR+EXPIRE）→429",
+          "milestone_verify": "同一 slug 连续 302 两次：探针显示第二次 SELECT 计数为 0；TTL 过期后再跳转又出现 1 次查询；一分钟内第 6 次创建→429 且响应头带剩余窗口；乱打不存在 slug 两次只查库 1 次",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "queue-mq",
+              "what": "Redis 在本章是缓存与计数器，第 6 章它将再兼一职：队列信箱"
+            }
+          ],
+          "depends_on": [
+            "persistence"
+          ],
+          "uses": [
+            "无状态服务",
+            "连接池"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "infra 起 pg+redis 后 pnpm test 全绿：命中率探针、TTL 过期重查、null 缓存、限流 429 各有独立测试"
+            },
+            {
+              "kind": "prose",
+              "criterion": "cache-aside 的每个步骤都能回答「跳过它会坏哪」；穿透/雪崩/击穿用同一套机制推出各自对策；多实例共享限流尺与无状态服务对账"
+            },
+            {
+              "kind": "experience",
+              "criterion": "读者先猜后跑：把 TTL 调成 0（等效禁用）预言探针计数变化并核对；限流阈值改 2 后第 3 次创建应 429"
+            },
+            {
+              "kind": "source",
+              "criterion": "INCR/EXPIRE/SETEX 原子性表述对齐 Redis 官方文档；延迟数量级给口径而非虚构精确值"
+            }
+          ]
+        },
+        {
+          "slug": "queue-mq",
+          "title": "第 6 章 削峰填谷：消息队列与异步统计",
+          "goal": "把点击统计从跳转请求里搬进 BullMQ 队列，worker 独立进程异步落库，用唯一 jobId 验证幂等与重试不重复计数",
+          "type": "build",
+          "feature_id": "queue-mq",
+          "verification": "code-lab",
+          "hook": {
+            "kind": "现象观察",
+            "point": "每次跳转顺手 INSERT 一条统计，看起来无害——直到某条 INSERT 卡住 3 秒：用户盯着短链等 3 秒才跳走，统计失败还会让跳转一起 500",
+            "phenomena": [
+              "卡住",
+              "3 秒",
+              "500"
+            ]
+          },
+          "new_concepts": [
+            "消息队列",
+            "生产者/消费者",
+            "幂等",
+            "重试与死信"
+          ],
+          "misconceptions": [
+            "队列是「另一个要背的大组件」，小项目不配用",
+            "重试更安全，多试几次总能对——重试会放大副作用",
+            "先把统计写对再谈异步也不迟"
+          ],
+          "milestone": "click_events 表迁移（唯一约束 jobId）+ redirect 端点改为入队即返 + apps/worker 独立进程消费批量落库（ON CONFLICT DO NOTHING）+ GET /api/links/:slug/stats 聚合端点 + 失败重试与死信记录",
+          "milestone_verify": "跳转后等 worker 空闲，stats 端点 total 恰好 +1；用同一 jobId 重放入队，行数不变（幂等测试）；停 worker 期间连点 3 次，重启后 3 条全部补齐（积压回放测试）",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "ops-observability",
+              "what": "死信与失败任务的告警动作在第 10 章运维章接入日志排查场景"
+            }
+          ],
+          "depends_on": [
+            "persistence",
+            "cache-redis"
+          ],
+          "uses": [
+            "Redis",
+            "表与行"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm test 全绿：入队即返延迟断言、worker 空闲后落库、同 jobId 不重复行、停启 worker 积压补齐"
+            },
+            {
+              "kind": "prose",
+              "criterion": "削峰/解耦/可重试分别对应「没有队列会坏哪」的三种具体坏法；at-least-once 投递推出幂等是必须而非可选"
+            },
+            {
+              "kind": "experience",
+              "criterion": "读者先猜后跑：预言去掉 ON CONFLICT 后重放同 jobId 的行数（恰好多 1 行），执行核对再恢复"
+            },
+            {
+              "kind": "source",
+              "criterion": "BullMQ 语义（at-least-once、attempts/backoff、jobId 去重）对齐官方文档；不虚构队列实现细节"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 从能跑到敢上线",
+      "chapters": [
+        {
+          "slug": "containerize",
+          "title": "第 7 章 一次构建，处处能跑：Docker 与 Compose",
+          "goal": "为前后端写多阶段 Dockerfile，用 compose 一键拉起 api+worker+web+pg+redis 全家桶，配置统一走环境变量",
+          "type": "build",
+          "feature_id": "containerize",
+          "verification": "observation",
+          "hook": {
+            "kind": "现象观察",
+            "point": "「我这能跑」：同事 clone 后 pnpm install 报错、Node 版本不同、本机没装 Postgres——环境差异不是玄学，是可枚举的差异清单",
+            "phenomena": [
+              "我这能跑",
+              "环境差异",
+              "没装 Postgres"
+            ]
+          },
+          "new_concepts": [
+            "镜像",
+            "容器",
+            "多阶段构建",
+            "镜像分层",
+            "编排（Compose）",
+            "环境变量分层"
+          ],
+          "misconceptions": [
+            "容器=虚拟机（带完整操作系统）",
+            "镜像越大越全越好",
+            ".env 提交进 git 方便大家用"
+          ],
+          "milestone": "Dockerfile.api 与 Dockerfile.web（多阶段：builder 全量构建 → runtime 只带产物）+ docker/compose.prod.yml（api/worker/web/pg/redis，restart 策略，健康检查挂第 10 章端点）+ .env.example + scripts/compose-infra.mjs + compose 冒烟脚本",
+          "milestone_verify": "docker compose -f docker/compose.prod.yml config -q 退出码 0；镜像构建成功；up -d 后 curl localhost:4510/healthz 返回 200，经 web 页面创建短链并 302 跳转成功；down 后整组容器消失",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "deploy-https",
+              "what": "compose.prod 仍直接暴露 api 端口、无 TLS；对外收口由第 9 章的反代完成"
+            }
+          ],
+          "depends_on": [
+            "persistence",
+            "cache-redis",
+            "queue-mq"
+          ],
+          "uses": [
+            "Redis",
+            "消息队列"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "compose config 校验与镜像构建退出码 0；冒烟脚本经真实容器拿到 /healthz 200 与一次 302"
+            },
+            {
+              "kind": "prose",
+              "criterion": "镜像/容器/分层各给反事实（无镜像则环境差异靠文档；无多阶段则运行时带着编译器；层序不当则缓存全失效）；.env 不进 git 的边界讲明"
+            },
+            {
+              "kind": "experience",
+              "criterion": "任务清单每条含操作与应看到的具体输出（构建日志的 CACHED 行、compose ps 的健康状态、curl 的 302 Location）"
+            },
+            {
+              "kind": "source",
+              "criterion": "多阶段与分层缓存表述对齐 Docker 官方文档；12-factor 配置原则对齐 12factor.net"
+            }
+          ]
+        },
+        {
+          "slug": "ci-pipeline",
+          "title": "第 8 章 让机器替你把关：CI 质量门禁",
+          "goal": "写出与本地 ci-local 同一张清单的 GitHub Actions workflow，让每次 push 在干净环境跑完 typecheck/test/build",
+          "type": "build",
+          "feature_id": "ci-pipeline",
+          "verification": "observation",
+          "hook": {
+            "kind": "事故",
+            "point": "周五下午合的分支周一炸了：「我本地是绿的」——本地绿只证明你的机器，不证明干净环境也绿",
+            "phenomena": [
+              "我本地是绿的",
+              "合并",
+              "干净环境"
+            ]
+          },
+          "new_concepts": [
+            "CI（持续集成）",
+            "质量门禁",
+            "GitHub Actions workflow"
+          ],
+          "misconceptions": [
+            "CI 是大公司流程，个人项目不需要",
+            "CI 和本地脚本是两套东西，行为对不上很正常",
+            "门禁越慢越严谨"
+          ],
+          "milestone": ".github/workflows/ci.yml（push/PR 触发；pnpm 装配 + 依赖缓存 + typecheck + infra 起容器 + test + build）+ scripts/ci-local.mjs（同一命令序列的本地执行器 + workflow 步骤对齐断言）+ README 徽章位",
+          "milestone_verify": "node scripts/ci-local.mjs 全绿且其清单与 workflow steps 由脚本自动比对一致；故意在 shared 包引入类型错误后 ci-local 第一步即失败（演示红）并复原",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "deploy-https",
+              "what": "镜像的 registry 推送与凭据管理（CI 侧）在第 9 章部署演练处交代边界；本课 CI 只做构建校验不推远端"
+            }
+          ],
+          "depends_on": [
+            "containerize"
+          ],
+          "uses": [
+            "镜像分层"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "node scripts/ci-local.mjs 退出码 0 且内含 workflow 对齐断言；pnpm test/typecheck 保持全绿"
+            },
+            {
+              "kind": "prose",
+              "criterion": "「同一张门禁清单」的反事实（两套清单会漂移成什么样）与依赖缓存命中依赖分层顺序的机理讲清"
+            },
+            {
+              "kind": "experience",
+              "criterion": "任务清单含：在 GitHub 真跑一次的步骤（或有公网仓库的读者）与本地 ci-local 的对照输出；无仓库环境时明确替代观察面"
+            },
+            {
+              "kind": "source",
+              "criterion": "workflow 字段与缓存行为对齐 GitHub Actions 官方文档；ci-local 与 yml 的命令序列逐条可对照"
+            }
+          ]
+        },
+        {
+          "slug": "deploy-https",
+          "title": "第 9 章 上线：反向代理、HTTPS 与回滚",
+          "goal": "用 Caddy 把整套 compose 服务安全地暴露到公网形态，完成「上线→验证→失败→回滚」的完整演练，讲清 DNS/TLS/回滚的分工",
+          "type": "build",
+          "feature_id": "deploy-https",
+          "verification": "observation",
+          "hook": {
+            "kind": "疑问",
+            "point": "服务在容器里跑得好好的，为什么全世界访问不到它？从「容器端口」到「https://你的域名」之间还差四步",
+            "phenomena": [
+              "访问不到",
+              "域名",
+              "https"
+            ]
+          },
+          "new_concepts": [
+            "DNS 解析",
+            "TLS 证书与 HTTPS",
+            "部署与回滚"
+          ],
+          "misconceptions": [
+            "HTTPS 是买来的证书装上就完——不知道自动签发与续期的存在",
+            "上线就是把文件复制到服务器——不知道部署的单位是镜像 tag",
+            "回滚就是把新代码删掉——不知道回滚是换回上一个镜像"
+          ],
+          "milestone": "docker/Caddyfile（反代 + 自动 HTTPS 说明 + 本地 short.local 彩排块）+ compose.prod 挂 caddy 服务收口对外端口 + scripts/deploy.mjs（构建/换 tag → up -d → 冒烟验证 → 失败自动回滚上一 tag）+ 回滚演练用坏镜像用例",
+          "milestone_verify": "caddy validate --config 通过；经反代（Host: short.local）curl /healthz 得 200；deploy.mjs 注入坏镜像后自动回滚，最终 /healthz 恢复 200 且镜像 tag 回到上一版；真实域名签发条件以清单列出（解析+80/443 可达）",
+          "relevant_files": [],
+          "promises_out": [
+            {
+              "target": "ops-observability",
+              "what": "上线后的「坏了我怎么看见」由第 10 章接手；本章反代只到流量入口"
+            }
+          ],
+          "depends_on": [
+            "containerize",
+            "ci-pipeline"
+          ],
+          "uses": [
+            "反向代理",
+            "镜像",
+            "环境变量分层"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "caddy validate 退出码 0；反代冒烟（Host 头经 8090 端口）拿到 200；回滚演练脚本两端（坏镜像失败→回滚成功）都有可对照输出"
+            },
+            {
+              "kind": "prose",
+              "criterion": "DNS/TLS/反代/回滚各给反事实与机制；本地彩排与真实公网的差异显式登记（无真实域名时的可验证边界）"
+            },
+            {
+              "kind": "experience",
+              "criterion": "任务清单：改 Host 头分别命中/未命中站点应看到不同响应；手动执行一次 deploy.mjs 的回滚分支并看到恢复输出"
+            },
+            {
+              "kind": "source",
+              "criterion": "Caddy 自动 HTTPS 条件与 Let's Encrypt 证书时长/速率对齐官方文档；不伪造真实签发输出"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第四部分 · 上线之后与全链路",
+      "chapters": [
+        {
+          "slug": "ops-observability",
+          "title": "第 10 章 上线之后：日志、健康检查与排障",
+          "goal": "给服务装上「坏了能看见」的三件套——结构化日志+requestId、深浅健康检查、备份恢复演练，并按剧本排查五类常见故障",
+          "type": "build",
+          "feature_id": "ops-observability",
+          "verification": "observation",
+          "hook": {
+            "kind": "事故",
+            "point": "凌晨用户说「短链打不开了」，你登服务器只看到一堆自由文本日志——没有 requestId、没有健康检查、没有备份验证记录，每一步都在猜",
+            "phenomena": [
+              "打不开",
+              "日志",
+              "猜"
+            ]
+          },
+          "new_concepts": [
+            "结构化日志",
+            "requestId",
+            "健康检查（浅/深）",
+            "备份与恢复演练"
+          ],
+          "misconceptions": [
+            "日志是 println，人能看就行",
+            "健康检查一个 /health 就够",
+            "备份做了就是安全的（没恢复过）"
+          ],
+          "milestone": "pino 结构化日志 + requestId 中间件（响应头 X-Request-Id 回显）+ /healthz（浅）与 /readyz（深：SELECT 1 + PING）+ scripts/backup.mjs（pg_dump 带时间戳产物 + --selftest 删表恢复回环）+ docs/runbook 五场景排查剧本（DB 拒连/Redis 挂/磁盘满/慢查询/内存涨）+ 扩容直觉决策树",
+          "milestone_verify": "任意请求的日志为可 JSON.parse 的行且含同一 requestId（响应头可对上）；停 pg 后 /readyz 503 且 body 点名 db、/healthz 仍 200；backup.mjs --selftest 输出「删表→恢复→行数一致」三段证据且退出码 0",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": [
+            "deploy-https"
+          ],
+          "uses": [
+            "Redis",
+            "消息队列"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "pnpm test 全绿（日志 JSON+requestId、readyz 依赖故障注入 503、healthz 恒 200）；node scripts/backup.mjs --selftest 退出码 0"
+            },
+            {
+              "kind": "prose",
+              "criterion": "浅/深分工的反事实（混用会误杀实例）与「没演练过的备份是安慰剂」都有可推演的机制支撑"
+            },
+            {
+              "kind": "experience",
+              "criterion": "五场景剧本每条第一步动作可判定（看哪个端点/grep 哪个字段/跑哪条命令），读者能对「症状→第一刀切哪」先猜后对"
+            },
+            {
+              "kind": "source",
+              "criterion": "pg_dump/恢复命令对齐 PostgreSQL 官方文档；日志与健康检查实践标注为业界惯例而非规范强制"
+            }
+          ]
+        },
+        {
+          "slug": "fullchain-review",
+          "title": "第 11 章 全链路复盘：每一跳都认识",
+          "goal": "把开篇的 driving question 收口成一段答案：重走一次点击短链的完整旅程，逐跳说出凭什么非它不可，并给出一套「什么时候加什么」的扩容决策树",
+          "type": "review",
+          "reviews": [
+            "request-journey",
+            "monorepo-api",
+            "persistence",
+            "auth-session",
+            "cache-redis",
+            "queue-mq",
+            "containerize",
+            "ci-pipeline",
+            "deploy-https",
+            "ops-observability"
+          ],
+          "verification": "none",
+          "hook": {
+            "kind": "终考",
+            "point": "回到第 1 章那 8 个场景题——现在你不看笔记，能对每一题说出归属层、担当技术与第一步排查动作吗？",
+            "phenomena": [
+              "8 个场景",
+              "归属层",
+              "排查动作"
+            ]
+          },
+          "new_concepts": [],
+          "misconceptions": [
+            "学完就是会了——不对账的能力清单不可信"
+          ],
+          "structure": "复盘对账：能力地图（每章一块积木）→ 一次点击的逐跳解剖（对账全书验证物）→ 场景重考（第 1 章 8 题带排查动作）→ 扩容决策树 → 更远的路（导航）",
+          "relevant_files": [],
+          "promises_out": [],
+          "depends_on": [
+            "request-journey",
+            "monorepo-api",
+            "persistence",
+            "auth-session",
+            "cache-redis",
+            "queue-mq",
+            "containerize",
+            "ci-pipeline",
+            "deploy-https",
+            "ops-observability"
+          ],
+          "uses": [],
+          "length_exempt": true,
+          "acceptance": [
+            {
+              "kind": "experience",
+              "criterion": "第 1 章 8 个场景逐题重考，每题答案含归属层、技术与第一步排查动作，与第 1 章答案对得上且更深一层"
+            },
+            {
+              "kind": "prose",
+              "criterion": "driving_question 原文在收束处收口成一段完整答案；一次点击的逐跳解剖每一跳都能回答「凭什么非它不可」"
+            },
+            {
+              "kind": "source",
+              "criterion": "对账引用的端点行为、数字、命令与 companion 终态一致（全书评审复跑）"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "divergence",
+      "title": "简化与差异登记",
+      "kind": "divergence"
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "一套短链服务：API、数据库、缓存、队列、容器、CI、HTTPS 反代与备份排障",
+    "verify": "compose 一键拉起全家桶，经 Caddy 反代创建短链并 302 跳转；拔掉任一依赖 /readyz 点名是谁坏了；备份→删库→恢复数据对得上"
+  }
+}

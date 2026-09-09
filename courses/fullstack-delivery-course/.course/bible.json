@@ -1,0 +1,109 @@
+{
+  "schema_version": 2,
+  "reader_model": {
+    "known": [
+      "TypeScript/JavaScript 日常开发；组件框架其一（Vue/React）写页面",
+      "npm/pnpm 装依赖、跑脚本；fetch/axios 调 API、看 Network 面板",
+      "git 基本操作与 GitHub 托管；见过 Vite 的 import.meta.env"
+    ],
+    "unfamiliar": [
+      { "concept": "服务端进程与端口监听", "why": "前端视角里服务器是黑盒，只认识 URL；不知道代码如何常驻、崩了谁拉起", "anchor": "读者自述后端了解有限（校准）" },
+      { "concept": "关系数据库系统知识（索引/迁移/连接池）", "why": "只见过「接口吐 JSON」，没见过数据在服务端怎么放、怎么被高效找到", "anchor": "读者自述数据库不熟（校准）" },
+      { "concept": "密码存储与会话保持", "why": "登录在前端是「调个接口存个状态」，服务端怎么记住「你是你」没有概念", "anchor": "读者自述后端了解有限（校准）" },
+      { "concept": "Redis 与缓存策略", "why": "没体会过数据库与内存的延迟差，也就没有「为什么要缓存」的痛点", "anchor": "读者自述缓存/Redis 不熟（校准）" },
+      { "concept": "消息队列与异步任务", "why": "前端的世界里代码同步跑完就结束，没有「先记下来回头慢慢做」的生产者/消费者模型", "anchor": "读者自述消息队列不了解（校准）" },
+      { "concept": "容器/镜像与编排", "why": "「能跑」依赖本机环境这件事从未成为读者的负担，容器要解决什么无从感受", "anchor": "读者自述部署运维了解有限（校准）" },
+      { "concept": "CI 流水线", "why": "个人项目里质量把关靠自觉，没有机器门禁的协作场景", "anchor": "读者自述部署运维了解有限（校准）" },
+      { "concept": "DNS/TLS/反向代理/回滚", "why": "上线对读者是陌生的最后一公里，域名、证书、反代各是什么分工没有地图", "anchor": "读者自述部署运维了解有限（校准）" },
+      { "concept": "运维实务（日志/健康检查/备份/排障）", "why": "项目没上线就没见过故障面，缺乏「坏了我怎么看见」的训练", "anchor": "读者自述运维了解有限（校准）" }
+    ]
+  },
+  "glossary": [
+    { "term": "请求旅程", "en": "request journey", "definition": "一次 HTTP 请求从浏览器出发到拿到响应所经过的全部站点：DNS 解析、（反向代理）、应用进程、（缓存）、数据库、（异步队列）。每一站存在的原因都是某一类「没有它就坏」的问题。", "interface": "拿到一个故障或需求，先沿旅程定位它属于哪一站，再谈技术选型——这是全书的排障地图。" },
+    { "term": "反向代理", "en": "reverse proxy", "definition": "挡在应用进程前面、代客户端把请求转发给后端的服务（如 Caddy/Nginx）。它做应用不擅长或不应做的事：TLS 终止、压缩、按域名路由到多个应用、限速缓冲。没有它，每个应用进程都要自己管证书和对外端口，换应用就要动代码。", "interface": "对外只开 80/443，域名与路径怎么分发给后端，写在反代配置里，应用进程只监听内网端口。" },
+    { "term": "无状态服务", "en": "stateless service", "definition": "应用进程自己不保存跨请求的数据（会话、业务数据都放在进程外：数据库、缓存）。成因：进程会崩溃、会重启、会复制多份——记在进程内存里的状态一崩就丢、多份就各说各话。它是「为什么需要数据库/缓存/会话表」的共同根因。", "interface": "判断一个数据该放哪，先问「进程重启后它该不该还在」——该在就不能放进程内存。" },
+    { "term": "端点", "en": "endpoint", "definition": "服务端暴露的一个「URL + HTTP 方法」组合，规定该请求的输入与输出（HTTP API 的最小交互单元）。前后端交互的本质：浏览器发 JSON 请求，服务端按契约返回 JSON 响应。", "interface": "POST /api/links 创建短链、GET /:slug 跳转——端点就是前后端约定的函数签名。" },
+    { "term": "请求校验", "en": "request validation", "definition": "在业务逻辑之前用 schema（zod）声明并检查请求体的形状（字段、类型、长度），不合法直接 422/400。成因：请求来自不可信的网络，信任它等于把脏数据放进系统。", "interface": "用 zod schema .parse() 一次声明、一次校验，失败自动给出可读的错误信息。" },
+    { "term": "共享契约", "en": "shared contract", "definition": "前后端共用同一份类型/校验源（packages/shared 里的 zod schema 及其推导类型），而不是各写一份等价代码。成因：两份手工同步的类型迟早漂移，字段改名时编译器应当同时抓住两边。", "interface": "schema 定义一次，后端用它校验请求，前端用它推导类型——改契约，两边编译期同时报错。" },
+    { "term": "CORS", "en": "Cross-Origin Resource Sharing", "definition": "浏览器的同源策略默认禁止页面读取跨源响应；CORS 是服务端用响应头（Access-Control-Allow-Origin 等）显式授权跨源访问的机制。注意它只约束浏览器，不约束 curl/服务端调用。", "interface": "开发期用代理同源绕开，生产期由后端按白名单回 CORS 头——cookie 场景还必须配 credentials。" },
+    { "term": "持久化", "en": "persistence", "definition": "让数据活得比进程久：写进进程之外的存储（这里是 PostgreSQL）。进程内存里的数据随重启蒸发——这是无状态服务的另一面，也是数据库存在的第一理由。", "interface": "创建、查询、更新业务数据都走数据库；进程随便重启，数据不动。" },
+    { "term": "表与行", "en": "table and row", "definition": "关系数据库的组织方式：表是同构记录的集合（links、users），每行是一条记录，列有固定类型与约束（NOT NULL、UNIQUE）。程序视角：表≈类型化的数组，行≈对象，约束≈编译期检查的运行时版。", "interface": "schema 用 Drizzle 声明成 TypeScript 代码，查询结果自动带类型。" },
+    { "term": "索引", "en": "index", "definition": "数据库为某几列额外维护的有序查找结构（B-tree 为主），把全表逐行扫描变成按值定位。成因：数据量线性增长时 O(n) 扫描的延迟也线性增长；索引是数据库里「用空间和写放大换读延迟」的手段。", "interface": "WHERE/JOIN 常用的列加索引；用 EXPLAIN 看查询计划里是 Index Scan 还是 Seq Scan。" },
+    { "term": "迁移", "en": "migration", "definition": "把 schema 的每次变更（建表、加列、加索引）记录为有序的、可重放的小脚本，让每个环境的表结构演进保持一致。成因：手工在各环境改表必然漂移，迁移让「表结构」也纳入版本管理。", "interface": "drizzle-kit generate 生成 SQL 迁移文件，drizzle-kit migrate 按序执行——表结构和代码一起进 git。" },
+    { "term": "连接池", "en": "connection pool", "definition": "应用预先建好并复用的一组数据库连接。成因：每次查询都新建 TCP+认证连接的开销远大于查询本身；且数据库能同时服务的连接数有限。池子把「建连」摊销成一次性的启动成本。", "interface": "postgres.js 一个 sql`` 实例就是池；进程启动建池、全程复用、退出时关。" },
+    { "term": "密码哈希（加盐）", "en": "password hashing with salt", "definition": "注册时用慢哈希函数（scrypt）加随机盐把密码变成不可逆的定长串存储；登录时重算比对。成因：数据库会泄露，明文等于把密码送给攻击者；慢哈希+盐让拖库后批量撞字典的代价高到不可行。它不是加密——加密可逆，哈希不可逆。", "interface": "node:crypto 的 scrypt(password, salt) 存库；verify 时同参数重算 constant-time 比对。" },
+    { "term": "会话", "en": "session", "definition": "服务端为已登录用户保存的状态记录（sessions 表里一行随机 token），客户端只持有 token。成因：HTTP 本身不记得你是谁，而「记住登录」需要跨请求的身份；无状态服务要求这份状态放在进程外（数据库/缓存）。", "interface": "登录成功→生成随机 token 存表→Cookie 下发；此后每个请求带 token，查表还原用户。" },
+    { "term": "httpOnly Cookie", "en": "httpOnly cookie", "definition": "带 HttpOnly 属性的 Cookie：浏览器存它、每个同源请求自动带上它、但页面的 JavaScript 读不到它。成因：XSS 注入的脚本偷不走读不到的凭据——这是「token 放 localStorage」与「Cookie 放 httpOnly」的安全分水岭。", "interface": "Set-Cookie: sid=…; HttpOnly; Secure; SameSite=Lax——登录态的下发与自动回传都交给浏览器。" },
+    { "term": "路由守护", "en": "route guard (middleware)", "definition": "在业务处理之前统一执行的检查层（中间件）：验证会话 token、把当前用户挂到上下文，不通过直接 401。成因：受保护端点散布在各处时，逐个手写检查必然漏。", "interface": "app.use('/api/*', authGuard)——守卫之后的所有路由都能读到 currentUser。" },
+    { "term": "CSRF 与 SameSite", "en": "CSRF and SameSite", "definition": "CSRF：恶意网站借你的浏览器「自动带 Cookie」的特性，诱导它向你的服务发请求。SameSite=Lax 让 Cookie 只在同站导航时携带，从浏览器层面挡掉跨站表单/图片触发。与 CORS 互补：CORS 管读，SameSite 管发。", "interface": "会话 Cookie 一律加 SameSite=Lax（改状态的操作再从严），配合不依赖 GET 做写操作。" },
+    { "term": "缓存", "en": "cache (cache-aside)", "definition": "把昂贵计算/查询的结果放进更快的存储（Redis 内存），下次直接取。cache-aside：读时先问缓存，未命中才查库并回填。成因：热数据的读请求高度重复，内存与磁盘的延迟差是数量级的——用少量陈旧窗口（TTL）换走绝大多数数据库查询。", "interface": "GET 热路径先 redis GET key，命中直接返回；未命中查库、SETEX 回填、设 TTL。" },
+    { "term": "TTL", "en": "time to live", "definition": "缓存条目的存活时间，到期由 Redis 自动删除。它是缓存一致性的代价控制器：TTL 内数据可能陈旧，TTL 越短越新鲜但缓存收益越小。没有它，缓存只进不出，终会把陈旧数据永远留住、把内存填满。", "interface": "SETEX key 秒数 value 一步写入带过期；业务上按「能容忍多久的陈旧」定值。" },
+    { "term": "缓存穿透", "en": "cache penetration", "definition": "查询永不存在的键（如乱刷不存在的 slug）：缓存永远未命中，每个请求都打到数据库——缓存对恶意流量反而透明。对策之一是把「查过、确实没有」也缓存一小段时间（null 缓存）。相邻的雪崩是大量键同时过期、击穿是热键过期瞬间齐涌。", "interface": "未命中查库为空 → 也写一个短 TTL 的空值标记，挡住重复的无效查询。" },
+    { "term": "限流", "en": "rate limiting", "definition": "对单位时间内的请求数设上限，超出返回 429。成因：写操作有成本（存储、下游压力），匿名接口若不限流就会被脚本刷爆。Redis 的 INCR+EXPIRE 天然适合：原子计数 + 窗口自动过期，多进程实例共享同一把尺。", "interface": "每 IP 每 key INCR，返回值==1 时 EXPIRE 设窗口；超过阈值直接 429。" },
+    { "term": "Redis", "en": "Redis", "definition": "内存键值数据库：数据放内存、单线程事件循环处理命令、命令级原子性，因此读写是微秒级。它不是取代数据库，而是放「丢了能重建、热、小」的数据：缓存、计数器、队列信箱、限流尺。", "interface": "ioredis 客户端 GET/SETEX/INCR/EXPIRE；数据结构不只有字符串，还有 list/set/hash。" },
+    { "term": "消息队列", "en": "message queue", "definition": "生产者把任务写进队列（Redis 里的 list 结构）就返回，消费者（worker）稍后取出处理。成因：同步做昂贵/易失败的副作业会把它的延迟和失败传染给主请求；队列把「现在答应」和「稍后完成」拆开——削峰、解耦、可重试三个词说的都是它。", "interface": "BullMQ：new Queue() 入队、new Worker() 消费；任务带数据和选项，独立进程运行。" },
+    { "term": "生产者/消费者", "en": "producer/consumer", "definition": "消息队列两侧的角色：生产者（API 进程）只负责把任务描述塞进信箱；消费者（worker 进程）只负责取出并执行。两侧互不等待、互不同址、甚至可以不同语言——这就是解耦的物理形态。", "interface": "API 里 await queue.add(name, data)；worker 里 worker.add(async job => …)。两者只共享队列名。" },
+    { "term": "幂等", "en": "idempotency", "definition": "同一操作执行一次与执行多次的结果相同。队列投递是 at-least-once（可能重投），所以消费者必须幂等，否则重试就变成重复计数。实现手段：给任务唯一 id，落库时用唯一约束 + ON CONFLICT DO NOTHING 挡住重复行。", "interface": "入队带唯一 jobId；落库 INSERT … ON CONFLICT DO NOTHING——重试多少次，计数只涨一次。" },
+    { "term": "重试与死信", "en": "retry and dead letter", "definition": "队列对失败任务的处置：按退避自动重试 N 次（瞬时故障常自愈）；重试用尽仍失败的任务进「死信」暂停并告警，而不是无限循环烧 CPU 或静默丢弃。它是异步世界里的 fail-fast 出口。", "interface": "BullMQ 的 attempts/backoff 配置重试；failed 事件里记录并告警——上线后盯的第一件事。" },
+    { "term": "镜像", "en": "image", "definition": "应用+依赖+运行环境的只读快照，分层构建、内容寻址。成因：「我机器上能跑」的根因是环境差异——镜像把环境本身变成可以分发、可以版本化的制品。镜像之于容器，如同类之于实例。", "interface": "docker build 按 Dockerfile 产镜像、打 tag 进 registry；部署=换个镜像 tag 重启。" },
+    { "term": "容器", "en": "container", "definition": "镜像的一个运行实例：共享宿主内核，用 namespace/cgroup 隔离出独立的进程视图与资源边界。它比虚拟机轻（不带内核），又比裸进程隔离好（文件系统、网络、资源上限独立）。", "interface": "docker run / compose up 起容器；docker ps 看它在跑，docker logs 看它说话。" },
+    { "term": "多阶段构建", "en": "multi-stage build", "definition": "Dockerfile 里用多个 FROM 阶段：前一阶段装全量依赖、编译 TS；后一阶段只拷走产物运行。成因：构建工具链（tsc、源码、devDependencies）运行时不需要——带着它们镜像又大又容易藏敏感物。", "interface": "builder 阶段 pnpm build，runtime 阶段 COPY --from=builder 产物——最终镜像里没有编译器。" },
+    { "term": "镜像分层", "en": "image layers", "definition": "镜像由 Dockerfile 每条指令产生的一层层只读层叠成；本机与 CI 都按层缓存：指令没变且输入没变，那一层直接复用。层的顺序决定缓存命中率——把最不常变的放前面（依赖先装，源码后拷）。", "interface": "改一行代码只重建「拷源码」之后的层，pnpm install 层照旧秒过——这是 CI 提速的关键。" },
+    { "term": "编排（Compose）", "en": "orchestration (Compose)", "definition": "用一个 YAML 声明多容器应用的全家桶：服务、镜像、环境变量、端口、依赖顺序、重启策略，一条命令整体拉起/销毁。成因：api+worker+web+pg+redis 五个容器手工 docker run 并互通网络，人肉顺序必然出错。", "interface": "docker compose up -d 一键起全家桶；config -q 验证声明；down 销毁。" },
+    { "term": "环境变量分层", "en": "environment-based config (12-factor)", "definition": "配置全部从环境变量读入（连接串、密钥、开关），代码与配置分离；同一镜像靠不同 env 跑不同环境。成因：配置写死在代码里就无法换环境；.env 文件只放本机/示例，真实密钥走部署平台的 secret 注入，永不进 git。", "interface": "process.env.DATABASE_URL 读取 + .env.example 提交模板 + compose 用 environment: 注入。" },
+    { "term": "CI（持续集成）", "en": "continuous integration", "definition": "每次 push/PR 由机器在干净环境里自动跑同一套质量门禁（typecheck/test/build）。成因：人审挡不住回归，本地「我这能跑」不可信——干净环境+机器执行把「合并=可用」变成可执行的承诺。", "interface": ".github/workflows/ci.yml 声明触发与步骤；红了就不许合并。" },
+    { "term": "质量门禁", "en": "quality gate", "definition": "合并前的判定性检查序列：typecheck、测试、构建——每项都有退出码。门禁的价值在「同一张清单」：本地 ci-local 与 CI 跑完全一致的命令，本地绿了 CI 才可能绿，清单改一处两边同步。", "interface": "scripts/ci-local.mjs 顺序执行与 workflow 相同的命令序列，任何一步非零即整体失败。" },
+    { "term": "GitHub Actions workflow", "en": "GitHub Actions workflow", "definition": "YAML 声明的自动化流水线：on 触发（push/PR）、jobs 跑在 GitHub 提供的虚拟机（runner）上、steps 逐步执行；配合 actions/cache 缓存依赖。", "interface": ".github/workflows/*.yml 声明文件；pnpm/action-setup + cache 加速，needs 串接任务。" },
+    { "term": "DNS 解析", "en": "DNS resolution", "definition": "把域名翻译成服务器 IP 的全球目录系统。浏览器发起请求的第一跳就是它。A 记录指 IPv4，CNAME 指另一个域名；生效受 TTL 缓存影响——改解析不是瞬时的。", "interface": "域名控制台加 A 记录指向服务器 IP；dig/nslookup 验证解析已生效。" },
+    { "term": "TLS 证书与 HTTPS", "en": "TLS certificate", "definition": "服务器用来证明「我真的是这个域名的主人」并被浏览器信任的凭证，配合 TLS 握手加密流量。Let's Encrypt 免费签发 90 天证书；Caddy 能自动完成申请+续期（ACME 协议）。没有它，密码在网络上明文可截。", "interface": "域名解析到服务器 + 80/443 可达，Caddyfile 写个域名就自动 HTTPS——本地彩排只能走 http，边界在差异附录。" },
+    { "term": "部署与回滚", "en": "deploy and rollback", "definition": "部署=把新镜像换上并重启服务；回滚=换回上一个镜像 tag。安全网来自三件事：镜像不可变（版本可指名）、数据库迁移向前兼容、验证失败自动退回。没有回滚路径的部署是把可用性押给运气。", "interface": "脚本化 deploy.sh：拉镜像→up -d→冒烟验证→失败自动回退上一 tag。" },
+    { "term": "结构化日志", "en": "structured logging", "definition": "每行日志是一条机器可解析的 JSON（时间、级别、requestId、事件、字段），而不是给人看的自由文本。成因：出了事你要按「那个请求」「那种错误」过滤——自由文本没法 grep 出结构。", "interface": "pino 的 log.info({ requestId, slug }, 'redirect')；stdout 输出 JSON，容器/docker logs 原样收集。" },
+    { "term": "requestId", "en": "request id (correlation id)", "definition": "入口中间件为每个请求生成的唯一短 id，随上下文传入所有日志行与响应头。成因：并发下同一服务的日志交织，没有关联标识就无法把「一个请求的完整一生」从几万行里抽出来。", "interface": "c.set('requestId', nanoid())；之后该请求打出的每条日志都带着它——排障的第一把钥匙。" },
+    { "term": "健康检查（浅/深）", "en": "health checks (liveness/readiness)", "definition": "浅检查（/healthz）只答「进程还活着」；深检查（/readyz）回答「依赖可用吗」（SELECT 1、PING Redis）。分工：进程死该重启（看浅）、依赖坏该摘流量不重启（看深）——混用会导致数据库故障时所有实例被误杀。", "interface": "编排与负载均衡探测这两个端点；curl 一发就知道该重启还是该看依赖。" },
+    { "term": "备份与恢复演练", "en": "backup and restore drill", "definition": "pg_dump 定期导出数据库快照；但备份只有被恢复验证过才算存在——「备份→删库→恢复→数据对上」的回环必须真的跑过。没演练过的备份是安慰剂。", "interface": "scripts/backup.mjs 定时 pg_dump 到带时间戳文件；restore 后跑数据核对，产物进运维手册。" }
+  ],
+  "verification_conventions": {
+    "companion_root": "courses/fullstack-delivery-course/companion",
+    "package_manager": "pnpm（workspace：packages/shared、apps/api、apps/worker、apps/web）",
+    "runtime_facts": {
+      "host": "Windows + Docker Desktop（Docker 29 / Compose v5），Node 22.22.2，pnpm 10.32.1",
+      "node_note": "2026-09 时点事实：Node 24 为 Active LTS（EOL 2028-04），Node 22 为 Maintenance LTS（EOL 2027-04），Node 20 已于 2026-04-30 EOL；本课验证环境为 Node 22，正文按「偶数 LTS 即生产可用」教学并标注时点（timeliness 义务）",
+      "ports": { "api_dev": 4510, "pg_host": 5544, "redis_host": 6639, "caddy": 8090, "web_dev": 5174 }
+    },
+    "gates": {
+      "unit_and_e2e": "pnpm test（vitest，测试内以 listen(0) 起真实 HTTP 服务，不依赖固定端口）",
+      "typecheck": "pnpm typecheck（各包 tsc --noEmit）",
+      "infra": "node scripts/compose-infra.mjs up|down（起/停教学用 pg:16 + redis:7 容器，固定宿主端口）",
+      "chapter_specific": "docker 章起 compose config 校验与镜像构建冒烟；CI 章跑 scripts/ci-local.mjs；部署章跑 Caddyfile 校验与反代冒烟；运维章跑备份恢复自测"
+    },
+    "red_green": "code-lab 章新增测试必须先因能力缺失而红、实现后转绿；旧章测试保持只读且全程保持绿（后章换实现不动接口=组装证据）",
+    "test_isolation": "网络、时间、随机性固定或隔离：测试内注入短 TTL/固定时钟选项；hash/scrypt 用小参数；进程用 ephemeral 端口"
+  },
+  "api_contract": [
+    { "name": "POST /api/links", "introduced_in": "monorepo-api", "contract": "body {url: string(https)}；201 {slug, url, createdAt}；校验失败 422（zod 首个错误字段）；第 4 章起需登录（401），第 5 章起限流 429" },
+    { "name": "GET /:slug", "introduced_in": "monorepo-api", "contract": "存在→302 Location=原 URL 并计数（第 6 章起改异步入队）；不存在→404；第 5 章起先查缓存" },
+    { "name": "GET /api/links/:slug/stats", "introduced_in": "queue-mq", "contract": "登录且属于本人→200 {slug, total, byDay:[{day,count}]}；否则 401/404" },
+    { "name": "POST /api/auth/register|login|logout, GET /api/auth/me", "introduced_in": "auth-session", "contract": "注册 201 建用户；登录 200 Set-Cookie: sid（HttpOnly; SameSite=Lax; Path=/）+ 7 天过期；登出 204 删会话；me 200 {id,email} 或 401" },
+    { "name": "GET /healthz, GET /readyz", "introduced_in": "ops-observability", "contract": "healthz 恒 200 {status:'ok'}（进程活）；readyz 依赖全通 200 {db:'ok',redis:'ok'}，任一不通 503 {db:'…',redis:'…'}" },
+    { "name": "packages/shared 契约面", "introduced_in": "monorepo-api", "contract": "createLinkSchema/linkResponseSchema/loginSchema 等为前后端唯一契约源；字段改名必须两侧同编译错误（测试断言推导类型一致）" }
+  ],
+  "factual_claims": true,
+  "authority_docs": [
+    { "title": "Node.js Release schedule & previous releases", "url": "https://nodejs.org/en/about/previous-releases", "why": "LTS 状态与时点事实（24 Active / 22 Maintenance / 20 EOL 2026-04）的唯一口径", "as_of": "2026-09-09" },
+    { "title": "PostgreSQL Documentation — Indexes / EXPLAIN", "url": "https://www.postgresql.org/docs/current/indexes.html", "why": "B-tree 索引行为、Seq Scan/Index Scan 查询计划事实", "as_of": "2026-09-09" },
+    { "title": "Drizzle ORM Documentation（migrations / postgres.js driver）", "url": "https://orm.drizzle.team/docs", "why": "schema/迁移/查询 API 行为", "as_of": "2026-09-09" },
+    { "title": "Hono Documentation（routing / middleware / @hono/node-server）", "url": "https://hono.dev/docs", "why": "路由、中间件上下文、Node 适配器行为", "as_of": "2026-09-09" },
+    { "title": "zod v4 Documentation", "url": "https://zod.dev", "why": "schema 定义与 parse 报错行为", "as_of": "2026-09-09" },
+    { "title": "Redis Documentation — commands & data types", "url": "https://redis.io/docs/latest/commands/", "why": "SETEX/INCR/EXPIRE 原子性与单线程模型表述", "as_of": "2026-09-09" },
+    { "title": "BullMQ Documentation（jobs / retries / idempotence）", "url": "https://bullmq.io/docs", "why": "队列语义：at-least-once、attempts/backoff、jobId 去重", "as_of": "2026-09-09" },
+    { "title": "OWASP Session Management Cheat Sheet", "url": "https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html", "why": "会话 token 生成/存储/httpOnly 的安全口径", "as_of": "2026-09-09" },
+    { "title": "RFC 7914 The scrypt Password-Based Key Derivation Function", "url": "https://www.rfc-editor.org/rfc/rfc7914", "why": "scrypt 的内存难度参数含义", "as_of": "2026-09-09" },
+    { "title": "MDN HTTP status / CORS", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP", "why": "302/401/429/422 语义与 CORS preflight 行为", "as_of": "2026-09-09" },
+    { "title": "Docker Docs — multi-stage builds / layer cache；Compose file reference", "url": "https://docs.docker.com/build/building/multi-stage/", "why": "分层缓存与多阶段构建事实", "as_of": "2026-09-09" },
+    { "title": "GitHub Actions — workflow syntax & caching", "url": "https://docs.github.com/actions", "why": "workflow 字段、runner、actions/cache 行为", "as_of": "2026-09-09" },
+    { "title": "Caddy Docs — automatic HTTPS；Let's Encrypt（ACME、90 天证书）", "url": "https://caddyserver.com/docs/automatic-https", "why": "自动签发/续期的条件与速率限制事实", "as_of": "2026-09-09" },
+    { "title": "The Twelve-Factor App — Config", "url": "https://12factor.net/config", "why": "配置走环境变量的原则出处", "as_of": "2026-09-09" },
+    { "title": "pnpm Workspace 文档", "url": "https://pnpm.io/workspaces", "why": "workspace 协议与过滤行为", "as_of": "2026-09-09" },
+    { "title": "PostgreSQL pg_dump 文档", "url": "https://www.postgresql.org/docs/current/app-pgdump.html", "why": "备份格式与恢复命令事实", "as_of": "2026-09-09" }
+  ]
+}
