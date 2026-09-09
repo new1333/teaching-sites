@@ -3,6 +3,8 @@ node_modules/
 .output/
 .data/
 *.local
+# 备份归档：数据快照不入库（与 .env 同一条「仓库只留生成方式」纪律），需要时 pg_dump 重新生成
+.backups/
 *.dump
 # 自签证书产物：私钥不入库，与 .env 同一条纪律；需要时 pnpm gen:cert 重新生成
 nginx/certs/

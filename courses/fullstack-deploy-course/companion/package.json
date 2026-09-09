@@ -17,6 +17,9 @@
     "db:generate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "node --env-file-if-exists=.env node_modules/drizzle-kit/bin.cjs migrate",
     "db:seed": "node --env-file-if-exists=.env scripts/seed.mjs",
+    "db:backup": "node scripts/backup.mjs",
+    "db:restore": "node scripts/restore.mjs",
+    "drill:backup-restore": "node scripts/drill-backup-restore.mjs",
     "compose:sim": "node scripts/compose-sim.mjs",
     "gen:cert": "node scripts/gen-cert.mjs",
     "sim:prod": "node scripts/sim-prod.mjs"
