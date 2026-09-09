@@ -1,0 +1,211 @@
+/* companion/app/assets/css/main.css · 蜗牛商店基础样式（刻意保持轻量） */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  color: #2d2a26;
+  background: #faf7f2;
+  line-height: 1.6;
+}
+
+.shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid #e5ded2;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2d2a26;
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  gap: 18px;
+}
+
+.nav a {
+  color: #5a544b;
+  text-decoration: none;
+}
+
+.nav a:hover {
+  color: #1f7a5f;
+}
+
+.main {
+  min-height: 60vh;
+  padding: 24px 0;
+}
+
+.footer {
+  padding-top: 16px;
+  border-top: 1px solid #e5ded2;
+  color: #9a9285;
+  font-size: 13px;
+}
+
+.hero {
+  padding: 48px 0 24px;
+}
+
+.hero h1 {
+  font-size: 40px;
+  margin: 0 0 12px;
+}
+
+.hero-sub {
+  max-width: 560px;
+  color: #5a544b;
+}
+
+.button {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: #1f7a5f;
+  color: #fff;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: #17604b;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.feature {
+  padding: 16px;
+  border: 1px solid #e5ded2;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.feature h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
+.feature p {
+  margin: 0;
+  color: #5a544b;
+  font-size: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border: 1px solid #e5ded2;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.thumb {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.name {
+  margin: 10px 0 4px;
+  font-size: 16px;
+}
+
+.meta {
+  margin: 0 0 6px;
+  color: #5a544b;
+  font-size: 13px;
+}
+
+.summary {
+  margin: 0 0 10px;
+  color: #7a7264;
+  font-size: 13px;
+  flex: 1;
+}
+
+.detail-link {
+  font-size: 13px;
+  color: #1f7a5f;
+}
+
+.state {
+  padding: 18px;
+  border-radius: 8px;
+  background: #f1ece2;
+  color: #5a544b;
+}
+
+.state-error {
+  background: #f8e3e0;
+  color: #a33a2a;
+}
+
+.state-loading {
+  background: #eaf2ee;
+  color: #1f6a54;
+}
+
+.search-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.search-form input {
+  flex: 1;
+  max-width: 360px;
+  padding: 9px 12px;
+  border: 1px solid #d8d0c2;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.search-form button {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #1f7a5f;
+  color: #fff;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.detail h1 {
+  margin-bottom: 4px;
+}
+
+.detail .meta {
+  font-size: 15px;
+}
+
+.detail .summary {
+  font-size: 15px;
+  color: #5a544b;
+}

@@ -1,0 +1,272 @@
+{
+  "tool": "scripts/measure.mjs（node 代理指标口径：不跑浏览器 JS，浏览器口径见正文）",
+  "generatedAt": "2026-09-09T02:09:43.282Z",
+  "base": "http://127.0.0.1:4311",
+  "build": "built",
+  "node": "v22.22.2",
+  "routes": [
+    {
+      "label": "home",
+      "path": "/",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 8.6,
+        "run2": 4.9
+      },
+      "htmlBytes": 2707,
+      "payloadBytes": 184,
+      "dataWithHtml": {
+        "probes": [
+          "蜗牛商店",
+          "慢慢来"
+        ],
+        "present": true
+      },
+      "firstLoadJs": {
+        "bytes": 189265,
+        "count": 4,
+        "chunks": [
+          {
+            "file": "_nuxt/CVYRJDxL.js",
+            "bytes": 91413
+          },
+          {
+            "file": "_nuxt/C3Fgr3IN.js",
+            "bytes": 61151
+          },
+          {
+            "file": "_nuxt/CosRPsGv.js",
+            "bytes": 35557
+          },
+          {
+            "file": "_nuxt/CtQQ_3tP.js",
+            "bytes": 1144
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "products",
+      "path": "/products",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 8.2,
+        "run2": 2.7
+      },
+      "htmlBytes": 2110,
+      "payloadBytes": 192,
+      "dataWithHtml": {
+        "probes": [
+          "云朵雨伞",
+          "慢炖陶锅"
+        ],
+        "present": false
+      },
+      "firstLoadJs": {
+        "bytes": 190089,
+        "count": 5,
+        "chunks": [
+          {
+            "file": "_nuxt/CVYRJDxL.js",
+            "bytes": 91413
+          },
+          {
+            "file": "_nuxt/C3Fgr3IN.js",
+            "bytes": 61151
+          },
+          {
+            "file": "_nuxt/CosRPsGv.js",
+            "bytes": 35557
+          },
+          {
+            "file": "_nuxt/wXX5glk7.js",
+            "bytes": 1160
+          },
+          {
+            "file": "_nuxt/Dzqm946E.js",
+            "bytes": 808
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "detail",
+      "path": "/products/1",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 6.5,
+        "run2": 4.2
+      },
+      "htmlBytes": 1957,
+      "payloadBytes": 199,
+      "dataWithHtml": {
+        "probes": [
+          "云朵雨伞"
+        ],
+        "present": false
+      },
+      "firstLoadJs": {
+        "bytes": 189310,
+        "count": 4,
+        "chunks": [
+          {
+            "file": "_nuxt/CVYRJDxL.js",
+            "bytes": 91413
+          },
+          {
+            "file": "_nuxt/C3Fgr3IN.js",
+            "bytes": 61151
+          },
+          {
+            "file": "_nuxt/CosRPsGv.js",
+            "bytes": 35557
+          },
+          {
+            "file": "_nuxt/C6wAx82D.js",
+            "bytes": 1189
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "search",
+      "path": "/search?q=%E9%9B%A8",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 6.9,
+        "run2": 8.4
+      },
+      "htmlBytes": 2224,
+      "payloadBytes": 202,
+      "dataWithHtml": {
+        "probes": [
+          "云朵雨伞"
+        ],
+        "present": false
+      },
+      "firstLoadJs": {
+        "bytes": 190826,
+        "count": 5,
+        "chunks": [
+          {
+            "file": "_nuxt/CVYRJDxL.js",
+            "bytes": 91413
+          },
+          {
+            "file": "_nuxt/C3Fgr3IN.js",
+            "bytes": 61151
+          },
+          {
+            "file": "_nuxt/CosRPsGv.js",
+            "bytes": 35557
+          },
+          {
+            "file": "_nuxt/C00eX7zx.js",
+            "bytes": 1545
+          },
+          {
+            "file": "_nuxt/wXX5glk7.js",
+            "bytes": 1160
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "favorites",
+      "path": "/favorites",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 5.9,
+        "run2": 3.4
+      },
+      "htmlBytes": 2111,
+      "payloadBytes": 193,
+      "dataWithHtml": {
+        "probes": [
+          "竹柄油纸伞"
+        ],
+        "present": false
+      },
+      "firstLoadJs": {
+        "bytes": 190094,
+        "count": 5,
+        "chunks": [
+          {
+            "file": "_nuxt/CVYRJDxL.js",
+            "bytes": 91413
+          },
+          {
+            "file": "_nuxt/C3Fgr3IN.js",
+            "bytes": 61151
+          },
+          {
+            "file": "_nuxt/CosRPsGv.js",
+            "bytes": 35557
+          },
+          {
+            "file": "_nuxt/wXX5glk7.js",
+            "bytes": 1160
+          },
+          {
+            "file": "_nuxt/4MFtze78.js",
+            "bytes": 813
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    }
+  ],
+  "endpoints": [
+    {
+      "label": "api-products",
+      "path": "/api/products",
+      "status": 200,
+      "ttfbMs": 810.1
+    }
+  ],
+  "apiHits": {},
+  "chaos": {
+    "delayMs": null,
+    "fail": "none",
+    "defaultDelays": {
+      "/api/products": 800,
+      "/api/products/:id": 500,
+      "/api/search": 600,
+      "/api/favorites": 300
+    }
+  }
+}
