@@ -74,6 +74,27 @@
         { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/01-03（全参数）", "result": "passed" }
       ],
       "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "prefetch-nav",
+      "file": "docs/04-prefetch-nav.md",
+      "status": "complete",
+      "summary": "建立两块积木：视口预取（NuxtLink 默认导航预取，视口内+空闲+2G/省流三条件，prefetchOn 逐键回退需显式 visibility:false）、资源提示（preload=本页真资源抬优先级，prefetch=未来最低优先级，modulepreload 为模块变体）。companion：NAV_LINKS 三档策略表驱动页头（products 默认/search 交互/favorites 裁剪）+ hero SVG 经 useHead preload（真资源四证据）；实测 HTML 中 3 条 rel=prefetch 为错误页分块（甄别断言）；gate:ch4 31 项先红（10/27）后绿、旧门 110/13/15 内含复跑、vitest 43 例；steps/ch04 快照。读者能定预取策略、辨三类提示、守真资源纪律。",
+      "artifacts": [
+        "companion/app/utils/nav-links.ts（策略表+纯映射）",
+        "companion/app/components/SiteHeader.vue（表驱动+data-prefetch 锚点）",
+        "companion/app/pages/index.vue + public/hero-snail.svg + main.css（hero preload）",
+        "companion/scripts/e2e-ch4.mjs + gate:ch4（31 项，内含旧门串行复跑）",
+        "companion/tests/nav-links.test.ts（10 例）",
+        "companion/reports/gate-ch4.json、steps/ch04-prefetch-nav/"
+      ],
+      "gates": [
+        { "command": "pnpm gate:ch4", "result": "passed" },
+        { "command": "pnpm test", "result": "passed" },
+        { "command": "node scripts/course-lint.mjs courses/nuxt-ux-course docs/04-prefetch-nav.md（全参数）", "result": "passed" }
+      ],
+      "review_blockers": 0
     }
   ]
 }

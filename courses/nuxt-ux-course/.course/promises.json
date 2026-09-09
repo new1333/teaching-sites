@@ -33,6 +33,14 @@
       "target": "asset-budget",
       "what": "首屏 JS 字节口径移交资产预算章纳入预算表 enforcement",
       "status": "open"
+    },
+    {
+      "id": "p5-prefetch-payload-to-route-cache",
+      "from": "prefetch-nav",
+      "from_n": 4,
+      "target": "route-cache",
+      "what": "预取与 payload 复用的叠加效果将在缓存章与 _payload.json 一起对账",
+      "status": "open"
     }
   ]
 }

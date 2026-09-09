@@ -1,6 +1,6 @@
 {
   "command": "pnpm gate:ch2（node scripts/e2e-ch2.mjs）",
-  "generatedAt": "2026-09-09T06:21:55.195Z",
+  "generatedAt": "2026-09-09T06:28:09.775Z",
   "base": "http://127.0.0.1:4311",
   "build": "skipped",
   "summary": {
@@ -11,7 +11,7 @@
   "failed": [],
   "products": {
     "status": 200,
-    "ttfbMs": 841.5,
+    "ttfbMs": 828.6,
     "htmlBytes": 20628,
     "payloadBytes": 4528,
     "probesInHtml": {
