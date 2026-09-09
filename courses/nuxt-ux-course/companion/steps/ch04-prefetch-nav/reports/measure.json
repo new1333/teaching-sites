@@ -1,24 +1,19 @@
 {
-  "command": "pnpm gate:ch1（node scripts/e2e-ch1.mjs）",
-  "generatedAt": "2026-09-09T06:21:50.720Z",
+  "tool": "scripts/measure.mjs（node 代理指标口径：不跑浏览器 JS，浏览器口径见正文）",
+  "generatedAt": "2026-09-09T03:50:51.067Z",
   "base": "http://127.0.0.1:4311",
-  "build": "skipped",
-  "summary": {
-    "passed": 110,
-    "failed": 0,
-    "total": 110
-  },
-  "failed": [],
+  "build": "built",
+  "node": "v22.22.2",
   "routes": [
     {
       "label": "home",
       "path": "/",
       "status": 200,
       "ttfbMs": {
-        "run1": 9.8,
-        "run2": 2.9
+        "run1": 11.8,
+        "run2": 3.6
       },
-      "htmlBytes": 3183,
+      "htmlBytes": 2859,
       "payloadBytes": 184,
       "dataWithHtml": {
         "probes": [
@@ -28,7 +23,7 @@
         "present": true
       },
       "firstLoadJs": {
-        "bytes": 191636,
+        "bytes": 191202,
         "count": 6,
         "chunks": [
           {
@@ -36,8 +31,8 @@
             "bytes": 74973
           },
           {
-            "file": "_nuxt/ic0avTyK.js",
-            "bytes": 61696
+            "file": "_nuxt/7RH9FnDd.js",
+            "bytes": 61451
           },
           {
             "file": "_nuxt/jjKjlfcb.js",
@@ -52,10 +47,17 @@
             "bytes": 11663
           },
           {
-            "file": "_nuxt/BpCdIXon.js",
-            "bytes": 1359
+            "file": "_nuxt/DyCq3ESu.js",
+            "bytes": 1170
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -63,10 +65,10 @@
       "path": "/products",
       "status": 200,
       "ttfbMs": {
-        "run1": 864.6,
-        "run2": 823
+        "run1": 842.4,
+        "run2": 816.9
       },
-      "htmlBytes": 20628,
+      "htmlBytes": 20467,
       "payloadBytes": 4528,
       "dataWithHtml": {
         "probes": [
@@ -76,7 +78,7 @@
         "present": true
       },
       "firstLoadJs": {
-        "bytes": 200829,
+        "bytes": 200584,
         "count": 8,
         "chunks": [
           {
@@ -84,8 +86,8 @@
             "bytes": 74973
           },
           {
-            "file": "_nuxt/ic0avTyK.js",
-            "bytes": 61696
+            "file": "_nuxt/7RH9FnDd.js",
+            "bytes": 61451
           },
           {
             "file": "_nuxt/jjKjlfcb.js",
@@ -108,10 +110,17 @@
             "bytes": 1159
           },
           {
-            "file": "_nuxt/D8bmJk70.js",
+            "file": "_nuxt/BDFLZ1A5.js",
             "bytes": 761
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -119,10 +128,10 @@
       "path": "/products/1",
       "status": 200,
       "ttfbMs": {
-        "run1": 547.8,
-        "run2": 525.3
+        "run1": 546.4,
+        "run2": 523
       },
-      "htmlBytes": 48694,
+      "htmlBytes": 48533,
       "payloadBytes": 419,
       "dataWithHtml": {
         "probes": [
@@ -131,7 +140,7 @@
         "present": true
       },
       "firstLoadJs": {
-        "bytes": 200996,
+        "bytes": 200812,
         "count": 7,
         "chunks": [
           {
@@ -139,8 +148,8 @@
             "bytes": 74973
           },
           {
-            "file": "_nuxt/ic0avTyK.js",
-            "bytes": 61696
+            "file": "_nuxt/7RH9FnDd.js",
+            "bytes": 61451
           },
           {
             "file": "_nuxt/jjKjlfcb.js",
@@ -159,10 +168,17 @@
             "bytes": 8632
           },
           {
-            "file": "_nuxt/VFyGAcd6.js",
-            "bytes": 2087
+            "file": "_nuxt/gE8Ss9Yn.js",
+            "bytes": 2148
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -170,10 +186,10 @@
       "path": "/search?q=%E9%9B%A8",
       "status": 200,
       "ttfbMs": {
-        "run1": 14.7,
-        "run2": 5.4
+        "run1": 11.5,
+        "run2": 7.8
       },
-      "htmlBytes": 2537,
+      "htmlBytes": 2376,
       "payloadBytes": 202,
       "dataWithHtml": {
         "probes": [
@@ -182,7 +198,7 @@
         "present": false
       },
       "firstLoadJs": {
-        "bytes": 193024,
+        "bytes": 192779,
         "count": 7,
         "chunks": [
           {
@@ -190,8 +206,8 @@
             "bytes": 74973
           },
           {
-            "file": "_nuxt/ic0avTyK.js",
-            "bytes": 61696
+            "file": "_nuxt/7RH9FnDd.js",
+            "bytes": 61451
           },
           {
             "file": "_nuxt/jjKjlfcb.js",
@@ -206,7 +222,7 @@
             "bytes": 11663
           },
           {
-            "file": "_nuxt/CshgWvQj.js",
+            "file": "_nuxt/AaO6TYRY.js",
             "bytes": 1588
           },
           {
@@ -214,6 +230,13 @@
             "bytes": 1159
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     },
     {
@@ -221,10 +244,10 @@
       "path": "/favorites",
       "status": 200,
       "ttfbMs": {
-        "run1": 6.8,
-        "run2": 3.9
+        "run1": 8.2,
+        "run2": 8.2
       },
-      "htmlBytes": 2424,
+      "htmlBytes": 2263,
       "payloadBytes": 193,
       "dataWithHtml": {
         "probes": [
@@ -233,7 +256,7 @@
         "present": false
       },
       "firstLoadJs": {
-        "bytes": 192275,
+        "bytes": 192030,
         "count": 7,
         "chunks": [
           {
@@ -241,8 +264,8 @@
             "bytes": 74973
           },
           {
-            "file": "_nuxt/ic0avTyK.js",
-            "bytes": 61696
+            "file": "_nuxt/7RH9FnDd.js",
+            "bytes": 61451
           },
           {
             "file": "_nuxt/jjKjlfcb.js",
@@ -261,10 +284,17 @@
             "bytes": 1159
           },
           {
-            "file": "_nuxt/Dk4cqoLQ.js",
+            "file": "_nuxt/xC9Qa6vI.js",
             "bytes": 839
           }
         ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
       }
     }
   ],
@@ -273,7 +303,7 @@
       "label": "api-products",
       "path": "/api/products",
       "status": 200,
-      "ttfbMs": 811.1
+      "ttfbMs": 805.3
     }
   ],
   "apiHits": {

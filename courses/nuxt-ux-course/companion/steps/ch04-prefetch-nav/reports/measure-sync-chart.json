@@ -1,0 +1,283 @@
+{
+  "tool": "scripts/measure.mjs（node 代理指标口径：不跑浏览器 JS，浏览器口径见正文）",
+  "generatedAt": "2026-09-09T03:39:39.960Z",
+  "base": "http://127.0.0.1:4311",
+  "build": "built",
+  "node": "v22.22.2",
+  "routes": [
+    {
+      "label": "home",
+      "path": "/",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 10.7,
+        "run2": 3.2
+      },
+      "htmlBytes": 2707,
+      "payloadBytes": 184,
+      "dataWithHtml": {
+        "probes": [
+          "蜗牛商店",
+          "慢慢来"
+        ],
+        "present": true
+      },
+      "firstLoadJs": {
+        "bytes": 190259,
+        "count": 4,
+        "chunks": [
+          {
+            "file": "_nuxt/CGUZZiqI.js",
+            "bytes": 91822
+          },
+          {
+            "file": "_nuxt/DfZygMvh.js",
+            "bytes": 61369
+          },
+          {
+            "file": "_nuxt/BNGwHzgo.js",
+            "bytes": 35923
+          },
+          {
+            "file": "_nuxt/5KVQYPOm.js",
+            "bytes": 1145
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "products",
+      "path": "/products",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 837,
+        "run2": 826.1
+      },
+      "htmlBytes": 20315,
+      "payloadBytes": 4528,
+      "dataWithHtml": {
+        "probes": [
+          "云朵雨伞",
+          "慢炖陶锅"
+        ],
+        "present": true
+      },
+      "firstLoadJs": {
+        "bytes": 199628,
+        "count": 6,
+        "chunks": [
+          {
+            "file": "_nuxt/CGUZZiqI.js",
+            "bytes": 91822
+          },
+          {
+            "file": "_nuxt/DfZygMvh.js",
+            "bytes": 61369
+          },
+          {
+            "file": "_nuxt/BNGwHzgo.js",
+            "bytes": 35923
+          },
+          {
+            "file": "_nuxt/BPV_g7ma.js",
+            "bytes": 8616
+          },
+          {
+            "file": "_nuxt/CO-VvTPQ.js",
+            "bytes": 1161
+          },
+          {
+            "file": "_nuxt/AT4gOa3c.js",
+            "bytes": 737
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "detail",
+      "path": "/products/1",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 528.1,
+        "run2": 527.3
+      },
+      "htmlBytes": 48310,
+      "payloadBytes": 419,
+      "dataWithHtml": {
+        "probes": [
+          "云朵雨伞"
+        ],
+        "present": true
+      },
+      "firstLoadJs": {
+        "bytes": 211299,
+        "count": 5,
+        "chunks": [
+          {
+            "file": "_nuxt/CGUZZiqI.js",
+            "bytes": 91822
+          },
+          {
+            "file": "_nuxt/DfZygMvh.js",
+            "bytes": 61369
+          },
+          {
+            "file": "_nuxt/BNGwHzgo.js",
+            "bytes": 35923
+          },
+          {
+            "file": "_nuxt/Cw4nIA37.js",
+            "bytes": 13569
+          },
+          {
+            "file": "_nuxt/BPV_g7ma.js",
+            "bytes": 8616
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "search",
+      "path": "/search?q=%E9%9B%A8",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 9.7,
+        "run2": 5
+      },
+      "htmlBytes": 2224,
+      "payloadBytes": 202,
+      "dataWithHtml": {
+        "probes": [
+          "云朵雨伞"
+        ],
+        "present": false
+      },
+      "firstLoadJs": {
+        "bytes": 191822,
+        "count": 5,
+        "chunks": [
+          {
+            "file": "_nuxt/CGUZZiqI.js",
+            "bytes": 91822
+          },
+          {
+            "file": "_nuxt/DfZygMvh.js",
+            "bytes": 61369
+          },
+          {
+            "file": "_nuxt/BNGwHzgo.js",
+            "bytes": 35923
+          },
+          {
+            "file": "_nuxt/D14tg1aW.js",
+            "bytes": 1547
+          },
+          {
+            "file": "_nuxt/CO-VvTPQ.js",
+            "bytes": 1161
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    },
+    {
+      "label": "favorites",
+      "path": "/favorites",
+      "status": 200,
+      "ttfbMs": {
+        "run1": 5.8,
+        "run2": 3.7
+      },
+      "htmlBytes": 2111,
+      "payloadBytes": 193,
+      "dataWithHtml": {
+        "probes": [
+          "竹柄油纸伞"
+        ],
+        "present": false
+      },
+      "firstLoadJs": {
+        "bytes": 191090,
+        "count": 5,
+        "chunks": [
+          {
+            "file": "_nuxt/CGUZZiqI.js",
+            "bytes": 91822
+          },
+          {
+            "file": "_nuxt/DfZygMvh.js",
+            "bytes": 61369
+          },
+          {
+            "file": "_nuxt/BNGwHzgo.js",
+            "bytes": 35923
+          },
+          {
+            "file": "_nuxt/CO-VvTPQ.js",
+            "bytes": 1161
+          },
+          {
+            "file": "_nuxt/B_9CTiiR.js",
+            "bytes": 815
+          }
+        ]
+      },
+      "repeatStable": {
+        "status": true,
+        "htmlBytes": true,
+        "payloadBytes": true,
+        "firstLoadJsBytes": true,
+        "dataWithHtml": true
+      }
+    }
+  ],
+  "endpoints": [
+    {
+      "label": "api-products",
+      "path": "/api/products",
+      "status": 200,
+      "ttfbMs": 805.3
+    }
+  ],
+  "apiHits": {
+    "/api/products": 2,
+    "/api/products/:id": 2
+  },
+  "chaos": {
+    "delayMs": null,
+    "fail": "none",
+    "defaultDelays": {
+      "/api/products": 800,
+      "/api/products/:id": 500,
+      "/api/search": 600,
+      "/api/favorites": 300
+    }
+  }
+}

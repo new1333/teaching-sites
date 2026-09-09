@@ -1,0 +1,61 @@
+{
+  "command": "pnpm gate:ch4（node scripts/e2e-ch4.mjs）",
+  "generatedAt": "2026-09-09T06:22:01.734Z",
+  "base": "http://127.0.0.1:4311",
+  "build": "built",
+  "summary": {
+    "passed": 31,
+    "failed": 0,
+    "total": 31
+  },
+  "failed": [],
+  "detail": {
+    "expectedStrategies": {
+      "/products": "viewport",
+      "/search": "interaction",
+      "/favorites": "none"
+    },
+    "navObserved": {
+      "/": {
+        "/products": "viewport",
+        "/search": "interaction",
+        "/favorites": "none"
+      },
+      "/products": {
+        "/products": "viewport",
+        "/search": "interaction",
+        "/favorites": "none"
+      }
+    },
+    "hero": {
+      "preloadTag": "<link rel=\"preload\" as=\"image\" href=\"/hero-snail.svg\">",
+      "cssReferencesAsset": true,
+      "assetBytes": 2669
+    },
+    "htmlPrefetchLinks": [
+      "/_nuxt/Cf1Cpy1s.js",
+      "/_nuxt/BDNMzG2s.js",
+      "/_nuxt/C6zMEnip.js"
+    ],
+    "wiring": {
+      "chunk": "\\public\\_nuxt\\ic0avTyK.js",
+      "bytes": 61696,
+      "hasTable": true,
+      "hasProps": true
+    },
+    "oldGates": [
+      {
+        "script": "e2e-ch1.mjs",
+        "code": 0
+      },
+      {
+        "script": "e2e-ch2.mjs",
+        "code": 0
+      },
+      {
+        "script": "e2e-ch3.mjs",
+        "code": 0
+      }
+    ]
+  }
+}
