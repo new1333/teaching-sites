@@ -1,0 +1,329 @@
+{
+  "schema_version": 2,
+  "outline_revision": 1,
+  "concept_first": {
+    "所有权地图": "repo-map",
+    "crate 依赖方向": "repo-map",
+    "ratchet 预算": "repo-map",
+    "SHA 钉版": "repo-map",
+    "命名双轨": "repo-map",
+    "VT 转义序列": "vt-grid",
+    "网格与单元格": "vt-grid",
+    "TermMode 位域": "vt-grid",
+    "damage 追踪": "vt-grid",
+    "PTY 伪终端": "pty-event-loop",
+    "ConPTY 对账": "pty-event-loop",
+    "事件循环": "pty-event-loop",
+    "FairMutex": "pty-event-loop",
+    "纯数据布局树": "split-tree",
+    "切割次序合同": "split-tree",
+    "树叶集合不变式": "split-tree",
+    "GPUI Entity": "gpui-shell",
+    "prepaint 回写": "gpui-shell",
+    "pane 生命周期": "gpui-shell",
+    "资源清理合同": "gpui-shell",
+    "传输层无关": "ssh-session",
+    "russh 连接复用": "ssh-session",
+    "jump 路由": "ssh-session",
+    "SshEventHost": "ssh-session",
+    "单在途 READ 上限": "sftp-engine",
+    "多句柄分段": "sftp-engine",
+    "进度/取消接缝": "sftp-engine",
+    "命名管道桥": "ai-hook-bridge",
+    "环境变量哨兵": "ai-hook-bridge",
+    "隐形合同": "ai-hook-bridge",
+    "有界转发": "ai-hook-bridge",
+    "类型化事件": "ai-lifecycle",
+    "门控排序": "ai-lifecycle",
+    "能力集分层": "ai-lifecycle",
+    "屏幕证据": "screen-evidence",
+    "区域规则": "screen-evidence",
+    "负向证据": "screen-evidence",
+    "规则优先级": "screen-evidence",
+    "快照节奏": "session-persistence",
+    "恢复护栏": "session-persistence",
+    "版本化 schema": "session-persistence",
+    "Lua 配置沙界": "lua-config",
+    "诊断作用域": "lua-config",
+    "SerdeReplace": "lua-config",
+    "排版编译管线": "native-math",
+    "光学缩放": "native-math",
+    "共享常量合同": "native-math",
+    "回答捕获": "answer-reader",
+    "文档 tab 模型": "answer-reader",
+    "管线复用结构": "answer-reader",
+    "Completer trait 接缝": "completion-engine",
+    "模糊匹配排序": "completion-engine"
+  },
+  "api_plan": [
+    {
+      "chapter": "repo-map",
+      "additions": [
+        "companion/scripts/probe-01-repo-map.mjs — 探针断言 workspace 成员清单、architecture.md 所有权合同与 GPUI SHA 钉版事实"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "vt-grid",
+      "additions": [
+        "companion/scripts/probe-02-vt-grid.mjs — 探针断言 TermMode 位标志集合、vte 依赖存在与 DECSET 2031 私有扩展在锁定源码中的位置"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "pty-event-loop",
+      "additions": [
+        "companion/scripts/probe-03-pty-event-loop.mjs — 探针断言平台分叉文件结构、READ_BUFFER_SIZE 常量与 FairMutex 的公平性实现锚点"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "split-tree",
+      "additions": [
+        "companion/scripts/probe-04-split-tree.mjs — 探针断言 CLOSE_MARGIN/RATIO_CLAMP 常量合同与 crate 无 UI 依赖（无 gpui 引用）"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "gpui-shell",
+      "additions": [
+        "companion/scripts/probe-05-gpui-shell.mjs — 探针断言 workspace 三件套结构、prepaint 回写调用点与 shutdown+Drop 双保险锚点"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "ssh-session",
+      "additions": [
+        "companion/scripts/probe-06-ssh-session.mjs — 探针断言远端 pane 不建本地 PTY 的代码路径、路由解析模块与 SshEventHost 抽象点"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "sftp-engine",
+      "additions": [
+        "companion/scripts/probe-07-sftp-engine.mjs — 探针断言分段规划常量、句柄区间划分与 TransferObserver trait 的解耦结构"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "ai-hook-bridge",
+      "additions": [
+        "companion/scripts/probe-08-ai-hook-bridge.mjs — 探针断言 nebula_hook 无第三方依赖、panic 退 0 结构、1MB/2s 边界常量与管道环境变量名"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "ai-lifecycle",
+      "additions": [
+        "companion/scripts/probe-09-ai-lifecycle.mjs — 探针断言五层模块划分、parse_envelope 入口与 GateVerdict 拒绝路径存在"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "screen-evidence",
+      "additions": [
+        "companion/scripts/probe-10-screen-evidence.mjs — 探针断言 claude.toml/_shared.toml 的区域字段、not 条件与优先级结构，及规则注释中的演化史时点"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "session-persistence",
+      "additions": [
+        "companion/scripts/probe-11-session-persistence.mjs — 探针断言快照频率常量、boot_attempts 上限与 v4 版本标记在锁定源码中的位置"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "lua-config",
+      "additions": [
+        "companion/scripts/probe-12-lua-config.mjs — 探针断言 vendored Lua 5.4 依赖、capture_diagnostics 作用域结构与 pebrel/nebula 双 require 兼容"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "native-math",
+      "additions": [
+        "companion/scripts/probe-13-native-math.mjs — 探针断言管线五阶段模块、MIN_READABLE_MATH_PX/OPTICAL_SCALE/MIN_SCRIPT_SCALE 常量值"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "answer-reader",
+      "additions": [
+        "companion/scripts/probe-14-answer-reader.mjs — 探针断言阅读器调用 math 编译入口的调用点（复用而非复制）与文档 tab 结构"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "completion-engine",
+      "additions": [
+        "companion/scripts/probe-15-completion-engine.mjs — 探针断言 Completer trait 定义、内置补全源清单与 nucleo-matcher 依赖"
+      ],
+      "semantic_changes": []
+    },
+    {
+      "chapter": "review",
+      "additions": [],
+      "semantic_changes": []
+    }
+  ],
+  "planned_summaries": {
+    "repo-map": "截至本章可调用积木：（无——本章是第一块地基）。本章提供：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨。",
+    "vt-grid": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨。本章提供：VT 转义序列、网格与单元格、TermMode 位域、damage 追踪。",
+    "pty-event-loop": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪。本章提供：PTY 伪终端、ConPTY 对账、事件循环、FairMutex。",
+    "split-tree": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex。本章提供：纯数据布局树、切割次序合同、树叶集合不变式。",
+    "gpui-shell": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式。本章提供：GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同。",
+    "ssh-session": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同。本章提供：传输层无关、russh 连接复用、jump 路由、SshEventHost。",
+    "sftp-engine": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost。本章提供：单在途 READ 上限、多句柄分段、进度/取消接缝。",
+    "ai-hook-bridge": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝。本章提供：命名管道桥、环境变量哨兵、隐形合同、有界转发。",
+    "ai-lifecycle": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发。本章提供：类型化事件、门控排序、能力集分层。",
+    "screen-evidence": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层。本章提供：屏幕证据、区域规则、负向证据、规则优先级。",
+    "session-persistence": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层、屏幕证据、区域规则、负向证据、规则优先级。本章提供：快照节奏、恢复护栏、版本化 schema。",
+    "lua-config": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层、屏幕证据、区域规则、负向证据、规则优先级、快照节奏、恢复护栏、版本化 schema。本章提供：Lua 配置沙界、诊断作用域、SerdeReplace。",
+    "native-math": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层、屏幕证据、区域规则、负向证据、规则优先级、快照节奏、恢复护栏、版本化 schema、Lua 配置沙界、诊断作用域、SerdeReplace。本章提供：排版编译管线、光学缩放、共享常量合同。",
+    "answer-reader": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层、屏幕证据、区域规则、负向证据、规则优先级、快照节奏、恢复护栏、版本化 schema、Lua 配置沙界、诊断作用域、SerdeReplace、排版编译管线、光学缩放、共享常量合同。本章提供：回答捕获、文档 tab 模型、管线复用结构。",
+    "completion-engine": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层、屏幕证据、区域规则、负向证据、规则优先级、快照节奏、恢复护栏、版本化 schema、Lua 配置沙界、诊断作用域、SerdeReplace、排版编译管线、光学缩放、共享常量合同、回答捕获、文档 tab 模型、管线复用结构。本章提供：Completer trait 接缝、模糊匹配排序。",
+    "review": "截至本章可调用积木：所有权地图、crate 依赖方向、ratchet 预算、SHA 钉版、命名双轨、VT 转义序列、网格与单元格、TermMode 位域、damage 追踪、PTY 伪终端、ConPTY 对账、事件循环、FairMutex、纯数据布局树、切割次序合同、树叶集合不变式、GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同、传输层无关、russh 连接复用、jump 路由、SshEventHost、单在途 READ 上限、多句柄分段、进度/取消接缝、命名管道桥、环境变量哨兵、隐形合同、有界转发、类型化事件、门控排序、能力集分层、屏幕证据、区域规则、负向证据、规则优先级、快照节奏、恢复护栏、版本化 schema、Lua 配置沙界、诊断作用域、SerdeReplace、排版编译管线、光学缩放、共享常量合同、回答捕获、文档 tab 模型、管线复用结构、Completer trait 接缝、模糊匹配排序。本章提供：（复盘章，不提供新积木）。"
+  },
+  "promises_plan": [
+    {
+      "from": "repo-map",
+      "from_n": 1,
+      "target": "review",
+      "what": "ratchet 预算与 SHA 钉版在终章与全部子系统对账"
+    },
+    {
+      "from": "vt-grid",
+      "from_n": 2,
+      "target": "pty-event-loop",
+      "what": "damage 追踪的最小重绘在事件循环章被调用"
+    },
+    {
+      "from": "pty-event-loop",
+      "from_n": 3,
+      "target": "gpui-shell",
+      "what": "PTY resize 对账在 GPUI 壳章的 prepaint 回写中被调用"
+    },
+    {
+      "from": "gpui-shell",
+      "from_n": 5,
+      "target": "ai-lifecycle",
+      "what": "pane 生命周期积木供 AI 事件管线调用"
+    },
+    {
+      "from": "ai-hook-bridge",
+      "from_n": 8,
+      "target": "ai-lifecycle",
+      "what": "命名管道桥的载荷形状在事件归一章被解析"
+    },
+    {
+      "from": "ai-lifecycle",
+      "from_n": 9,
+      "target": "screen-evidence",
+      "what": "能力集分层原则在屏幕证据章作为回退层依据被调用"
+    },
+    {
+      "from": "native-math",
+      "from_n": 13,
+      "target": "answer-reader",
+      "what": "排版编译管线入口在回答阅读器章被验证复用"
+    }
+  ],
+  "file_ownership": {
+    "repo-map": [
+      "companion/scripts/probe-01-repo-map.mjs",
+      "docs/01-repo-map.md"
+    ],
+    "vt-grid": [
+      "companion/scripts/probe-02-vt-grid.mjs",
+      "docs/02-vt-grid.md"
+    ],
+    "pty-event-loop": [
+      "companion/scripts/probe-03-pty-event-loop.mjs",
+      "docs/03-pty-event-loop.md"
+    ],
+    "split-tree": [
+      "companion/scripts/probe-04-split-tree.mjs",
+      "docs/04-split-tree.md"
+    ],
+    "gpui-shell": [
+      "companion/scripts/probe-05-gpui-shell.mjs",
+      "docs/05-gpui-shell.md"
+    ],
+    "ssh-session": [
+      "companion/scripts/probe-06-ssh-session.mjs",
+      "docs/06-ssh-session.md"
+    ],
+    "sftp-engine": [
+      "companion/scripts/probe-07-sftp-engine.mjs",
+      "docs/07-sftp-engine.md"
+    ],
+    "ai-hook-bridge": [
+      "companion/scripts/probe-08-ai-hook-bridge.mjs",
+      "docs/08-ai-hook-bridge.md"
+    ],
+    "ai-lifecycle": [
+      "companion/scripts/probe-09-ai-lifecycle.mjs",
+      "docs/09-ai-lifecycle.md"
+    ],
+    "screen-evidence": [
+      "companion/scripts/probe-10-screen-evidence.mjs",
+      "docs/10-screen-evidence.md"
+    ],
+    "session-persistence": [
+      "companion/scripts/probe-11-session-persistence.mjs",
+      "docs/11-session-persistence.md"
+    ],
+    "lua-config": [
+      "companion/scripts/probe-12-lua-config.mjs",
+      "docs/12-lua-config.md"
+    ],
+    "native-math": [
+      "companion/scripts/probe-13-native-math.mjs",
+      "docs/13-native-math.md"
+    ],
+    "answer-reader": [
+      "companion/scripts/probe-14-answer-reader.mjs",
+      "docs/14-answer-reader.md"
+    ],
+    "completion-engine": [
+      "companion/scripts/probe-15-completion-engine.mjs",
+      "docs/15-completion-engine.md"
+    ],
+    "review": [
+      "docs/16-review.md"
+    ]
+  },
+  "waves": [
+    [
+      "repo-map"
+    ],
+    [
+      "vt-grid",
+      "split-tree",
+      "ai-hook-bridge",
+      "lua-config",
+      "native-math",
+      "completion-engine"
+    ],
+    [
+      "pty-event-loop"
+    ],
+    [
+      "gpui-shell",
+      "ssh-session"
+    ],
+    [
+      "sftp-engine",
+      "ai-lifecycle",
+      "session-persistence",
+      "answer-reader"
+    ],
+    [
+      "screen-evidence"
+    ],
+    [
+      "review"
+    ]
+  ]
+}

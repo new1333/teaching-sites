@@ -1,0 +1,229 @@
+{
+  "schema_version": 2,
+  "kind": "repo",
+  "label": "pebrel",
+  "description": "Pebrel（原名 Nebula）：Rust + GPUI 的 GPU 加速终端模拟器，兼作 SSH/SFTP 工作区与 AI CLI（Claude Code / Codex 等）会话宿主。九 crate workspace：nebula_terminal 承载与 Alacritty 同构的 VT/Grid/PTY 核心，nebula_split 是纯数据分屏树，nebula_app 聚合 SSH 远端终端、SFTP 并发传输、AI 钩子桥与事件管线、会话持久化、原生 TeX/Markdown 阅读器、Lua 配置。仓库带中文机制注释与架构所有权地图，适合锁定源码走读。",
+  "features": [
+    {
+      "id": "vt-core",
+      "name": "VT 解析与网格状态机",
+      "summary": "vte 把字节流解析成 ANSI 转义调用，Term 在 Grid 行存储上维护单元格/光标/TermMode 位域，并用 damage 追踪最小重绘区。",
+      "reader_can": "追一条 CSI/OSC 序列从字节流到屏幕单元格状态变化的完整路径，说出 TermMode 位标志对应的终端模式（含 DECSET 2031 主题订阅这类私有扩展）。",
+      "evidence": [
+        { "path": "nebula_terminal/src/term/mod.rs", "why": "Term 高层 API、TermMode 位域、模式栈与私有扩展注释" },
+        { "path": "nebula_terminal/src/grid/mod.rs", "why": "行存储、滚动区与 Dimensions 抽象" }
+      ]
+    },
+    {
+      "id": "pty-bridge",
+      "name": "PTY 与事件循环",
+      "summary": "平台分支的 tty 模块（Unix PTY / Windows ConPTY）负责 spawn shell，event_loop 用 polling 就绪唤醒分块读字节，经 FairMutex 同步喂给 Term。",
+      "reader_can": "讲清本地 shell 输出跨线程进入 UI 的每一步，指出 ConPTY 与 Unix PTY 的平台分叉点与 resize 对账（ALIGN_DELAY 静默期）。",
+      "evidence": [
+        { "path": "nebula_terminal/src/tty/mod.rs", "why": "Pty 接口与 unix/windows 平台分支" },
+        { "path": "nebula_terminal/src/event_loop.rs", "why": "PTY I/O 主循环、READ_BUFFER_SIZE 与 ConPTY 光标对账" },
+        { "path": "nebula_terminal/src/sync.rs", "why": "FairMutex 双锁公平性实现" }
+      ]
+    },
+    {
+      "id": "split-tree",
+      "name": "纯数据分屏树",
+      "summary": "nebula_split 用纯数据 + 纯函数实现布局树切割数学（floor/钳制次序）、拖拽比例曲线（关闭边距、提交量化）与最近邻导航，不含任何 UI 框架类型。",
+      "reader_can": "把交互式布局规则抽成无 UI 依赖、可独立测试的纯函数，并按「pane id 集合 == 树叶集合」不变式把树接回视图层。",
+      "evidence": [
+        { "path": "nebula_split/src/lib.rs", "why": "切割数学、CLOSE_MARGIN/RATIO_CLAMP 合同与模块自述文档" },
+        { "path": "nebula_split/src/dock.rs", "why": "dock 方向布局与导航规则" }
+      ]
+    },
+    {
+      "id": "gpui-shell",
+      "name": "GPUI 壳与 pane 生命周期",
+      "summary": "workspace 持有 panes + SplitTree + focused 三件套，GPUI Entity 渲染；element 的 prepaint 回写 PTY 尺寸，关 pane 由 tree.remove_leaf 裁定结局，显式 shutdown 加 Drop 兜底。",
+      "reader_can": "用 GPUI 的 Entity/Context 模型组装多 pane 工作区，解释 resize 的 burst + settle 合同与资源清理合同为什么这样设计。",
+      "evidence": [
+        { "path": "nebula_app/src/gpui_shell/workspace.rs", "why": "分屏 pane 生命周期合同与模块地图（模块清单含 session_persistence、residency 等）" },
+        { "path": "nebula_gpui/src/main.rs", "why": "最小入口：直接 run_shell" },
+        { "path": "nebula_app/src/gpui_shell/terminal/element.rs", "why": "终端元素 prepaint/回写 PTY 尺寸的渲染侧" }
+      ]
+    },
+    {
+      "id": "ssh-session",
+      "name": "SSH 远端终端",
+      "summary": "russh 客户端复用连接（直连/jump 路由解析），远端 pane 不建本地 PTY，SSH channel 直接驱动与本地统一的输入/缩放/关闭消息协议，渲染与键盘因此传输层无关。",
+      "reader_can": "把「终端协议」与「传输层」解耦：解释同一个 Term/渲染栈为何既吃 ConPTY 又吃 SSH channel，以及 SshEventHost 抽象如何让一条 russh 业务路径服务两个 UI 壳。",
+      "evidence": [
+        { "path": "nebula_app/src/ssh_session.rs", "why": "远端会话驱动方式与 SshEventHost 宿主回调抽象" },
+        { "path": "nebula_app/src/ssh_session/route.rs", "why": "直连与 jump 路由解析" },
+        { "path": "nebula_app/src/ssh_session/agent.rs", "why": "SSH agent 身份选择与有界发现预算" }
+      ]
+    },
+    {
+      "id": "sftp-engine",
+      "name": "SFTP 并发传输引擎",
+      "summary": "下载吞吐靠对同一远端文件开多个句柄、每句柄负责一段连续区间的分段并行（单句柄只有单在途 READ，顺序读上限是分块/RTT）；进度与取消经 TransferObserver trait 与 UI 解耦，全程无平台分支。",
+      "reader_can": "用多句柄分段绕开上游库的吞吐上限，并设计不依赖 UI 类型的进度/取消回调接缝；说明为什么上传方向不需要这套机制。",
+      "evidence": [
+        { "path": "nebula_app/src/ssh_sftp/transfer.rs", "why": "并发传输引擎完整论证（在途能力分析、跨平台落盘）" },
+        { "path": "nebula_app/src/ssh_sftp/limits.rs", "why": "分段规划与分块常量" }
+      ]
+    },
+    {
+      "id": "ai-hook-bridge",
+      "name": "AI CLI 钩子桥进程",
+      "summary": "独立纯 std 小进程 nebula-hook 被 Claude/Kimi/Codex/opencode/Pi 等钩子调用，经命名管道把原始载荷转发给宿主；三条设计约束：隐形（任何路径含 panic 必退 0）、作用域化（PEBREL_NOTIFY_PIPE 环境变量哨兵只在 Nebula 内存在）、有界（1MB 载荷上限、2s 转发超时）。",
+      "reader_can": "设计不打扰宿主 CLI 语义的跨进程事件桥，解释为什么环境变量比全局配置更适合做作用域哨兵，以及 --chain 如何兼容已被占用的 notify 槽位。",
+      "evidence": [
+        { "path": "nebula_hook/src/main.rs", "why": "钩子桥全部设计约束与各 CLI 的调用形态" },
+        { "path": "nebula_app/src/ai_hook.rs", "why": "宿主侧管道环境变量约定（PIPE_ENV/PANE_ENV/HOOK_EXE_ENV）" }
+      ]
+    },
+    {
+      "id": "ai-lifecycle",
+      "name": "AI 事件归一与门控排序",
+      "summary": "分层依赖流 transport → protocol/payload → typed events → ordering（GateVerdict 拒绝并解释原因）→ pane lifecycle；UI 适配器只渲染共享生命周期，绝不用扫描终端文本重新解释已完成的钩子。",
+      "reader_can": "把异构 CLI 事件归一为有界排序的类型化状态机，说明「钩子优先、屏幕证据仅作缺失能力的回退」这条分层原则的工程理由。",
+      "evidence": [
+        { "path": "nebula_app/src/ai_hook.rs", "why": "依赖流自述与模块划分" },
+        { "path": "nebula_app/src/ai_hook/ordering.rs", "why": "GateVerdict 门控与批次重排" },
+        { "path": "nebula_app/src/ai_hook/event.rs", "why": "类型化事件与能力集" },
+        { "path": "nebula_app/src/ai_hook/protocol.rs", "why": "信封解析（parse_envelope）与载荷形状校验" }
+      ]
+    },
+    {
+      "id": "screen-evidence",
+      "name": "声明式屏幕证据规则",
+      "summary": "每个 AI CLI 一份 TOML：按屏幕区域（底部 N 非空行、最后水平分隔线之后）配 contains/line_regex/not 组合与优先级，推断 idle/working/blocked；注释里保留规则演化史（含曾恒假的 AND 条件如何让 Working 被降级成 Done）。",
+      "reader_can": "为未适配的 CLI 编写一条屏幕检测规则，并运用负向证据设计状态推断（「看见提示符 ≠ 空闲」，因为回合中输入框同样可见）。",
+      "evidence": [
+        { "path": "nebula_app/src/agent_detection/claude.toml", "why": "规则样例：区域、优先级、not 负向证据与因果注释" },
+        { "path": "nebula_app/src/agent_detection/_shared.toml", "why": "跨 CLI 共享规则基线" },
+        { "path": "nebula_app/src/ai_agents/screen_context.rs", "why": "结构化受限的屏幕观察提取" }
+      ]
+    },
+    {
+      "id": "session-persistence",
+      "name": "会话快照与恢复",
+      "summary": "1Hz 且跳过无变化的连续快照写入，崩溃也能恢复到一秒内；boot_attempts 三连败即放弃恢复以打破恢复-崩溃循环；v4 schema 记录整棵分屏树与每 tab 启动身份（shell/profile/SSH），同一格式兼作工作区导出文件。",
+      "reader_can": "设计崩溃安全的版本化会话快照与防恢复循环护栏，并把布局树 + 启动身份序列化为可跨机器移植的工作区格式。",
+      "evidence": [
+        { "path": "nebula_app/src/session.rs", "why": "快照节奏、boot_attempts 护栏与 v4 schema 自述" },
+        { "path": "nebula_app/src/session/window_layout.rs", "why": "窗口布局与多会话合并" },
+        { "path": "nebula_app/src/gpui_shell/workspace/session_persistence.rs", "why": "GPUI 壳侧的持久化接线" }
+      ]
+    },
+    {
+      "id": "lua-config",
+      "name": "Lua 配置与字段级诊断",
+      "summary": "vendored Lua 5.4（mlua）执行本地受信配置（require 'pebrel'，旧 require 'nebula' 同表兼容），nebula_config 用 thread-local 诊断作用域捕获 unknown/deprecated/invalid 字段，`pebrel config check` 离线校验，TOML 配置并行支持。",
+      "reader_can": "为可编程配置建立「执行本地代码、产物可校验」的边界，并在 serde 之上实现字段级诊断收集与 SerdeReplace 局部热更新。",
+      "evidence": [
+        { "path": "nebula_config/src/lib.rs", "why": "诊断作用域（capture_diagnostics）与 SerdeReplace" },
+        { "path": "nebula_app/src/config/lua/runtime.rs", "why": "Lua 运行时接线" },
+        { "path": "docs/lua-configuration.md", "why": "官方 Lua 配置手册（API 表、config init/check）" }
+      ]
+    },
+    {
+      "id": "native-math",
+      "name": "原生 TeX 公式管线",
+      "summary": "parse → validate → layout → compile → rasterize 的窗口/OpenGL 无关管线（IR + 缓存 + 位图），终端覆盖层与 markdown 阅读器共用同一编译入口、最小可读字号与光学缩放常量，字号不足时统一回退源码文本。",
+      "reader_can": "设计后端无关的排版编译管线，并用共享常量保证两条渲染路径判定一致；解释 Latin Modern 光学缩放 1.21 与最小上下标字号 0.8 这类刻意偏离 KaTeX 的取舍。",
+      "evidence": [
+        { "path": "nebula_app/src/math/mod.rs", "why": "管线分层、共享常量（MIN_READABLE_MATH_PX/OPTICAL_SCALE/MIN_SCRIPT_SCALE）与取舍注释" },
+        { "path": "nebula_app/src/math/compile.rs", "why": "编译入口与缓存" },
+        { "path": "nebula_app/src/math/layout.rs", "why": "布局阶段" }
+      ]
+    },
+    {
+      "id": "answer-reader",
+      "name": "AI 回答原生阅读器",
+      "summary": "捕获的 Claude Code / Codex 回答在无 WebView 的原生阅读器中以 Markdown、公式、源码文本与本地图片打开；公式渲染复用 native-math 共享管线，不另造一份。",
+      "reader_can": "在终端产品里为 AI 输出建立文档化视图，识别「两条管线共用一个编译入口」的复用结构而非复制实现。",
+      "evidence": [
+        { "path": "nebula_app/src/assistant_answer.rs", "why": "回答捕获与阅读器入口" },
+        { "path": "nebula_app/src/text_document.rs", "why": "文档 tab 的文本模型" },
+        { "path": "nebula_app/src/markdown", "why": "markdown 渲染模块目录" }
+      ]
+    },
+    {
+      "id": "completion-engine",
+      "name": "独立补全引擎",
+      "summary": "从 Nushell nu-cli 补全框架抽取的独立 crate：Completer trait 定义补全源接缝，文件/目录/静态列表为内置源，nucleo-matcher 提供前缀/子串/模糊匹配，输出类型与任何终端视图无关。",
+      "reader_can": "把框架内成熟子系统抽成零 UI 依赖的可复用 crate，用 trait 划定补全源的扩展点并接上模糊排序。",
+      "evidence": [
+        { "path": "nebula-completions/src/lib.rs", "why": "crate 自述（来源、能力、再导出）" },
+        { "path": "nebula-completions/src/matcher.rs", "why": "CandidateMatcher 匹配引擎" },
+        { "path": "nebula-completions/src/completer.rs", "why": "Completer trait 接缝" }
+      ]
+    },
+    {
+      "id": "workspace-governance",
+      "name": "workspace 治理：所有权地图与发布预算",
+      "summary": "docs/architecture.md 用「owns / must not become」两栏合同固定 composition → capabilities → domain 的依赖方向，并对 11 个超大旧文件施加 ratchet 预算；根 Cargo.toml 用全局 opt-level=s 做体积优化、把渲染/塑形/VT 热路径 crate 逐个钉回 O3，GPUI 依赖用完整 SHA 固定在自有 fork 基线上（禁 main/通配版本）。",
+      "reader_can": "读所有权地图判断一个改动应落在哪个 crate、哪些边界不许越；在 Cargo workspace 里复述体积/性能权衡与「只认 SHA」的依赖钉版策略为什么能避免两套 gpui 类型。",
+      "evidence": [
+        { "path": "docs/architecture.md", "why": "所有权地图、依赖方向与中文摘要" },
+        { "path": "Cargo.toml", "why": "workspace 成员、发布体积预算注释与 GPUI 固定基线全记录" },
+        { "path": "docs/project-constraints.md", "why": "文件预算与受约束合同" }
+      ]
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "pty-bridge", "to": "vt-core" },
+      { "from": "gpui-shell", "to": "pty-bridge" },
+      { "from": "gpui-shell", "to": "split-tree" },
+      { "from": "ssh-session", "to": "pty-bridge" },
+      { "from": "sftp-engine", "to": "ssh-session" },
+      { "from": "ai-lifecycle", "to": "ai-hook-bridge" },
+      { "from": "ai-lifecycle", "to": "gpui-shell" },
+      { "from": "screen-evidence", "to": "ai-lifecycle" },
+      { "from": "session-persistence", "to": "gpui-shell" },
+      { "from": "answer-reader", "to": "native-math" },
+      { "from": "answer-reader", "to": "gpui-shell" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "source-walkthrough",
+    "verification": "repo-probe",
+    "source_policy": "guided-walkthrough",
+    "reason": "结构上非常适合锁定源码走读：九个 crate 边界清晰，docs/architecture.md 提供权威所有权地图，关键模块的中文机制注释详尽到记录取舍因果（如 SFTP 多句柄分段、Claude 屏幕证据规则演化），locked_ref 可精确复现。GPL-3.0 允许逐字复制与再分发，因此 guided-walkthrough 法律上可行，但义务必须兑现：凡引用源码片段的课程页面须署名（Kuddev/pebrel，commit 360613aa6eedfa4e441d658d98db502e8a81442b）并保留 GPL-3.0 声明，包含实质摘录的课程内容自身需以 GPL-3.0 兼容方式发布；若课程站不接受 GPL 义务，应收缩为最小片段引用或降级 zero-trace（见 issues）。验证建议 repo-probe 静态探针而非构建运行：目标仓库要求 Rust 1.97.1 工具链、vendored Lua 与钉在 Kuddev/zed、Kuddev/gpui-component 固定 SHA 的依赖，构建/运行成本高且摄取期只读；companion 验证应从教学契约独立设计（如对 split-tree 纯函数、VT 序列效应的独立小实验），不构建目标仓库。"
+  },
+  "repo": {
+    "url": "https://github.com/Kuddev/pebrel",
+    "locked_ref": "360613aa6eedfa4e441d658d98db502e8a81442b",
+    "license": {
+      "kind": "GPL-3.0",
+      "note": "LICENSE 为 GNU GPL v3（2007-06-29），README 徽章一致，已核实。仓库另携带 THIRD-PARTY-NOTICES 与 licenses/ 目录（依赖许可汇编）。课程引用源码须逐处署名（仓库 + locked_ref）并保持许可声明；含实质摘录的课程内容需 GPL-3.0 兼容发布。"
+    },
+    "source_map": [
+      { "path": "docs/architecture.md", "one_liner": "所有权地图：每块面积的 owns / must-not-become 合同与依赖方向", "role": "map" },
+      { "path": "Cargo.toml", "one_liner": "workspace 成员、发布体积预算与 GPUI 固定基线的完整决策记录", "role": "manifest" },
+      { "path": "nebula_gpui/src/main.rs", "one_liner": "入口：一行调用 run_shell", "role": "entry" },
+      { "path": "nebula_terminal/src/term/mod.rs", "one_liner": "VT 核心状态机与 TermMode", "role": "domain" },
+      { "path": "nebula_terminal/src/tty/mod.rs", "one_liner": "Pty 抽象与平台分支", "role": "adapter" },
+      { "path": "nebula_terminal/src/event_loop.rs", "one_liner": "PTY I/O 主循环与 ConPTY resize 对账", "role": "domain" },
+      { "path": "nebula_split/src/lib.rs", "one_liner": "分屏树纯函数合同", "role": "domain" },
+      { "path": "nebula_app/src/gpui_shell/workspace.rs", "one_liner": "GPUI 工作区与 pane 生命周期合同", "role": "view" },
+      { "path": "nebula_app/src/ssh_session.rs", "one_liner": "SSH 远端终端：传输层无关的会话驱动", "role": "capability" },
+      { "path": "nebula_app/src/ssh_sftp/transfer.rs", "one_liner": "SFTP 多句柄分段并发传输引擎", "role": "capability" },
+      { "path": "nebula_hook/src/main.rs", "one_liner": "AI CLI 钩子桥进程的全部设计约束", "role": "tool" },
+      { "path": "nebula_app/src/ai_hook.rs", "one_liner": "AI 事件管线分层依赖流", "role": "capability" },
+      { "path": "nebula_app/src/agent_detection/claude.toml", "one_liner": "屏幕证据规则样例（区域 + 优先级 + 负向证据）", "role": "data" },
+      { "path": "nebula_app/src/session.rs", "one_liner": "会话快照版本化与恢复护栏", "role": "capability" },
+      { "path": "nebula_config/src/lib.rs", "one_liner": "配置字段级诊断与 SerdeReplace", "role": "domain" },
+      { "path": "docs/lua-configuration.md", "one_liner": "Lua 配置官方手册", "role": "doc" },
+      { "path": "nebula_app/src/math/mod.rs", "one_liner": "原生 TeX 管线分层与共享常量", "role": "domain" },
+      { "path": "nebula-completions/src/lib.rs", "one_liner": "独立补全引擎自述", "role": "domain" }
+    ],
+    "execution": "read-only"
+  },
+  "issues": [
+    "GPL-3.0 传染性：teaching-sites 仓库根未见 LICENSE，课程站自身许可未定。若正文包含实质源码摘录，该部分须以 GPL-3.0 发布并署名（Kuddev/pebrel @ 360613aa6eedfa4e441d658d98db502e8a81442b）；大纲期若不能接受，须降级 zero-trace 或把引用压缩为最小片段并逐处署名。",
+    "仓库携带 THIRD-PARTY-NOTICES 与 licenses/ 目录（依赖许可汇编）；若课程分发中复制这些文本需一并遵守相应条款，普通源码引用一般不触发，记录备查。",
+    "构建级验证不可行：rust-toolchain 1.97.1、依赖钉在 Kuddev/zed 与 Kuddev/gpui-component 的固定 SHA、vendored Lua 5.4；companion 验证不得依赖目标仓库构建，verification 应为 repo-probe 静态探针 + 独立小实验。",
+    "nebula_app 为 613 个 .rs 文件的巨型 crate，architecture.md 自述 11 个超大旧文件受 ratchet 预算约束、display/renderer 是遗留渲染路径；走读必须按特性选文件，不能按目录遍历，且模块名与文件位置不完全对应（#[path] 重映射，见 architecture.md「Rust module names are not file locations」）。",
+    "命名双轨：项目由 Nebula 改名 Pebrel，crate 仍叫 nebula_*，环境变量 PEBREL_*/NEBULA_* 并存（兼容旧配置与旧安装）。课程术语需在 bible 统一，并明确双轨兼容原因。",
+    "本次为 --depth 1 浅 clone：locked_ref 与 HEAD 一致，但 git 历史/blame 不可用；若后续 guided-walkthrough 探针需要 blame 佐证，需先 git fetch --unshallow。",
+    "agent_detection 的 TOML 规则注释含日期化因果记录（如 2026-08-22 修正恒假条件），教学内容引用时应标注其时点性，避免表述为永恒事实。"
+  ]
+}

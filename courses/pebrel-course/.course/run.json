@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "skill": "vitepress-teaching-site",
+  "status": "generating",
+  "phase": "chapters",
+  "language": "zh-CN",
+  "outline_revision": 1,
+  "next_chapter": 1,
+  "completed_chapters": [],
+  "degraded_chapters": [],
+  "blocked_chapters": [],
+  "skipped_interactions": ["calibration", "outline-confirmation"],
+  "last_commit": {
+    "kind": "phase",
+    "id": "planning-complete"
+  }
+}

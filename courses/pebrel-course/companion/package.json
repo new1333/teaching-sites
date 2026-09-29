@@ -1,0 +1,8 @@
+{
+  "name": "pebrel-course-companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "probes": "node scripts/run-all.mjs"
+  }
+}

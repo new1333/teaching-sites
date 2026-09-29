@@ -1,0 +1,1199 @@
+{
+  "schema_version": 2,
+  "title": "Pebrel 源码走读：GPU 终端模拟器的九个 crate",
+  "audience": "能用 Rust 读写中等单文件、想读懂真实工业级仓库的开发者",
+  "driving_question": "一个 GPU 加速终端如何同时成为 SSH 工作区与 AI CLI 会话的家？",
+  "input": {
+    "kind": "repo",
+    "ref": "Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b"
+  },
+  "profile": {
+    "archetype": "source-walkthrough",
+    "verification": "repo-probe",
+    "source_policy": "guided-walkthrough",
+    "code_density": "collapsed",
+    "obligations": [
+      {
+        "kind": "legal",
+        "note": "本课程逐字引用 GPL-3.0 项目的源码片段。凡引用处标注 Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:path；被引用片段依 GPL-3.0 授权使用，署名与许可声明集中声明于 about 页，正文首处引用时再次提示。",
+        "surfaces": [
+          "docs/about.md",
+          "docs/repo-map.md"
+        ]
+      },
+      {
+        "kind": "timeliness",
+        "note": "屏幕证据 TOML 规则注释含日期化因果记录（如 2026-08-22 修正），正文引用时标注时点性；本课程全部事实锚定 locked_ref，主分支后续演进不自动生效。",
+        "surfaces": [
+          "docs/about.md",
+          "docs/screen-evidence.md"
+        ]
+      }
+    ],
+    "presentation": {
+      "visual": "none"
+    },
+    "scale": "standard"
+  },
+  "companion": {
+    "form": "锁定 clone 上的只读静态探针集（Node ESM 脚本，每章一个探针 + 聚合 runner）",
+    "language": "Node.js ≥ 20（ESM）",
+    "scope": "只读探针 .course/repo @ 360613aa6eedfa4e441d658d98db502e8a81442b：解析、grep、结构断言；不安装目标仓库依赖、不构建、不执行其代码",
+    "commands": {
+      "probes": "node scripts/run-all.mjs",
+      "probe": "node scripts/probe-<chapter>.mjs"
+    }
+  },
+  "parts": [
+    {
+      "title": "第一部分 · 地基：地图与终端本体",
+      "chapters": [
+        {
+          "slug": "repo-map",
+          "title": "第 1 章 仓库地图：九个 crate 与所有权合同",
+          "goal": "拿到所有权地图并独立判断任意改动的落点 crate 与禁区",
+          "type": "walkthrough",
+          "feature_id": "workspace-governance",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "clone 下来 600+ 个 .rs 文件，从哪读起？为什么同一个 GPUI 依赖出现两个 fork 会直接编不过",
+            "phenomena": [
+              "九个 crate",
+              "所有权地图",
+              "SHA 钉版"
+            ]
+          },
+          "new_concepts": [
+            "所有权地图",
+            "crate 依赖方向",
+            "ratchet 预算",
+            "SHA 钉版",
+            "命名双轨"
+          ],
+          "misconceptions": [
+            "大仓库按目录顺序通读就能理解",
+            "依赖写 main 分支或 ^x.y 更新更省事",
+            "crate 名 nebula_* 是笔误"
+          ],
+          "milestone": "探针断言 workspace 成员清单、architecture.md 所有权合同与 GPUI SHA 钉版事实",
+          "milestone_verify": "node scripts/probe-01-repo-map.mjs 输出九个成员与钉版 SHA 摘要，退出码 0",
+          "relevant_files": [
+            {
+              "path": "docs/architecture.md",
+              "why": "所有权地图正本"
+            },
+            {
+              "path": "Cargo.toml",
+              "why": "workspace 成员、体积预算注释与 GPUI 基线"
+            },
+            {
+              "path": "docs/project-constraints.md",
+              "why": "文件预算与受约束合同"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "review",
+              "what": "ratchet 预算与 SHA 钉版在终章与全部子系统对账"
+            }
+          ],
+          "depends_on": [],
+          "uses": [],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 workspace 成员数=9、GPUI 依赖含 40 位 SHA、architecture.md 存在 owns/must-not-become 两栏"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能用地图对 3 个假想改动（加一种键位、改 SFTP 分段数、换字体渲染）说出落点 crate 与禁区"
+            },
+            {
+              "kind": "source",
+              "criterion": "引用纪律（owner/repo@sha:path 标注格式）在正文首处引用时教授并示范"
+            }
+          ]
+        },
+        {
+          "slug": "vt-grid",
+          "title": "第 2 章 从字节到屏幕：VT 解析与网格状态机",
+          "goal": "独立追踪一条 CSI/OSC 序列从字节流到单元格状态变化的完整路径",
+          "type": "walkthrough",
+          "feature_id": "vt-core",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "为什么 ls 的彩色输出、vim 的局部刷新、cat 一个二进制文件后的『乱码』，都是同一台状态机的输入",
+            "phenomena": [
+              "转义序列",
+              "单元格",
+              "damage"
+            ]
+          },
+          "new_concepts": [
+            "VT 转义序列",
+            "网格与单元格",
+            "TermMode 位域",
+            "damage 追踪"
+          ],
+          "misconceptions": [
+            "终端每次输出都全屏重绘",
+            "颜色是字符的属性而不是单元格的属性",
+            "DECSET 编号都是标准规定的"
+          ],
+          "milestone": "探针断言 TermMode 位标志集合、vte 依赖存在与 DECSET 2031 私有扩展在锁定源码中的位置",
+          "milestone_verify": "node scripts/probe-02-vt-grid.mjs 列出解析→网格→damage 的证据锚点，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_terminal/src/term/mod.rs",
+              "why": "Term API、TermMode 与模式栈"
+            },
+            {
+              "path": "nebula_terminal/src/grid/mod.rs",
+              "why": "行存储、滚动区与 Dimensions"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "pty-event-loop",
+              "what": "damage 追踪的最小重绘在事件循环章被调用"
+            }
+          ],
+          "depends_on": [
+            "repo-map"
+          ],
+          "uses": [
+            "所有权地图",
+            "命名双轨"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针对锁定源码断言 TermMode 位域成员与 2031 扩展存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能对 `\\x1b[31mError\\x1b[0m` 写出从 vte 回调到单元格样式落库的每一步"
+            },
+            {
+              "kind": "source",
+              "criterion": "term/grid 引用块逐字来自锁定 ref 并带路径标注"
+            }
+          ]
+        },
+        {
+          "slug": "pty-event-loop",
+          "title": "第 3 章 PTY 桥与事件循环：shell 输出的跨线程旅程",
+          "goal": "讲清本地 shell 输出跨线程进入 UI 的每一步，指出 ConPTY 与 Unix PTY 的分叉点",
+          "type": "walkthrough",
+          "feature_id": "pty-bridge",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "拖动窗口大小时 Windows 终端会重放一屏内容——这段『回声』为什么没有糊掉你的屏幕",
+            "phenomena": [
+              "伪终端",
+              "事件循环",
+              "对账"
+            ]
+          },
+          "new_concepts": [
+            "PTY 伪终端",
+            "ConPTY 对账",
+            "事件循环",
+            "FairMutex"
+          ],
+          "misconceptions": [
+            "shell 直接把字符画进窗口",
+            "锁只要互斥就够，先来后到无所谓",
+            "resize 就是改一个宽度变量"
+          ],
+          "milestone": "探针断言平台分叉文件结构、READ_BUFFER_SIZE 常量与 FairMutex 的公平性实现锚点",
+          "milestone_verify": "node scripts/probe-03-pty-event-loop.mjs 输出 I/O 循环证据链与常量值，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_terminal/src/tty/mod.rs",
+              "why": "Pty 接口与平台分支"
+            },
+            {
+              "path": "nebula_terminal/src/event_loop.rs",
+              "why": "I/O 主循环与 ConPTY 对账"
+            },
+            {
+              "path": "nebula_terminal/src/sync.rs",
+              "why": "FairMutex 实现"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "gpui-shell",
+              "what": "PTY resize 对账在 GPUI 壳章的 prepaint 回写中被调用"
+            }
+          ],
+          "depends_on": [
+            "vt-grid"
+          ],
+          "uses": [
+            "VT 转义序列",
+            "damage 追踪",
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 tty 平台模块、READ_BUFFER_SIZE 与 FairMutex 到达序实现存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能按顺序复述『shell write → PTY 就绪 → 分块读 → FairMutex → Term → UI 通知』并标注每步所在文件"
+            },
+            {
+              "kind": "source",
+              "criterion": "event_loop/sync 引用块逐字来自锁定 ref"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第二部分 · 界面：分屏与 GPUI 壳",
+      "chapters": [
+        {
+          "slug": "split-tree",
+          "title": "第 4 章 纯数据分屏树：不含一个 UI 类型的布局内核",
+          "goal": "把交互式布局规则读成可独立测试的纯函数，并按树叶集合不变式接回视图",
+          "type": "walkthrough",
+          "feature_id": "split-tree",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "三个 pane 挤一条边，把中间的拖到最小——为什么没有 pane 变成 0 宽，也没有 pane 凭空消失",
+            "phenomena": [
+              "纯函数",
+              "钳制",
+              "树叶"
+            ]
+          },
+          "new_concepts": [
+            "纯数据布局树",
+            "切割次序合同",
+            "树叶集合不变式"
+          ],
+          "misconceptions": [
+            "布局逻辑天然长在 UI 框架里",
+            "比例切割先钳制后取整无关紧要",
+            "关闭 pane 只是隐藏一个视图"
+          ],
+          "milestone": "探针断言 CLOSE_MARGIN/RATIO_CLAMP 常量合同与 crate 无 UI 依赖（无 gpui 引用）",
+          "milestone_verify": "node scripts/probe-04-split-tree.mjs 输出常量值与依赖清单证据，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_split/src/lib.rs",
+              "why": "切割数学与合同注释"
+            },
+            {
+              "path": "nebula_split/src/dock.rs",
+              "why": "dock 布局与导航规则"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "repo-map"
+          ],
+          "uses": [
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 nebula_split 的 Cargo.toml 与源码均不含 UI 框架依赖"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能用不变式解释一次 remove_leaf 后为什么视图不会出现幽灵 pane"
+            },
+            {
+              "kind": "source",
+              "criterion": "lib.rs 引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "gpui-shell",
+          "title": "第 5 章 GPUI 壳与 pane 生命周期",
+          "goal": "用 Entity 模型解释多 pane 工作区的组装、resize 合同与资源清理合同",
+          "type": "walkthrough",
+          "feature_id": "gpui-shell",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "窗口拖着不放时终端内容会抖动收缩，松手才稳定——渲染和 PTY 的尺寸谁说了算",
+            "phenomena": [
+              "Entity",
+              "prepaint",
+              "shutdown"
+            ]
+          },
+          "new_concepts": [
+            "GPUI Entity",
+            "prepaint 回写",
+            "pane 生命周期",
+            "资源清理合同"
+          ],
+          "misconceptions": [
+            "UI 拥有布局真相",
+            "Drop 是可靠的清理时机",
+            "resize 是一次同步调用"
+          ],
+          "milestone": "探针断言 workspace 三件套结构、prepaint 回写调用点与 shutdown+Drop 双保险锚点",
+          "milestone_verify": "node scripts/probe-05-gpui-shell.mjs 输出 pane 生命周期证据链，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/gpui_shell/workspace.rs",
+              "why": "pane 生命周期合同与模块地图"
+            },
+            {
+              "path": "nebula_gpui/src/main.rs",
+              "why": "最小入口"
+            },
+            {
+              "path": "nebula_app/src/gpui_shell/terminal/element.rs",
+              "why": "prepaint 回写 PTY 尺寸"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "ai-lifecycle",
+              "what": "pane 生命周期积木供 AI 事件管线调用"
+            }
+          ],
+          "depends_on": [
+            "pty-event-loop",
+            "split-tree"
+          ],
+          "uses": [
+            "事件循环",
+            "纯数据布局树",
+            "树叶集合不变式",
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 workspace.rs 的三件套字段、element.rs 的 resize 回写与显式 shutdown 调用点存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能解释 burst + settle 合同为何必须由 prepaint 侧裁定尺寸"
+            },
+            {
+              "kind": "source",
+              "criterion": "workspace/element 引用块逐字来自锁定 ref"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第三部分 · 远端：SSH 工作区",
+      "chapters": [
+        {
+          "slug": "ssh-session",
+          "title": "第 6 章 传输层无关：SSH 远端终端",
+          "goal": "解释同一个 Term/渲染栈为何既吃 ConPTY 又吃 SSH channel",
+          "type": "walkthrough",
+          "feature_id": "ssh-session",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "远端 pane 里跑 vim 和本地一样流畅——渲染代码里却找不到任何 ssh 字样的分支",
+            "phenomena": [
+              "channel",
+              "传输层",
+              "jump"
+            ]
+          },
+          "new_concepts": [
+            "传输层无关",
+            "russh 连接复用",
+            "jump 路由",
+            "SshEventHost"
+          ],
+          "misconceptions": [
+            "远端终端需要另一套渲染",
+            "一个 SSH 连接只能开一个会话",
+            "跳板机配置只是命令行参数拼接"
+          ],
+          "milestone": "探针断言远端 pane 不建本地 PTY 的代码路径、路由解析模块与 SshEventHost 抽象点",
+          "milestone_verify": "node scripts/probe-06-ssh-session.mjs 输出传输层解耦证据链，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/ssh_session.rs",
+              "why": "远端会话驱动与 SshEventHost"
+            },
+            {
+              "path": "nebula_app/src/ssh_session/route.rs",
+              "why": "直连与 jump 路由"
+            },
+            {
+              "path": "nebula_app/src/ssh_session/agent.rs",
+              "why": "agent 身份选择"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "pty-event-loop"
+          ],
+          "uses": [
+            "事件循环",
+            "VT 转义序列",
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 ssh_session 的 channel 驱动路径与本地 PTY 路径共享 Term 栈的结构事实"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能画出本地/远端两条数据路径并指出分叉发生在哪一层"
+            },
+            {
+              "kind": "source",
+              "criterion": "ssh_session 引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "sftp-engine",
+          "title": "第 7 章 SFTP 并发引擎：多句柄绕开在途上限",
+          "goal": "讲清下载吞吐的封顶原因与多句柄分段方案，以及进度/取消为何走 trait 接缝",
+          "type": "walkthrough",
+          "feature_id": "sftp-engine",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "千兆带宽的服务器，单线程 sftp 下载只有几 MB/s——瓶颈不在带宽，在协议的在途窗口",
+            "phenomena": [
+              "在途 READ",
+              "多句柄",
+              "RTT"
+            ]
+          },
+          "new_concepts": [
+            "单在途 READ 上限",
+            "多句柄分段",
+            "进度/取消接缝"
+          ],
+          "misconceptions": [
+            "下载慢是压缩不够",
+            "并发下载数越多一定越快",
+            "进度条是引擎的一部分"
+          ],
+          "milestone": "探针断言分段规划常量、句柄区间划分与 TransferObserver trait 的解耦结构",
+          "milestone_verify": "node scripts/probe-07-sftp-engine.mjs 输出分段参数与接缝证据，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/ssh_sftp/transfer.rs",
+              "why": "并发传输引擎论证"
+            },
+            {
+              "path": "nebula_app/src/ssh_sftp/limits.rs",
+              "why": "分段规划与分块常量"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "ssh-session"
+          ],
+          "uses": [
+            "russh 连接复用"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 limits.rs 分段常量与 transfer.rs 的 observer trait 存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能算出给定 RTT 与分块下单句柄吞吐上限，并解释上传方向为何不需要多句柄"
+            },
+            {
+              "kind": "source",
+              "criterion": "transfer/limits 引用块逐字来自锁定 ref"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第四部分 · AI 会话宿主",
+      "chapters": [
+        {
+          "slug": "ai-hook-bridge",
+          "title": "第 8 章 钩子桥进程：AI CLI 事件的隐形搬运工",
+          "goal": "读透一个 200 行级 std-only 小进程如何做到隐形、作用域化、有界",
+          "type": "walkthrough",
+          "feature_id": "ai-hook-bridge",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "Claude Code 在 pane 里跑得好好的，宿主却知道它何时开始等待输入——CLI 从没直接和终端说过话",
+            "phenomena": [
+              "命名管道",
+              "环境变量",
+              "退出码"
+            ]
+          },
+          "new_concepts": [
+            "命名管道桥",
+            "环境变量哨兵",
+            "隐形合同",
+            "有界转发"
+          ],
+          "misconceptions": [
+            "钩子失败应该让用户看见错误",
+            "进程发现宿主要靠全局配置或轮询",
+            "转发越快越好、不用上限"
+          ],
+          "milestone": "探针断言 nebula_hook 无第三方依赖、panic 退 0 结构、1MB/2s 边界常量与管道环境变量名",
+          "milestone_verify": "node scripts/probe-08-ai-hook-bridge.mjs 输出三条设计约束的证据锚点，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_hook/src/main.rs",
+              "why": "钩子桥全部设计约束"
+            },
+            {
+              "path": "nebula_app/src/ai_hook.rs",
+              "why": "宿主侧环境变量约定"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "ai-lifecycle",
+              "what": "命名管道桥的载荷形状在事件归一章被解析"
+            }
+          ],
+          "depends_on": [
+            "repo-map"
+          ],
+          "uses": [
+            "命名双轨",
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 Cargo.toml 依赖为空/仅 std、载荷上限与超时常量、PEBREL_* 环境变量名存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能解释为何环境变量哨兵比全局配置更适合限定作用域，以及 --chain 如何兼容被占用的槽位"
+            },
+            {
+              "kind": "source",
+              "criterion": "nebula_hook 引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "ai-lifecycle",
+          "title": "第 9 章 事件归一与门控排序：从原始载荷到类型化状态机",
+          "goal": "讲清 transport → payload → typed events → ordering → lifecycle 的分层依赖流",
+          "type": "walkthrough",
+          "feature_id": "ai-lifecycle",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "Claude、Codex、Kimi 的钩子载荷长得完全不一样，UI 却只认一套状态——中间那层『翻译官』按什么规则裁决乱序",
+            "phenomena": [
+              "类型化事件",
+              "GateVerdict",
+              "分层"
+            ]
+          },
+          "new_concepts": [
+            "类型化事件",
+            "门控排序",
+            "能力集分层"
+          ],
+          "misconceptions": [
+            "UI 应该扫描终端文本判断 AI 状态",
+            "事件到达顺序天然可信",
+            "多支持一个 CLI 就是多写一堆 if"
+          ],
+          "milestone": "探针断言五层模块划分、parse_envelope 入口与 GateVerdict 拒绝路径存在",
+          "milestone_verify": "node scripts/probe-09-ai-lifecycle.mjs 输出分层依赖流证据链，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/ai_hook.rs",
+              "why": "依赖流自述与模块划分"
+            },
+            {
+              "path": "nebula_app/src/ai_hook/ordering.rs",
+              "why": "GateVerdict 与批次重排"
+            },
+            {
+              "path": "nebula_app/src/ai_hook/event.rs",
+              "why": "类型化事件与能力集"
+            },
+            {
+              "path": "nebula_app/src/ai_hook/protocol.rs",
+              "why": "信封解析与载荷校验"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "screen-evidence",
+              "what": "能力集分层原则在屏幕证据章作为回退层依据被调用"
+            }
+          ],
+          "depends_on": [
+            "gpui-shell",
+            "ai-hook-bridge"
+          ],
+          "uses": [
+            "pane 生命周期",
+            "命名管道桥",
+            "GPUI Entity"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 ordering/event/protocol 模块的关键类型与拒绝路径存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能对一个乱序样例（TurnEnd 先于 ToolUse 到达）推出 GateVerdict 的裁决结果"
+            },
+            {
+              "kind": "source",
+              "criterion": "ai_hook 系列引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "screen-evidence",
+          "title": "第 10 章 屏幕证据：为未知 CLI 写状态推断规则",
+          "goal": "能独立为未适配 CLI 编写一条屏幕检测规则，并运用负向证据设计推断",
+          "type": "walkthrough",
+          "feature_id": "screen-evidence",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "一个没适配钩子的 CLI，宿主靠『看屏幕』猜它的状态——为什么规则写成『看见提示符就算空闲』是错的",
+            "phenomena": [
+              "TOML 规则",
+              "负向证据",
+              "优先级"
+            ]
+          },
+          "new_concepts": [
+            "屏幕证据",
+            "区域规则",
+            "负向证据",
+            "规则优先级"
+          ],
+          "misconceptions": [
+            "看见提示符等于空闲",
+            "规则条件越多越可靠",
+            "全屏匹配和区域匹配效果一样"
+          ],
+          "milestone": "探针断言 claude.toml/_shared.toml 的区域字段、not 条件与优先级结构，及规则注释中的演化史时点",
+          "milestone_verify": "node scripts/probe-10-screen-evidence.mjs 输出规则结构清单，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/agent_detection/claude.toml",
+              "why": "规则样例与因果注释"
+            },
+            {
+              "path": "nebula_app/src/agent_detection/_shared.toml",
+              "why": "共享规则基线"
+            },
+            {
+              "path": "nebula_app/src/ai_agents/screen_context.rs",
+              "why": "结构化屏幕观察提取"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "ai-lifecycle"
+          ],
+          "uses": [
+            "能力集分层",
+            "网格与单元格"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 TOML 规则的区域/优先级/not 字段结构与 screen_context 提取函数存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能为假设的『Gemini CLI』写出一条含负向证据的 idle 规则并说明理由"
+            },
+            {
+              "kind": "source",
+              "criterion": "规则注释中的日期化演化史在正文标注时点性（timeliness 义务）"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第五部分 · 数据与配置",
+      "chapters": [
+        {
+          "slug": "session-persistence",
+          "title": "第 11 章 会话持久化：崩溃安全快照与恢复护栏",
+          "goal": "读懂 1Hz 快照节奏、v4 schema 与 boot_attempts 护栏的完整设计",
+          "type": "walkthrough",
+          "feature_id": "session-persistence",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "强杀进程再打开，分屏布局、每个 tab 连的是哪台服务器都回来了——但连续崩三次后它突然『失忆』",
+            "phenomena": [
+              "快照",
+              "恢复",
+              "护栏"
+            ]
+          },
+          "new_concepts": [
+            "快照节奏",
+            "恢复护栏",
+            "版本化 schema"
+          ],
+          "misconceptions": [
+            "持久化就是退出时存一次",
+            "恢复失败就该再试一次恢复",
+            "会话文件格式改字段无所谓"
+          ],
+          "milestone": "探针断言快照频率常量、boot_attempts 上限与 v4 版本标记在锁定源码中的位置",
+          "milestone_verify": "node scripts/probe-11-session-persistence.mjs 输出节奏/护栏/schema 证据，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/session.rs",
+              "why": "快照节奏与恢复护栏"
+            },
+            {
+              "path": "nebula_app/src/session/window_layout.rs",
+              "why": "窗口布局与合并"
+            },
+            {
+              "path": "nebula_app/src/gpui_shell/workspace/session_persistence.rs",
+              "why": "壳侧接线"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "gpui-shell"
+          ],
+          "uses": [
+            "pane 生命周期",
+            "树叶集合不变式"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 1Hz/跳过无变化、boot_attempts 三连败、v4 标记三个事实"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能解释恢复-崩溃循环为何需要护栏而非重试，以及导出文件为何复用同一 schema"
+            },
+            {
+              "kind": "source",
+              "criterion": "session 引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "lua-config",
+          "title": "第 12 章 Lua 配置：本地执行、产物可校验",
+          "goal": "读懂『配置即代码』的安全边界与字段级诊断的实现",
+          "type": "walkthrough",
+          "feature_id": "lua-config",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "配置写错一个字段名，终端不是崩溃而是精确告诉你哪个字段不认识、哪个已废弃——诊断是逐字段收集来的",
+            "phenomena": [
+              "Lua",
+              "诊断",
+              "热更新"
+            ]
+          },
+          "new_concepts": [
+            "Lua 配置沙界",
+            "诊断作用域",
+            "SerdeReplace"
+          ],
+          "misconceptions": [
+            "可编程配置等于可以执行任意来源代码",
+            "校验只能给出第一个错误",
+            "热更新必须整文件重载"
+          ],
+          "milestone": "探针断言 vendored Lua 5.4 依赖、capture_diagnostics 作用域结构与 pebrel/nebula 双 require 兼容",
+          "milestone_verify": "node scripts/probe-12-lua-config.mjs 输出沙界与诊断证据，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_config/src/lib.rs",
+              "why": "诊断作用域与 SerdeReplace"
+            },
+            {
+              "path": "nebula_app/src/config/lua/runtime.rs",
+              "why": "Lua 运行时接线"
+            },
+            {
+              "path": "docs/lua-configuration.md",
+              "why": "官方配置手册"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "repo-map"
+          ],
+          "uses": [
+            "命名双轨",
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 mlua/vendored 依赖形态、诊断捕获入口与双 require 兼容代码存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能说明『执行本地受信代码』边界如何成立，以及 `pebrel config check` 为何能离线工作"
+            },
+            {
+              "kind": "source",
+              "criterion": "config 引用块逐字来自锁定 ref，官方手册事实标注 docs 路径"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第六部分 · 原生体验扩展",
+      "chapters": [
+        {
+          "slug": "native-math",
+          "title": "第 13 章 原生 TeX 管线：后端无关的公式排版",
+          "goal": "读懂 parse→validate→layout→compile→rasterize 五段管线与共享常量合同",
+          "type": "walkthrough",
+          "feature_id": "native-math",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "终端里弹出的公式和网页里 KaTeX 渲的不完全一样大——不是 bug，是刻意的排版取舍",
+            "phenomena": [
+              "管线",
+              "光学缩放",
+              "常量"
+            ]
+          },
+          "new_concepts": [
+            "排版编译管线",
+            "光学缩放",
+            "共享常量合同"
+          ],
+          "misconceptions": [
+            "公式渲染必须依赖 WebView 或平台 UI",
+            "字号不足时降级是显示层临时决定",
+            "和 KaTeX 的差异是未修完的 bug"
+          ],
+          "milestone": "探针断言管线五阶段模块、MIN_READABLE_MATH_PX/OPTICAL_SCALE/MIN_SCRIPT_SCALE 常量值",
+          "milestone_verify": "node scripts/probe-13-native-math.mjs 输出阶段清单与常量值，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/math/mod.rs",
+              "why": "管线分层与共享常量"
+            },
+            {
+              "path": "nebula_app/src/math/compile.rs",
+              "why": "编译入口与缓存"
+            },
+            {
+              "path": "nebula_app/src/math/layout.rs",
+              "why": "布局阶段"
+            }
+          ],
+          "promises_out": [
+            {
+              "target": "answer-reader",
+              "what": "排版编译管线入口在回答阅读器章被验证复用"
+            }
+          ],
+          "depends_on": [
+            "repo-map"
+          ],
+          "uses": [
+            "所有权地图"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言五阶段模块存在且常量值与正文声明一致"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能解释『窗口/OpenGL 无关』如何成立，及共享常量为何必须双路径共用"
+            },
+            {
+              "kind": "source",
+              "criterion": "math 引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "answer-reader",
+          "title": "第 14 章 AI 回答阅读器：共享管线的复用范式",
+          "goal": "识别『两条渲染路径共用一个编译入口』的复用结构，读懂数据流",
+          "type": "walkthrough",
+          "feature_id": "answer-reader",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "终端里按一下就把 Claude 的回答变成一篇带公式高亮的『文档』——没有 WebView，公式渲染也不是另写的一套",
+            "phenomena": [
+              "回答捕获",
+              "文档 tab",
+              "复用"
+            ]
+          },
+          "new_concepts": [
+            "回答捕获",
+            "文档 tab 模型",
+            "管线复用结构"
+          ],
+          "misconceptions": [
+            "阅读器等于嵌一个浏览器",
+            "复用就是复制粘贴代码",
+            "文本模型需要感知 markdown 语法之外的东西"
+          ],
+          "milestone": "探针断言阅读器调用 math 编译入口的调用点（复用而非复制）与文档 tab 结构",
+          "milestone_verify": "node scripts/probe-14-answer-reader.mjs 输出复用调用点证据，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula_app/src/assistant_answer.rs",
+              "why": "回答捕获与阅读器入口"
+            },
+            {
+              "path": "nebula_app/src/text_document.rs",
+              "why": "文档 tab 文本模型"
+            },
+            {
+              "path": "nebula_app/src/markdown",
+              "why": "markdown 渲染模块"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "gpui-shell",
+            "native-math"
+          ],
+          "uses": [
+            "排版编译管线",
+            "共享常量合同",
+            "GPUI Entity"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 assistant_answer/text_document 对 math::compile 的调用链存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能对比『复用入口』与『复制实现』两种方案的成本并说明判定方法"
+            },
+            {
+              "kind": "source",
+              "criterion": "引用块逐字来自锁定 ref"
+            }
+          ]
+        },
+        {
+          "slug": "completion-engine",
+          "title": "第 15 章 独立补全引擎：从 Nushell 抽出的零 UI crate",
+          "goal": "读懂 Completer trait 接缝与模糊匹配排序如何组成零 UI 依赖的可复用 crate",
+          "type": "walkthrough",
+          "feature_id": "completion-engine",
+          "verification": "repo-probe",
+          "hook": {
+            "kind": "phenomena",
+            "point": "敲三个字母，一条 40 字符的命令排在候选第一位——排序器根本不知道『命令』是什么",
+            "phenomena": [
+              "trait",
+              "模糊匹配",
+              "候选"
+            ]
+          },
+          "new_concepts": [
+            "Completer trait 接缝",
+            "模糊匹配排序"
+          ],
+          "misconceptions": [
+            "补全逻辑必须知道 shell 语义才能工作",
+            "匹配就是字符串前缀比较",
+            "抽取成 crate 只是为了目录整洁"
+          ],
+          "milestone": "探针断言 Completer trait 定义、内置补全源清单与 nucleo-matcher 依赖",
+          "milestone_verify": "node scripts/probe-15-completion-engine.mjs 输出接缝与内置源清单，退出码 0",
+          "relevant_files": [
+            {
+              "path": "nebula-completions/src/lib.rs",
+              "why": "crate 自述与再导出"
+            },
+            {
+              "path": "nebula-completions/src/matcher.rs",
+              "why": "CandidateMatcher"
+            },
+            {
+              "path": "nebula-completions/src/completer.rs",
+              "why": "Completer trait"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "repo-map"
+          ],
+          "uses": [
+            "所有权地图",
+            "crate 依赖方向"
+          ],
+          "acceptance": [
+            {
+              "kind": "gate",
+              "criterion": "探针断言 trait 方法签名、内置源枚举与 nucleo 依赖存在"
+            },
+            {
+              "kind": "prose",
+              "criterion": "读者能设计一个假想补全源（如 git 分支）并指出需要实现哪个 trait 方法"
+            },
+            {
+              "kind": "source",
+              "criterion": "completions 引用块逐字来自锁定 ref"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "第七部分 · 收束",
+      "chapters": [
+        {
+          "slug": "review",
+          "title": "第 16 章 从地图回到地图：全书能力对账",
+          "goal": "把十五个子系统放回所有权地图，独立判断任意改动的落点、禁区与影响面",
+          "type": "review",
+          "reviews": [
+            "workspace-governance",
+            "vt-core",
+            "pty-bridge",
+            "split-tree",
+            "gpui-shell",
+            "ssh-session",
+            "sftp-engine",
+            "ai-hook-bridge",
+            "ai-lifecycle",
+            "screen-evidence",
+            "session-persistence",
+            "lua-config",
+            "native-math",
+            "answer-reader",
+            "completion-engine"
+          ],
+          "hook": {
+            "kind": "capability-audit",
+            "point": "回到第 1 章的地图：现在每个 crate 里住着什么，你都能讲出一段机制故事吗",
+            "phenomena": [
+              "对账",
+              "落点",
+              "影响面"
+            ]
+          },
+          "new_concepts": [],
+          "misconceptions": [
+            "读完十五章等于会改任何模块",
+            "治理预算是管理者的事与读者无关"
+          ],
+          "relevant_files": [
+            {
+              "path": "docs/architecture.md",
+              "why": "对账底表"
+            },
+            {
+              "path": "Cargo.toml",
+              "why": "体积预算与钉版复盘"
+            }
+          ],
+          "promises_out": [],
+          "depends_on": [
+            "vt-grid",
+            "pty-event-loop",
+            "split-tree",
+            "gpui-shell",
+            "ssh-session",
+            "sftp-engine",
+            "ai-hook-bridge",
+            "ai-lifecycle",
+            "screen-evidence",
+            "session-persistence",
+            "lua-config",
+            "native-math",
+            "answer-reader",
+            "completion-engine"
+          ],
+          "uses": [
+            "所有权地图",
+            "crate 依赖方向",
+            "ratchet 预算",
+            "SHA 钉版"
+          ],
+          "acceptance": [
+            {
+              "kind": "experience",
+              "criterion": "对账清单覆盖十五个特性，每项链接对应章与探针"
+            },
+            {
+              "kind": "prose",
+              "criterion": "三个跨子系统改动场景（改键位、加分屏行为、加新 CLI 支持）都能走通落点→禁区→影响面推理"
+            },
+            {
+              "kind": "source",
+              "criterion": "全章断言与各章正文及锁定 ref 一致，不引入新的未教机制"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "appendices": [
+    {
+      "slug": "glossary",
+      "title": "术语表",
+      "kind": "glossary"
+    },
+    {
+      "slug": "source-map",
+      "title": "源码阅读地图",
+      "kind": "source-map"
+    },
+    {
+      "slug": "exercises",
+      "title": "练习：为未知 CLI 写屏幕证据规则",
+      "kind": "exercises"
+    }
+  ],
+  "final_milestone": {
+    "what_reader_built": "独立走读九个 crate 任一子系统的能力（锁定 commit，探针可复跑）",
+    "verify": "全书探针在锁定 clone 上一键全绿；对任一假想改动能说出落点 crate、禁区与影响面"
+  },
+  "length_notes": {
+    "compression_policy": "第 13-15 章为视野章，按『机制故事 + 接缝识别』压缩篇幅，最低回收义务：每章至少教会一个可迁移的读码范式并过各自探针 gate；压缩意图在章首声明",
+    "review_chapter": "ch16 为全书对账复盘，verification 解析为 none，验收走 experience/prose/source 判据"
+  }
+}

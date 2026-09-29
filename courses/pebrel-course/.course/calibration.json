@@ -1,0 +1,34 @@
+{
+  "schema_version": 2,
+  "status": "defaulted",
+  "audience": "能用 Rust 读写中等长度单文件、未读过万行级仓库 internals 的开发者",
+  "known": [
+    "Rust 基本语法与所有权模型（能读写中等长度单文件）",
+    "命令行日常使用，按文档完成过安装与配置，遇错会检索",
+    "查官方文档与 GitHub 源码仓库的习惯",
+    "作为用户使用终端模拟器、ssh/scp 与 AI CLI 工具的经验",
+    "Git 基本操作与 commit 概念"
+  ],
+  "unfamiliar": [
+    "VT/ANSI 转义序列的解析机制与网格状态机",
+    "PTY/ConPTY 平台抽象与终端 I/O 事件循环",
+    "GPUI（Zed 渲染框架）的 Entity/Context 模型",
+    "SSH/SFTP 协议细节与 russh 编程模型",
+    "万行级 workspace 的分层治理、体积预算与依赖钉版"
+  ],
+  "anchors": [
+    { "concept": "VT 解析与网格状态机", "known_anchor": "读者天天看 ls 彩色输出与清屏效果，但未追问 \\x1b[ 序列如何变成单元格颜色" },
+    { "concept": "PTY/ConPTY 与事件循环", "known_anchor": "读者打开过终端窗口跑 shell，但未思考 shell 与窗口之间隔着的伪终端层和跨线程搬运" },
+    { "concept": "GPUI Entity/Context 模型", "known_anchor": "读者可能有 React/Vue 响应式 UI 经验，但未接触 Zed 的 GPUI 框架" },
+    { "concept": "SSH/SFTP 协议与 russh", "known_anchor": "读者用 ssh/scp/sftp 命令连过远端，但未看过 channel 抽象与在途请求限制" },
+    { "concept": "workspace 治理", "known_anchor": "读者维护过单 crate 或小 workspace，未管理过九 crate 与 fork SHA 钉版" }
+  ],
+  "decisions": [
+    "熟练度：Rust 能力取下限（中等长度单文件可读写）；async、锁、平台分支按『见过但不熟』处理，首次使用给接口句",
+    "相邻知识：GPU 渲染、终端协议、SSH 协议均按未接触处理，全部首教；不假设读者写过终端模拟器或任何 GPUI 代码",
+    "使用场景：面向想读懂真实工业级 Rust 项目、或想给 Pebrel/同类终端提 PR 的开发者；不假设读者要自研终端",
+    "期望终点：独立走读锁定 commit 上九个 crate 的任一子系统并讲清机制与改动落点，而非复现实现",
+    "四维度均在画像中显式覆盖（相邻知识/熟练度/使用场景/期望终点）；因 defaulted 无逐字回答，不保存个人信息"
+  ],
+  "default_reason": "用户要求自主运行（合理使用子代理并发、控制主会话上下文），未做批量校准问卷，skipped_interactions 已在 run.json 记录。按 course-profiles.md 的 source-walkthrough 保守准入下限生成：能用 Rust 读写中等长度单文件；会查官方文档；未读过万行级仓库 internals。上浮项：额外假设读者有终端模拟器、SSH 与 AI CLI 的用户级使用经验（本课程主题的地板，超出下限的部分已在 anchors 标注来源为保守推断而非用户回答）。"
+}
