@@ -31,7 +31,7 @@
     { "term": "事件循环", "en": "event loop", "definition": "nebula_terminal 的 I/O 线程主循环：polling 等就绪、分块读字节、喂给 Term、发 UI 通知，READ_BUFFER_SIZE 控制每次读取上限", "interface": "本地 shell 输出进入 UI 的唯一通道，跨线程搬运的起点" },
     { "term": "FairMutex", "definition": "sync.rs 实现的公平互斥锁，按到达顺序授予锁，避免 UI 线程在 PTY 高压输出下饿死", "interface": "Term 共享状态的双锁结构之一，读 term.rs 线程模型时的支点" },
     { "term": "纯数据布局树", "definition": "nebula_split 用纯数据 + 纯函数表达分屏切割，不引用任何 UI 框架类型，因此可独立测试", "interface": "分屏行为的第一性模型：切割数学与导航规则全在这里" },
-    { "term": "切割次序合同", "definition": "split 计算中 floor 与钳制的执行次序被固定为合同（先取整后钳制边距），保证任何比例下不留 0 宽 pane", "interface": "调分屏比例异常问题时先核对的规则" },
+    { "term": "切割次序合同", "definition": "split 切割的执行次序被固定为合同：先 floor 取整、再双向钳到至少一个单元格宽，第二段吃余数；提交比例另经 RATIO_CLAMP 硬钳带（CLOSE_MARGIN 属关闭手势阈值），保证任何比例下不留 0 宽 pane", "interface": "调分屏比例异常问题时先核对的规则" },
     { "term": "树叶集合不变式", "definition": "『pane id 集合 == 树叶集合』的等式，是树与视图层对接的验收口径，破坏即出现幽灵 pane 或丢 pane", "interface": "把布局树接回 UI 时的对账判据" },
     { "term": "GPUI Entity", "definition": "Zed GPUI 框架的响应式对象模型：实体持状态、Context 提供订阅与更新入口，渲染由框架调度", "interface": "读 nebula_app 界面代码的基本单元，看到 .update()/cx 即在操作实体" },
     { "term": "prepaint 回写", "definition": "终端元素在渲染 prepaint 阶段把最终像素尺寸换算成行列并回写 PTY，形成 resize 的 burst + settle 合同", "interface": "『窗口拖动时 shell 怎么知道列数变了』的答案" },
