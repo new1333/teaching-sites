@@ -6,8 +6,8 @@ title: 第 2 章 从字节到屏幕：VT 解析与网格状态机
 
 ## 工具箱
 
-- 命名双轨 — 引用代码用 crate 现名 nebula_*，讲产品用 Pebrel，NEBULA_ 前缀按兼容层理解（第 1 章）。
-- 所有权地图 — 查 docs/architecture.md 的 owns / must not become 两栏合同，判断一个改动该落在哪个 crate（第 1 章）。
+- 命名双轨 — 引用代码用 crate 现名 nebula_*，讲产品用 Pebrel，NEBULA_ 前缀按兼容层理解（[第 1 章](./01-repo-map.md)）。
+- 所有权地图 — 查 docs/architecture.md 的 owns / must not become 两栏合同，判断一个改动该落在哪个 crate（[第 1 章](./01-repo-map.md)）。
 
 ## 三种输出，一台状态机
 
@@ -28,9 +28,9 @@ shell 手里没有画笔。程序与终端之间只有一条字节管道：要�
 | `nebula_terminal` | Grid, VT processing, terminal/PTY behavior | Product panels or GPUI state |
 ```
 
-本章的引用块首行都标注 `Kuddev/pebrel@360613aa…:路径`，与锁定 commit 逐字一致；被引用代码依 GPL-3.0 授权使用，署名与许可声明集中在 about 页（标注格式见第 1 章的引用纪律一节）。
+本章的引用块首行都标注 `Kuddev/pebrel@360613aa…:路径`，与锁定 commit 逐字一致；被引用代码依 GPL-3.0 授权使用，署名与许可声明集中在 about 页（标注格式见[第 1 章](./01-repo-map.md)的引用纪律一节）。
 
-合同读法：nebula_terminal 拥有网格、VT 处理与终端行为；禁区是产品面板与 GPUI 状态。本章读的全部状态机代码都与 UI 框架无关。crate 名沿用旧的 nebula_ 前缀、产品叫 Pebrel，引用代码一律用现名（命名双轨的口径，第 1 章）。
+合同读法：nebula_terminal 拥有网格、VT 处理与终端行为；禁区是产品面板与 GPUI 状态。本章读的全部状态机代码都与 UI 框架无关。crate 名沿用旧的 nebula_ 前缀、产品叫 Pebrel，引用代码一律用现名（命名双轨的口径，[第 1 章](./01-repo-map.md)）。
 
 ### VT 转义序列：一条管道，两种内容
 
@@ -121,7 +121,7 @@ pub struct Grid<T> {
 
 </details>
 
-字段面过一遍：cursor / saved_cursor 是当前与暂存的光标（光标自带一个「模板」，演练时细看）；raw: Storage<T> 是行存储本体；columns / lines 是可见尺寸；display_offset 记录视口向历史方向回滚了多少；max_scroll_limit 限定历史行数上限。
+字段面过一遍：cursor / saved_cursor 是当前与暂存的光标（光标自带一个「模板」，演练时细看）；raw: Storage&lt;T> 是行存储本体；columns / lines 是可见尺寸；display_offset 记录视口向历史方向回滚了多少；max_scroll_limit 限定历史行数上限。
 
 单个格子长什么样，答案在 cell.rs。
 
@@ -445,7 +445,7 @@ pub(super) struct TermDamageState {
 }
 ```
 
-一个 full 标志、每行的账、上一帧光标位置。合同也写在源码里：渲染读 `pub fn damage()`，读完调 `reset_damage()` 清零——damage 的文档注释原话是 After reading damage reset_damage should be called。渲染侧按帧拿 Partial 迭代器、只重画坏行；这就是 vim 局部刷新不闪全屏的机制。账本的消费端接线在事件循环与渲染侧（第 3 章）。
+一个 full 标志、每行的账、上一帧光标位置。合同也写在源码里：渲染读 `pub fn damage()`，读完调 `reset_damage()` 清零——damage 的文档注释原话是 After reading damage reset_damage should be called。渲染侧按帧拿 Partial 迭代器、只重画坏行；这就是 vim 局部刷新不闪全屏的机制。账本的消费端接线在事件循环与渲染侧（[第 3 章](./03-pty-event-loop.md)）。
 
 ### 四块积木拼成一条因果链
 
@@ -555,7 +555,7 @@ impl<T: EventListener> Handler for Term<T> {
 
 `ls` 的彩色输出：SGR 序列改模板，字符落格时把颜色一并写进 Cell——颜色是格子的属性，不是字符的。vim 的局部刷新：滚动区加行级 damage 记账，渲染只拿 Partial 迭代器重画坏行；只有结构性变化才走 Full。`cat` 二进制的「乱码」：那些字节同样进了这台状态机，大部分被当普通字符印进格子，恰好长得像转义序列的片段被忠实地当指令执行——乱码不是故障，是状态机在正确地执行垃圾输入。
 
-你带走了四块新积木：VT 转义序列、网格与单元格、TermMode 位域、damage 追踪。下一站：这些字节在进入状态机之前，还有一段从 shell 到终端的跨线程旅程（第 3 章）。
+你带走了四块新积木：VT 转义序列、网格与单元格、TermMode 位域、damage 追踪。下一站：这些字节在进入状态机之前，还有一段从 shell 到终端的跨线程旅程（[第 3 章](./03-pty-event-loop.md)）。
 
 ### 自查
 

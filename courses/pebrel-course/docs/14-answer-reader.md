@@ -8,7 +8,7 @@ title: 第 14 章 AI 回答阅读器：共享管线的复用范式
 
 ## 工具箱
 
-本章调用的旧积木三块。**排版编译管线**——TeX 公式的唯一编译入口，parse → validate → layout → compile 产后端无关的布局结果，与窗口系统无关（第 13 章）。**共享常量合同**——最小可读字号这类常量在两条渲染路径间共用，保证回退判定一致（第 13 章）。**GPUI Entity**——实体持状态、Context 提供订阅与更新入口，看到 `.update()` / `cx` 就是在操作实体（第 5 章）。三块在手，一条「没有 WebView 的文档阅读器」能从载荷走到像素。
+本章调用的旧积木三块。**排版编译管线**——TeX 公式的唯一编译入口，parse → validate → layout → compile 产后端无关的布局结果，与窗口系统无关（[第 13 章](./13-native-math.md)）。**共享常量合同**——最小可读字号这类常量在两条渲染路径间共用，保证回退判定一致（[第 13 章](./13-native-math.md)）。**GPUI Entity**——实体持状态、Context 提供订阅与更新入口，看到 `.update()` / `cx` 就是在操作实体（[第 5 章](./05-gpui-shell.md)）。三块在手，一条「没有 WebView 的文档阅读器」能从载荷走到像素。
 
 ## 滚出网格的回答，去哪了
 
@@ -20,14 +20,14 @@ title: 第 14 章 AI 回答阅读器：共享管线的复用范式
 
 ### 回答捕获：在信封解析处接住原文
 
-先排除一个想象：回答不是从屏幕上抠下来的。网格上确实有这段文字，屏幕证据那层回退（第 10 章）也确实从网格读状态——但它读的是「状态」，给的是没有钩子的 CLI 用的，从来不当「原文」的来源。回答原文只在一个地方完整存在：CLI 钩子事件的载荷里。所以捕获点不在渲染层，而在载荷被解析成事件对象的那一行：
+先排除一个想象：回答不是从屏幕上抠下来的。网格上确实有这段文字，屏幕证据那层回退（[第 10 章](./10-screen-evidence.md)）也确实从网格读状态——但它读的是「状态」，给的是没有钩子的 CLI 用的，从来不当「原文」的来源。回答原文只在一个地方完整存在：CLI 钩子事件的载荷里。所以捕获点不在渲染层，而在载荷被解析成事件对象的那一行：
 
 ```rust
 // Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_app/src/ai_hook/protocol.rs
     let answer = crate::assistant_answer::AssistantAnswer::from_hook(&source, &payload);
 ```
 
-（引用依 GPL-3.0 授权，署名与许可集中声明于 about 页，本章首处引用提示一次，后不重复。）载荷经命名管道桥——CLI 侧钩子写管道、宿主读出（第 8 章）——进宿主，在这条解析函数里被归一成类型化事件，即异构载荷折成一种带类型的事件对象（第 9 章）。回答就挂在事件上，随事件流进 UI。from_hook 本身只干一件事：按 CLI 与事件名查一个字段名，把字段值装进一个三态信封。
+（引用依 GPL-3.0 授权，署名与许可集中声明于 about 页，本章首处引用提示一次，后不重复。）载荷经命名管道桥——CLI 侧钩子写管道、宿主读出（[第 8 章](./08-ai-hook-bridge.md)）——进宿主，在这条解析函数里被归一成类型化事件。异构载荷折成一种带类型的事件对象（[第 9 章](./09-ai-lifecycle.md)）。回答就挂在事件上，随事件流进 UI。from_hook 本身只干一件事：按 CLI 与事件名查一个字段名，把字段值装进一个三态信封。
 
 ```rust
 // Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_app/src/assistant_answer.rs
@@ -113,7 +113,7 @@ pane 号对得上、来源是两家 CLI 之一、序号比上次新、会话身�
         .detach();
 ```
 
-取 `answers.latest`，用 GPUI Entity 的标准姿势造一个 AnswerReader 实体（第 5 章），订阅它的 Close 事件把自己清空并回焦。阅读器打开后，整个 pane 的渲染为之让位——Render 实现的第一行就是短路：
+取 `answers.latest`，用 GPUI Entity 的姿势造一个 AnswerReader 实体（[第 5 章](./05-gpui-shell.md)），订阅 Close 事件清空回焦。阅读器打开后，整个 pane 的渲染为之让位——Render 实现的第一行就是短路：
 
 ```rust
 // Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_app/src/gpui_shell/terminal/view.rs
@@ -264,7 +264,7 @@ engine 是 ScientificRender。它的后台 Job 在分发处碰到本章要害的
             },
 ```
 
-import 行是 `use crate::math::{DEFAULT_LIMITS, compile_formula, compile_formula_source};`——两个编译入口都来自那条排版编译管线（第 13 章）。整条链读下来：AnswerReader 的 TextView 撞见公式节点，公式交给 math_view::register 装上的渲染闭包。闭包探针编译后经 MathAssets::layout 转交引擎。ScientificRender 的 Job 分发处，`compile_formula` 与 `compile_formula_source` 二选一。这就是「排版编译管线入口在阅读器路径被复用」的落点：阅读器经钩子间接调用，终端覆盖层直接调用，同一个入口，零份拷贝。
+import 行是 `use crate::math::{DEFAULT_LIMITS, compile_formula, compile_formula_source};`——两个编译入口都来自那条排版编译管线（[第 13 章](./13-native-math.md)）。整条链读下来：AnswerReader 的 TextView 撞见公式节点，公式交给 math_view::register 装上的渲染闭包。闭包探针编译后经 MathAssets::layout 转交引擎。ScientificRender 的 Job 分发处，`compile_formula` 与 `compile_formula_source` 二选一。这就是「排版编译管线入口在阅读器路径被复用」的落点：阅读器经钩子间接调用，终端覆盖层直接调用，同一个入口，零份拷贝。
 
 链条的第二个调用方在文档 tab 侧。绘制方 display/markdown_view.rs，正是 markdown/mod.rs 头注释指过去的位置。它的非测试代码里，`compile_formula(` 恰好两处，第一处在量测：
 
@@ -352,7 +352,7 @@ fn measure_math(
 - claude，`hook_event_name` 为 `Notification`，`last_assistant_message` 有值；
 - codex，`type` 为 `agent-turn-complete`，`last-assistant-message` 是 131073 个字符的文本。
 
-写完展开锁定测试核对。注意它怎么把「字段名拼写写错」也钉进 Missing：
+写完展开锁定测试核对。注意它怎么把「字段名拼写写错」也钉进 Missing。
 
 <details>
 <summary>assistant_answer.rs · 字段错拼与事件不符的判定（锁定原文节选）</summary>
@@ -404,6 +404,6 @@ fn measure_math(
 
 ## 收束
 
-开篇的问题现在可以整段回答。滚出网格的回答没有丢。CLI 在回合结束时经钩子把完整原文随载荷交出，宿主在信封解析处用 from_hook 把它装进三态信封。完整的进 Complete，缺席是 Missing，超 128 KiB 报 TooLarge 且不截断。inbox 按 pane 与会话身份收件，latest 上的快照随时可以变成一个 AnswerReader 实体，整个 pane 的渲染为之让位。它读起来像一篇文档，靠的是 TextView 的 markdown 渲染加后台归一的文本；公式高亮不另起炉灶，靠的是钩子把公式递给排版编译管线（第 13 章）——同一个入口、同一份常量合同、零份拷贝。文档 tab 那一侧同构：一份 TextSnapshot，本地与 SFTP 两条后端共用。
+开篇的问题现在可以整段回答。滚出网格的回答没有丢。CLI 在回合结束时经钩子把完整原文随载荷交出，宿主在信封解析处用 from_hook 把它装进三态信封。完整的进 Complete，缺席是 Missing，超 128 KiB 报 TooLarge 且不截断。inbox 按 pane 与会话身份收件，latest 上的快照随时可以变成一个 AnswerReader 实体，整个 pane 的渲染为之让位。它读起来像一篇文档，靠的是 TextView 的 markdown 渲染加后台归一的文本；公式高亮不另起炉灶，靠的是钩子把公式递给排版编译管线（[第 13 章](./13-native-math.md)）——同一个入口、同一份常量合同、零份拷贝。文档 tab 那一侧同构：一份 TextSnapshot，本地与 SFTP 两条后端共用。
 
-本章交给你三块新积木。回答捕获：hook 载荷 → 三态信封 → pane 会话收件。文档 tab 模型：WorkspaceTab 的 Document 变体，加与渲染器无关的 TextSnapshot。管线复用结构：识别「共用入口」与「复制实现」的四步判别法。两个易错点带走：open_answer 在锁定提交上还没有触发接线，别把机制链说成已上线的功能；阅读器自己不含一行 TeX 代码——复用的证据恰恰是那串 0。下一站看补全引擎的抽取（第 15 章），全书能力对账归终章（第 16 章）。
+本章交给你三块新积木。回答捕获：hook 载荷 → 三态信封 → pane 会话收件。文档 tab 模型：WorkspaceTab 的 Document 变体，加与渲染器无关的 TextSnapshot。管线复用结构：识别「共用入口」与「复制实现」的四步判别法。两个易错点带走：open_answer 在锁定提交上还没有触发接线，别把机制链说成已上线的功能；阅读器自己不含一行 TeX 代码——复用的证据恰恰是那串 0。下一站看补全引擎的抽取（[第 15 章](./15-completion-engine.md)），全书能力对账归终章（[第 16 章](./16-review.md)）。

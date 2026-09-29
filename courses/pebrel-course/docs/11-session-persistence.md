@@ -697,7 +697,7 @@ grep -rn "Duration::from_secs(1)" nebula_app/src/event.rs nebula_app/src/gpui_sh
 
 1. 你同时开着两个窗口。窗口 A 挂着两次未完成的恢复（boot_attempts = 2），窗口 B 一切正常（0）。下一次自动保存的合并快照里 boot_attempts 是几？为什么不是两个数相加？
 2. 一个更新版本的终端写了 v5 文件，你回退到本锁定版本运行。正常启动会发生什么？更新交接路径（load_update_windows）又会发生什么？两条路径的处置为什么不同？
-3. 你给 TabSession 加一个新字段 zoomed_pane: Option<u64>，记录 tab 是否处于临时满屏。需要把 VERSION 升到 5 吗？依据是格式演进两条正道里的哪一条？
+3. 你给 TabSession 加一个新字段 zoomed_pane: Option&lt;u64>，记录 tab 是否处于临时满屏。需要把 VERSION 升到 5 吗？依据是格式演进两条正道里的哪一条？
 
 <details>
 <summary>参考答案</summary>

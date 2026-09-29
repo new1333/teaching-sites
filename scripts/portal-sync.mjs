@@ -15,10 +15,13 @@ const courseNames = readdirSync(coursesDir, { withFileTypes: true })
   .sort()
 
 const courses = []
+// 跳过 = 不进 sidebar/导航，也不参与 vitepress 编译（其死链不得阻断聚合构建）
+const skippedCourses = []
 for (const name of courseNames) {
   const cfgPath = join(coursesDir, name, 'docs', '.vitepress', 'config.mjs')
   if (!existsSync(cfgPath)) {
     console.warn(`[portal] 跳过 ${name}：缺少 docs/.vitepress/config.mjs`)
+    skippedCourses.push(name)
     continue
   }
   const cfg = (await import(pathToFileURL(cfgPath).href)).default
@@ -81,7 +84,7 @@ const config = `// 由 scripts/portal-sync.mjs 生成，勿手改。改课程请
 export default {
 ${baseLine}  title: '课程中心',
   description: '全部教学课程的聚合入口',
-  srcExclude: ['**/README.md', '**/companion/**', '**/.course/**'],
+  srcExclude: ${j(['**/README.md', '**/companion/**', '**/.course/**', ...skippedCourses.map((n) => `${n}/docs/**`)])},
   rewrites: { ':course/docs/:path*': ':course/:path*' },
   themeConfig: {
     nav: ${j(nav)},

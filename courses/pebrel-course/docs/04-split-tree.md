@@ -8,7 +8,7 @@ title: 第 4 章 纯数据分屏树：不含一个 UI 类型的布局内核
 
 ## 工具箱
 
-- 所有权地图 — 判断改动落点 crate 与禁区的查表入口：docs/architecture.md 的 owns / must-not-become 两栏（第 1 章）。
+- 所有权地图 — 判断改动落点 crate 与禁区的查表入口：docs/architecture.md 的 owns / must-not-become 两栏（[第 1 章](./01-repo-map.md)）。
 
 本章只调用这一块积木，其余从零建立。
 
@@ -34,7 +34,7 @@ title: 第 4 章 纯数据分屏树：不含一个 UI 类型的布局内核
 [dependencies]
 ```
 
-`[dependencies]` 段零条目；src 下仅有的两个 .rs 文件里，没有一处 gpui 或其他 UI 框架字样；全部 use 语句只有 std::mem 与 super::*。crate 依赖方向的合同（第 1 章）说 domain crate 不许依赖 UI 与平台能力——nebula_split 是把这份合同执行到极致的展品；SHA 钉版（第 1 章）解决的问题在这里干脆不存在：一个依赖都没有，没什么可钉。
+`[dependencies]` 段零条目；src 下仅有的两个 .rs 文件里，没有一处 gpui 或其他 UI 框架字样；全部 use 语句只有 std::mem 与 super::*。crate 依赖方向的合同（[第 1 章](./01-repo-map.md)）说 domain crate 不许依赖 UI 与平台能力——nebula_split 是把这份合同执行到极致的展品；SHA 钉版（[第 1 章](./01-repo-map.md)）解决的问题在这里干脆不存在：一个依赖都没有，没什么可钉。
 
 crate 的开场白把出身交代得很清楚：
 
@@ -51,7 +51,7 @@ crate 的开场白把出身交代得很清楚：
 //! 保留；新 UI 一律读本 crate。改规则时两处同步，直到 P3 接入完成。
 ```
 
-三处值得停下。其一，命名双轨照旧（第 1 章）：crate 叫 nebula-split、注释自称 Nebula、产品叫 Pebrel——引用代码用现名，讲产品用新名。其二，这套规则是从旧壳 window_context/split.rs 逐字对照搬出来的；旧壳所在的 window_context.rs 在体积预算表上记着 3735 行、只减不增（ratchet 预算，第 1 章），把共享规则搬出巨石文件而不是继续往里堆，正合预算的方向。其三，"旧壳冻结、新 UI 一律读本 crate"是锁定 commit 上记录在案的裁定，主分支此后的演进不自动生效。
+三处值得停下。其一，命名双轨照旧（[第 1 章](./01-repo-map.md)）：crate 叫 nebula-split、注释自称 Nebula、产品叫 Pebrel——引用代码用现名，讲产品用新名。其二，这套规则是从旧壳 window_context/split.rs 逐字对照搬出来的；旧壳所在的 window_context.rs 在体积预算表上记着 3735 行、只减不增（ratchet 预算，[第 1 章](./01-repo-map.md)），把共享规则搬出巨石文件而不是继续往里堆，正合预算的方向。其三，"旧壳冻结、新 UI 一律读本 crate"是锁定 commit 上记录在案的裁定，主分支此后的演进不自动生效。
 
 树的形状本身：
 
@@ -76,13 +76,13 @@ pub enum SplitTree<T> {
 
 叶子 Leaf(T) 只装一个泛型 id——树不关心这个 id 背后是哪种视图对象，任何可复制、可比较的类型都行。内部节点记方向和比例，其中 ratio 是提交值，preview_ratio 是拖拽中的预览值，两个字段的分工后面细讲。铺陈函数 layout() 吃一棵树加一个 viewport 矩形，吐出 SplitLayout：每个叶子的矩形，加上每条分隔条的身份，仅此而已。同一棵树加同一 viewport，永远得到同一份输出；没有隐藏状态，没有副作用。
 
-这棵树的边界同样值得读。它对终端内部一无所知：TermMode 位域里此刻置着哪些模式（第 2 章）、damage 追踪圈了哪些行要重画（第 2 章），都不在它的世界里。nebula_terminal 里那把按到达序授锁的 FairMutex（第 3 章）在这里也没有对应物——纯函数不持有共享状态，自然不需要锁。它只认矩形、比例和 id，换来的是可独立测试：crate 里 16 个单元测试不需要窗口、不需要 GPU，headless 全绿。
+这棵树的边界同样值得读。它对终端内部一无所知：TermMode 位域里此刻置着哪些模式（[第 2 章](./02-vt-grid.md)）、damage 追踪圈了哪些行要重画（[第 2 章](./02-vt-grid.md)），都不在它的世界里。nebula_terminal 里那把按到达序授锁的 FairMutex（[第 3 章](./03-pty-event-loop.md)）在这里也没有对应物——纯函数不持有共享状态，自然不需要锁。它只认矩形、比例和 id，换来的是可独立测试：crate 里 16 个单元测试不需要窗口、不需要 GPU，headless 全绿。
 
 ## 切割次序合同：先取整、再钳制、余数归第二段
 
 **切割次序合同**——可用长度先扣掉分隔条，第一段按比例 floor 取整，再双向钳到"至少一个单元格"宽，第二段拿走全部余数。次序写死在表达式里，不是建议。
 
-为什么以"格"为单位？pane 里住着一张由 VT 转义序列一行行改写的网格与单元格（第 2 章）——宽度切成 7.3 格没有意义，切割必须落在整格上；受压的一侧也至少要留一格，否则连一个字符都放不下。合同原文写在 layout 的 doc 注释里，执行在 collect_rects 的 LeftRight 分支——与注释隔着一个函数，下面第二个块是节选：
+为什么以"格"为单位？pane 里住着一张由 VT 转义序列一行行改写的网格与单元格（[第 2 章](./02-vt-grid.md)）——宽度切成 7.3 格没有意义，切割必须落在整格上；受压的一侧也至少要留一格，否则连一个字符都放不下。合同原文写在 layout 的 doc 注释里，执行在 collect_rects 的 LeftRight 分支——与注释隔着一个函数，下面第二个块是节选：
 
 ```rust
 // Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs（已统一去缩进）
@@ -150,7 +150,7 @@ pub fn commit_ratio(preview: f32, extent: f32, divider: f32, cell: f32) -> f32 {
 
 preview_ratio 只在拖拽中用：关闭区把预览钉死在 0.02 / 0.98，让受压的 pane 可见地塌下去，示意"松手即关"；常规带内才动用 RATIO_CLAMP。曲线抽查：0.03 → 0.02，0.07 → 0.10，0.5 → 0.5，0.93 → 0.90。松手那一刻的裁决在 drag_close_target。raw < 0.06 返回 Some(false)，raw > 0.94 返回 Some(true)，带内返回 None。边界是严格不等式，恰好压在 0.06 上不算越过。commit_ratio 是最终落库的那条路：先把预览吸附到整数个单元格，再过一遍硬钳带——0.437 在 usable = 800、格宽 10 下吸附成 0.4375；0.02 与 0.98 会被压回 0.10 与 0.90。
 
-为什么树里要同时存 ratio 和 preview_ratio？preview_ratio 字段的 doc 只有一句关键话："PTY 尺寸跟随提交值直到松手"。pane 里那个 PTY 伪终端（第 3 章）一旦收到 resize，shell 就按新列数重排输出；Windows 上 ConPTY 还会重放一屏内容，靠事件循环里的对账静默期吸收（ConPTY 对账，第 3 章）。拖拽的每个中间尺寸都通知 PTY 的话，一次拖手就是几十场 resize 风暴。所以预览只移动分隔条，提交才改树，终端内容在整个拖拽期间保持稳定。松手后最终尺寸怎么写回 PTY，属于壳侧接线的话题（第 5 章）。
+为什么树里要同时存 ratio 和 preview_ratio？preview_ratio 字段的 doc 只有一句关键话："PTY 尺寸跟随提交值直到松手"。pane 里那个 PTY 伪终端（[第 3 章](./03-pty-event-loop.md)）一旦收到 resize，shell 就按新列数重排输出；Windows 上 ConPTY 还会重放一屏内容，靠事件循环里的对账静默期吸收（ConPTY 对账，[第 3 章](./03-pty-event-loop.md)）。拖拽的每个中间尺寸都通知 PTY 的话，一次拖手就是几十场 resize 风暴。所以预览只移动分隔条，提交才改树，终端内容在整个拖拽期间保持稳定。松手后最终尺寸怎么写回 PTY，属于壳侧接线的话题（[第 5 章](./05-gpui-shell.md)）。
 
 ## 树叶集合不变式：关闭是摘叶，不是隐藏
 
@@ -308,7 +308,7 @@ console.log(first, second);
 - 切割次序合同 — 先 floor、再钳到至少一格、余数归第二段；分屏比例异常时先核对的规则
 - 树叶集合不变式 — pane id 集合等于 leaves() 集合；把布局树接回视图时的对账判据
 
-这棵树如何被壳调用、pane 从生到死走哪条时间线，是下一站的地图（第 5 章）。
+这棵树如何被壳调用、pane 从生到死走哪条时间线，是下一站的地图（[第 5 章](./05-gpui-shell.md)）。
 
 ### 自查
 

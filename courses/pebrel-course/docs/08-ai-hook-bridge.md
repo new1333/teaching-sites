@@ -8,8 +8,8 @@ title: 第 8 章 钩子桥进程：AI CLI 事件的隐形搬运工
 
 本章要调用的旧积木只有两块；钩子桥自己的机制，从零建立。
 
-- **命名双轨** — 新名 Pebrel、PEBREL_* 与旧名 nebula_*、NEBULA_* 并存的兼容约定；引用代码用 crate 现名，见到旧前缀按兼容层理解（第 1 章）。
-- **所有权地图** — 落点查表入口：拿改动描述对 architecture.md 的 owns / must-not-become 两栏，读出该落在哪个 crate、不许变成什么（第 1 章）。
+- **命名双轨** — 新名 Pebrel、PEBREL_* 与旧名 nebula_*、NEBULA_* 并存的兼容约定；引用代码用 crate 现名，见到旧前缀按兼容层理解（[第 1 章](./01-repo-map.md)）。
+- **所有权地图** — 落点查表入口：拿改动描述对 architecture.md 的 owns / must-not-become 两栏，读出落点 crate 与禁区（[第 1 章](./01-repo-map.md)）。
 
 ## 钩子：宿主是怎么知道的
 
@@ -144,7 +144,7 @@ fn spawn_pipe_server(sink: impl Fn(AiHookEvent) -> bool + Send + 'static) {
     };
 ```
 
-启动时机是关键：管道名赶在第一个 PTY 之前写进宿主的进程环境。pane 里的 shell 住在一个 PTY 伪终端里——内核提供的成对设备，让 shell 以为面对真实终端（第 3 章）。Windows 的 ConPTY 会合并宿主的进程环境，于是这张环境表一路传到每个 pane 里的 shell、shell 里的 CLI，再到 CLI 唤起的钩子。管道名带着宿主的进程号（pebrel-notify-{pid}），按实例唯一：两个 Pebrel 同时开，各自的钩子只会找到各自的管道。
+启动时机是关键：管道名赶在第一个 PTY 之前写进宿主的进程环境。pane 里的 shell 住在一个 PTY 伪终端里——内核提供的成对设备，让 shell 以为面对真实终端（[第 3 章](./03-pty-event-loop.md)）。Windows 的 ConPTY 会合并宿主的进程环境，于是这张环境表一路传到每个 pane 里的 shell、shell 里的 CLI，再到 CLI 唤起的钩子。管道名带着宿主的进程号（pebrel-notify-{pid}），按实例唯一：两个 Pebrel 同时开，各自的钩子只会找到各自的管道。
 
 钩子侧的读取收敛在一个函数里：
 
@@ -216,7 +216,7 @@ fn envelope(source: &str, pane: &str, contract: &str, payload: &[u8]) -> Vec<u8>
 }
 ```
 
-信封头一行声明协议版本、来源与 pane，载荷原样贴在后头，helper 不做任何重编码。pane 号来自另一个哨兵 PEBREL_PANE_ID：宿主为每个 pane 单独写环境表（nebula_app/src/agent_env.rs:76），钩子读到后签进信封。这个 id 恰好是分屏树的一片树叶。布局内核是一棵纯数据布局树，树叶集合不变式保证 pane id 集合与树叶一一对应（第 4 章）。署名总能对回一棵真实的树，宿主据此把事件送进对应 pane 生命周期的时间线（第 5 章）。
+信封头一行声明协议版本、来源与 pane，载荷原样贴在后头，helper 不做任何重编码。pane 号来自另一个哨兵 PEBREL_PANE_ID：宿主为每个 pane 单独写环境表（nebula_app/src/agent_env.rs:76），钩子读到后签进信封。这个 id 恰好是分屏树的一片树叶。布局内核是一棵纯数据布局树，树叶集合不变式保证 pane id 集合与树叶一一对应（[第 4 章](./04-split-tree.md)）。署名总能对回一棵真实的树，宿主据此把事件送进对应 pane 生命周期的时间线（[第 5 章](./05-gpui-shell.md)）。
 
 ### 有界转发：1 MiB 与 2 秒
 
@@ -281,7 +281,7 @@ path = "src/main.rs"
 
 没有 [dependencies] 表。实测的 section 只有两个：package 与 bin。这不是疏忽，是写进治理文档的合同。docs/project-constraints.md 明说：nebula-settings、nebula-split 与 nebula_hook 保留既有的零生产依赖契约。architecture.md 的禁区措辞说的是同一件事——不得变成 an application dependency container。
 
-把这本书到目前为止建立的机制摊开，逐个问「它会不会出现在这个进程的 use 里」，能看清这张空依赖表的分量。VT 转义序列的解析、网格与单元格、TermMode 位域、damage 追踪，全部住在 nebula_terminal（第 2 章）。事件循环与 FairMutex 在那边管 I/O 线程的调度，ConPTY 对账管 resize 重放（第 3 章）。nebula_split 的纯数据布局树与切割次序合同（第 4 章）在这里没有对应物。GPUI 侧的 GPUI Entity 与 prepaint 回写（第 5 章）、SSH 的 russh 连接复用、jump 路由与 SshEventHost（第 6 章）同样缺席。SFTP 的单在途 READ 上限、多句柄分段、进度/取消接缝（第 7 章）更是两个世界。治理工具也大多用不上：SHA 钉版钉的是 GPUI 那类 fork 依赖，这里没有依赖表可钉；ratchet 预算约束的是旧文件的只减不增，这个单文件不靠预算就守住了体积。crate 依赖方向图里它是一片孤叶：读它的行为只需要 std 的语义，不需要先懂任何邻居。
+把这本书到目前为止建立的机制摊开，逐个问「它会不会出现在这个进程的 use 里」，能看清这张空依赖表的分量。VT 转义序列的解析、网格与单元格、TermMode 位域、damage 追踪，全部住在 nebula_terminal（[第 2 章](./02-vt-grid.md)）。事件循环与 FairMutex 在那边管 I/O 线程的调度，ConPTY 对账管 resize 重放（[第 3 章](./03-pty-event-loop.md)）。nebula_split 的纯数据布局树与切割次序合同（[第 4 章](./04-split-tree.md)）在这里没有对应物。GPUI 侧的 GPUI Entity 与 prepaint 回写（[第 5 章](./05-gpui-shell.md)）同样缺席。SSH 的 russh 连接复用、jump 路由与 SshEventHost（[第 6 章](./06-ssh-session.md)）也不在这个进程里。SFTP 的单在途 READ 上限、多句柄分段、进度/取消接缝（[第 7 章](./07-sftp-engine.md)）更是两个世界。治理工具也大多用不上：SHA 钉版钉的是 GPUI 那类 fork 依赖，这里没有依赖表可钉；ratchet 预算约束的是旧文件的只减不增，这个单文件不靠预算就守住了体积。crate 依赖方向图里它是一片孤叶：读它的行为只需要 std 的语义，不需要先懂任何邻居。
 
 ### --chain：给被占用的槽位让路
 
@@ -315,7 +315,7 @@ fn chain_notifier(args: &[String]) {
 
 以下两段超出本章主线，能定位即可，不展开机制。
 
-其一，远端通道。SSH pane 里没有本地命名管道，同一段 run() 的 else 分支改走控制终端。做法是把信封 base64 编码后，包进一条 OSC 转义序列写进 /dev/tty——OSC 是 VT 转义序列家族的一员（第 2 章），形如 `ESC ]777;nebula-hook;token;base64载荷 BEL`。字节流顺着既有的 SSH 通道回到宿主——搭的是 russh 连接复用的便车；无论这条连接是直连还是经 jump 路由多跳，中间环节对它透明。哨兵换成了 32 位十六进制的 REMOTE_HOOK_TOKEN，消息上限收紧到 64 KiB。同一信封、两种物理通道，是传输层无关原则在事件入口的缩影（第 6 章）。
+其一，远端通道。SSH pane 里没有本地命名管道，同一段 run() 的 else 分支改走控制终端。做法是把信封 base64 编码后，包进一条 OSC 转义序列写进 /dev/tty——OSC 是 VT 转义序列家族的一员（[第 2 章](./02-vt-grid.md)），形如 `ESC ]777;nebula-hook;token;base64载荷 BEL`。字节流顺着既有的 SSH 通道回到宿主——搭的是 russh 连接复用的便车；无论这条连接是直连还是经 jump 路由多跳，中间环节对它透明。哨兵换成了 32 位十六进制的 REMOTE_HOOK_TOKEN，消息上限收紧到 64 KiB。同一信封、两种物理通道，是传输层无关原则在事件入口的缩影（[第 6 章](./06-ssh-session.md)）。
 
 其二，串台门。别家 agent 的 hook runner 会读取同一份 ~/.claude/settings.json，于是 Pebrel 装给 claude 的钩子会在 Grok Build 的事件上触发。把 Grok 的事件当 claude 上报有两个后果：pane 贴错 provider 身份；别家的 session id 拿去 claude --resume 一个不存在的会话。FOREIGN_HOOK_RUNNERS 记录这些 runner 独有的环境变量，当前是 GROK_HOOK_NAME 与 GROK_HOOK_EVENT，命中即退场。
 
@@ -396,6 +396,6 @@ PASS  [ai-hook-bridge] 19/19 checks
 
 回到开篇的问题：宿主怎么知道 Claude Code 开始等人？每个回合事件都短暂唤起一次 pebrel-hook——它在环境变量哨兵里找到本实例的命名管道，把署着 pane 号的信封一次写入，两秒内必定返回，任何路径都以退出码 0 收场。CLI 侧无感，用户任务无扰，这就是隐形搬运工的全部工作。
 
-本章交出四块积木：命名管道桥，AI CLI 事件进入宿主的物理通道；环境变量哨兵，用进程继承圈定作用域的发现机制；隐形合同，辅助进程对调用方的退出码纪律；有界转发，载荷与时间的双界。这些信封到了宿主手里怎么拆开、归一、排序，去向一行：（第 9 章）。
+本章交出四块积木：命名管道桥，AI CLI 事件进入宿主的物理通道；环境变量哨兵，用进程继承圈定作用域的发现机制；隐形合同，辅助进程对调用方的退出码纪律；有界转发，载荷与时间的双界。这些信封到了宿主手里怎么拆开、归一、排序，去向一行：（[第 9 章](./09-ai-lifecycle.md)）。
 
 迁移自查只有三问，以后再遇到「要住进别人会话的辅助进程」就先答它们：退出码合同是什么？作用域哨兵是什么？载荷与时间的界在哪？有一问答不上来，先别写代码。

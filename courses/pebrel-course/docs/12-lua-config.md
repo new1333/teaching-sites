@@ -6,7 +6,7 @@ title: 第 12 章 Lua 配置：本地执行、产物可校验
 
 ## 工具箱
 
-配置这条线要调的旧积木，两块都产自同一片地基（第 1 章）。
+配置这条线要调的旧积木，两块都产自同一片地基（[第 1 章](./01-repo-map.md)）。
 
 - **命名双轨** — 引用代码用 crate 现名 nebula_*，讲产品用 Pebrel；旧前缀与旧名字按兼容层理解，这里的关键形态是「旧名字还活着，且收敛在一处」。
 - **所有权地图** — 落点查表入口：拿改动描述对 architecture.md 的 owns / must-not-become 两栏，读出该落在哪个 crate、不许变成什么。
@@ -405,7 +405,7 @@ PASS  [lua-config] 29/29 checks
 
 1. 挡不住，也不归它挡。沙界管的是代码来处：发现过程不下载远端配置、注入模块无网络入口、require 只搜本地路径。本地模块属于「可执行的本地代码」，信任与否由用户负责。手册那句 Only use configuration files and modules that you trust，说的就是这回事。
 2. 拿不到清单。capture_diagnostics 只包在 Lua 路径上（lua/mod.rs:108）；TOML 反序列化没有作用域，三个 report 入口走 if !captured 的降级分支，字段报告散进日志。unknown 与 deprecated 降 warn；invalid 降 error。同一批函数，两个出口。
-3. 在。env 的类型是 HashMap<String, String>；replace 对 HashMap 是合并语义——补丁只覆盖出现的键，EDITOR 原样保留。对照：标量与 Vec 才是整体替换。
+3. 在。env 的类型是 HashMap&lt;String, String>；replace 对 HashMap 是合并语义——补丁只覆盖出现的键，EDITOR 原样保留。对照：标量与 Vec 才是整体替换。
 4. 一次。两个名字注册的是同一张表（runtime.rs:143-144）。reload_configuration 闭包与它背后的 ReloadSignal 也是同一个，两次调用打在同一个 AtomicBool 上；宿主看到的是同一路待处理信号，rawequal 测试顺手钉住了这个性质。
 
 </details>

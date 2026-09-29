@@ -18,7 +18,7 @@
         "note": "本课程逐字引用 GPL-3.0 项目的源码片段。凡引用处标注 Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:path；被引用片段依 GPL-3.0 授权使用，署名与许可声明集中声明于 about 页，正文首处引用时再次提示。",
         "surfaces": [
           "docs/about.md",
-          "docs/repo-map.md"
+          "docs/01-repo-map.md"
         ]
       },
       {
@@ -26,7 +26,7 @@
         "note": "屏幕证据 TOML 规则注释含日期化因果记录（如 2026-08-22 修正），正文引用时标注时点性；本课程全部事实锚定 locked_ref，主分支后续演进不自动生效。",
         "surfaces": [
           "docs/about.md",
-          "docs/screen-evidence.md"
+          "docs/10-screen-evidence.md"
         ]
       }
     ],

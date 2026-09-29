@@ -241,7 +241,7 @@ async fn pump<H: SshEventHost>(
     });
 ```
 
-其二，会话句柄同型。spawn_session_at 持有 Arc<FairMutex<Term<H>>>，返回 EventLoopSender——与本地 Notifier 是同一 sender 类型。
+其二，会话句柄同型。spawn_session_at 持有 Arc&lt;FairMutex&lt;Term&lt;H>>>，返回 EventLoopSender——与本地 Notifier 是同一 sender 类型。
 
 ```rust
 // Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_app/src/ssh_session.rs（行 534–554）
