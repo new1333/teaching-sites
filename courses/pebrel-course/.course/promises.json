@@ -1,4 +1,12 @@
 {
   "schema_version": 2,
-  "promises": []
+  "promises": [
+    { "id": "p1", "from": "repo-map", "from_n": 1, "target": "review", "what": "ratchet 预算与 SHA 钉版在终章与全部子系统对账", "status": "fulfilled", "resolution": "16-review 治理账两节：预算按采纳 11/现行 9 双口径逐条归属特性；SHA 按 [patch.crates-io]/[workspace.dependencies] 结构对渲染面与零 UI 面对齐，引 probe-01 实跑输出" },
+    { "id": "p2", "from": "vt-grid", "from_n": 2, "target": "pty-event-loop", "what": "damage 追踪的最小重绘在事件循环章被调用", "status": "fulfilled", "resolution": "03 章「字节落库之后」小节走通 feed 记账→Wakeup→event_mailbox 去重→display damage()/reset_damage() 消费，组装式点名「事件循环 = polling + FairMutex + damage 追踪」" },
+    { "id": "p3", "from": "pty-event-loop", "from_n": 3, "target": "gpui-shell", "what": "PTY resize 对账在 GPUI 壳章 prepaint 回写中被调用", "status": "fulfilled", "resolution": "05 章「链条的另一半在事件循环」节把 prepaint→set_layout→ViewportTracker→grid-before-PTY→Msg::Resize/ResizeGrid→PendingResize→ALIGN_DELAY 串成单一因果链，逐字引用 event_loop.rs ResizeGrid 文档注释" },
+    { "id": "p4", "from": "gpui-shell", "from_n": 5, "target": "ai-lifecycle", "what": "pane 生命周期积木供 AI 事件管线调用", "status": "fulfilled", "resolution": "09 章 accept_for_pane 文档 + windowing.rs:932 严格路由合同处真实调用（pane id 不复用接口回顾带链接）" },
+    { "id": "p5", "from": "ai-hook-bridge", "from_n": 8, "target": "ai-lifecycle", "what": "命名管道桥的载荷形状在事件归一章被解析", "status": "fulfilled", "resolution": "09 章 parse_envelope 一节以 nebula-hook/1 信封开场逐字段解析（头行校验、按源门控、串台第二道门、会话键收紧）" },
+    { "id": "p6", "from": "ai-lifecycle", "from_n": 9, "target": "screen-evidence", "what": "能力集分层原则在屏幕证据章作为回退层依据被调用", "status": "fulfilled", "resolution": "10 章「钩子第一层、屏幕只补缺失能力」真实调用该积木，引所有权地图 ai_agents 行 must-not-become（Authority to overwrite hook results）与 detect 无命中保钩子态双证据" },
+    { "id": "p7", "from": "native-math", "from_n": 13, "target": "answer-reader", "what": "排版编译管线入口在回答阅读器章被验证复用", "status": "fulfilled", "resolution": "14 章 AnswerReader→math_view::register→set_math_renderer→engine.layout→compile_formula 完整调用链，阅读器模块零 TeX token 反证 + 文档 tab 两处直接调用点 + 共享常量 import 作组装证据" }
+  ]
 }
