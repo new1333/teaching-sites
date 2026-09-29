@@ -74,13 +74,14 @@ for (let i = 2; i < argv.length; i++) {
   const a = argv[i]
   if (!a.startsWith('--')) { termsFromCli.push(a); continue }
   switch (a) {
-    case '--new': flags.new = takeGroup(argv, i); break
-    case '--pain': flags.pain = takeGroup(argv, i); break
-    case '--terms': termsFromCli.push(...takeGroup(argv, i)); break
-    case '--lang': flags.lang = takeOne(argv, i); break
-    case '--source-policy': flags.sourcePolicy = takeOne(argv, i); break
-    case '--verification': flags.verification = takeOne(argv, i); break
-    case '--min-chars': flags.minChars = Number(takeOne(argv, i)); break
+    // takeGroup/takeOne 只向前看不清费循环索引：这里按已消费数量推进 i，防止 flag 值被重复计入位置参数术语
+    case '--new': flags.new = takeGroup(argv, i); i += flags.new.length; break
+    case '--pain': flags.pain = takeGroup(argv, i); i += flags.pain.length; break
+    case '--terms': { const g = takeGroup(argv, i); termsFromCli.push(...g); i += g.length; break }
+    case '--lang': flags.lang = takeOne(argv, i); if (flags.lang !== undefined) i += 1; break
+    case '--source-policy': flags.sourcePolicy = takeOne(argv, i); if (flags.sourcePolicy !== undefined) i += 1; break
+    case '--verification': flags.verification = takeOne(argv, i); if (flags.verification !== undefined) i += 1; break
+    case '--min-chars': flags.minChars = Number(takeOne(argv, i)); if (!Number.isNaN(flags.minChars)) i += 1; break
     default: console.error(`未知参数 ${a}`); process.exit(2)
   }
 }
@@ -193,6 +194,9 @@ const CH_REF = /第\s*(\d+)(?:\s*[、和至到\-]\s*\d+)*\s*章/g
 const navSpans = []
 for (const re of [/\[[^\]\n]*\]\([^)\n]*\)/g, /（[^）\n]*）/g, /\([^)\n]*\)/g])
   for (const m of text.matchAll(re)) navSpans.push([m.index, m.index + m[0].length])
+// frontmatter 是元数据而非叙事：title 须与大纲逐字一致（final-check 对账），写作侧无法改写其中的「第 N 章」。
+const fmSpan = /^---\n[\s\S]*?\n---/.exec(text)
+if (fmSpan) navSpans.push([fmSpan.index, fmSpan.index + fmSpan[0].length])
 const inNavSpan = (i) => navSpans.some(([a, b]) => i >= a && i < b)
 // 掩掉括注与链接后的叙事文本：句式类规则在这里查
 let narrative = ''
