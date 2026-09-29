@@ -80,7 +80,7 @@ to rename all existing directories or create abstract interfaces everywhere.
 
 ### 依赖方向：合同里能机器检查的那一半
 
-上一节那句单向流，本书叫它 crate依赖方向——依赖只能从外向内：application 可以依赖 core，core 绝不依赖 application，更不许沾任何渲染包。这句话有一半不用靠自觉：检查器吃 `architecture/dependencies.toml`。
+上一节那句单向流，本书叫它 crate 依赖方向——依赖只能从外向内：application 可以依赖 core，core 绝不依赖 application，更不许沾任何渲染包。这句话有一半不用靠自觉：检查器吃 `architecture/dependencies.toml`。
 
 ::: details dependencies.toml 全文（37 行，逐字引自锁定 ref）
 
@@ -143,7 +143,7 @@ under [ratcheted budgets](project-constraints.md). Move their independent rules
 when working on the relevant capability; do not mix a whole-app rewrite into a fix.
 ```
 
-治理工具叫 ratchet预算——ratchet 是棘轮，一种只能单向拧动的扳手。合同一句话：超标旧文件的行数额度按采纳时的实测值钉死，此后只许变小，不许变大。预算表本身在 `architecture/file-budgets.txt`：
+治理工具叫 ratchet 预算——ratchet 是棘轮，一种只能单向拧动的扳手。合同一句话：超标旧文件的行数额度按采纳时的实测值钉死，此后只许变小，不许变大。预算表本身在 `architecture/file-budgets.txt`：
 
 ```text
 Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:architecture/file-budgets.txt
@@ -215,9 +215,9 @@ gpui-component = { git = "https://github.com/Kuddev/gpui-component", rev = "fc5f
 gpui-component-assets = { git = "https://github.com/Kuddev/gpui-component", rev = "fc5f5cf63dd80686dafacd2a6e37345bbd1dc7ba", version = "=0.5.1" }
 ```
 
-顺带交代：`[patch.crates-io]` 段里还有两条与 GPUI 无关的补丁。一个钉在自有 fork 上的 `x11-clipboard` 上游修复，段首 TODO 写明官方发布后即撤销；另一个是 vendor 进 `third_party/` 的 winit 0.30.13。
+顺带交代：`[patch.crates-io]` 段里还有两条与 GPUI 无关的补丁。一个钉在上游作者 quininer 仓上的 `x11-clipboard` 修复（不是 Kuddev 自有仓——来源身份要说准），段首 TODO 写明官方发布后即撤销；另一个是 vendor 进 `third_party/` 的 winit 0.30.13。
 
-这套做法就是 SHA钉版——依赖不写 branch、不写 tag、不写通配版本，只用完整 40 位 commit SHA 加精确等号版本（如 `=0.2.2`）把来源钉死。为什么这么较劲？`Cargo.toml` 的基线注释把事故形态写得很具体：
+这套做法就是 SHA 钉版——依赖不写 branch、不写 tag、不写通配版本，只用完整 40 位 commit SHA 加精确等号版本（如 `=0.2.2`）把来源钉死。为什么这么较劲？`Cargo.toml` 的基线注释把事故形态写得很具体：
 
 ```toml
 # Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:Cargo.toml
@@ -325,7 +325,7 @@ PASS  [repo-map] 24/24 checks
 
 回到开篇的问题。700 个文件从哪读起？不从文件树读起，从 `docs/architecture.md` 的 19 行合同读起：先判职责归属，再看依赖方向，最后才进模块——目录顺序在这里不承担导航。同一个 GPUI 出现两个 fork 为什么会编不过？因为 Cargo 认包看的是「URL 加 rev」的来源身份，两处不一致就是两套同名类型。这个仓库用 SHA 钉版把四个包钉在同一棵源码树上，并把规则写成注释合同，探针再把它变成可复跑的断言。
 
-本章交出五块积木，全书反复调用。所有权地图——判落点的权威查表入口。crate依赖方向——先看 crate 归属再读模块。ratchet 预算——动旧大文件前核对上限合同。SHA 钉版——40 位 SHA 加 Kuddev fork 即为钉版基线。命名双轨——引用代码用 nebula 名，讲产品用 Pebrel 名。每走进一个子系统，第一动作都是回到这张地图找到它的一行。（第 16 章会把 ratchet 预算与 SHA 钉版放回全部十五个子系统对账。）
+本章交出五块积木，全书反复调用。所有权地图——判落点的权威查表入口。crate 依赖方向——先看 crate 归属再读模块。ratchet 预算——动旧大文件前核对上限合同。SHA 钉版——40 位 SHA 加 Kuddev fork 即为钉版基线。命名双轨——引用代码用 nebula 名，讲产品用 Pebrel 名。每走进一个子系统，第一动作都是回到这张地图找到它的一行。（第 16 章会把 ratchet 预算与 SHA 钉版放回全部十五个子系统对账。）
 
 ### 自查：换一个情境再判一遍
 

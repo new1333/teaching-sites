@@ -285,7 +285,7 @@ pub(crate) fn pixels_per_point(scale_factor: f32) -> f32 {
 
 ## 验证：先猜，再跑
 
-第一步，探针先猜后跑。到 companion 目录运行 `node scripts/probe-13-native-math.mjs`。跑之前把四个离散预测写在纸上：数学模块的文件数；三个常量 MIN_READABLE_MATH_PX、OPTICAL_SCALE、MIN_SCRIPT_SCALE 的值；`pixel_size * super::OPTICAL_SCALE` 乘法的处数；全部检查的条数。跑完对照——应为 10 份文件、6.0 / 1.21 / 0.8、恰好 2 处、23 条全绿；summary 行还会把阶段清单与缓存事实串打出来。预测落空，回「管线不认识窗口」与「光学缩放」两节找原因。
+第一步，探针先猜后跑。到 companion 目录运行 `node scripts/probe-13-native-math.mjs`。跑之前把四个离散预测写在纸上：mod.rs 声明的模块数（目录里会多出一个 mod.rs 本体，别数进去）；三个常量 MIN_READABLE_MATH_PX、OPTICAL_SCALE、MIN_SCRIPT_SCALE 的值；`pixel_size * super::OPTICAL_SCALE` 乘法的处数；全部检查的条数。跑完对照——应为 10 个声明模块、6.0 / 1.21 / 0.8、恰好 2 处、23 条全绿；summary 行还会把阶段清单与缓存事实串打出来。预测落空，回「管线不认识窗口」与「光学缩放」两节找原因。
 
 第二步，纸面演算。名义字号 20px 下：(a) 补偿前的 x-height 是多少像素？(b) 补偿后呢？(c) 分式分子在 MATH 表原生 70% 下多大，抬到下限后多大？先写数，再展开锁定测试核对。
 

@@ -15,7 +15,7 @@ title: 第 8 章 钩子桥进程：AI CLI 事件的隐形搬运工
 
 在 Pebrel 的一个 pane 里启动 Claude Code，让它修一个 bug。它干活时 pane 的状态标记是「工作中」；它停下来等你审阅，标记变成「等待输入」；回合结束时你不在，宿主还能给出一条完成通知。可 Claude Code 从头到尾只往自己的 stdout 打字——它没有到终端的任何直连线路。
 
-信息走的是一条暗道。Claude Code 这类 CLI 提供钩子机制：在回合事件发生时，比如你提交提示、工具调用结束、回合停止，执行一个外部程序。Pebrel 装进去的那个程序叫 pebrel-hook，一个 493 行、零第三方依赖的小进程。它不画界面、不读键盘，每次唤起主要做三件事：从 stdin 或末位参数接过原始载荷；按一个环境变量里写的地址，把载荷写进一条命名管道；然后以退出码 0 退出。
+信息走的是一条暗道。Claude Code 这类 CLI 提供钩子机制：在回合事件发生时，比如你提交提示、工具调用结束、回合停止，执行一个外部程序。Pebrel 装进去的那个程序叫 pebrel-hook，一个 492 行、零第三方依赖的小进程。它不画界面、不读键盘，每次唤起主要做三件事：从 stdin 或末位参数接过原始载荷；按一个环境变量里写的地址，把载荷写进一条命名管道；然后以退出码 0 退出。
 
 这就是本章的主角：命名管道桥——被 CLI 钩子反复唤起的小进程，经一条按名字寻址的命名管道，把原始载荷转交给常驻宿主的接收端。整条桥由两部分组成：nebula_hook crate（搬运工本体）与 nebula_app/src/ai_hook（宿主侧的接收、解析与安装）。
 
@@ -337,7 +337,7 @@ fn chain_notifier(args: &[String]) {
 以下操作都在课程的锁定 clone（.course/repo @ 360613aa）上做，全程只读；定向破坏那一步除外，破坏后复原。
 
 1. 先猜再打开 nebula_hook/Cargo.toml：写下你预测的依赖表数量，再打开数一数。预期是 0；探针的实测口径是「section 只有 package, bin」。
-2. 核对导入面：`grep -n "use " nebula_hook/src/main.rs`。预期 4 条，全部以 std:: 或 super:: 开头。
+2. 核对导入面：`grep -n "^use " nebula_hook/src/main.rs`。预期 4 条，全部以 std:: 或 super:: 开头。
 3. 走读退出链：打开 main.rs 的 169-197 行，按顺序找到 catch_unwind（:181）、recv_timeout（:186）与 chain_notifier（:190）。给三处各写一句话：它守的是哪条约束的哪个失效模式。
 4. 跑本章探针，在 companion 目录执行 `node scripts/probe-08-ai-hook-bridge.mjs`。预期 19 项全 ok：
 

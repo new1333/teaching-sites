@@ -45,7 +45,7 @@ grep -rn "pub fn set_layout" --include="*.rs" nebula_app nebula_terminal
 # 唯一命中：nebula_app/src/gpui_shell/terminal/view/layout.rs
 ```
 
-顺带两个防混提示：`nebula_app/src/display/terminal_math.rs` 里那个 `set_layout_resolver` 是上一代 winit 壳的遗迹，与本章无关；`workspace.rs` 本身挂在 ratchet预算名单上（`architecture/file-budgets.txt` 给的上限是 4798 行），改它之前先核对预算合同（[第 1 章](./01-repo-map.md)）。
+顺带两个防混提示：`nebula_app/src/display/terminal_math.rs` 里那个 `set_layout_resolver` 属公式覆盖层管线（[第 13 章](./13-native-math.md)），与本章的 `set_layout` 无关；`workspace.rs` 本身挂在 ratchet 预算名单上（`architecture/file-budgets.txt` 给的上限是 4798 行），改它之前先核对预算合同（[第 1 章](./01-repo-map.md)）。
 
 ## Entity：壳的细胞
 
@@ -593,7 +593,7 @@ impl Drop for TerminalView {
 
 `shutdown` 体内只发一条 `Msg::Shutdown`——清理的执行者还是事件循环自己，宿主只递辞呈。幂等是关键设计：重复调用只会得到一次发送失败，被 `let _ =` 吞掉。于是「显式调用 + Drop 兜底」两道保险可以重叠而不打架。
 
-显式调用的分布值得数一遍：workspace.rs 里 `.shutdown();` 恰好 8 处。close_pane 的 Collapsed 分支 1 处、finish_close_tab 的循环 1 处；pane 替换路径 3 处、split 挂树失败的防御 2 处（实测数字见验证槽）。8 处里只有 2 处是「用户要求的关闭」，其余 6 处全是防御：替换失败、挂树失败这类「实体已经出生、但没能上岗」的路径，必须当场回收，否则就是孤儿 PTY。detach 的活体搬迁则反向印证——那条路绝不能调 shutdown，调了就把还活着的会话杀了。
+显式调用的分布值得数一遍：workspace.rs 里 `.shutdown();` 恰好 8 处。close_pane 的 Collapsed 分支 1 处、finish_close_tab 的循环 1 处；pane 替换路径 4 处——3 处是替换失败的防御，另 1 处是替换成功后回收被换下的旧 pane；split 挂树失败的防御 2 处（实测数字见验证槽）。8 处里只有 2 处是「用户要求的关闭」，其余 6 处＝防御 5 处＋常规替换回收 1 处：替换失败、挂树失败这类「实体已经出生、但没能上岗」的路径，必须当场回收，否则就是孤儿 PTY。detach 的活体搬迁则反向印证——那条路绝不能调 shutdown，调了就把还活着的会话杀了。
 
 **显式 shutdown 管业务语义上的结束，Drop 管物理上的最后兜底**。评审资源泄漏类改动时，检查清单就三问：每条「实体出生」路径是否都有对应的显式回收？防御路径失败时是否回收？Drop 是否只做兜底而不承担唯一清理责任？
 
@@ -636,7 +636,7 @@ node scripts/probe-05-gpui-shell.mjs
 grep -c "\.shutdown();" nebula_app/src/gpui_shell/workspace.rs
 ```
 
-答案是 8。如果你猜的是 2——只数了关 pane 与关 tab 两条「正常路径」——就漏了 6 处防御性回收，而孤儿 PTY 恰恰从防御路径的缺口里漏出去。
+答案是 8。如果你猜的是 2——只数了关 pane 与关 tab 两条「正常路径」——就漏了 6 处非用户触发的回收（5 处防御＋1 处替换成功后回收旧 pane），而孤儿 PTY 恰恰从防御路径的缺口里漏出去。
 
 三、纸上手术（定向破坏）。不改 clone、不改探针，在纸面上完成：把 `close_pane` Collapsed 分支里的 `pane.view.read(cx).shutdown();`（workspace.rs 行 1539）这一行删掉。先写两个离散预测再往下读。
 

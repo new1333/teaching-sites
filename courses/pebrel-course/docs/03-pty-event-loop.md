@@ -264,7 +264,7 @@ pub struct FairMutex<T> {
                 },
 ```
 
-注释里的 "Go back to mio" 是上游遗留的陈旧注释：本仓库的轮询库是 `polling`，依赖里根本没有 mio。全仓库源码里独立的 `mio` 一词只出现在这一行注释里，它描述的库早已不在——读真实仓库时要带这份警惕：注释与代码一样会过期，且没人替你回收。顺带别和 `miow` 混淆：那是 Windows 命名管道库，ConPTY 建管道用的另一个 crate，与本行无关。
+注释里的 "Go back to mio" 是上游遗留的陈旧注释。本仓库的轮询库是 `polling`，nebula_terminal 的 Cargo.toml 与产品源码里没有 mio。把 grep 的范围划准再下结论：在 nebula_terminal/src 里，`mio` 的词级命中恰好这一行注释。范围扩到全仓库则会翻出别的——Cargo.lock 里经 notify/tokio 传递进来的 mio 1.0.4，还有 vendored winit 注释里的提及；那些不是这里的产品代码。注释与代码一样会过期，且没人替你回收；断言的边界要跟着证据的范围走。顺带别和 `miow` 混淆：那是 Windows 命名管道库，ConPTY 建管道用的另一个 crate，与本行无关。
 
 ### 字节落库之后：damage 账本如何被消费
 
@@ -548,9 +548,9 @@ node scripts/probe-03-pty-event-loop.mjs
 
 跑完对照：应为退出码 0、`PASS [pty-event-loop] 27/27 checks`，摘要含 `1048576B` 与 `ALIGN_DELAY=120ms`；`mio` 词级命中恰好 1 行——event_loop.rs 里那句 "Go back to mio" 陈旧注释；`.lease()` 调用点恰好 1 处——`event_loop.rs` 的 `pty_read`。第 3 问去掉 `-w` 会多出 miow（ConPTY 建管道的库）和 termios（Unix 终端属性）的行——一个词的孤立程度，用 grep 就能度量。
 
-定向破坏一次。在锁定 clone 的工作副本里打开 `nebula_terminal/src/sync.rs`，把 `lock()` 里的两行换序——先 `self.data.lock()` 后取 `next`。保存前先写预测：重跑探针，27 条里恰好哪几条红？
+定向破坏一次。在锁定 clone 的工作副本里打开 `nebula_terminal/src/event_loop.rs`，把 pty_read 里那行 `let _terminal_lease = Some(self.terminal.lease());` 整行注释掉。保存前先写预测：重跑探针，27 条里恰好哪几条红？
 
-我的预测：恰好 1 条红——「lock() 先拿 next 再拿 data」那条断言换了序就不再成立；而「lease() 只锁 next」那条仍然绿，因为它守的是排队位的语义，不依赖 `lock()` 内部的顺序。跑，核对。然后把两行改回，再跑一次确认回到 27/27——SHA 钉版的锁定 ref 是全书引用纪律的地基（第 1 章），你的 clone 必须复原，正文里逐字引用的每一行都以它为准。
+我的预测：恰好 2 条红。「pty_read 先 lease 保留锁位」那条断言找不到这行了；「全仓库 .lease() 调用点唯一」那条随之失效。而「lock() 先拿 next 再拿 data」那条仍然绿：它守的是 sync.rs 里 lock() 的到达序合同，与 lease() 调用点在不在无关。跑，核对。这 2 红也顺手标出了探针断言的边界：字符串在场检查守得住「合同写了什么、调用点在哪」，守不住「运行时是否真的走这条路」——那要靠编译器与上游测试。然后把那行还原，再跑一次确认回到 27/27——SHA 钉版的锁定 ref 是全书引用纪律的地基（第 1 章），你的 clone 必须复原，正文里逐字引用的每一行都以它为准。
 
 ## 收束：通道的秩序
 

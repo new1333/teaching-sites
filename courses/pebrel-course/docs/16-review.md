@@ -34,7 +34,7 @@ title: 第 16 章 从地图回到地图：全书能力对账
 | gpui-shell | [第 5 章](./05-gpui-shell.md) | pane 生命周期三件套加 prepaint 回写（网格跟手、子进程松手落定），再加显式 shutdown 与 Drop 双保险 | GPUI Entity、prepaint 回写、pane 生命周期、资源清理合同 | `companion/scripts/probe-05-gpui-shell.mjs`（28 条） |
 | ssh-session | [第 6 章](./06-ssh-session.md) | 同一套 Term 与渲染栈吃本地也吃远端：分叉在会话边界，一条 russh 连接多路复用，jump 路由解析成类型化计划，SshEventHost 是协议与宿主的接缝 | 传输层无关、russh 连接复用、jump 路由、SshEventHost | `companion/scripts/probe-06-ssh-session.mjs`（27 条） |
 | sftp-engine | [第 7 章](./07-sftp-engine.md) | 下载慢的第一因是单在途 READ 上限（吞吐封顶在分块除以 RTT）；多句柄分段把在途叠到 64 个，进度与取消走 trait 接缝 | 单在途 READ 上限、多句柄分段、进度/取消接缝 | `companion/scripts/probe-07-sftp-engine.mjs`（29 条） |
-| ai-hook-bridge | [第 8 章](./08-ai-hook-bridge.md) | 493 行 std-only 小进程做到隐形（panic 也退 0）、作用域化（环境变量哨兵）、有界（1 MiB 与 2 秒），信封经命名管道进宿主 | 命名管道桥、环境变量哨兵、隐形合同、有界转发 | `companion/scripts/probe-08-ai-hook-bridge.mjs`（19 条） |
+| ai-hook-bridge | [第 8 章](./08-ai-hook-bridge.md) | 492 行 std-only 小进程做到隐形（panic 也退 0）、作用域化（环境变量哨兵）、有界（1 MiB 与 2 秒），信封经命名管道进宿主 | 命名管道桥、环境变量哨兵、隐形合同、有界转发 | `companion/scripts/probe-08-ai-hook-bridge.mjs`（19 条） |
 | ai-lifecycle | [第 9 章](./09-ai-lifecycle.md) | 五层流水线 transport→payload→typed→ordering→lifecycle：方言锁死在解析层（六变体），GateVerdict 带原因裁决，能力档位表决定屏幕回退 | 类型化事件、门控排序、能力集分层 | `companion/scripts/probe-09-ai-lifecycle.mjs`（37 条） |
 | screen-evidence | [第 10 章](./10-screen-evidence.md) | 无钩子 CLI 靠看屏幕推断：底部至多 24 行取样、区域规则圈地、负向证据排除反例、优先级裁决，证据不足时返回 None 不伪造 | 屏幕证据、区域规则、负向证据、规则优先级 | `companion/scripts/probe-10-screen-evidence.mjs`（30 条） |
 | session-persistence | [第 11 章](./11-session-persistence.md) | 1Hz 快照跳过无变化帧、原子落盘；boot_attempts 三连败断路隔离现场；v4 schema 记整棵树，同格式兼作导出 | 快照节奏、恢复护栏、版本化 schema | `companion/scripts/probe-11-session-persistence.mjs`（24 条） |
@@ -51,7 +51,7 @@ title: 第 16 章 从地图回到地图：全书能力对账
 
 先对数。治理文档（architecture.md 与 project-constraints.md）写的是「采纳时十一个超标文件」；锁定 ref 上的 file-budgets.txt 实际剩 9 条 allowance，limit 2000。两个数字都真：采纳时 11 个，其中两条此后离开了名单，离开的方式预算表本身看不出来。引用时双口径并写，不替仓库圆成同一个数。
 
-再把 9 条放回特性地图。nebula_terminal/src/term/mod.rs（2713 行）是 vt-core 的心脏文件，第 2 章的网格状态机就住在这里。nebula_app/src/gpui_shell/workspace.rs（4798 行）是 gpui-shell 的正身，第 11 章的壳侧接线是它的子模块。其余 7 条属于旧渲染区与旧壳：display 区五件、event.rs、window_context.rs。第 1 章把 display 与 renderer 划为「不得再成为新功能的来源」；window_context 是第 9 章里与 GPUI 壳共用一扇门的另一个壳。
+再把 9 条放回特性地图。nebula_terminal/src/term/mod.rs（额度 2713 行，当前 2579 行）是 vt-core 的心脏文件，第 2 章的网格状态机就住在这里。nebula_app/src/gpui_shell/workspace.rs（额度 4798 行，当前 3346 行）是 gpui-shell 的正身，第 11 章的壳侧接线是它的子模块。其余 7 条属于旧渲染区与旧壳：display 区五件、event.rs、window_context.rs。第 1 章把 display 与 renderer 划为「不得再成为新功能的来源」；window_context 是第 9 章里与 GPUI 壳共用一扇门的另一个壳。
 
 对账的结论是方向性的。十五章讲的特性，没有一个靠往在册文件里堆行落地；模板是第 4 章——共享分屏规则从 window_context 巨石里抽成零依赖的 nebula_split，治理方向是搬出、不是膨胀。反过来说，凡是要动在册文件的改动，**预算合同先于代码评审**：普通 PR 不能新增或调高 allowance，文件缩小后旧额度作废，不许复用。探针守的是名单的形状（limit 与条数）；行数增量的执法在 PR 侧的 --base 检查，两层各管一段。
 
@@ -78,7 +78,7 @@ summary [repo-map] members(9)=nebula_app,nebula_terminal,nebula_config,nebula_co
 
 禁区。nebula_terminal 的右栏明写不得变成 GPUI 状态：终端核心是网格与 VT 处理，不该认识任何键位（[第 2 章](./02-vt-grid.md)）。nebula_split 也不收——它的 owns 是树、几何与导航规则，键位不在其中；往零依赖 crate 里塞输入语义，等于拆掉它可独立测试的前提（[第 4 章](./04-split-tree.md)）。
 
-影响面。最大的一处来自 ratchet 预算：命令接线的家 workspace.rs 在册，额度 4798 行、只减不增——新键位要么挤进预算，要么顺手把命令块搬出巨石文件。会话面没有波及。v4 快照记的是启动身份、整棵树与焦点下标；键位不是会话状态，正如 broadcast 开关只活在内存、绝不写进快照（[第 11 章](./11-session-persistence.md)）。
+影响面。最大的一处来自 ratchet 预算：命令接线的家 workspace.rs 在册，额度 4798 行、只减不增——新键位要么挤进预算，要么顺手把命令块搬出巨石文件。会话面没有波及。v4 快照记的是启动身份、整棵树与焦点下标；键位不是会话状态，正如 broadcast 开关只活在内存（v4 快照结构见[第 11 章](./11-session-persistence.md)）、绝不写进快照（[第 5 章](./05-gpui-shell.md)）。
 
 判据：改完跑 `node scripts/probe-05-gpui-shell.mjs`，28 条不该有红的——键位不碰三件套、回写与清理链；预算面的增量交给 PR 侧检查，探针只守名单形状。
 
@@ -110,7 +110,7 @@ summary [repo-map] members(9)=nebula_app,nebula_terminal,nebula_config,nebula_co
 
 四步，每步先落笔再动手。
 
-第一步，先猜后跑。在 companion 目录执行 `node scripts/run-all.mjs` 之前，写下三个离散值：探针通过数（整数）、合计断言数（整数）、probe-01 summary 行里 budgets 段的 allowance 条数（整数）。答案：15/15、398、9。任何一项对不上，说明锁定 clone 与课程版本脱节，先解决再往下。
+第一步，先猜后跑。在 companion 目录执行 `node scripts/run-all.mjs` 之前，写下三个离散值：探针通过数（整数）、合计断言数（整数）、probe-01 summary 行里 budgets 段的 allowance 条数（整数）。答案：15/15、398、9——合计数由各探针 PASS 行的分数自行累加，runner 不单列总数行。任何一项对不上，说明锁定 clone 与课程版本脱节，先解决再往下。
 
 第二步，抽行复述。从对账表挑两行：自选一行，再加第 7 行（SFTP）。合上书，各讲一遍机制故事。判据不是背诵原文，是三个追问能答上：下载慢的第一因是什么？上传方向为什么不需要多句柄？进度条为什么不在引擎里？讲不出的那行，就是你与「会改这个模块」之间的距离。
 

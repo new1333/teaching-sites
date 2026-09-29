@@ -82,23 +82,23 @@ pub enum SplitTree<T> {
 
 **切割次序合同**——可用长度先扣掉分隔条，第一段按比例 floor 取整，再双向钳到"至少一个单元格"宽，第二段拿走全部余数。次序写死在表达式里，不是建议。
 
-为什么以"格"为单位？pane 里住着一张由 VT 转义序列一行行改写的网格与单元格（第 2 章）——宽度切成 7.3 格没有意义，切割必须落在整格上；受压的一侧也至少要留一格，否则连一个字符都放不下。合同原文写在 layout 的 doc 注释里，执行就在紧随其后的三行：
+为什么以"格"为单位？pane 里住着一张由 VT 转义序列一行行改写的网格与单元格（第 2 章）——宽度切成 7.3 格没有意义，切割必须落在整格上；受压的一侧也至少要留一格，否则连一个字符都放不下。合同原文写在 layout 的 doc 注释里，执行在 collect_rects 的 LeftRight 分支——与注释隔着一个函数，下面第二个块是节选：
 
 ```rust
-// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs
+// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs（已统一去缩进）
 /// 切割数学与旧壳逐字一致：可用长度 = 总长 - 分隔条，第一段先 floor
 /// 再双向钳制到"至少一个单元格"，第二段吃掉余数。
 ```
 
 ```rust
-// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs
+// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs（已统一去缩进）
 let usable = (vp.w - divider).max(cell_w);
 let first_w =
     (usable * r).floor().max(cell_w).min((usable - cell_w).max(cell_w));
 let second_w = (usable - first_w).max(cell_w);
 ```
 
-用仓库自己的测试数字走一遍。viewport 宽 803、分隔条厚 3：usable = 800。比例 0.5 时，first = floor(800 × 0.5) = 400，second = 800 − 400 = 400；分隔条落在 500..503，右侧 pane 从 503 起、宽 400。lib.rs 的测试 layout_splits_left_right_with_floor_and_divider 断言的就是这组数。极端情形换 viewport 宽 103、格宽 10，usable = 100。比例 0.001 时 floor(0.1) = 0，钳制把 0 顶到 10，second 吃下 90。测试 layout_clamps_each_side_to_a_cell 断言受压侧恰为 10.0。
+用仓库自己的测试数字走一遍。viewport 宽 803、分隔条厚 3：usable = 800。比例 0.5 时，first = floor(800 × 0.5) = 400，second = 800 − 400 = 400；分隔条落在 500..503、右侧 pane 从 503 起宽 400（测试矩形自 x=100 起，绝对坐标才是 500..503；相对 usable 的偏移是 400..403）。lib.rs 的测试 layout_splits_left_right_with_floor_and_divider 断言的就是这组数。极端情形换 viewport 宽 103、格宽 10，usable = 100。比例 0.001 时 floor(0.1) = 0，钳制把 0 顶到 10，second 吃下 90。测试 layout_clamps_each_side_to_a_cell 断言受压侧恰为 10.0。
 
 "先取整还是先钳制，无所谓吧。"这个直觉在多数输入下确实无害，整数世界里两种次序常常给同一个答案，它有合理的来路。恰好骗人的是边界：漏掉钳制一步，比例 0.001 会切出 0 宽的第一段，pane 直接消失。两段各自独立取整（而不是余数归第二段），usable = 100、比例 0.545 会得到 55 加 46，和变成 101——多出的 1 像素让两侧重叠，分隔条失去落点。合同把三条性质分给三步看守：钳制守"两侧各至少一格"，余数结构守"两侧之和恒等于 usable"，floor 守"第一段不超额"。破坏其中一步，恰好死对应的那条，其余还活着——验证槽里会亲手拆一次。
 
@@ -173,7 +173,7 @@ pub enum RemoveOutcome<T> {
 ```
 
 ```rust
-// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs
+// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs（已统一去缩进）
 /// 摘除 `target` 叶子并塌缩其父节点，兄弟子树接管腾出的空间。
 pub fn remove_leaf(&mut self, target: T) -> RemoveOutcome<T> {
     if let SplitTree::Leaf(id) = self {
@@ -211,7 +211,7 @@ pub fn remove_leaf(&mut self, target: T) -> RemoveOutcome<T> {
 <details><summary>lib.rs 的摘叶往返测试（逐字）</summary>
 
 ```rust
-// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs
+// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/lib.rs（已统一去缩进）
 #[test]
 fn split_and_remove_roundtrip() {
     let mut tree = SplitTree::leaf(1u32);
@@ -238,7 +238,7 @@ fn split_and_remove_roundtrip() {
 失败路径也在守同一条不变式。dock.rs 处理"把一棵现成的树拖到某个 pane 旁边"这件事。
 
 ```rust
-// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/dock.rs
+// Kuddev/pebrel@360613aa6eedfa4e441d658d98db502e8a81442b:nebula_split/src/dock.rs（已统一去缩进）
 /// Return the source unchanged if the destination disappeared during the gesture.
 pub fn dock_at_leaf(&mut self, target: T, source: Self, side: SplitNav) -> Result<(), Self> {
     match self {

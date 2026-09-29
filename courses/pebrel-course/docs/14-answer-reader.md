@@ -206,7 +206,7 @@ pub(crate) struct TextSnapshot {
 }
 ```
 
-头注释一句话说完立场：与渲染器无关、本地与 SFTP 共享。8 MiB 上限之外，decode 的收尾一行把 truncated 与 invalid_encoding 一并折进 read_only，写法是 `read_only: read_only || truncated || invalid_encoding`。超限或含二进制字节的快照永远不可编辑。防的是半份文件被当成完整文件改了再存。全仓库 `use crate::text_document` 恰好四处。本地侧是 file_editor/document.rs 与 file_editor/source.rs。远端侧是 ssh_sftp/document.rs 与 ssh_sftp/transaction.rs。一份模型，两条后端路径——这是本章的第二个复用结构，判定方法与公式管线完全同构，下一节给方法。文档 tab 的入口路由是三条只读查看器的前缀判断，即 image_viewer、markdown_view、code_tab 各自的 `viewable_file`。视图类型 DocTabView 则是 file_editor 里 TextFileView 的重导出，同一形态两个名字。
+头注释一句话说完立场：与渲染器无关、本地与 SFTP 共享。8 MiB 上限之外，decode 的收尾一行把 truncated 与 invalid_encoding 一并折进 read_only，写法是 `read_only: read_only || truncated || invalid_encoding`。超限或含二进制字节的快照永远不可编辑。防的是半份文件被当成完整文件改了再存。全仓库 `use crate::text_document` 恰好四个文件（grep 按行数是 5 行，file_editor/document.rs 占 2 行）。本地侧是 file_editor/document.rs 与 file_editor/source.rs。远端侧是 ssh_sftp/document.rs 与 ssh_sftp/transaction.rs。一份模型，两条后端路径——这是本章的第二个复用结构，判定方法与公式管线完全同构，下一节给方法。文档 tab 的入口路由是三条只读查看器的前缀判断，即 image_viewer、markdown_view、code_tab 各自的 `viewable_file`。视图类型 DocTabView 则是 file_editor 里 TextFileView 的重导出，同一形态两个名字。
 
 ### 一条编译入口，两个调用方，零份拷贝
 

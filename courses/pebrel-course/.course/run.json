@@ -1,17 +1,17 @@
 {
   "schema_version": 2,
   "skill": "vitepress-teaching-site",
-  "status": "generating",
-  "phase": "chapters",
+  "status": "reviewing",
+  "phase": "book-review",
   "language": "zh",
   "outline_revision": 1,
-  "next_chapter": 1,
-  "completed_chapters": [],
+  "next_chapter": null,
+  "completed_chapters": ["repo-map", "vt-grid", "pty-event-loop", "split-tree", "gpui-shell", "ssh-session", "sftp-engine", "ai-hook-bridge", "ai-lifecycle", "screen-evidence", "session-persistence", "lua-config", "native-math", "answer-reader", "completion-engine", "review"],
   "degraded_chapters": [],
   "blocked_chapters": [],
   "skipped_interactions": ["calibration", "outline-confirmation"],
   "last_commit": {
-    "kind": "phase",
-    "id": "planning-complete"
+    "kind": "chapter",
+    "id": "all-16-chapters-reviewed"
   }
 }

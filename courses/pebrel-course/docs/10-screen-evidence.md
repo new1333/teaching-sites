@@ -243,7 +243,7 @@ region = "bottom_non_empty_lines(6)"
 contains = ["esc to cancel"]
 ```
 
-两根柱子：blocked 与 working。没有 idle 规则，一个 not 都没有。提示符特征不足以下断言时，正确动作是不写规则——detect 不命中时返回 None。注释原话：callers retain their higher-confidence hook/process state rather than fabricating idle。调用方保留更高置信度的钩子或进程状态，绝不凭屏幕伪造空闲。这份克制有家学：钩子桥那边对 CLI 隐形（失败绝不打扰用户的任务，隐形合同）、转发有界（载荷 1 MB 上限、2 秒超时的有界转发）；屏幕这边的同款克制，就是宁可 None。
+两根柱子：blocked 与 working。没有 idle 规则，一个 not 都没有。提示符特征不足以下断言时，正确动作是不写规则——detect 不命中时返回 None。注释原话：callers retain their higher-confidence hook/process state rather than fabricating idle。调用方保留更高置信度的钩子或进程状态，绝不凭屏幕伪造空闲。这份克制有家学：钩子桥那边对 CLI 隐形（失败绝不打扰用户的任务，隐形合同）、转发有界（载荷 1 MiB 上限、2 秒超时的有界转发）；屏幕这边的同款克制，就是宁可 None。
 
 ## 规则优先级：命中之后谁说了算
 

@@ -389,7 +389,7 @@ PASS  [lua-config] 29/29 checks
 
 ### 变体：给暴露面点名
 
-`grep -n "module.set(" .course/repo/nebula_app/src/config/lua/runtime.rs`。预期字面键 11 处；把 log_error、log_warn、log_info 三个函数名算上，暴露面共 14 个入口。再用 `grep -inE "net|http|fetch|socket|request|download|url"` 过滤这 14 个名字，预期 0 命中。哪天这里冒出一个 fetch 类入口，两个数字会同时变——暴露面清点是沙界最便宜的巡检，不需要读懂任何一个入口的实现。
+`grep -n "module.set(" .course/repo/nebula_app/src/config/lua/runtime.rs`。预期字面键 11 处（grep 会打出 12 行——第 12 行是 runtime.rs:133 循环里注册三个 log 函数的那一处，不算字面键）；把 log_error、log_warn、log_info 三个函数名算上，暴露面共 14 个入口。再用 `grep -inE "net|http|fetch|socket|request|download|url"` 过滤这 14 个名字，预期 0 命中。哪天这里冒出一个 fetch 类入口，两个数字会同时变——暴露面清点是沙界最便宜的巡检，不需要读懂任何一个入口的实现。
 
 三项验证各对一条结论：边界可清点——暴露面是数得出来的；收集是全量——错误清单的长短可以精确预言；引用有刚性——正文与源码的一致性由机器看守。
 
