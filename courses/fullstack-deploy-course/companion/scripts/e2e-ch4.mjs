@@ -173,7 +173,6 @@ try {
   if (!failed) console.log(`[e2e:ch4] 全部断言通过 (${passed}/${passed})`)
 } catch (err) {
   markFailed(err)
-  failed = true
   if (child && child.exitCode === null && child.signalCode === null) {
     killChild()
     await new Promise((resolve) => child.on('exit', resolve))

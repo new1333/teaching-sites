@@ -193,7 +193,6 @@ try {
   if (!failed) console.log(`[e2e:ch3] 全部断言通过 (${passed}/${passed})`)
 } catch (err) {
   markFailed(err)
-  failed = true
   // 抛出点可能在幕一/幕二的 finally 之前：确保当前子进程被收尾
   if (child && child.exitCode === null && child.signalCode === null) {
     killChild()

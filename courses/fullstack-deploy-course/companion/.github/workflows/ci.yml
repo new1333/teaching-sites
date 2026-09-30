@@ -1,0 +1,70 @@
+# companion/.github/workflows/ci.yml · push/PR 触发的检查流水线
+# 纪律：步骤命令与本地同源——检查链只引用 package.json scripts（lint/typecheck/test/build），
+# 唯一的内联命令是锁定版本的依赖安装；结构由 scripts/validate-workflow.mjs 断言（pnpm validate:ci）。
+# runner 上的端口选择与本地不同：干净的 CI 机器没有 5432 占用问题，直接用标准端口映射。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 同一分支来了新提交就取消还在排队的旧运行：省额度，也让红绿记录始终对应最新提交
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # 流水线的保险丝：挂死的步骤最多烧 15 分钟，而不是烧完仓库的默认时限
+    timeout-minutes: 15
+    # 集成测试需要的 PostgreSQL：与 compose.db.yaml 同款镜像、同套引导三变量
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ship_log
+          POSTGRES_PASSWORD: ship_log
+          POSTGRES_DB: ship_log
+        # 宿主(runner)侧 5432 → 容器侧 5432；映射过的服务容器在 localhost 可达
+        ports:
+          - 5432:5432
+        # job 会等健康探针转绿才开始跑步骤——本地 up --wait 等的是同一件事
+        options: >-
+          --health-cmd "pg_isready -U ship_log -d ship_log"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # pnpm 必须先于 setup-node 就位：cache: pnpm 要靠它查存储路径
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 安装依赖（锁定版本）
+        run: pnpm install --frozen-lockfile
+
+      - name: lint
+        run: pnpm lint
+
+      - name: typecheck
+        run: pnpm typecheck
+
+      - name: test（连服务容器）
+        run: pnpm test
+        env:
+          # 只在本地跑过的检查链之外，CI 多出的唯一一块运行期事实：
+          # NUXT_DB_URL 指向服务容器（与第 12 条断言对账的参数源）
+          NUXT_DB_URL: postgres://ship_log:ship_log@localhost:5432/ship_log
+
+      - name: build
+        run: pnpm build

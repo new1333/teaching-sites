@@ -22,7 +22,9 @@
     "drill:backup-restore": "node scripts/drill-backup-restore.mjs",
     "compose:sim": "node scripts/compose-sim.mjs",
     "gen:cert": "node scripts/gen-cert.mjs",
-    "sim:prod": "node scripts/sim-prod.mjs"
+    "sim:prod": "node scripts/sim-prod.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "validate:ci": "node scripts/validate-workflow.mjs"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
@@ -33,11 +35,15 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@golar/vue": "0.1.10",
     "@types/node": "^22.20.1",
     "drizzle-kit": "^0.31.10",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
     "golar": "0.1.10",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "yaml": "^2.9.0"
   }
 }

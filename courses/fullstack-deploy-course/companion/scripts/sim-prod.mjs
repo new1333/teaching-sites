@@ -23,8 +23,6 @@ const PROJECT = 'shiplog-prod'
 const HTTP_PORT = 4181
 const HTTPS_PORT = 8443
 const BASE = `https://127.0.0.1:${HTTPS_PORT}`
-const API = `${BASE}/api/deploys`
-const HEALTH = `${BASE}/api/health`
 // 幕一写入、崩溃重启后必须还能读到的记录（7 位十六进制，通过 POST 校验）
 const SURVIVOR_COMMIT = '502feed'
 
