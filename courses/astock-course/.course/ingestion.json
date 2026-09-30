@@ -1,0 +1,143 @@
+{
+  "schema_version": 2,
+  "kind": "topic",
+  "label": "A股投资从小白到专家",
+  "description": "零基础普通人进入A股市场所需的完整能力线：从钱与市场的基本原理，到交易规则与行情工具，到公司分析与估值，到风险与仓位管理，最终收敛为一套可执行的个人投资体系。主题输入，无外部仓库。",
+  "features": [
+    {
+      "id": "time-value",
+      "name": "货币时间价值与复利",
+      "summary": "一笔钱随时间增值与贬值的算术：终值、通胀、实际购买力。",
+      "reader_can": "算出任意本金/收益率/年限下的终值与实际购买力，判断一个收益率能否跑赢通胀"
+    },
+    {
+      "id": "stock-nature",
+      "name": "股票的本质与收益来源",
+      "summary": "股票=公司所有权凭证；长期回报来自企业盈利，短期波动来自情绪与估值。",
+      "reader_can": "用股东视角说清股票收益的两个来源，并解释为什么把股票当筹码追涨杀跌长期必输"
+    },
+    {
+      "id": "market-rules",
+      "name": "A股交易规则与成本",
+      "summary": "交易时间、集合竞价、T+1、涨跌停板、佣金/印花税/过户费。",
+      "reader_can": "算出一笔A股买卖的完整成本与涨跌停价格，判定任意下单时点的归属交易日与可卖出时点"
+    },
+    {
+      "id": "k-line",
+      "name": "K线与成交量",
+      "summary": "一根K线编码当日多空战争的全过程：四价二线与量能配合。",
+      "reader_can": "读出任意K线的开高低收与影线含义，结合成交量判断当日多空力量"
+    },
+    {
+      "id": "trend-ma",
+      "name": "均线与趋势及技术分析的边界",
+      "summary": "均线是过去N天的平均成本；趋势可识别但不可精确预测；金叉策略扣费后往往跑不赢持有。",
+      "reader_can": "用均线判断趋势状态，说出技术分析的适用边界与失效场景"
+    },
+    {
+      "id": "financial-statements",
+      "name": "财报三张表与体检指标",
+      "summary": "资产负债表、利润表、现金流量表；利润是观点，现金是事实。",
+      "reader_can": "从简化三张表算出毛利率、净利率、经营现金流/净利润比，识别利润与现金的背离危险信号"
+    },
+    {
+      "id": "valuation-multiples",
+      "name": "估值倍数：PE/PB/股息率",
+      "summary": "用倍数给公司称重：回本年限直觉 + 无风险利率锚。",
+      "reader_can": "算任意公司的PE/PB/股息率，用存款/国债利率作锚判断当前价格贵不贵"
+    },
+    {
+      "id": "margin-of-safety",
+      "name": "内在价值、安全边际与能力圈",
+      "summary": "好公司≠好股票：价格与价值的关系，为犯错留出余量，只在圈内出手。",
+      "reader_can": "用价值-价格-安全边际三要素判断一笔投资该不该出手，并用能力圈清单划定不碰领域"
+    },
+    {
+      "id": "risk-math",
+      "name": "风险的数学：波动、回撤与盈亏不对称",
+      "summary": "亏损的百分比是不对称的：亏50%要涨100%才回本；回撤可度量可预算。",
+      "reader_can": "算一笔持仓的最大回撤与回本所需涨幅，量化自己能承受的风险"
+    },
+    {
+      "id": "diversification",
+      "name": "分散化与资产配置",
+      "summary": "低相关资产组合能在不降低预期收益的情况下降低波动；再平衡机械执行低买高卖。",
+      "reader_can": "用相关性解释分散为何降风险，给出股债基础配置并执行一次再平衡计算"
+    },
+    {
+      "id": "position-sizing",
+      "name": "仓位管理与定投",
+      "summary": "先决定最大可承受亏损，再反推仓位上限；定投把择时难题拆成纪律。",
+      "reader_can": "按最大可承受亏损反推单一持仓与总仓位上限，制定并核算一份定投计划"
+    },
+    {
+      "id": "behavior-traps",
+      "name": "行为陷阱与防御规则",
+      "summary": "损失厌恶、处置效应、锚定、从众：亏钱的根源常是行为而非信息；防御靠规则不靠意志力。",
+      "reader_can": "识别四种行为陷阱在自己交易中的表现，并给每种陷阱配一条机械防御规则"
+    },
+    {
+      "id": "index-etf",
+      "name": "指数基金与ETF",
+      "summary": "指数=一篮子公司的规则化组合；低费率长期复利的威力；普通人的核心持仓工具。",
+      "reader_can": "算出费率的十年差与一份定投计划收益，用宽基指数搭建核心持仓"
+    },
+    {
+      "id": "stock-checklist",
+      "name": "个股研究七步清单",
+      "summary": "把全书积木组装成一条可复用的研究流程：生意→护城河→财报→估值→风险→仓位→决策，每步有出口。",
+      "reader_can": "独立走完七步清单，对一家真实上市公司产出可检查的买/不买结论"
+    },
+    {
+      "id": "your-system",
+      "name": "个人投资体系（一页纸计划书）",
+      "summary": "把全部能力对账收口为一份个人投资计划书：目标、配置、买入规则、卖出规则、风控红线、复盘节奏。",
+      "reader_can": "写出并通过同伴可检查判定的一页纸投资计划书"
+    },
+    {
+      "id": "expert-roadmap",
+      "name": "进阶地图与能力自评",
+      "summary": "从入门到专家的路径：行业分析、财报深研、估值进阶、工具化；用积木清单定位自己的缺口。",
+      "reader_can": "定位自己当前能力位置，选定一条12个月进阶路径"
+    }
+  ],
+  "capabilities": {
+    "edges": [
+      { "from": "time-value", "to": "stock-nature" },
+      { "from": "stock-nature", "to": "financial-statements" },
+      { "from": "time-value", "to": "valuation-multiples" },
+      { "from": "financial-statements", "to": "valuation-multiples" },
+      { "from": "valuation-multiples", "to": "margin-of-safety" },
+      { "from": "time-value", "to": "risk-math" },
+      { "from": "stock-nature", "to": "risk-math" },
+      { "from": "risk-math", "to": "diversification" },
+      { "from": "risk-math", "to": "position-sizing" },
+      { "from": "market-rules", "to": "position-sizing" },
+      { "from": "risk-math", "to": "behavior-traps" },
+      { "from": "valuation-multiples", "to": "index-etf" },
+      { "from": "diversification", "to": "index-etf" },
+      { "from": "position-sizing", "to": "index-etf" },
+      { "from": "margin-of-safety", "to": "stock-checklist" },
+      { "from": "trend-ma", "to": "stock-checklist" },
+      { "from": "position-sizing", "to": "stock-checklist" },
+      { "from": "behavior-traps", "to": "stock-checklist" },
+      { "from": "index-etf", "to": "your-system" },
+      { "from": "stock-checklist", "to": "your-system" },
+      { "from": "your-system", "to": "expert-roadmap" },
+      { "from": "market-rules", "to": "k-line" },
+      { "from": "k-line", "to": "trend-ma" }
+    ]
+  },
+  "profile_hint": {
+    "archetype": "knowledge-path",
+    "verification": "mixed",
+    "source_policy": "zero-trace",
+    "reason": "终点是独立演算与判断（算成本、读K线、估价值、控仓位），非编程实现；验证混合：演算类走 worksheet，可视化承重章走 canvas-app，公开信息实操走 observation，原理/复盘章走 none。零编程读者，代码密度 minimal。"
+  },
+  "issues": [
+    "金融受监管领域：全程需合规声明（不构成投资建议），compliance 义务挂首页、速查表与收尾章",
+    "费率、税率、交易规则属时效性事实：timeliness 义务挂 about 与事实首现章，全部数字需 as_of 与权威来源",
+    "行情与历史数据无法实时获取：教学图表一律用 companion 固定种子合成的示意数据并明确标注，不伪造真实行情",
+    "真实开户涉及实名与银行三方存管：observation 任务限定在免登录可完成的公开信息动作"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "skill": "vitepress-teaching-site",
+  "status": "complete",
+  "phase": "delivery",
+  "language": "zh",
+  "outline_revision": 0,
+  "next_chapter": null,
+  "completed_chapters": [
+    "time-value",
+    "stock-nature",
+    "market-rules",
+    "k-line",
+    "trend-ma",
+    "financial-statements",
+    "valuation-multiples",
+    "margin-of-safety",
+    "risk-math",
+    "diversification",
+    "position-sizing",
+    "behavior-traps",
+    "index-etf",
+    "stock-checklist",
+    "your-system",
+    "expert-roadmap"
+  ],
+  "degraded_chapters": [],
+  "blocked_chapters": [],
+  "skipped_interactions": [
+    "calibration",
+    "outline-confirmation"
+  ],
+  "last_commit": {
+    "kind": "assembly",
+    "id": "astock-course"
+  }
+}

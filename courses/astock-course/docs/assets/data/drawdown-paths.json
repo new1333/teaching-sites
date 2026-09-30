@@ -1,0 +1,238 @@
+{
+  "labeling": "教学示意·课程自产合成数据：三条净值路径与回本涨幅对照曲线为固定种子合成的教学剧情，与任何真实账户、真实市场无关；不构成任何投资建议",
+  "meta": {
+    "seed": 42,
+    "generator": "companion/src/datasets/ch09-risk.ts · makePath（剧本基值 + mulberry32 种子噪声）+ finance.maxDrawdown / recoveryGain / annualizedVolatility",
+    "start_value": 1,
+    "months": [
+      "M0",
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "M5",
+      "M6",
+      "M7",
+      "M8",
+      "M9",
+      "M10",
+      "M11",
+      "M12",
+      "M13",
+      "M14",
+      "M15",
+      "M16",
+      "M17",
+      "M18",
+      "M19",
+      "M20",
+      "M21",
+      "M22",
+      "M23",
+      "M24"
+    ],
+    "vol_note": "年化波动率按月收益率标准差 ×√12 的课程简化口径计算（母体标准差、24 个月样本）；未采用日频 ×√252 等实务口径——差异登记附录「简化与差异清单」"
+  },
+  "paths": [
+    {
+      "id": "shallow",
+      "name": "甲·浅回撤",
+      "story": "稳步上行八个多月，一次两位数回调，此后一年修复并创新高",
+      "values": [
+        1,
+        1.0162,
+        1.0354,
+        1.0485,
+        1.0647,
+        1.0837,
+        1.1107,
+        1.1317,
+        1.1462,
+        1.0858,
+        1.0064,
+        0.9584,
+        0.9766,
+        0.9971,
+        1.0136,
+        1.0333,
+        1.0531,
+        1.0707,
+        1.0806,
+        1.1073,
+        1.12,
+        1.1322,
+        1.1466,
+        1.166,
+        1.1851
+      ],
+      "volatility_annual_pct": 8.75,
+      "max_drawdown": {
+        "peak_index": 8,
+        "trough_index": 11,
+        "peak_month": "M8",
+        "trough_month": "M11",
+        "peak_value": 1.1462,
+        "trough_value": 0.9584,
+        "drawdown_pct": 16.38,
+        "recovery_gain_pct": 19.6
+      }
+    },
+    {
+      "id": "halved",
+      "name": "乙·深腰斩",
+      "story": "半年冲高，七个月连跌去了一半多，此后连涨一年仍未回到起点",
+      "values": [
+        1,
+        1.03,
+        1.0674,
+        1.0989,
+        1.1471,
+        1.1828,
+        1.2253,
+        1.1176,
+        0.9823,
+        0.832,
+        0.736,
+        0.6694,
+        0.6281,
+        0.5998,
+        0.6228,
+        0.6513,
+        0.6718,
+        0.7056,
+        0.7354,
+        0.7691,
+        0.8007,
+        0.8326,
+        0.8647,
+        0.9017,
+        0.9321
+      ],
+      "volatility_annual_pct": 22.26,
+      "max_drawdown": {
+        "peak_index": 6,
+        "trough_index": 13,
+        "peak_month": "M6",
+        "trough_month": "M13",
+        "peak_value": 1.2253,
+        "trough_value": 0.5998,
+        "drawdown_pct": 51.05,
+        "recovery_gain_pct": 104.28
+      }
+    },
+    {
+      "id": "grinder",
+      "name": "丙·慢磨阴跌",
+      "story": "没有一个月称得上大跌，小输小赢磨两年，累计跌去两成多",
+      "values": [
+        1,
+        1.011,
+        1.0232,
+        1.0305,
+        1.0383,
+        1.0177,
+        1.0277,
+        1.0024,
+        0.9892,
+        0.9765,
+        0.9536,
+        0.933,
+        0.9385,
+        0.9285,
+        0.9229,
+        0.897,
+        0.903,
+        0.8878,
+        0.8739,
+        0.8596,
+        0.849,
+        0.8273,
+        0.8138,
+        0.8068,
+        0.7919
+      ],
+      "volatility_annual_pct": 4.43,
+      "max_drawdown": {
+        "peak_index": 4,
+        "trough_index": 24,
+        "peak_month": "M4",
+        "trough_month": "M24",
+        "peak_value": 1.0383,
+        "trough_value": 0.7919,
+        "drawdown_pct": 23.73,
+        "recovery_gain_pct": 31.12
+      }
+    }
+  ],
+  "recovery_curve": {
+    "note": "亏损幅度（峰值到谷值，或相对成本）与回本所需涨幅的对照：涨幅 = 亏损 ÷（1 − 亏损），由复利不变量 (1−亏损)×(1+涨幅)=1 解出",
+    "loss_step_pct": 5,
+    "highlights": [
+      30,
+      50,
+      70
+    ],
+    "curve": [
+      {
+        "loss_pct": 0,
+        "recovery_pct": 0
+      },
+      {
+        "loss_pct": 5,
+        "recovery_pct": 5.26
+      },
+      {
+        "loss_pct": 10,
+        "recovery_pct": 11.11
+      },
+      {
+        "loss_pct": 15,
+        "recovery_pct": 17.65
+      },
+      {
+        "loss_pct": 20,
+        "recovery_pct": 25
+      },
+      {
+        "loss_pct": 25,
+        "recovery_pct": 33.33
+      },
+      {
+        "loss_pct": 30,
+        "recovery_pct": 42.86
+      },
+      {
+        "loss_pct": 35,
+        "recovery_pct": 53.85
+      },
+      {
+        "loss_pct": 40,
+        "recovery_pct": 66.67
+      },
+      {
+        "loss_pct": 45,
+        "recovery_pct": 81.82
+      },
+      {
+        "loss_pct": 50,
+        "recovery_pct": 100
+      },
+      {
+        "loss_pct": 55,
+        "recovery_pct": 122.22
+      },
+      {
+        "loss_pct": 60,
+        "recovery_pct": 150
+      },
+      {
+        "loss_pct": 65,
+        "recovery_pct": 185.71
+      },
+      {
+        "loss_pct": 70,
+        "recovery_pct": 233.33
+      }
+    ]
+  }
+}

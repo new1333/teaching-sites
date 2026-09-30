@@ -1,0 +1,162 @@
+{
+  "chapter": "11-position-sizing",
+  "title": "仓位与定投：先决定输得起，再决定买多少",
+  "as_of": "2026-09",
+  "note": "第 11 章 worksheet 的题目输入与唯一期望答案。仓位反推题 2 道 + 定投核算表 12 期 × 2 条行情（V 形主表 / 一路下行反例）。费用沿用第 3 章课程示例值：佣金 万2.5 双向、单笔最低 5 元；过户费 万0.1 双向；印花税 万5 仅卖出单边（实际以开户券商合同与最新公告为准）。",
+  "conventions": {
+    "money_rounding": "金额（含各项费用与平均成本）四舍五入保留 2 位小数（src/round.ts round2）",
+    "shares_rounding": "份额保留 4 位小数；累计份额 = 四舍五入后的逐期份额累加（再保留 4 位）",
+    "lot_rounding": "可买数量向下取整到 100 股（1 手）的整数倍——主板按手交易的课程口径；理论股数不足 1 手时数量记 0（这笔交易放弃）",
+    "position_cap": "仓位上限 = 持仓市值 ÷ 总资金，以百分数呈现保留 2 位小数",
+    "avg_cost": "平均成本（含费）= 累计总付出 ÷ 累计份额；平均成本（不含费）= 累计成交金额 ÷ 累计份额；各保留 2 位小数",
+    "dca_inputs": "每期按成交金额 1000 元买入（份额 = 1000 ÷ 当期价格，碎股课程简化）；当期费用 = 佣金 + 过户费，总付出 = 成交金额 + 两费；行情为课程自产合成教学数据，与任何真实基金或股票无关",
+    "lump_sum_compare": "一次性买入对照：把 12 期合计 12000 元在第 1 期价格一次性买入，期末按第 12 期价格估值"
+  },
+  "fee_assumptions": {
+    "note": "课程示例值，实际以开户券商合同为准（bible verification_conventions.fee_assumptions）",
+    "commission_rate": 0.00025,
+    "commission_min": 5,
+    "stamp_tax_rate": 0.0005,
+    "transfer_fee_rate": 0.00001,
+    "as_of": "2026-09"
+  },
+  "position_cases": [
+    {
+      "id": "position-A",
+      "label": "演练跟算：总资金 10 万、单笔风险预算 1%、买价 10.00 元、止损 9.50 元（股数整除到 20 手）",
+      "total_capital": 100000.0,
+      "budget_rate": 0.01,
+      "buy_price": 10.0,
+      "stop_price": 9.5,
+      "expected": {
+        "budget_amount": 1000.0,
+        "per_share_risk": 0.5,
+        "raw_shares": 2000.0,
+        "shares": 2000,
+        "lots": 20,
+        "actual_risk": 1000.0,
+        "position_value": 20000.0,
+        "position_cap_pct": 20.0,
+        "buy_commission": 5.0,
+        "buy_transfer_fee": 0.2,
+        "buy_total_paid": 20005.2
+      }
+    },
+    {
+      "id": "position-B",
+      "label": "验证自算：月结余 4000 元攒 20 个月共 8 万、预算 2%、买价 20.00 元、止损 18.50 元（取整到 10 手，留下 100 元余量）",
+      "total_capital": 80000.0,
+      "budget_rate": 0.02,
+      "buy_price": 20.0,
+      "stop_price": 18.5,
+      "expected": {
+        "budget_amount": 1600.0,
+        "per_share_risk": 1.5,
+        "raw_shares": 1066.6667,
+        "shares": 1000,
+        "lots": 10,
+        "actual_risk": 1500.0,
+        "position_value": 20000.0,
+        "position_cap_pct": 25.0,
+        "buy_commission": 5.0,
+        "buy_transfer_fee": 0.2,
+        "buy_total_paid": 20005.2
+      }
+    }
+  ],
+  "full_position_ladder": {
+    "note": "同一只个股腰斩（跌 50%）时，不同仓位下总资金的亏损与回本涨幅（回本涨幅用第 9 章 recoveryGain 计算）",
+    "stock_drop": 0.5,
+    "cases": [
+      { "position_pct": 100.0, "account_loss_pct": 50.0, "recovery_pct": 100.0 },
+      { "position_pct": 50.0, "account_loss_pct": 25.0, "recovery_pct": 33.33 },
+      { "position_pct": 20.0, "account_loss_pct": 10.0, "recovery_pct": 11.11 }
+    ]
+  },
+  "dca_cases": [
+    {
+      "id": "dca-V",
+      "label": "V 形行情：先跌到 1.40 再涨回 2.20（12 期跟算主表）",
+      "monthly_amount": 1000.0,
+      "prices": [2.0, 1.8, 1.6, 1.5, 1.4, 1.55, 1.7, 1.65, 1.8, 1.95, 2.1, 2.2],
+      "expected": {
+        "periods": [
+          { "month": 1, "price": 2.0, "invest_amount": 1000.0, "shares": 500.0, "cum_shares": 500.0, "cum_amount": 1000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 1005.01, "avg_cost": 2.01 },
+          { "month": 2, "price": 1.8, "invest_amount": 1000.0, "shares": 555.5556, "cum_shares": 1055.5556, "cum_amount": 2000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 2010.02, "avg_cost": 1.9 },
+          { "month": 3, "price": 1.6, "invest_amount": 1000.0, "shares": 625.0, "cum_shares": 1680.5556, "cum_amount": 3000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 3015.03, "avg_cost": 1.79 },
+          { "month": 4, "price": 1.5, "invest_amount": 1000.0, "shares": 666.6667, "cum_shares": 2347.2223, "cum_amount": 4000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 4020.04, "avg_cost": 1.71 },
+          { "month": 5, "price": 1.4, "invest_amount": 1000.0, "shares": 714.2857, "cum_shares": 3061.508, "cum_amount": 5000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 5025.05, "avg_cost": 1.64 },
+          { "month": 6, "price": 1.55, "invest_amount": 1000.0, "shares": 645.1613, "cum_shares": 3706.6693, "cum_amount": 6000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 6030.06, "avg_cost": 1.63 },
+          { "month": 7, "price": 1.7, "invest_amount": 1000.0, "shares": 588.2353, "cum_shares": 4294.9046, "cum_amount": 7000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 7035.07, "avg_cost": 1.64 },
+          { "month": 8, "price": 1.65, "invest_amount": 1000.0, "shares": 606.0606, "cum_shares": 4900.9652, "cum_amount": 8000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 8040.08, "avg_cost": 1.64 },
+          { "month": 9, "price": 1.8, "invest_amount": 1000.0, "shares": 555.5556, "cum_shares": 5456.5208, "cum_amount": 9000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 9045.09, "avg_cost": 1.66 },
+          { "month": 10, "price": 1.95, "invest_amount": 1000.0, "shares": 512.8205, "cum_shares": 5969.3413, "cum_amount": 10000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 10050.1, "avg_cost": 1.68 },
+          { "month": 11, "price": 2.1, "invest_amount": 1000.0, "shares": 476.1905, "cum_shares": 6445.5318, "cum_amount": 11000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 11055.11, "avg_cost": 1.72 },
+          { "month": 12, "price": 2.2, "invest_amount": 1000.0, "shares": 454.5455, "cum_shares": 6900.0773, "cum_amount": 12000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 12060.12, "avg_cost": 1.75 }
+        ],
+        "summary": {
+          "total_amount": 12000.0,
+          "total_fees": 60.12,
+          "total_paid": 12060.12,
+          "total_shares": 6900.0773,
+          "avg_cost_ex_fee": 1.74,
+          "avg_cost": 1.75,
+          "end_price": 2.2,
+          "end_value": 15180.17,
+          "pl_amount": 3180.17,
+          "pl_pct": 26.5,
+          "sell_commission": 5.0,
+          "sell_transfer_fee": 0.15,
+          "stamp_tax": 7.59,
+          "net_received": 15167.43,
+          "net_pl": 3107.31,
+          "net_pl_pct": 25.77,
+          "lump_sum_end_value": 13200.0,
+          "lump_sum_pl_pct": 10.0
+        }
+      }
+    },
+    {
+      "id": "dca-D",
+      "label": "下行行情：从 2.00 一路跌到 0.90（反例：摊薄不等于不亏）",
+      "monthly_amount": 1000.0,
+      "prices": [2.0, 1.9, 1.8, 1.7, 1.6, 1.5, 1.4, 1.3, 1.2, 1.1, 1.0, 0.9],
+      "expected": {
+        "periods": [
+          { "month": 1, "price": 2.0, "invest_amount": 1000.0, "shares": 500.0, "cum_shares": 500.0, "cum_amount": 1000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 1005.01, "avg_cost": 2.01 },
+          { "month": 2, "price": 1.9, "invest_amount": 1000.0, "shares": 526.3158, "cum_shares": 1026.3158, "cum_amount": 2000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 2010.02, "avg_cost": 1.96 },
+          { "month": 3, "price": 1.8, "invest_amount": 1000.0, "shares": 555.5556, "cum_shares": 1581.8714, "cum_amount": 3000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 3015.03, "avg_cost": 1.91 },
+          { "month": 4, "price": 1.7, "invest_amount": 1000.0, "shares": 588.2353, "cum_shares": 2170.1067, "cum_amount": 4000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 4020.04, "avg_cost": 1.85 },
+          { "month": 5, "price": 1.6, "invest_amount": 1000.0, "shares": 625.0, "cum_shares": 2795.1067, "cum_amount": 5000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 5025.05, "avg_cost": 1.8 },
+          { "month": 6, "price": 1.5, "invest_amount": 1000.0, "shares": 666.6667, "cum_shares": 3461.7734, "cum_amount": 6000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 6030.06, "avg_cost": 1.74 },
+          { "month": 7, "price": 1.4, "invest_amount": 1000.0, "shares": 714.2857, "cum_shares": 4176.0591, "cum_amount": 7000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 7035.07, "avg_cost": 1.68 },
+          { "month": 8, "price": 1.3, "invest_amount": 1000.0, "shares": 769.2308, "cum_shares": 4945.2899, "cum_amount": 8000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 8040.08, "avg_cost": 1.63 },
+          { "month": 9, "price": 1.2, "invest_amount": 1000.0, "shares": 833.3333, "cum_shares": 5778.6232, "cum_amount": 9000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 9045.09, "avg_cost": 1.57 },
+          { "month": 10, "price": 1.1, "invest_amount": 1000.0, "shares": 909.0909, "cum_shares": 6687.7141, "cum_amount": 10000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 10050.1, "avg_cost": 1.5 },
+          { "month": 11, "price": 1.0, "invest_amount": 1000.0, "shares": 1000.0, "cum_shares": 7687.7141, "cum_amount": 11000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 11055.11, "avg_cost": 1.44 },
+          { "month": 12, "price": 0.9, "invest_amount": 1000.0, "shares": 1111.1111, "cum_shares": 8798.8252, "cum_amount": 12000.0, "commission": 5.0, "transfer_fee": 0.01, "period_paid": 1005.01, "cum_paid": 12060.12, "avg_cost": 1.37 }
+        ],
+        "summary": {
+          "total_amount": 12000.0,
+          "total_fees": 60.12,
+          "total_paid": 12060.12,
+          "total_shares": 8798.8252,
+          "avg_cost_ex_fee": 1.36,
+          "avg_cost": 1.37,
+          "end_price": 0.9,
+          "end_value": 7918.94,
+          "pl_amount": -4081.06,
+          "pl_pct": -34.01,
+          "sell_commission": 5.0,
+          "sell_transfer_fee": 0.08,
+          "stamp_tax": 3.96,
+          "net_received": 7909.9,
+          "net_pl": -4150.22,
+          "net_pl_pct": -34.41,
+          "lump_sum_end_value": 5400.0,
+          "lump_sum_pl_pct": -55.0
+        }
+      }
+    }
+  ]
+}

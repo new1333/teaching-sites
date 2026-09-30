@@ -1,0 +1,510 @@
+{
+  "schema_version": 2,
+  "chapters": [
+    {
+      "n": 1,
+      "slug": "time-value",
+      "file": "docs/01-time-value.md",
+      "status": "complete",
+      "summary": "第1章建立5块积木：货币时间价值、收益率（含年化）、复利、通货膨胀、实际购买力。验证物：finance.ts纯函数+fixtures 7题5年化（15条测试互锁）+compound-vs-inflation.json双曲线数据，导出两次逐字节一致。读者能笔算任意本金/利率/年限的终值与实际购买力，用收益率对照通胀判断输赢；「存款不亏钱」「高收益不看年限」两误区已证伪。评审阻断1（落桶判定）已修，gates全绿，lint 0。",
+      "artifacts": [
+        "companion/src/finance.ts",
+        "companion/fixtures/time-value.json",
+        "companion/tests/finance.test.ts",
+        "companion/src/datasets/ch01-time-value.ts",
+        "docs/assets/data/compound-vs-inflation.json"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2（sha256 一致）",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 01-time-value.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 2,
+      "slug": "stock-nature",
+      "file": "docs/02-stock-nature.md",
+      "status": "complete",
+      "summary": "第2章（principle/none）建立5块积木：股票、股权、市值、盈利、估值；核心拆解「市值=盈利×估值倍数」，任何涨跌劈成盈利因子与估值因子。用无人交易持股、市值蒸发无人赚两反例证伪零和误区；用盈利+21%而股价−51.6%证伪「股价跌=公司不行」。调用第1章复利、收益率、货币时间价值、通胀、购买力五块积木（工具箱5行），无companion增量。评审阻断1（枚举计数）已修，outline uses 已对账补齐，gates全绿，lint 0。",
+      "artifacts": [
+        "docs/02-stock-nature.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 02-stock-nature.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 3,
+      "slug": "market-rules",
+      "file": "docs/03-market-rules.md",
+      "status": "complete",
+      "summary": "第3章（worksheet）建立6块积木：集合竞价、T+1、涨跌停板、印花税、佣金、过户费。验证物：costs.ts纯函数+market-rules.json 9题（3成本/2涨跌停/4时点）+12条测试互锁。读者能用15:00分界+交易日历+T+1三步判定任意委托归属与最早可卖日，用前收盘×(1±幅度)算涨跌停价，合出五笔完整成本。评审阻断1（T+1法条依据为1998版证券法，现行载体是交易所规则）已修，bible/正文/注释三处同口径改。gates全绿，lint 0。",
+      "artifacts": [
+        "companion/src/costs.ts",
+        "companion/fixtures/market-rules.json",
+        "companion/tests/costs.test.ts",
+        "docs/03-market-rules.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2（逐字节一致）",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 03-market-rules.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 4,
+      "slug": "k-line",
+      "file": "docs/04-k-line.md",
+      "status": "complete",
+      "summary": "第4章（canvas-app）建立4块积木：K线、阳线与阴线、上影线与下影线、成交量。验证物：market.ts固定种子合成行情（六类可教特征18条测试锁定）+kline-demo.json+KLineChart组件（40根先猜后揭晓20根、悬停读四价量、平盘灰色与阳线判定对齐）。四价成因从撮合时间线组装（开盘竞价+连续竞价+收盘竞价），调用11块旧积木（工具箱三组）。评审阻断2处（收盘价机理与前章冲突、量能证据句与数据矛盾）已修。gates全绿，build过，lint 0。",
+      "artifacts": [
+        "companion/src/market.ts",
+        "companion/src/datasets/ch04-kline.ts",
+        "companion/tests/market.test.ts",
+        "docs/assets/data/kline-demo.json",
+        "docs/.vitepress/theme/components/KLineChart.vue",
+        "docs/04-k-line.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2（逐字节一致）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "node scripts/course-lint.mjs … 04-k-line.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 5,
+      "slug": "trend-ma",
+      "file": "docs/05-trend-ma.md",
+      "status": "complete",
+      "summary": "第5章（canvas-app）建立4块积木：均线、趋势、支撑与压力、金叉与死叉。验证物：market.ts扩展250日合成行情+交叉回测器（费用复用第3章costs.ts）+ma-cross.json+MaCrossChart组件（MA5/MA20+8交叉标记+策略/持有双净值），30条测试锁定。核心反直觉由实算证伪：含费交叉策略18091.59 vs 持有18804.90，滞后是大头、费用仅占7.5%。评审零阻断4建议已修（D74量价措辞、净值/回测首现括注、收束句式、promise登记）。",
+      "artifacts": [
+        "companion/src/market.ts",
+        "companion/src/datasets/ch05-trend-ma.ts",
+        "companion/tests/ma-cross.test.ts",
+        "docs/assets/data/ma-cross.json",
+        "docs/.vitepress/theme/components/MaCrossChart.vue",
+        "docs/05-trend-ma.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（75条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 05-trend-ma.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 6,
+      "slug": "financial-statements",
+      "file": "docs/06-financial-statements.md",
+      "status": "complete",
+      "summary": "第6章（worksheet）建立8块积木：资产负债表、利润表、现金流量表、毛利率、净利润、应收账款、货币资金、经营现金流。验证物：statements.ts纯函数+fixtures甲乙两家合成公司三张表与五项指标唯一答案+丙自查，15条测试互锁（全书90条）。康美案钩子（处罚决定书〔2020〕24号，三年虚增货币资金约886亿）经评审对照原文核实；「利润是观点，现金是事实」三层递进讲透。评审零阻断6建议已修（第三误区补落点、利息表述、工具箱复利行、存货/科目括注）。",
+      "artifacts": [
+        "companion/src/statements.ts",
+        "companion/fixtures/statements.json",
+        "companion/tests/statements.test.ts",
+        "docs/06-financial-statements.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（90条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 06-financial-statements.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 7,
+      "slug": "valuation-multiples",
+      "file": "docs/07-valuation-multiples.md",
+      "status": "complete",
+      "summary": "第7章（worksheet）建立5块积木：市盈率、盈利收益率、市净率、股息率、无风险利率。验证物：valuation.ts纯函数+fixtures 6题1自查（判定边界0.95%含等号），17条新测试全书107条互锁。钩子（两只10元股票十年vs千年回本）闭环；存款锚粗筛判定推出「不输存款/贵得危险」；辛的一次性收益陷阱与拆股算术双证伪误区。评审阻断1（邮储0.98%例外，六大行表述失准）已修：正文/代码注释/fixtures/bible五处同口径改；收束句式已换写法。",
+      "artifacts": [
+        "companion/src/valuation.ts",
+        "companion/fixtures/valuation.json",
+        "companion/tests/valuation.test.ts",
+        "docs/07-valuation-multiples.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（107条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 07-valuation-multiples.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 8,
+      "slug": "margin-of-safety",
+      "file": "docs/08-margin-of-safety.md",
+      "status": "complete",
+      "summary": "第8章（principle/none）建立4块积木：内在价值（折现估区间）、安全边际（七折出手示意规则）、能力圈（三问）、护城河（十年之问）。茅台约8.83倍到超60倍真实区间（中证网/东方财富，带年份与约）讲透好公司≠好股票，双误区证伪；四道闸检查链组装。无companion增量，基线107条全绿。评审零阻断2建议已修（收束句式去同构、2021顶部断言加免登录复核锚）。附：lint脚本jargon规则修正为豁免课程正式教授术语（护城河为投资课术语）。",
+      "artifacts": [
+        "docs/08-margin-of-safety.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（107条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 08-margin-of-safety.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 9,
+      "slug": "risk-math",
+      "file": "docs/09-risk-math.md",
+      "status": "complete",
+      "summary": "第9章（canvas-app）建立4块积木：盈亏不对称、最大回撤、波动率（月频×√12简化口径）、回本涨幅=亏损÷(1−亏损)。验证物：finance.ts扩展4函数+三条24月种子路径（浅16.38%/深51.05%/慢磨23.73%但波动最低）+对照曲线，23条新测试全书130条互锁；DrawdownChart峰谷标注。钩子闭环、双误区证伪、舍入陷阱转为教学点。评审阻断1（正文乘法示例矛盾）与2建议已修。",
+      "artifacts": [
+        "companion/src/finance.ts",
+        "companion/src/datasets/ch09-risk.ts",
+        "companion/tests/risk-math.test.ts",
+        "docs/assets/data/drawdown-paths.json",
+        "docs/.vitepress/theme/components/DrawdownChart.vue",
+        "docs/09-risk-math.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（130条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 09-risk-math.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 10,
+      "slug": "diversification",
+      "file": "docs/10-diversification.md",
+      "status": "complete",
+      "summary": "第10章（canvas-app）建立4块积木：相关性、分散化、资产配置、再平衡。验证物：portfolio.ts纯函数+实验台五档相关水平（6.21%→18.63%单调台阶）+丙丁0.95伪分散例+60/40三年漂移（72.42%）与再平衡对照，35条新测试全书165条互锁；PortfolioMixChart切换交互。评审阻断3处（图表读数与正文矛盾、相关性手算符号、与第9章四处句式同款）已修。",
+      "artifacts": [
+        "companion/src/portfolio.ts",
+        "companion/src/datasets/ch10-mix.ts",
+        "companion/tests/portfolio.test.ts",
+        "docs/assets/data/portfolio-mix.json",
+        "docs/.vitepress/theme/components/PortfolioMixChart.vue",
+        "docs/10-diversification.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（165条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 10-diversification.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 11,
+      "slug": "position-sizing",
+      "file": "docs/11-position-sizing.md",
+      "status": "complete",
+      "summary": "第11章（worksheet）建立4块积木：仓位、仓位管理、单笔风险预算、定投。验证物：position.ts（预算÷每股风险反推+定投逐期成本）+fixtures（反推2道+定投12期×2条：V形+26.50% vs 一次性+10.00%、下行仍亏34.01%）+18条新测试全书183条互锁。先定输多少→再算买多少；满仓/定投双误区算术证伪。评审阻断2处（反推题缺输入、碎股口径未声明）已修。",
+      "artifacts": [
+        "companion/src/position.ts",
+        "companion/fixtures/position.json",
+        "companion/tests/position.test.ts",
+        "docs/11-position-sizing.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（183条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 11-position-sizing.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 12,
+      "slug": "behavior-traps",
+      "file": "docs/12-behavior-traps.md",
+      "status": "complete",
+      "summary": "第12章（principle/none）建立4块积木：损失厌恶（系数约2，文献口径）、处置效应（成本价坐上决策席）、锚定效应（分母错误）、从众效应（拥挤造顶）。四条机械防御规则（预算单/季度去留日/止损进持仓单/日历再平衡）组装自第10/11章积木；老周合成账本连锁与重放；钩子2021年1月爆款基金（定性口径+authority登记）。评审零阻断6建议已修（收束撞款、Q5骨架第4次、毫秒裸数字、乙票先行词、工具箱承诺对齐、authority补登）。",
+      "artifacts": [
+        "docs/12-behavior-traps.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（183条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 12-behavior-traps.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 13,
+      "slug": "index-etf",
+      "file": "docs/13-index-etf.md",
+      "status": "complete",
+      "summary": "第13章（worksheet）建立5块积木：指数、宽基指数、指数基金、ETF、费率。验证物：indexfund.ts（feeDrag复用第1章growthFactor+合成净值+折溢价）+fixtures 6题+21条新测试全书204条互锁；dca-vs-lump.json（种子63合成宽基240月）+DcaChart三层图。组装证据：第11章dcaSchedule一行未改跑完240期定投。十年赌局按2017年度信十年终局口径（125.8%对21.7–87.7%，四只不过半线、最好约七成），评审阻断（原用2016年信九年口径）已回灌修复。",
+      "artifacts": [
+        "companion/src/indexfund.ts",
+        "companion/src/datasets/ch13-dca.ts",
+        "companion/tests/indexfund.test.ts",
+        "docs/assets/data/dca-vs-lump.json",
+        "docs/.vitepress/theme/components/DcaChart.vue",
+        "docs/13-index-etf.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条）",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm export ×2",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm docs:build",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 13-index-etf.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 14,
+      "slug": "stock-checklist",
+      "file": "docs/14-stock-checklist.md",
+      "status": "complete",
+      "summary": "第14章（observation组装章）建立2块积木：商业模式（一句话说清钱从哪来）、研究清单（每步带通过标准与不通过出口）。验证物：七步清单表+茅台七步走查台账（约+长期公开特征口径，易变数字转读者自查，三处不荐股声明）+12条免登录observation任务。13块旧积木按「公司→价格→自己」串成带出口流程，与第8章四道闸首尾相接。评审阻断2处（凑手数算术、失实引注）与6建议已修（②步任务补齐、Q4换输入、②③次序口径、合同负债注、千元量级限定）。",
+      "artifacts": [
+        "docs/14-stock-checklist.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 14-stock-checklist.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 15,
+      "slug": "your-system",
+      "file": "docs/15-your-system.md",
+      "status": "complete",
+      "summary": "第15章（review/none终章）建立2块积木：投资体系、投资计划书（一页纸六槽：目标/配置/买入/卖出/红线/复盘，各带可判定填写标准）。对账：前14章64块积木按五组收拢，五组接口稳定各举一例（评审抽查8处全真）；重考第1章存款场景，driving question原文收口；能力清单与final_milestone对齐；合规声明收尾。评审零阻断2建议已修（百分点措辞、损失厌恶工具箱行）。",
+      "artifacts": [
+        "docs/15-your-system.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 15-your-system.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    },
+    {
+      "n": 16,
+      "slug": "expert-roadmap",
+      "file": "docs/16-expert-roadmap.md",
+      "status": "complete",
+      "summary": "第16章（principle/none压缩视野章，length_exempt）新增积木0块：主线已在第15章收口，本章答「下一步去哪」。三份合成持仓点名10块缺口积木各配修法；12个月三条示例路径（行业深研/估值深研/工具化执行）各3个查产出物的里程碑；书单限公开经典+官方投教渠道；末段driving question回望收束全书。评审零阻断4建议已修（点名矛盾+定投闭环、收束句式、公司癸能力锚、核心仓换日常词）。",
+      "artifacts": [
+        "docs/16-expert-roadmap.md"
+      ],
+      "gates": [
+        {
+          "command": "pnpm typecheck",
+          "result": "passed"
+        },
+        {
+          "command": "pnpm test（204条不变）",
+          "result": "passed"
+        },
+        {
+          "command": "course-lint 16-expert-roadmap.md",
+          "result": "passed"
+        }
+      ],
+      "review_blockers": 0
+    }
+  ]
+}
